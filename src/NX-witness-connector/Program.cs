@@ -1,14 +1,16 @@
-﻿using SmartFace.Contract.Models.Notifications;
-using System;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using SmartFace.Sample.Notifications.Helpers;
 
 namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
-    public class SampleNotificationReader
+    public class Program
     {
         private const string ZERO_MQ_DEFAULT_HOST = "localhost";
         private const int ZERO_MQ_DEFAULT_PORT = 2406;
@@ -21,8 +23,42 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
         public static CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         public static bool ReadKeyToStop = Environment.UserInteractive;
 
-        public static Task Main(string[] args)
+        public static async Task Main(string[] args)
         {
+            try
+            {
+                var logger = SetupBasicLogging();
+
+                var configurationRoot = new ConfigurationBuilder()
+                    .AddJsonFile("appSettings.json", optional: false)
+                    .AddEnvironmentVariables()
+                    .AddCommandLine(args)
+                    .Build();
+
+                
+                var hostBuilder = CreateHostBuilder(args, logger, configurationRoot);
+                using var host = hostBuilder.Build();
+
+                var hostApplicationLifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
+
+                var applicationTask = host.RunAsync();
+
+                await using (hostApplicationLifetime.ApplicationStarted.Register(() =>
+                {
+                    Log.Information("Application started.");
+                })) { }
+
+                await applicationTask;
+
+                Log.Information("Application stopped.");
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Application start-up failed.");
+                Log.CloseAndFlush();
+                throw;
+            }
+
             ParseArguments(args, out string hostName, out int port, out var subscribedTopics);
 
             // Create notification reader
@@ -172,6 +208,44 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 
                 notificationTopics = inputTopics;
             }
+        }
+
+        public static IHostBuilder CreateHostBuilder(string[] args, ILogger logger, IConfigurationRoot configurationRoot)
+        {
+            return Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration(builder =>
+                {
+                    builder.Sources.Clear();
+                    builder.AddConfiguration(configurationRoot);
+                })
+                .ConfigureWebHostDefaults(webHostBuilder =>
+                    {
+                        webHostBuilder
+                            .UseConfiguration(configurationRoot)
+                            .UseSerilog(logger)
+                            .UseStartup<Startup>();
+                    })
+                .UseWindowsService()
+                .UseSystemd();
+        }
+
+        private static ILogger SetupBasicLogging()
+        {
+            var logRootDir = Path.GetFullPath(Path.Combine(FileApplicationData.AppDataDirPath(), "logs")); // , $"{fileNameWithoutExtension}.log"));
+
+            var absLogFilePath = Path.GetFullPath(Path.Combine(FileApplicationData.AppDataDirPath(), "logs", $"{fileNameWithoutExtension}.log"));
+            return absLogFilePath;
+            
+            var loggingFile = Path.Combine(logRootDir, $"{LOG_FILE_NAME}.log");
+            var errorLogFile = Path.Combine(logRootDir, $"{ERROR_LOG_FILE_NAME}.log");
+
+            var logger = new LoggerConfiguration().
+                WithBasicConfiguration(loggingFile, errorLogFile)
+                .CreateLogger();
+
+            Log.Logger = logger;
+
+            return logger;
         }
     }
 }

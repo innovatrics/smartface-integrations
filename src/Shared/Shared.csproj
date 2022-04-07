@@ -1,15 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
-    <Platforms>AnyCPU;x64</Platforms>
-    <Configurations>Debug;Release</Configurations>
-    <Version>4.12.0</Version>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <Authors>Innovatrics</Authors>
     <Product>SmartFace</Product>
-    <PublishTrimmed>true</PublishTrimmed>
-    <TrimMode>CopyUsed</TrimMode>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +11,15 @@
     <PackageReference Include="NetMQ" Version="4.0.1.6" />
     <PackageReference Include="NETStandard.Library" Version="2.0.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.6" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="3.1.6" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="3.1.6" />
+    <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
+    <PackageReference Include="Serilog.Sinks.Literate" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.Network" Version="2.0.2.68" />
   </ItemGroup>
 
   <Choose>
@@ -33,7 +36,7 @@
   </Choose>
 
   <ItemGroup>
-    <ProjectReference Include="..\SmartFace.Contract\SmartFace.Contract.csproj" />
+    
   </ItemGroup>
 
 </Project>
