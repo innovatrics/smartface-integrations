@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Configurations>Debug;Release</Configurations>
+    <Version>4.12.0</Version>
+    <Authors>Innovatrics</Authors>
+    <Product>SmartFace</Product>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>CopyUsed</TrimMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    
+    <PackageReference Include="NetMQ" Version="4.0.1.6" />
+    <PackageReference Include="NETStandard.Library" Version="2.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <Choose>
+    <When Condition="'$(Configuration)' == 'Release'">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.4">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+      </ItemGroup>
+    </When>
+    <Otherwise>
+    </Otherwise>
+  </Choose>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SmartFace.Contract\SmartFace.Contract.csproj" />
+  </ItemGroup>
+
+</Project>
