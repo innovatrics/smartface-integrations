@@ -7,23 +7,22 @@ using Serilog.Sinks.Network;
 using Serilog.Sinks.Network.Formatters;
 using ILogger = Serilog.ILogger;
 
-namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
-{
-    internal static class LoggingSetupHelper
-    {
-        internal const string LOG_FILE_NAME = "AccessController";
-        internal const string ERROR_LOG_FILE_NAME = "AccessController_Errors";
+using Innovatrics.SmartFace.Integrations.Shared.Utils;
 
+namespace Innovatrics.SmartFace.Integrations.Shared.Logging
+{
+    internal static class LoggingSetup
+    {
         private const int LOG_FILE_SIZE_LIMIT_MEGABYTES = 25;
         private const int LOG_FILE_COUNT_LIMIT = 10;
 
         private const int ERROR_LOG_FILE_SIZE_LIMIT_MEGABYTES = 100;
         private const int ERROR_LOG_FILE_COUNT_LIMIT = 1;
 
-        internal static ILogger SetupBasicLogging()
+        internal static ILogger SetupBasicLogging(string appName, string logFileName = null, string errorLogFileName = null)
         {
-            var loggingFile = AbsLogFilePathForFile(LOG_FILE_NAME);
-            var errorLogFile = AbsLogFilePathForFile(ERROR_LOG_FILE_NAME);
+            var loggingFile = AbsLogFilePathForFile(appName, logFileName ?? "main");
+            var errorLogFile = AbsLogFilePathForFile(appName, errorLogFileName ?? "error");
 
             var logger = new LoggerConfiguration().
                 WithBasicConfiguration(loggingFile, errorLogFile)
@@ -51,9 +50,9 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
                 });
         }
 
-        private static string AbsLogFilePathForFile(string fileNameWithoutExtension)
+        private static string AbsLogFilePathForFile(string appName, string fileNameWithoutExtension)
         {
-            var absLogFilePath = Path.GetFullPath(Path.Combine(FileApplicationData.AppDataDirPath(), "logs", $"{fileNameWithoutExtension}.log"));
+            var absLogFilePath = Path.GetFullPath(Path.Combine(FileApplicationData.AppDataDirPath(appName), "logs", $"{fileNameWithoutExtension}.log"));
             return absLogFilePath;
         }
     }

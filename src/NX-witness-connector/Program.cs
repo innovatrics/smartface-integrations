@@ -8,6 +8,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
+using Innovatrics.SmartFace.Integrations.Shared.Logging;
+
 namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
     public class Program
@@ -27,7 +29,7 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
         {
             try
             {
-                var logger = SetupBasicLogging();
+                var logger =  LoggingSetup.SetupBasicLogging();
 
                 var configurationRoot = new ConfigurationBuilder()
                     .AddJsonFile("appSettings.json", optional: false)
@@ -227,25 +229,6 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
                     })
                 .UseWindowsService()
                 .UseSystemd();
-        }
-
-        private static ILogger SetupBasicLogging()
-        {
-            var logRootDir = Path.GetFullPath(Path.Combine(FileApplicationData.AppDataDirPath(), "logs")); // , $"{fileNameWithoutExtension}.log"));
-
-            var absLogFilePath = Path.GetFullPath(Path.Combine(FileApplicationData.AppDataDirPath(), "logs", $"{fileNameWithoutExtension}.log"));
-            return absLogFilePath;
-            
-            var loggingFile = Path.Combine(logRootDir, $"{LOG_FILE_NAME}.log");
-            var errorLogFile = Path.Combine(logRootDir, $"{ERROR_LOG_FILE_NAME}.log");
-
-            var logger = new LoggerConfiguration().
-                WithBasicConfiguration(loggingFile, errorLogFile)
-                .CreateLogger();
-
-            Log.Logger = logger;
-
-            return logger;
         }
     }
 }

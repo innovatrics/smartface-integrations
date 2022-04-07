@@ -1,11 +1,10 @@
 ﻿using Serilog;
 using Serilog.Events;
 
-namespace Innovatrics.SmartFace.Integrations.Shared.Extensions
+namespace Innovatrics.SmartFace.Integrations.Shared.Logging
 {
     public static class SerilogExtensions
     {
-
         public static LoggerConfiguration WriteToRollingFile(this LoggerConfiguration configuration, string fullLogFilePath, int fileSizeLimitMegaBytes, int retainedFileCountLimit)
         {
             var cfg = configuration.WriteTo.File(
