@@ -11,7 +11,7 @@ using Innovatrics.SmartFace.Integrations.Shared.Utils;
 
 namespace Innovatrics.SmartFace.Integrations.Shared.Logging
 {
-    internal static class LoggingSetup
+    public static class LoggingSetup
     {
         private const int LOG_FILE_SIZE_LIMIT_MEGABYTES = 25;
         private const int LOG_FILE_COUNT_LIMIT = 10;
@@ -19,7 +19,7 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
         private const int ERROR_LOG_FILE_SIZE_LIMIT_MEGABYTES = 100;
         private const int ERROR_LOG_FILE_COUNT_LIMIT = 1;
 
-        internal static ILogger SetupBasicLogging(string appName, string logFileName = null, string errorLogFileName = null)
+        public static ILogger SetupBasicLogging(string appName, string logFileName = null, string errorLogFileName = null)
         {
             var loggingFile = AbsLogFilePathForFile(appName, logFileName ?? "main");
             var errorLogFile = AbsLogFilePathForFile(appName, errorLogFileName ?? "error");

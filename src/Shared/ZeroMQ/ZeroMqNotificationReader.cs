@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using NetMQ;
 using NetMQ.Sockets;
 
-namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
+namespace Innovatrics.SmartFace.Integrations.Shared.ZeroMQ
 {
     public delegate void NotificationReceived(string topic, string json);
     public delegate void ErrorOccured(Exception exception);
