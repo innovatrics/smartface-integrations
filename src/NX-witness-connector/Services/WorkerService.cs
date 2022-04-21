@@ -19,10 +19,12 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly ZeroMqNotificationReader zeroMqNotificationReader;
+        private readonly IZeroMQNotificationProcessingService zeroMQNotificationProcessingService;
 
         public WorkerService(
             ILogger logger,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IZeroMQNotificationProcessingService zeroMQNotificationProcessingService
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -32,6 +34,7 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
             var port = this.configuration.GetValue<int>("SmartFace:ZeroMQ:Port", ZERO_MQ_DEFAULT_PORT);
 
             this.zeroMqNotificationReader = new ZeroMqNotificationReader(hostName, port, CancellationToken.None);
+            this.zeroMQNotificationProcessingService = zeroMQNotificationProcessingService ?? throw new ArgumentNullException(nameof(zeroMQNotificationProcessingService));
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -58,22 +61,11 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
             this.zeroMqNotificationReader.OnError += (ex) => { logger.Error($"ERROR : {ex.Message}"); };
 
             // Hook on notification event
-            this.zeroMqNotificationReader.OnNotificationReceived += (topic, json) =>
+            this.zeroMqNotificationReader.OnNotificationReceived += async (topic, json) =>
             {
                 logger.Information($"Notification with topic : {topic} received.");
 
-                switch (topic)
-                {
-                    case ZeroMqNotificationTopic.HUMAN_FALL_DETECTED:
-                        {
-                            var dto = JsonConvert.DeserializeObject<HumanFallDetectionNotificationDTO>(json);
-                            break;
-                        }
-
-                    default:
-                        break;
-                }
-
+                await this.zeroMQNotificationProcessingService.ProcessNotificationAsync(topic, json);
             };
 
             // Start listening for ZeroMQ messages
