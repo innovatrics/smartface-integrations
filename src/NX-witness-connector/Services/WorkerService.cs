@@ -18,7 +18,6 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly ZeroMqNotificationReader zeroMqNotificationReader;
         private readonly IZeroMQNotificationProcessingService zeroMQNotificationProcessingService;
 
         public WorkerService(
@@ -29,11 +28,6 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            
-            var hostName = this.configuration.GetValue<string>("SmartFace:ZeroMQ:HostName", ZERO_MQ_DEFAULT_HOST);
-            var port = this.configuration.GetValue<int>("SmartFace:ZeroMQ:Port", ZERO_MQ_DEFAULT_PORT);
-
-            this.zeroMqNotificationReader = new ZeroMqNotificationReader(hostName, port, CancellationToken.None);
             this.zeroMQNotificationProcessingService = zeroMQNotificationProcessingService ?? throw new ArgumentNullException(nameof(zeroMQNotificationProcessingService));
         }
 
@@ -41,7 +35,7 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
         {
             this.logger.Information($"{nameof(WorkerService)} is starting");
 
-            this.startReceivingZeroMqotifications();
+            this.startReceivingZeroMqotifications(cancellationToken);
 
             return Task.CompletedTask;
         }
@@ -53,32 +47,35 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
             this.stopReceivingZeroMqotifications();
         }
 
-        private void startReceivingZeroMqotifications()
+        private void startReceivingZeroMqotifications(CancellationToken cancellationToken)
         {
             this.logger.Information("Starting ZeroMQ connection");
 
+            var hostName = this.configuration.GetValue<string>("SmartFace:ZeroMQ:HostName", ZERO_MQ_DEFAULT_HOST);
+            var port = this.configuration.GetValue<int>("SmartFace:ZeroMQ:Port", ZERO_MQ_DEFAULT_PORT);
+
+            var reader = new ZeroMqNotificationReader(hostName, port, CancellationToken.None);
+
             // Log errors
-            this.zeroMqNotificationReader.OnError += (ex) => { logger.Error($"ERROR : {ex.Message}"); };
+            reader.OnError += (ex) => { logger.Error($"ERROR : {ex.Message}"); };
 
             // Hook on notification event
-            this.zeroMqNotificationReader.OnNotificationReceived += async (topic, json) =>
-            {
-                logger.Information($"Notification with topic : {topic} received.");
+            reader.OnNotificationReceived += async (string topic, string json) =>
+                    {
+                        logger.Information($"Notification with topic : {topic} received.");
 
-                await this.zeroMQNotificationProcessingService.ProcessNotificationAsync(topic, json);
-            };
+                        await this.zeroMQNotificationProcessingService.ProcessNotificationAsync(topic, json);
+                    };
 
             // Start listening for ZeroMQ messages
-            this.zeroMqNotificationReader.Init();
+            reader.Init();
 
-            this.logger.Information($"ZeroMQ connect initialized at {this.zeroMqNotificationReader.EndPoint}");
+            this.logger.Information($"ZeroMQ connect initialized at {reader.EndPoint}");
         }
-        
+
         private void stopReceivingZeroMqotifications()
         {
             this.logger.Information("Stopping ZeroMQ connection");
-
-            this.zeroMqNotificationReader.Dispose();
         }
     }
 }

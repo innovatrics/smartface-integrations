@@ -13,5 +13,11 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
     internal interface INXWitnessAdapter
     {
+        Task PushGenericEventAsync(
+            DateTime? timestamp = null,
+            string source = null,
+            string caption = null,
+            string cameraRef = null
+        );
     }
 }

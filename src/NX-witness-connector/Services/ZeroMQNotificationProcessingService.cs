@@ -29,12 +29,21 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
         {
             switch (topic)
             {
+                // case ZeroMqNotificationTopic.PEDESTRIANS_INSERTED:
+                //         await this.nxWitnessAdapter.PushGenericEventAsync(
+                //             caption: "Fall detection",
+                //             cameraRef: $"DS-2CD2043G0-I"
+                //         );
+                //         break;
+
                 case ZeroMqNotificationTopic.HUMAN_FALL_DETECTED:
                     {
                         var dto = JsonConvert.DeserializeObject<HumanFallDetectionNotificationDTO>(json);
-
-
-
+                        await this.nxWitnessAdapter.PushGenericEventAsync(
+                            timestamp: dto.FrameTimestamp,
+                            caption: "Fall detection",
+                            cameraRef: $"{dto.StreamId}"
+                        );
                         break;
                     }
 

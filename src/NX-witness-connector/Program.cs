@@ -78,6 +78,11 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
             //     loggingBuilder.AddSerilog(logger);
             // });
 
+            services.AddHttpClient();
+
+            services.AddSingleton<IZeroMQNotificationProcessingService, ZeroMQNotificationProcessingService>();
+            services.AddSingleton<INXWitnessAdapter, NXWitnessAdapter>();
+            
             services.AddHostedService<WorkerService>();
         }
     }
