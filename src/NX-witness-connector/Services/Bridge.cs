@@ -60,7 +60,7 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
             return cameraMappings
                         .Where(w => w.Source == streamId)
                         .Select(s => s.Target?.ToLower())
-                        .FirstOrDefault();
+                        .SingleOrDefault();
         }
     }
 }
