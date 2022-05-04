@@ -50,7 +50,7 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 
         private string convertToCameraId(Guid? streamId)
         {
-            var cameraMappings = this.configuration.GetSection("NXWitnessConnector:Cameras").Get<CameraMappingConfig[]>();
+            var cameraMappings = this.configuration.GetSection("NXWitness:Cameras").Get<CameraMappingConfig[]>();
 
             if (cameraMappings == null)
             {

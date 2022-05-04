@@ -82,6 +82,7 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 
             services.AddSingleton<IZeroMQNotificationProcessingService, ZeroMQNotificationProcessingService>();
             services.AddSingleton<INXWitnessAdapter, NXWitnessAdapter>();
+            services.AddSingleton<IBridge, Bridge>();
             
             services.AddHostedService<WorkerService>();
         }
