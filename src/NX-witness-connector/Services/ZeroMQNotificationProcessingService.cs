@@ -14,15 +14,15 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
     internal class ZeroMQNotificationProcessingService : IZeroMQNotificationProcessingService
     {
         private readonly ILogger logger;
-        private readonly INXWitnessAdapter nxWitnessAdapter;
+        private readonly IBridge bridge;
 
         public ZeroMQNotificationProcessingService(
             ILogger logger,
-            INXWitnessAdapter nxWitnessAdapter
+            IBridge bridge
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.nxWitnessAdapter = nxWitnessAdapter ?? throw new ArgumentNullException(nameof(nxWitnessAdapter));
+            this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
         }
 
         public async Task ProcessNotificationAsync(string topic, string json)
@@ -39,10 +39,10 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
                 case ZeroMqNotificationTopic.HUMAN_FALL_DETECTED:
                     {
                         var dto = JsonConvert.DeserializeObject<HumanFallDetectionNotificationDTO>(json);
-                        await this.nxWitnessAdapter.PushGenericEventAsync(
+                        await this.bridge.PushGenericEventAsync(
                             timestamp: dto.FrameTimestamp,
                             caption: "Fall detection",
-                            cameraRef: $"{dto.StreamId}"
+                            streamId: dto.StreamId
                         );
                         break;
                     }

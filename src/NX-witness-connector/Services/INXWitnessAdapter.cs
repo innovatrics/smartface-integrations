@@ -11,7 +11,7 @@ using Innovatrics.SmartFace.Models.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
-    internal interface INXWitnessAdapter
+    public interface INXWitnessAdapter
     {
         Task PushGenericEventAsync(
             DateTime? timestamp = null,
