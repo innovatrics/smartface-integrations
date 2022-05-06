@@ -32,9 +32,9 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
         )
         {
 
-            var nxWitnessCameraId = this.convertToCameraId(streamId);
+            var nxWitnessCamera = this.mapToNxCamera(streamId);
 
-            if (nxWitnessCameraId == null)
+            if (nxWitnessCamera == null)
             {
                 this.logger.Information("Stream has not any mapping to NX Witness Camera. StreamId {streamId}", streamId);
                 return;
@@ -44,22 +44,16 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
                             timestamp: timestamp,
                             caption: caption,
                             source: source,
-                            cameraRef: nxWitnessCameraId
+                            cameraRef: nxWitnessCamera.Id
                         );
         }
 
-        private string convertToCameraId(Guid? streamId)
+        private CameraMappingConfigCamera mapToNxCamera(Guid? streamId)
         {
             var cameraMappings = this.configuration.GetSection("NXWitness:Cameras").Get<CameraMappingConfig[]>();
-
-            if (cameraMappings == null)
-            {
-                return $"cam_{streamId}";
-            }
-
             return cameraMappings
-                        .Where(w => w.Source == streamId)
-                        .Select(s => s.Target?.ToLower())
+                        .Where(w => w.StreamId == streamId)
+                        .Select(s => s.NXCamera)
                         .SingleOrDefault();
         }
     }

@@ -14,14 +14,17 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
     internal class ZeroMQNotificationProcessingService : IZeroMQNotificationProcessingService
     {
         private readonly ILogger logger;
+        private readonly IConfiguration configuration;
         private readonly IBridge bridge;
 
         public ZeroMQNotificationProcessingService(
             ILogger logger,
+            IConfiguration configuration,
             IBridge bridge
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
         }
 
@@ -29,23 +32,18 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
         {
             switch (topic)
             {
-                // case ZeroMqNotificationTopic.PEDESTRIANS_INSERTED:
-                //         await this.nxWitnessAdapter.PushGenericEventAsync(
-                //             caption: "Fall detection",
-                //             cameraRef: $"DS-2CD2043G0-I"
-                //         );
-                //         break;
-
                 case ZeroMqNotificationTopic.HUMAN_FALL_DETECTED:
-                    {
-                        var dto = JsonConvert.DeserializeObject<HumanFallDetectionNotificationDTO>(json);
-                        await this.bridge.PushGenericEventAsync(
-                            timestamp: dto.FrameTimestamp,
-                            caption: "Fall detection",
-                            streamId: dto.StreamId
-                        );
-                        break;
-                    }
+                    var caption = this.configuration.GetValue<string>("", ZeroMqNotificationTopic.HUMAN_FALL_DETECTED);
+
+                    var dto = JsonConvert.DeserializeObject<HumanFallDetectionNotificationDTO>(json);
+
+                    await this.bridge.PushGenericEventAsync(
+                        timestamp: dto.FrameTimestamp,
+                        caption: caption,
+                        streamId: dto.StreamId
+                    );
+                    break;
+
 
                 default:
                     break;
