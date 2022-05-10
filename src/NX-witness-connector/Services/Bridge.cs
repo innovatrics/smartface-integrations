@@ -31,7 +31,6 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
             Guid? streamId = null
         )
         {
-
             var nxWitnessCamera = this.mapToNxCamera(streamId);
 
             if (nxWitnessCamera == null)
