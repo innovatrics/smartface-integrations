@@ -11,7 +11,7 @@ using Innovatrics.SmartFace.Models.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
-    internal class WorkerService : IHostedService
+    public class WorkerService : IHostedService
     {
         private const string ZERO_MQ_DEFAULT_HOST = "localhost";
         private const int ZERO_MQ_DEFAULT_PORT = 2406;

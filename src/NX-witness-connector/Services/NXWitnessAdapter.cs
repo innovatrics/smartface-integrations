@@ -14,7 +14,7 @@ using System.Web;
 
 namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
-    internal class NXWitnessAdapter : INXWitnessAdapter
+    public class NXWitnessAdapter : INXWitnessAdapter
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;

@@ -11,7 +11,7 @@ using Innovatrics.SmartFace.Models.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
-    internal interface IZeroMQNotificationProcessingService
+    public interface IZeroMQNotificationProcessingService
     {
         Task ProcessNotificationAsync(string topic, string json);
     }

@@ -14,7 +14,7 @@ using System.Collections.Generic;
 
 namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
-    internal class ZeroMQNotificationProcessingService : IZeroMQNotificationProcessingService
+    public class ZeroMQNotificationProcessingService : IZeroMQNotificationProcessingService
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
