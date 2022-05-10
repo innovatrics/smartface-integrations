@@ -39,7 +39,6 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
         {
             var httpClient = this.httpClientFactory.CreateClient();
 
-
             httpClient.DefaultRequestHeaders.Add("Authorization", this.GetBasicAuthHeader());
 
             var hostName = this.configuration.GetValue<string>("NXWitness:HostName");
