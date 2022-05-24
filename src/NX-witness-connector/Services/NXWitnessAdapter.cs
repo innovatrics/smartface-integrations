@@ -1,16 +1,10 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Net.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
-using Serilog;
-
-using Innovatrics.SmartFace.Integrations.Shared.ZeroMQ;
-using Innovatrics.SmartFace.Models.Notifications;
 using System.Text;
 using System.Web;
+using Microsoft.Extensions.Configuration;
+using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
@@ -74,7 +68,6 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 
             if (cameraRef != null)
             {
-                //requestUrl += $"metadata={HttpUtility.UrlEncode("{\"cameraRefs\":[\"" + cameraRef + "\"]}")}&";
                 requestUrl += "metadata={\"cameraRefs\":[\"" + cameraRef + "\"]}&";
             }
 
