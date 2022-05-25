@@ -7,7 +7,7 @@ using Serilog;
 
 using Innovatrics.SmartFace.Integrations.Shared.ZeroMQ;
 
-namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
+namespace Innovatrics.SmartFace.Integrations.NotificationsReceiver
 {
     public class WorkerService : IHostedService
     {
@@ -16,17 +16,14 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly IZeroMQNotificationProcessingService zeroMQNotificationProcessingService;
 
         public WorkerService(
             ILogger logger,
-            IConfiguration configuration,
-            IZeroMQNotificationProcessingService zeroMQNotificationProcessingService
+            IConfiguration configuration
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.zeroMQNotificationProcessingService = zeroMQNotificationProcessingService ?? throw new ArgumentNullException(nameof(zeroMQNotificationProcessingService));
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -61,8 +58,6 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
             reader.OnNotificationReceived += async (string topic, string json) =>
                     {
                         logger.Information($"Notification with topic: {topic} received.");
-
-                        await this.zeroMQNotificationProcessingService.ProcessNotificationAsync(topic, json);
                     };
 
             // Start listening for ZeroMQ messages
