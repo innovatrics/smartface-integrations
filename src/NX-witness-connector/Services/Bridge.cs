@@ -11,17 +11,17 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly INXWitnessAdapter nxWitnessAdapter;
+        private readonly INXWitnessConnector nxWitnessConnector;
 
         public Bridge(
             ILogger logger,
             IConfiguration configuration,
-            INXWitnessAdapter nxWitnessAdapter
+            INXWitnessConnector nxWitnessConnector
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.nxWitnessAdapter = nxWitnessAdapter ?? throw new ArgumentNullException(nameof(nxWitnessAdapter));
+            this.nxWitnessConnector = nxWitnessConnector ?? throw new ArgumentNullException(nameof(nxWitnessConnector));
         }
 
         public async Task PushGenericEventAsync(
@@ -39,7 +39,7 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
                 return;
             }
 
-            await this.nxWitnessAdapter.PushGenericEventAsync(
+            await this.nxWitnessConnector.PushGenericEventAsync(
                             timestamp: timestamp,
                             caption: caption,
                             source: source,

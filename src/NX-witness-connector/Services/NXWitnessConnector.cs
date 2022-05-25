@@ -8,13 +8,13 @@ using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
-    public class NXWitnessAdapter : INXWitnessAdapter
+    public class NXWitnessConnector : INXWitnessConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public NXWitnessAdapter(
+        public NXWitnessConnector(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory)
