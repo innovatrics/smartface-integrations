@@ -7,4 +7,4 @@ Repository is a combination of both the real world deployed code and the samples
 Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NX-witness-connector" >the code</a>.
 
 ## Notifications Receiver
-Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NX-witness-connector" >the code</a>.
+Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NotificationsReceiver" >the code</a>.
