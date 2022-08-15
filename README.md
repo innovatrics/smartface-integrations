@@ -18,3 +18,6 @@ In `src/Shared` folder you may find several libraries that are pre-built for reu
 
 ### Shared/AccessController
 A gRPC connector to SmartFace AccessController module. Listen to gRPC access notifications. Visit <a href="src/Shared/AccessController" >the code</a>.
+
+### Shared/ZeroMQ
+A ZeroMQ connector to SmartFace. Listen to ZeroMQ notifications. Visit <a href="src/Shared/ZeroMQ" >the code</a>.
