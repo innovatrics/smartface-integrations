@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
-using SmartFace.Integrations.Fingera.Notifications.DTO;
+using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
-namespace SmartFace.Integrations.Fingera
+namespace Innovatrics.SmartFace.Integrations.AccessController
 {
     public interface IBridge
     {

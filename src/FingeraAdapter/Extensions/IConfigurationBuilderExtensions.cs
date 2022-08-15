@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace SmartFace.Integrations.Fingera.Extensions
+namespace Innovatrics.SmartFace.Integrations.AccessController.Extensions
 {
     public static class IConfigurationBuilderExtensions
     {

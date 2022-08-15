@@ -1,5 +1,5 @@
 ﻿using System;
-using SmartFace.Contract.Models.Enums;
+using Innovatrics.SmartFace.Integrations.Shared.Enums;
 
 namespace SmartFace.Contract.Models.Notifications
 {

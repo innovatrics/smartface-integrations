@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SmartFace.Integrations.Fingera.Notifications.DTO
+namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
 {
     public class GrantedNotification : Notification
     {

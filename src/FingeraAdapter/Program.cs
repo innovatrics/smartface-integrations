@@ -5,10 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using SmartFace.Integrations.Fingera.Clients.Grpc;
-using SmartFace.Integrations.Fingera.Extensions;
+using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
+using Innovatrics.SmartFace.Integrations.AccessController.Extensions;
 
-namespace SmartFace.Integrations.Fingera
+namespace Innovatrics.SmartFace.Integrations.AccessController
 {
     public class Program
     {

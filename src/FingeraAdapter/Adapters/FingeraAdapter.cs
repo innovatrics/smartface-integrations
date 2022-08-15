@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace SmartFace.Integrations.Fingera
+namespace Innovatrics.SmartFace.Integrations.AccessController
 {
     public class FingeraAdapter : IFingeraAdapter
     {

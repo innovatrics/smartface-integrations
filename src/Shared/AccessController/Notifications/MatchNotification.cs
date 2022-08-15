@@ -1,7 +1,7 @@
 ﻿using System;
-using SmartFace.Contract.Models.Enums;
+using Innovatrics.SmartFace.Integrations.Shared.Enums;
 
-namespace SmartFace.Integrations.Fingera.Notifications.DTO
+namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
 {
     public class MatchNotification
     {

@@ -1,4 +1,4 @@
-namespace SmartFace.Contract.Models.Enums
+namespace Innovatrics.SmartFace.Integrations.Shared.Enums
 {
     public enum MatchResultType
     {

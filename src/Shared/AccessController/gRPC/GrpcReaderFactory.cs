@@ -1,7 +1,7 @@
 ﻿using System;
-using SmartFace.Integrations.Fingera.Readers;
+using Innovatrics.SmartFace.Integrations.AccessController.Readers;
 
-namespace SmartFace.Integrations.Fingera.Clients.Grpc
+namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
 {
     public class GrpcReaderFactory
     {

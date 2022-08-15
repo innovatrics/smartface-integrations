@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using SmartFace.Integrations.Fingera.Clients.Grpc;
-using SmartFace.Integrations.Fingera.Notifications.DTO;
-using SmartFace.Integrations.Fingera.Readers;
+using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
+using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
+using Innovatrics.SmartFace.Integrations.AccessController.Readers;
 
-namespace SmartFace.Integrations.Fingera
+namespace Innovatrics.SmartFace.Integrations.AccessController
 {
     public class MainHostedService : IHostedService
     {

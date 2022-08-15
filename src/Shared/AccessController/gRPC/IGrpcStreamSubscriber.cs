@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Innovatrics.Smartface;
 
-namespace SmartFace.Integrations.Fingera.Clients.Grpc
+namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
 {
     public interface IGrpcStreamSubscriber : IAsyncDisposable
     {

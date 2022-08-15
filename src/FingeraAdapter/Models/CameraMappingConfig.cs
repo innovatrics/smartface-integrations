@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SmartFace.Integrations.Fingera.Models
+namespace Innovatrics.SmartFace.Integrations.AccessController.Models
 {
     public class CameraMappingConfig
     {

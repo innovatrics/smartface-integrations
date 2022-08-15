@@ -8,7 +8,7 @@ using Innovatrics.Smartface;
 using Polly;
 using GrpcCore = Grpc.Core;
 
-namespace SmartFace.Integrations.Fingera.Clients.Grpc
+namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
 {
     public class GrpcStreamSubscriber : IGrpcStreamSubscriber
     {

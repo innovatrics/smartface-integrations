@@ -1,13 +1,13 @@
 ﻿using System;
 using Innovatrics.Smartface;
 
-using SmartFace.Integrations.Fingera.Clients.Grpc;
-using SmartFace.Integrations.Fingera.Notifications;
-using SmartFace.Integrations.Fingera.Utils;
-using SmartFace.Integrations.Fingera.Notifications.DTO;
+using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
+using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
+using Innovatrics.SmartFace.Integrations.AccessController.Utils;
+using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using System.Threading.Tasks;
 
-namespace SmartFace.Integrations.Fingera.Readers
+namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
 {
     public class GrpcNotificationReader : IAsyncDisposable
     {

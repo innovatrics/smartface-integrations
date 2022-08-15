@@ -1,7 +1,7 @@
 ﻿using Innovatrics.Smartface;
-using SmartFace.Integrations.Fingera.Notifications.DTO;
+using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
-namespace SmartFace.Integrations.Fingera.Utils
+namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
 {
     public static class AccessNotificationExtensions
     {

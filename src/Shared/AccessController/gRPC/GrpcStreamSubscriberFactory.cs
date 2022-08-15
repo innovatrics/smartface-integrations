@@ -1,4 +1,4 @@
-﻿namespace SmartFace.Integrations.Fingera.Clients.Grpc
+﻿namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
 {
     public class GrpcStreamSubscriberFactory
     {

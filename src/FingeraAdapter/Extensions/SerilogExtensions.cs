@@ -2,7 +2,7 @@
 using Serilog;
 using Serilog.Events;
 
-namespace SmartFace.Integrations.Fingera.Extensions
+namespace Innovatrics.SmartFace.Integrations.AccessController.Extensions
 {
     public static class SerilogExtensions
     {
