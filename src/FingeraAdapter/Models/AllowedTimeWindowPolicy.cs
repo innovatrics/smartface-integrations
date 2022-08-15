@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Innovatrics.SmartFace.Integrations.AccessController.Models
+namespace Innovatrics.SmartFace.Integrations.FingeraAdapter.Models
 {
     public class AllowedTimeWindowPolicy
     {

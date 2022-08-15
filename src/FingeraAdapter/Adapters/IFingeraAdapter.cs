@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Innovatrics.SmartFace.Integrations.AccessController
+namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
 {
     public interface IFingeraAdapter
     {

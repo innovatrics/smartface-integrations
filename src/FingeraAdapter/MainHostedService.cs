@@ -8,7 +8,7 @@ using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessController.Readers;
 
-namespace Innovatrics.SmartFace.Integrations.AccessController
+namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
 {
     public class MainHostedService : IHostedService
     {
@@ -118,6 +118,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController
 
         private Task OnGrpcPing(DateTime sentAt)
         {
+            this.logger.Debug("gRPC ping received");
             this.lastGrpcPing = DateTime.UtcNow;
             return Task.CompletedTask;
         }

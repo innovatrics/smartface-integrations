@@ -4,10 +4,10 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using Innovatrics.SmartFace.Integrations.AccessController.Models;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
+using Innovatrics.SmartFace.Integrations.FingeraAdapter.Models;
 
-namespace Innovatrics.SmartFace.Integrations.AccessController
+namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
 {
     public class Bridge : IBridge
     {

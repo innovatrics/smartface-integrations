@@ -1,14 +1,14 @@
 ﻿using System;
 using System.IO;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
-using Innovatrics.SmartFace.Integrations.AccessController.Extensions;
+using Innovatrics.SmartFace.Integrations.Shared.Logging;
+using Innovatrics.SmartFace.Integrations.Shared.Extensions;
 
-namespace Innovatrics.SmartFace.Integrations.AccessController
+namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
 {
     public class Program
     {
