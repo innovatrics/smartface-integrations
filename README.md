@@ -3,11 +3,12 @@
 This repository contains integrations of Innovatrics SmartFace with various products or technologies.
 Repository is a combination of both the real world deployed code and the samples for demonstration purposes.
 
+## Fingera Adapter
+Listens to gRPC access notifications and in case of granted access call Fingera (3rd party serfice) for further action.
+Check <a href="src/FingeraAdapter" >the code</a>.
+
 ## NX Witness Connector
 Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NX-witness-connector" >the code</a>.
-
-## Notifications Receiver
-Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NotificationsReceiver" >the code</a>.
 
 ## Notifications Receiver
 Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NotificationsReceiver" >the code</a>.
@@ -16,4 +17,4 @@ Send configurable events from SmartFace (face detection, body detection, face id
 In `src/Shared` folder you may find several libraries that are pre-built for reusable purposes
 
 ### Shared/AccessController
-An gRPC connector to AccessController module. Visit <a href="src/Shared/AccessController" >the code</a>.
+A gRPC connector to SmartFace AccessController module. Listen to gRPC access notifications. Visit <a href="src/Shared/AccessController" >the code</a>.
