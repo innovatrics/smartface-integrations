@@ -8,3 +8,12 @@ Send configurable events from SmartFace (face detection, body detection, face id
 
 ## Notifications Receiver
 Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NotificationsReceiver" >the code</a>.
+
+## Notifications Receiver
+Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NotificationsReceiver" >the code</a>.
+
+## Shared
+In `src/Shared` folder you may find several libraries that are pre-built for reusable purposes
+
+### Shared/AccessController
+An gRPC connector to AccessController module. Visit <a href="src/Shared/AccessController" >the code</a>.
