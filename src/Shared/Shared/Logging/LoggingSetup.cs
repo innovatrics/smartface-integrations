@@ -40,10 +40,10 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
                 .WriteTo.LiterateConsole(
                     outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {Message:j} {Properties:j} {NewLine}{Exception}")
                 // Send copies of error log events to separate error log file
-                .WriteToRollingFile(absLogFilePath, LOG_FILE_SIZE_LIMIT_MEGABYTES, LOG_FILE_COUNT_LIMIT)
+                .WithRollingFile(absLogFilePath, LOG_FILE_SIZE_LIMIT_MEGABYTES, LOG_FILE_COUNT_LIMIT)
                 .WriteTo.Logger(lc =>
                 {
-                    lc.WriteToRollingFile(absErrLogFilePath, ERROR_LOG_FILE_SIZE_LIMIT_MEGABYTES, ERROR_LOG_FILE_COUNT_LIMIT).Filter
+                    lc.WithRollingFile(absErrLogFilePath, ERROR_LOG_FILE_SIZE_LIMIT_MEGABYTES, ERROR_LOG_FILE_COUNT_LIMIT).Filter
                         .ByIncludingOnly(le =>
                             le.Level == LogEventLevel.Error
                             || le.Level == LogEventLevel.Fatal);

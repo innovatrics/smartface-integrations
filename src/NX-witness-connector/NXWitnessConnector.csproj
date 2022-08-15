@@ -35,7 +35,8 @@
   </Choose>
 
   <ItemGroup>
-    <ProjectReference Include="..\Shared\Shared.csproj" />
+    <ProjectReference Include="..\Shared\Shared\Shared.csproj" />
+    <ProjectReference Include="..\Shared\ZeroMQ\ZeroMQ.csproj" />
   </ItemGroup>
 
 </Project>
