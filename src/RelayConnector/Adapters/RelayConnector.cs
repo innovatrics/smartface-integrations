@@ -25,32 +25,39 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(string stationId, int? userId, DateTime timestamp, long score, string type = "camera", byte[] image = null)
+        public async Task OpenAsync(string ipAddress, int port, int channel, string authUsername = null, string authPassword = null)
         {
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var relayServer = this.configuration.GetValue<string>("Relay:Server");
+            var requestUri = $"http://{ipAddress}:{port}/do_value/slot_0/";
 
-            if (string.IsNullOrEmpty(relayServer))
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
+
+            if (!string.IsNullOrEmpty(authUsername) && !string.IsNullOrEmpty(authPassword))
             {
-                throw new InvalidOperationException("Relay server must be configured");
+                var authenticationString = $"{authUsername}:{authPassword}";
+                var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
+
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
 
-            var requestUrl = $"{relayServer}/scserver?type={type}&score={score}&station_id={stationId}&user_id={userId}&timestamp={timestamp:o}";
-
-            HttpContent content;
-
-            if (image != null)
+            var payload = new
             {
-                content = new ByteArrayContent(image);
-                content.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg");
-            }
-            else
-            {
-                content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
-            }
+                DOVal = new[] {
+                    new {
+                        Ch = channel,
+                        Val = 1
+                    },
+                    new {
+                        Ch = channel,
+                        Val = 0
+                    }
+                }
+            };
 
-            var result = await httpClient.PostAsync(requestUrl, content);
+            httpRequest.Content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+
+            var result = await httpClient.SendAsync(httpRequest);
             string resultContent = await result.Content.ReadAsStringAsync();
 
             this.logger.Debug("Response: {response}", resultContent);
