@@ -7,6 +7,8 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
+using Innovatrics.SmartFace.Integrations.RelayConnector.Factories;
+using Innovatrics.SmartFace.Integrations.RelayConnector.Services;
 
 namespace Innovatrics.SmartFace.Integrations.RelayConnector
 {
@@ -75,8 +77,8 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
 
-            services.AddSingleton<IRelayConnector, RelayConnector>();
-            services.AddSingleton<IBridge, Bridge>();
+            services.AddSingleton<IRelayConnectorFactory, RelayConnectorFactory>();
+            services.AddSingleton<IBridgeService, BridgeService>();
 
             services.AddHostedService<MainHostedService>();
 

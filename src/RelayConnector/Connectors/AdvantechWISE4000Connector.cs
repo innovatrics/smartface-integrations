@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace Innovatrics.SmartFace.Integrations.RelayConnector
+namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors
 {
-    public class RelayConnector : IRelayConnector
+    public class AdvantechWISE400Connector : IRelayConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public RelayConnector(
+        public AdvantechWISE400Connector(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory
@@ -25,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(string ipAddress, int port, int channel, string authUsername = null, string authPassword = null)
+        public async Task OpenAsync(string ipAddress, int port, int channel, string username = null, string password = null)
         {
             var httpClient = this.httpClientFactory.CreateClient();
 
@@ -33,9 +33,9 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
-            if (!string.IsNullOrEmpty(authUsername) && !string.IsNullOrEmpty(authPassword))
+            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
             {
-                var authenticationString = $"{authUsername}:{authPassword}";
+                var authenticationString = $"{username}:{password}";
                 var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
 
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);

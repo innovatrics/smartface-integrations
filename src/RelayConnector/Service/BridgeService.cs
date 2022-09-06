@@ -6,24 +6,25 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.RelayConnector.Models;
+using Innovatrics.SmartFace.Integrations.RelayConnector.Factories;
 
-namespace Innovatrics.SmartFace.Integrations.RelayConnector
+namespace Innovatrics.SmartFace.Integrations.RelayConnector.Services
 {
-    public class Bridge : IBridge
+    public class BridgeService : IBridgeService
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly IRelayConnector relayConnector;
+        private readonly IRelayConnectorFactory relayConnectorFactory;
 
-        public Bridge(
+        public BridgeService(
             ILogger logger,
             IConfiguration configuration,
-            IRelayConnector relayConnector
+            IRelayConnectorFactory relayConnectorFactory
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.relayConnector = relayConnector ?? throw new ArgumentNullException(nameof(relayConnector));
+            this.relayConnectorFactory = relayConnectorFactory ?? throw new ArgumentNullException(nameof(relayConnectorFactory));
         }
 
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
@@ -50,30 +51,32 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
                 }
             }
 
-            await this.relayConnector.OpenAsync(
+            var relayConnector = this.relayConnectorFactory.Create(cameraToRelayMapping.Type);
+
+            await relayConnector.OpenAsync(
                 ipAddress: cameraToRelayMapping.IPAddress,
                 port: cameraToRelayMapping.Port,
                 channel: cameraToRelayMapping.Channel,
-                authUsername: cameraToRelayMapping.AuthUsername,
-                authPassword: cameraToRelayMapping.AuthPassword
+                username: cameraToRelayMapping.Username,
+                password: cameraToRelayMapping.Password
             );
         }
 
-        private CameraMappingConfig getCameraMapping(string streamId)
+        private RelayMapping getCameraMapping(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
             {
                 throw new InvalidOperationException($"{nameof(streamId)} is expected as GUID");
             }
 
-            var cameraMappings = this.configuration.GetSection("Relay:Cameras").Get<CameraMappingConfig[]>();
+            var relayMappings = this.configuration.GetSection("RelayMappings").Get<RelayMapping[]>();
 
-            if (cameraMappings == null)
+            if (relayMappings == null)
             {
                 return null;
             }
 
-            return cameraMappings
+            return relayMappings
                         .Where(w => w.StreamId == streamGuid)
                         .FirstOrDefault();
         }

@@ -7,6 +7,7 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessController.Readers;
+using Innovatrics.SmartFace.Integrations.RelayConnector.Services;
 
 namespace Innovatrics.SmartFace.Integrations.RelayConnector
 {
@@ -15,7 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly GrpcReaderFactory grpcReaderFactory;
-        private readonly IBridge bridge;
+        private readonly IBridgeService bridge;
         private GrpcNotificationReader grpcNotificationReader;
         private System.Timers.Timer timerPing;
         private DateTime lastGrpcPing;
@@ -24,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
             ILogger logger,
             IConfiguration configuration,
             GrpcReaderFactory grpcReaderFactory,
-            IBridge bridge
+            IBridgeService bridge
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
