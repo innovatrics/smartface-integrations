@@ -47,7 +47,7 @@ Add following pattern to existing docker compose:
       - FaceGate__Cameras__0__Source=ec0437ae-7716-4141-99d9-a9b2a4dd2106
       - FaceGate__Cameras__0__Target=your-checkpoint-id
       - FaceGate__Cameras__1__Source=d5ff8f40-f900-4492-8ecc-6a2539648964
-      - FaceGate__Cameras__2__Target=your-another-checkpoint-id
+      - FaceGate__Cameras__1__Target=your-another-checkpoint-id
 
 networks:
   default:
