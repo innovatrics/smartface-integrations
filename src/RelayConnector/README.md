@@ -14,5 +14,6 @@ To run application localy, follow these steps
  - run `dotnet publish -c Release -r win10-x64 --self-contained true -p:ReadyToRun=false -p:PublishSingleFile=true -p:PublishTrimmed=false -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true`
 
 ### Deploy to Docker
-- Run `docker build -f RelayConnector.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.0 .`
+- navigate to root of this repo
+- Run `docker build -f src/RelayConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.0 .`
 - Run `docker push registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.0`
