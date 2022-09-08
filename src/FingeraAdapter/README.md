@@ -15,8 +15,11 @@ To run application localy, follow these steps
 
 ### Deploy to Docker
 - navigate to root of this repo
-- Run `docker build -f src/FingeraAdapter/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-fingera:1.0 .`
-- Run `docker push registry.gitlab.com/innovatrics/smartface/integrations-fingera:1.0`
+- run following commands
+ - `docker build -f src/FingeraAdapter/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-fingera:1.0 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-fingera:1.0 registry.gitlab.com/innovatrics/smartface/integrations-fingera:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-fingera:1.0`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-fingera:latest`
 
 ### Policies
 You can specify currently one policy `AllowedTimeWindow` which authorizes open request only within a given time frame. We receive notifications with UTC date, time in policy must also be specified in UTC date (time) 
@@ -29,3 +32,36 @@ You can specify currently one policy `AllowedTimeWindow` which authorizes open r
     }
     ...
 ````
+
+## Usage
+Add following pattern to existing docker compose:
+
+```
+      
+  ...
+
+  sf-station:
+    image: ${REGISTRY}sf-station:${SFS_VERSION}
+    container_name: SFStation
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    env_file: .env.sfstation
+
+  fingeraadapter:
+    image: ${REGISTRY}integrations-fingera
+    container_name: SFFingera
+    restart: unless-stopped
+    environment:
+      - AccessController__Host=SFAccessController
+      - AccessController__Port=80
+      - Policies__AllowedTimeWindow__Enabled=true
+      - Policies__AllowedTimeWindow__From=03:00
+      - Policies__AllowedTimeWindow__To=19:00
+
+networks:
+  default:
+    external:
+      name: sf-network
+
+```
