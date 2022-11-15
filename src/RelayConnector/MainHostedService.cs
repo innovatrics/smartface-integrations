@@ -58,6 +58,8 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
 
             this.accessControllerPingTimer?.Stop();
             this.accessControllerPingTimer?.Dispose();
+            this.keepAlivePingTimer?.Stop();
+            this.keepAlivePingTimer?.Dispose();
         }
 
         private GrpcNotificationReader CreateGrpcReader()
