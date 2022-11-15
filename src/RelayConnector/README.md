@@ -16,9 +16,9 @@ To run application localy, follow these steps
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/RelayConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.0 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.0 registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.0`
+ - `docker build -f src/RelayConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.2 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.2 registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.2`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:latest`
 
 ## Usage
