@@ -111,11 +111,6 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
             await this.bridge.ProcessGrantedNotificationAsync(notification);
         }
 
-        private async Task sendKeepAliveSignal()
-        {
-            await this.bridge.SendKeepAliveSignalAsync();
-        }
-
         private void startPingTimer()
         {
             this.lastGrpcPing = DateTime.UtcNow;
@@ -166,9 +161,9 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
                 keepAlivePingTimer.Interval = keepAliveInterval * 1000;
                 keepAlivePingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
                 {
-                    this.logger.Information("");
+                    this.logger.Information("KeepAlive interval elapsed, process ping");
 
-                    this.startReceivingGrpcNotifications();
+                    await this.bridge.SendKeepAliveSignalAsync();
                 };
 
                 keepAlivePingTimer.Start();

@@ -62,34 +62,37 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Services
             );
         }
 
-        public async Task SendKeepAliveSignal()
+        public async Task SendKeepAliveSignalAsync()
         {
-            var cameraToRelayMapping = this.getCameraMapping(notification.StreamId);
+            var cameraToRelayMappings = this.getAllCameraMappings();
 
-            if (cameraToRelayMapping == null)
+            if (cameraToRelayMappings == null)
             {
-                this.logger.Warning("Stream {streamId} has not any mapping to Relay", notification.StreamId);
+                this.logger.Warning("No mapping to Relay configured");
                 return;
             }
 
-            if (cameraToRelayMapping.WatchlistExternalIds != null)
+            var uniqueRelays = cameraToRelayMappings.GroupBy(g => new
             {
-                if (cameraToRelayMapping.WatchlistExternalIds.Length > 0 && !cameraToRelayMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
-                {
-                    this.logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.", notification.WatchlistExternalId, notification.StreamId);
-                    return;
-                }
+                g.Type,
+                g.IPAddress,
+                g.Port,
+                g.Username,
+                g.Password
+            }).ToArray();
+
+            foreach (var cameraToRelayMapping in uniqueRelays)
+            {
+                var relayConnector = this.relayConnectorFactory.Create(cameraToRelayMapping.Key.Type);
+
+                await relayConnector.SendKeepAliveAsync(
+                    ipAddress: cameraToRelayMapping.Key.IPAddress,
+                    port: cameraToRelayMapping.Key.Port,
+                    channel: cameraToRelayMapping.First().Channel,
+                    username: cameraToRelayMapping.Key.Username,
+                    password: cameraToRelayMapping.Key.Password
+                );
             }
-
-            var relayConnector = this.relayConnectorFactory.Create(cameraToRelayMapping.Type);
-
-            await relayConnector.OpenAsync(
-                ipAddress: cameraToRelayMapping.IPAddress,
-                port: cameraToRelayMapping.Port,
-                channel: cameraToRelayMapping.Channel,
-                username: cameraToRelayMapping.Username,
-                password: cameraToRelayMapping.Password
-            );
         }
 
         private RelayMapping getCameraMapping(string streamId)
@@ -109,6 +112,13 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Services
             return relayMappings
                         .Where(w => w.StreamId == streamGuid)
                         .FirstOrDefault();
+        }
+
+        private RelayMapping[] getAllCameraMappings()
+        {
+            return this.configuration
+                            .GetSection("RelayMappings")
+                            .Get<RelayMapping[]>();
         }
     }
 }
