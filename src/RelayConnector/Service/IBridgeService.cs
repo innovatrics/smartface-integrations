@@ -6,5 +6,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Services
     public interface IBridgeService
     {
         Task ProcessGrantedNotificationAsync(GrantedNotification notification);
+        
+        Task SendKeepAliveSignalAsync();
     }
 }
