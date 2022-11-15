@@ -27,7 +27,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors
 
         public async Task OpenAsync(string ipAddress, int port, int channel, string username = null, string password = null)
         {
-            this.logger.Information($"{nameof(OpenAsync)} to {{ipAddress}}:{{port}}/do_value/slot_0/ and channel: {{channel}}", ipAddress, port, channel);
+            this.logger.Information("Send Open to {ipAddress}:{port}/do_value/slot_0/ and channel: {channel}", ipAddress, port, channel);
 
             var httpClient = this.httpClientFactory.CreateClient();
 
@@ -68,13 +68,13 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors
             }
             else
             {
-                this.logger.Error($"Error with Status: {{statusCode}}", result.StatusCode);
+                this.logger.Error("Fail with {statusCode}", result.StatusCode);
             }
         }
 
         public async Task SendKeepAliveAsync(string ipAddress, int port, int? channel = null, string username = null, string password = null)
         {
-            this.logger.Information($"{nameof(OpenAsync)} to {{ipAddress}}:{{port}}/di_value/slot_0/ and channel: {{channel}}", ipAddress, port, channel);
+            this.logger.Information("Send KeepAlive to {ipAddress}:{port}/di_value/slot_0/ and channel: {channel}", ipAddress, port, channel);
 
             var httpClient = this.httpClientFactory.CreateClient();
 
@@ -104,7 +104,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors
             }
             else
             {
-                this.logger.Error($"Error with Status: {{statusCode}}", result.StatusCode);
+                this.logger.Error("Fail with {statusCode}", result.StatusCode);
             }
         }
     }
