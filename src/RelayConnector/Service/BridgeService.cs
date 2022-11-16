@@ -62,6 +62,39 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Services
             );
         }
 
+        public async Task SendKeepAliveSignalAsync()
+        {
+            var cameraToRelayMappings = this.getAllCameraMappings();
+
+            if (cameraToRelayMappings == null)
+            {
+                this.logger.Warning("No mapping to Relay configured");
+                return;
+            }
+
+            var uniqueRelays = cameraToRelayMappings.GroupBy(g => new
+            {
+                g.Type,
+                g.IPAddress,
+                g.Port,
+                g.Username,
+                g.Password
+            }).ToArray();
+
+            foreach (var cameraToRelayMapping in uniqueRelays)
+            {
+                var relayConnector = this.relayConnectorFactory.Create(cameraToRelayMapping.Key.Type);
+
+                await relayConnector.SendKeepAliveAsync(
+                    ipAddress: cameraToRelayMapping.Key.IPAddress,
+                    port: cameraToRelayMapping.Key.Port,
+                    channel: cameraToRelayMapping.First().Channel,
+                    username: cameraToRelayMapping.Key.Username,
+                    password: cameraToRelayMapping.Key.Password
+                );
+            }
+        }
+
         private RelayMapping getCameraMapping(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
@@ -79,6 +112,13 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Services
             return relayMappings
                         .Where(w => w.StreamId == streamGuid)
                         .FirstOrDefault();
+        }
+
+        private RelayMapping[] getAllCameraMappings()
+        {
+            return this.configuration
+                            .GetSection("RelayMappings")
+                            .Get<RelayMapping[]>();
         }
     }
 }

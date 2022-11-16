@@ -27,6 +27,8 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors
 
         public async Task OpenAsync(string ipAddress, int port, int channel, string username = null, string password = null)
         {
+            this.logger.Information("Send Open to {ipAddress}:{port}/do_value/slot_0/ and channel: {channel}", ipAddress, port, channel);
+
             var httpClient = this.httpClientFactory.CreateClient();
 
             var requestUri = $"http://{ipAddress}:{port}/do_value/slot_0/";
@@ -60,7 +62,50 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors
             var result = await httpClient.SendAsync(httpRequest);
             string resultContent = await result.Content.ReadAsStringAsync();
 
-            this.logger.Debug("Response: {response}", resultContent);
+            if (result.IsSuccessStatusCode)
+            {
+                this.logger.Information("OK");
+            }
+            else
+            {
+                this.logger.Error("Fail with {statusCode}", result.StatusCode);
+            }
+        }
+
+        public async Task SendKeepAliveAsync(string ipAddress, int port, int? channel = null, string username = null, string password = null)
+        {
+            this.logger.Information("Send KeepAlive to {ipAddress}:{port}/di_value/slot_0/ and channel: {channel}", ipAddress, port, channel);
+
+            var httpClient = this.httpClientFactory.CreateClient();
+
+            var requestUri = $"http://{ipAddress}:{port}/di_value/slot_0/";
+
+            if (channel != null)
+            {
+                requestUri += $"{channel}";
+            }
+
+            var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+            {
+                var authenticationString = $"{username}:{password}";
+                var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
+
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+            }
+
+            var result = await httpClient.SendAsync(httpRequest);
+            string resultContent = await result.Content.ReadAsStringAsync();
+
+            if (result.IsSuccessStatusCode)
+            {
+                this.logger.Information("OK");
+            }
+            else
+            {
+                this.logger.Error("Fail with {statusCode}", result.StatusCode);
+            }
         }
     }
 }
