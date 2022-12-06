@@ -1,0 +1,195 @@
+﻿syntax = "proto3";
+package innovatrics.smartface;
+ 
+import "google/protobuf/timestamp.proto";
+ 
+service VideoAnalyticService {
+    rpc GetFrames(stream AnalysisResult) returns (stream Frame);
+}
+ 
+// *************************  ANALYSIS METADATA MESSAGES ************************* 
+enum MetadataType {
+    NONE = 0x00;
+    BOUNDING_BOX_METADATA = 0x01;
+    FACE_EXTRACTION_METADATA = 0x02;
+    FACE_MATCH_RESULT_METADATA = 0x04;
+    FACE_NO_MATCH_RESULT_METADATA = 0x08;
+}
+
+message AnalysisResult {
+    string stream_id = 1;
+    string frame_id = 2;
+    int64 frame_timestamp_us = 3;
+    string tracklet_id = 4;
+ 
+    uint32 metadata_type = 5;
+    BoundingBoxMetadata bounding_box_metadata = 6;
+    FaceExtractionMetadata face_extraction_metadata = 7;
+    FaceMatchResultMetadata match_result_metadata = 8;
+    FaceNoMatchResultMetadata no_match_result_metadata = 9;
+    google.protobuf.Timestamp sent_at = 10;
+}
+
+ 
+message BoudingBox {
+    float x = 1;
+    float y = 2;
+    float width = 3;
+    float height = 4;
+}
+ 
+enum ObjectType {
+    FACE = 0;   
+}
+ 
+message BoundingBoxMetadata {
+    ObjectType object_type = 1;
+    BoudingBox bounding_box = 2;
+    bool is_currently_best = 3;
+}
+ 
+enum GenderType {
+    MALE = 0;
+    FEMALE = 1;
+    UNKNOWN = 2;
+}
+ 
+enum FaceMaskStatus {
+	Unknown = 0;
+	Mask = 1;
+	NoMask = 2;
+}
+
+message FaceExtractionMetadata {
+    string face_id = 1;
+    string image_data_id = 2;
+    float age = 3;
+    GenderType gender_type = 4;
+    int32 quality = 5;
+    FaceMaskStatus face_mask_status = 6;
+
+    bool age_has_value = 7;
+}
+
+message SpoofCheck {
+	bool performed = 1;
+	bool passed = 2;
+}
+ 
+message FaceMatchResultMetadata {
+    string match_result_id = 1;
+    string face_id = 2;
+    int32 matching_score = 3;  
+ 
+    string watchlist_member_id = 4;
+    string watchlist_member_display_name = 5;
+    string watchlist_member_full_name = 6;
+ 
+    string watchlist_id = 7;
+    string watchlist_display_name = 8;
+    string watchlist_full_name = 9;
+
+    bool is_analytic_event = 10;
+    bool is_spoof_analytic_event = 11;
+
+    SpoofCheck spoof_check = 12;
+}
+ 
+message FaceNoMatchResultMetadata {
+    string match_result_id = 1;
+    string face_id = 2;
+
+    bool is_analytic_event = 3;
+}
+
+message BestShotMetadata {
+    BoudingBox bounding_box = 1;
+}
+ 
+// *************************  RAW FRAME MESSAGE FOR ANALYTICS *************************
+
+message Frame {
+    int64 frame_timestamp_us = 1;
+    // can be omitted if ImageFormat is not BGR
+    int32 frame_width = 2;
+    // can be omitted if ImageFormat is not BGR
+    int32 frame_height = 3;
+    int32 line_size = 4;
+    bytes frame_data = 5;
+    ImageFormat image_format = 6;
+
+    bool has_attached_objects_info = 7;
+    repeated FaceData face_data = 8;
+}
+
+message FaceData {
+	FaceBoundingBox bounding_box = 1;
+	float confidence = 2;
+	FaceLandmarksMetadata landmarks_metadata = 3;
+	//optional
+	FaceMaskMetadata mask_metadata = 4;
+	//optional
+	Image crop_image = 5;
+}
+
+message Image {
+	int32 width = 1;
+	int32 height = 2;
+	bytes data = 3;
+	ImageFormat format = 4;
+}
+
+message FaceBoundingBox {
+	float x = 1;
+	float y = 2;
+	float width = 3;
+	float height = 4;
+}
+
+enum FaceKeypointType {
+	RightEyeOuterCorner = 0;
+	RightEyeCentre = 1;
+	RightEyeInnerCorner = 2;
+	LeftEyeInnerCorner = 3;
+	LeftEyeCentre = 4;
+	LeftEyeOuterCorner = 5;
+	NoseRoot = 6;
+	NoseRightBottom = 7;
+	NoseTip = 8;
+	NoseLeftBottom = 9;
+	NoseBottom = 10;
+	MouthRightCorner = 11;
+	MouthCenter = 12;
+	MouthLeftCorner = 13;
+	MouthUpperEdge = 14;
+	MouthLowerEdge = 15;
+	RightEyebrowOuterEnd = 16;
+	RightEyebrowInnerEnd = 17;
+	LeftEyebrowInnerEnd = 18;
+	LeftEyebrowOuterEnd = 19;
+	RightEdge = 20;
+	ChinTip = 21;
+	LeftEdge = 22;
+}
+
+message FaceKeypointMetadata {
+	FaceKeypointType keypoint_type = 1;
+	float confidence = 2;
+	float x = 3;
+	float y = 4;
+}
+
+message FaceLandmarksMetadata {
+	repeated FaceKeypointMetadata keypoint_metadata = 1;
+}
+
+message FaceMaskMetadata {
+	float confidence = 1;
+}
+ 
+// Defines content of frame_data field of Frame message
+enum ImageFormat {
+    BGR = 0;
+    // JPEG. PNG, ... 
+    ENCODED_STANDARD = 1;
+}
