@@ -16,4 +16,8 @@
         </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProtoBuf Include="Protos\frame_analysis.proto" GrpcService="Server" />
+    </ItemGroup>
+
 </Project>
