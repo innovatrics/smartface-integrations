@@ -13,6 +13,9 @@ Send configurable events from SmartFace (face detection, body detection, face id
 ## Notifications Receiver
 Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NotificationsReceiver" >the code</a>.
 
+## gRPC Camera Server
+Create sample gRPC Server that can be connected to SmartFace as special type of Camera. Check <a href="src/GrpcCamera" >README</a> for more info.
+
 ## Shared
 In `src/Shared` folder you may find several libraries that are pre-built for reusable purposes
 

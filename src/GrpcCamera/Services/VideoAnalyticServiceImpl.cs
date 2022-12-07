@@ -5,16 +5,23 @@ namespace Innovatrics.SmartFace.Integrations.GrpcCamera.Services;
 
 public class VideoAnalyticServiceImpl : Innovatrics.Smartface.VideoAnalyticService.VideoAnalyticServiceBase
 {
+    private readonly string sourcePath;
+
     public VideoAnalyticServiceImpl()
     {
         Console.WriteLine("init");
+        
+        var rootDirectory = Directory.GetCurrentDirectory();
+        this.sourcePath = Path.Combine(rootDirectory, "stream-out");
+
+        Console.WriteLine($"Image source path {sourcePath}");
     }
 
     public override async Task GetFrames(IAsyncStreamReader<AnalysisResult> requestStream, IServerStreamWriter<Frame> responseStream, ServerCallContext callContext)
     {
         Console.WriteLine("Connected client");
 
-        var files = Directory.GetFiles(@"C:\Users\lmalik\Downloads\test-data", "*.jpg");
+        var files = Directory.GetFiles(sourcePath, "*.jpg");
 
         while (!callContext.CancellationToken.IsCancellationRequested)
         {
