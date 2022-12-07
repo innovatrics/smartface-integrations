@@ -9,8 +9,6 @@ public class VideoAnalyticServiceImpl : Innovatrics.Smartface.VideoAnalyticServi
 
     public VideoAnalyticServiceImpl()
     {
-        Console.WriteLine("init");
-        
         var rootDirectory = Directory.GetCurrentDirectory();
         this.sourcePath = Path.Combine(rootDirectory, "stream-out");
 
@@ -19,6 +17,8 @@ public class VideoAnalyticServiceImpl : Innovatrics.Smartface.VideoAnalyticServi
 
     public override async Task GetFrames(IAsyncStreamReader<AnalysisResult> requestStream, IServerStreamWriter<Frame> responseStream, ServerCallContext callContext)
     {
+        var startedAt = DateTime.UtcNow;
+
         Console.WriteLine("Connected client");
 
         var files = Directory.GetFiles(sourcePath, "*.jpg");
@@ -27,18 +27,20 @@ public class VideoAnalyticServiceImpl : Innovatrics.Smartface.VideoAnalyticServi
         {
             foreach (var file in files)
             {
-                Console.WriteLine("Writing stream message to connected client");
+                var timestampMs = (long)Math.Round((DateTime.UtcNow - startedAt).TotalMilliseconds, 0);
+
+                Console.WriteLine($"Writing stream message {file} in {timestampMs} posMs to connected client");
 
                 var imageData = File.ReadAllBytes(file);
-                var protobufData = Google.Protobuf.ByteString.CopyFrom(imageData);
 
                 await responseStream.WriteAsync(new Frame()
                 {
+                    FrameTimestampUs = timestampMs * 1000,
                     ImageFormat = ImageFormat.EncodedStandard,
-                    FrameData = protobufData
-                }).ConfigureAwait(false);
+                    FrameData = Google.Protobuf.ByteString.CopyFrom(imageData)
+                });
 
-                Thread.Sleep(1000);
+                Thread.Sleep(6 * 1000);
             }
         }
 
