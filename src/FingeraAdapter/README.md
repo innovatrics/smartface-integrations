@@ -5,7 +5,7 @@ This application connects to SmartFace AccessController gRPC stream, process `GR
 To run application localy, follow these steps
  - open terminal
  - navigate to /src/FingeraAdapter
- - run `dotnet build; dotnet run`
+ - run `dotnet run`
 
  ## Deployment
  To deploy application, follow these steps
