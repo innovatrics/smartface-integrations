@@ -27,7 +27,10 @@ This project includes all necessary tools for generating required gRPC classes, 
 </ItemGroup>
 ```
 
-So, after a simple `dotnet build` you will get two files generated in *obj/Debug/net6.0/Protos*
+Run a simple build with  `dotnet build` and you will get two files generated in *obj/Debug/net6.0/Protos* 
+
+![FrameAnalysis classes](/assets/grpccamera/proto-classes.png)
+
 
 
 
