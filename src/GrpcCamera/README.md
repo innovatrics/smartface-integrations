@@ -45,6 +45,9 @@ Few points has to be taken with special care:
 2. `FrameTimestampUs` is timestamp of particular frame in **microseconds** . Field is required, must have a growing value as demonstrated in sample.
 
 ### SmartFace Camera
-Custom configuration
+SmartFace Camera connected to a gRPC stream requires some custom configuration in order to bring the best results. Here they are:
 
 ![SmartFace Camera config](/assets/GrpcCamera/camera-config.png)
+
+1. Configure source using custom protocol **sfcam**://ip-address-of-the-gRPC-server:port 
+2. Set Detection and Extraction interval in order to process each incomming frame
