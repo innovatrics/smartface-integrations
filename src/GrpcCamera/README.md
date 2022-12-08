@@ -50,4 +50,7 @@ SmartFace Camera connected to a gRPC stream requires some custom configuration i
 ![SmartFace Camera config](/assets/GrpcCamera/camera-config.png)
 
 1. Configure source using custom protocol **sfcam**://ip-address-of-the-gRPC-server:port 
-2. Set Detection and Extraction interval in order to process each incomming frame
+2. Set FACE DISCOVERY FREQUENCY and FACE EXTRACTON FREQUENCY to 1ms in order to process each incomming frame
+
+### Known limitations
+- When discovery & extraction frequency set to 1ms, an extra attention must be paid when sending images to the gRPC stream. Full processing usually takes from 150ms to 500ms so you should not sent more than 2 images per second.
