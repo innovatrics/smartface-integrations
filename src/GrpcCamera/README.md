@@ -51,7 +51,7 @@ await responseStream.WriteAsync(new Frame()
 
 `FrameTimestampUs` is timestamp of particular frame in **microseconds** (therefore miliseconds has to be multiplied by thousand). Field is required, must have a growing value as demonstrated in sample.
 
-`ImageFormat` - by default, SmartFace camera expects image in raw (BMP) format. When sending compressed images (JPG or PNG), so  must be specified as well.
+`ImageFormat` has to be set when sending compressed images (JPG or PNG). By default, SmartFace camera expects image in raw (BMP) format.
 
 
 ### SmartFace Camera
