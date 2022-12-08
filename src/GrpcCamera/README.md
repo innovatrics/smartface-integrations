@@ -53,4 +53,5 @@ SmartFace Camera connected to a gRPC stream requires some custom configuration i
 2. Set FACE DISCOVERY FREQUENCY and FACE EXTRACTON FREQUENCY to 1ms in order to process each incomming frame
 
 ### Known limitations
-- When discovery & extraction frequency set to 1ms, an extra attention must be paid when sending images to the gRPC stream. Full processing usually takes from 150ms to 500ms so you should not sent more than 2 images per second.
+- When discovery & extraction frequency set to 1ms, an extra attention must be paid when sending images to the gRPC stream. Full processing usually takes from 150ms to 500ms so you should not sent more than 2 images per second per single camera.
+  - images that have not been processed will be dropped (no caching and post-processing)
