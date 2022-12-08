@@ -8,7 +8,7 @@ In generally, **Camera service is a client** and **video source is a server**.
 
 In this case, SmartFace Camera is a gRPC client connected to a gRPC stream and waits for incomming messages with `Frame`. The gRPC stream has to be produced by a gRPC server using our <a href="protos/frame_analysis.proto" >protobuf</a> schema.
 
-## How to start
+### gRPC Server
 This project includes all necessary tools for generating required gRPC classes, as configured in `GrpcCamera.csproj` :
 
 ```
@@ -31,7 +31,20 @@ Run a simple build with  `dotnet build` and you will get two files generated in 
 
 ![FrameAnalysis classes](/assets/GrpcCamera/proto-classes.png)
 
+`VideoAnalyticServiceImpl` is a custom implementation of generated scaffolding `VideoAnalyticServiceBase` from protobuf schema.
 
+```
+public class VideoAnalyticServiceImpl : Innovatrics.Smartface.VideoAnalyticService.VideoAnalyticServiceBase
+{
+```
 
+Important logic is happening in the overriden method `GetFrames`. In this sample we are iterating all Jpeg files in a sample folder and uploading them to the gRPC stream. This can be replaced by any real images from whatever source.
+Few points has to be taken with special care:
 
+1. All images must the have same resolution. You must not stream one image with 1200x800 and shortly 1000x600 afterwards. It will end up with an exception in SmartFace Camera service.
+2. `FrameTimestampUs` is timestamp of particular frame in **microseconds** . Field is required, must have a growing value as demonstrated in sample.
 
+### SmartFace Camera
+Custom configuration
+
+![SmartFace Camera config](/assets/GrpcCamera/camera-config.png)
