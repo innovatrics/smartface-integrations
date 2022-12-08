@@ -50,6 +50,8 @@ await responseStream.WriteAsync(new Frame()
 ```
 
 `FrameTimestampUs` is timestamp of particular frame in **microseconds** (therefore miliseconds has to be multiplied by thousand). Field is required, must have a growing value as demonstrated in sample.
+By default, SmartFace camera expects image in raw (BMP) format. You will mostly deal with compressed images (JPG or PNG), so `ImageFormat` must be specified as well.
+
 
 ### SmartFace Camera
 SmartFace Camera connected to a gRPC stream requires some custom configuration in order to bring the best results. Here they are:
@@ -62,4 +64,5 @@ SmartFace Camera connected to a gRPC stream requires some custom configuration i
 ### Known limitations
 - When discovery & extraction frequency set to 1ms, an extra attention must be paid when sending images to the gRPC stream. Full processing usually takes from 150ms to 500ms so you should not sent more than 2 images per second per single camera (stream).
   - images that have not been processed will be dropped (no caching and post-processing)
+  - 2 images per second includes safe margin. Exact throughput can be calculated as 1000 ms / time_of_full_processing_of_frame ms = throughput
 - All images must the have same resolution per camera (stream). You must not stream one image with 1200x800 and shortly 1000x600 afterwards. It will end up with an exception in SmartFace Camera service.
