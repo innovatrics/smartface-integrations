@@ -8,7 +8,7 @@ In generally, **Camera service is a client** and **video source is a server**.
 
 In this case, SmartFace Camera is a gRPC client connected to a gRPC stream and waits for incomming messages with `Frame`. The gRPC stream has to be produced by a gRPC server using our <a href="protos/frame_analysis.proto" >protobuf</a> schema.
 
-### gRPC Server
+### Create a gRPC Server
 This project includes all necessary tools for generating required gRPC classes, as configured in `GrpcCamera.csproj` :
 
 ```
@@ -39,10 +39,17 @@ public class VideoAnalyticServiceImpl : Innovatrics.Smartface.VideoAnalyticServi
 ```
 
 Important logic is happening in the overriden method `GetFrames`. In this sample we are iterating all Jpeg files in a sample folder and uploading them to the gRPC stream. This can be replaced by any real images from whatever source.
-Few points has to be taken with special care:
 
-1. All images must the have same resolution. You must not stream one image with 1200x800 and shortly 1000x600 afterwards. It will end up with an exception in SmartFace Camera service.
-2. `FrameTimestampUs` is timestamp of particular frame in **microseconds** . Field is required, must have a growing value as demonstrated in sample.
+```
+await responseStream.WriteAsync(new Frame()
+{
+    FrameTimestampUs = timestampMs * 1000,
+    ImageFormat = ImageFormat.EncodedStandard,
+    FrameData = Google.Protobuf.ByteString.CopyFrom(imageData)
+});
+```
+
+`FrameTimestampUs` is timestamp of particular frame in **microseconds** (therefore miliseconds has to be multiplied by thousand). Field is required, must have a growing value as demonstrated in sample.
 
 ### SmartFace Camera
 SmartFace Camera connected to a gRPC stream requires some custom configuration in order to bring the best results. Here they are:
@@ -53,5 +60,6 @@ SmartFace Camera connected to a gRPC stream requires some custom configuration i
 2. Set FACE DISCOVERY FREQUENCY and FACE EXTRACTON FREQUENCY to 1ms in order to process each incomming frame
 
 ### Known limitations
-- When discovery & extraction frequency set to 1ms, an extra attention must be paid when sending images to the gRPC stream. Full processing usually takes from 150ms to 500ms so you should not sent more than 2 images per second per single camera.
+- When discovery & extraction frequency set to 1ms, an extra attention must be paid when sending images to the gRPC stream. Full processing usually takes from 150ms to 500ms so you should not sent more than 2 images per second per single camera (stream).
   - images that have not been processed will be dropped (no caching and post-processing)
+- All images must the have same resolution per camera (stream). You must not stream one image with 1200x800 and shortly 1000x600 afterwards. It will end up with an exception in SmartFace Camera service.
