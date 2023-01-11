@@ -45,20 +45,20 @@ namespace SmartFace.Integrations.IFaceManualCall
                     {
                         imageName = Path.GetFileName(imagePath),
                         image = File.ReadAllBytes(imagePath),
-                        // crop = EncodeRawToDefaultImageFormat(face.GetCropImage()),
 
                         detectionQuality = face.GetAttribute(FaceAttributeId.FaceConfidence),
                         faceSize = face.GetAttribute(FaceAttributeId.FaceSize),
 
                         sharpness = face.GetAttribute(FaceAttributeId.Sharpness),
                         brightness = face.GetAttribute(FaceAttributeId.Brightness),
-                        // contrast = face.GetAttribute(FaceAttributeId.Contrast),
 
                         pitchAngle = face.GetAttribute(FaceAttributeId.PitchAngle),
                         yawAngle = face.GetAttribute(FaceAttributeId.YawAngle),
                         rollAngle = face.GetAttribute(FaceAttributeId.RollAngle),
 
                         glassesWithHeavyFrame = face.GetAttribute(FaceAttributeId.HeavyFrame),
+                        // tintedGlasses = face.GetAttribute(FaceAttributeId.TintedGlasses),
+                        // glassStatus = face.GetAttribute(FaceAttributeId.GlassStatus)
                     });
                 }
             }

@@ -28,6 +28,8 @@ namespace SmartFace.Integrations.IFaceManualCall
         public float yawAngle { get; internal set; }
         public float rollAngle { get; internal set; }
 
-        public float glassesWithHeavyFrame { get; internal set; }
+        public float glassStatus { get; internal set; }
+        public float glassesWithHeavyFrame { get; internal set; }        
+        public float tintedGlasses { get; internal set; }
     }
 }
