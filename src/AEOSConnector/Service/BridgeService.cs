@@ -5,26 +5,26 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
-using Innovatrics.SmartFace.Integrations.AOESConnector.Models;
-using Innovatrics.SmartFace.Integrations.AOESConnector.Factories;
+using Innovatrics.SmartFace.Integrations.AEOSConnector.Models;
+using Innovatrics.SmartFace.Integrations.AEOSConnector.Factories;
 
-namespace Innovatrics.SmartFace.Integrations.AOESConnector.Services
+namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Services
 {
     public class BridgeService : IBridgeService
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly IAOESConnectorFactory AOESConnectorFactory;
+        private readonly IAEOSConnectorFactory AEOSConnectorFactory;
 
         public BridgeService(
             ILogger logger,
             IConfiguration configuration,
-            IAOESConnectorFactory AOESConnectorFactory
+            IAEOSConnectorFactory AEOSConnectorFactory
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.AOESConnectorFactory = AOESConnectorFactory ?? throw new ArgumentNullException(nameof(AOESConnectorFactory));
+            this.AEOSConnectorFactory = AEOSConnectorFactory ?? throw new ArgumentNullException(nameof(AEOSConnectorFactory));
         }
 
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
@@ -34,91 +34,84 @@ namespace Innovatrics.SmartFace.Integrations.AOESConnector.Services
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            var cameraToAOESMapping = this.getCameraMapping(notification.StreamId);
+            var cameraToAEOSMapping = this.getCameraMapping(notification.StreamId);
 
-            if (cameraToAOESMapping == null)
+            if (cameraToAEOSMapping == null)
             {
-                this.logger.Warning("Stream {streamId} has not any mapping to AOES", notification.StreamId);
+                this.logger.Warning("Stream {streamId} has not any mapping to AEOS", notification.StreamId);
                 return;
             }
 
-            if (cameraToAOESMapping.WatchlistExternalIds != null)
+            if (cameraToAEOSMapping.WatchlistExternalIds != null)
             {
-                if (cameraToAOESMapping.WatchlistExternalIds.Length > 0 && !cameraToAOESMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
+                if (cameraToAEOSMapping.WatchlistExternalIds.Length > 0 && !cameraToAEOSMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
                 {
                     this.logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.", notification.WatchlistExternalId, notification.StreamId);
                     return;
                 }
             }
 
-            var AOESConnector = this.AOESConnectorFactory.Create(cameraToAOESMapping.Type);
+            var AEOSConnector = this.AEOSConnectorFactory.Create(cameraToAEOSMapping.Type);
 
-            await AOESConnector.OpenAsync(
-                ipAddress: cameraToAOESMapping.IPAddress,
-                port: cameraToAOESMapping.Port,
-                channel: cameraToAOESMapping.Channel,
-                username: cameraToAOESMapping.Username,
-                password: cameraToAOESMapping.Password
+            await AEOSConnector.OpenAsync(
+                AEpuHostname: cameraToAEOSMapping.AEpuHostname,
+                AEpuPort: cameraToAEOSMapping.AEpuPort,
+                WatchlistMemberID: notification.WatchlistMemberId                
             );
         }
 
         public async Task SendKeepAliveSignalAsync()
         {
-            var cameraToAOESMappings = this.getAllCameraMappings();
+            var cameraToAEOSMappings = this.getAllCameraMappings();
 
-            if (cameraToAOESMappings == null)
+            if (cameraToAEOSMappings == null)
             {
-                this.logger.Warning("No mapping to AOES configured");
+                this.logger.Warning("No mapping to AEOS configured");
                 return;
             }
 
-            var uniqueAOESs = cameraToAOESMappings.GroupBy(g => new
+            var uniqueAEOSs = cameraToAEOSMappings.GroupBy(g => new
             {
                 g.Type,
-                g.IPAddress,
-                g.Port,
-                g.Username,
-                g.Password
+                g.AEpuHostname,
+                g.AEpuPort
             }).ToArray();
 
-            foreach (var cameraToAOESMapping in uniqueAOESs)
+            foreach (var cameraToAEOSMapping in uniqueAEOSs)
             {
-                var AOESConnector = this.AOESConnectorFactory.Create(cameraToAOESMapping.Key.Type);
+                var AEOSConnector = this.AEOSConnectorFactory.Create(cameraToAEOSMapping.Key.Type);
 
-                await AOESConnector.SendKeepAliveAsync(
-                    ipAddress: cameraToAOESMapping.Key.IPAddress,
-                    port: cameraToAOESMapping.Key.Port,
-                    channel: cameraToAOESMapping.First().Channel,
-                    username: cameraToAOESMapping.Key.Username,
-                    password: cameraToAOESMapping.Key.Password
+                await AEOSConnector.SendKeepAliveAsync(
+                    AEpuHostname: cameraToAEOSMapping.Key.AEpuHostname,
+                    AEpuPort: cameraToAEOSMapping.Key.AEpuPort
                 );
             }
         }
 
-        private AOESMapping getCameraMapping(string streamId)
+        private AEOSMapping getCameraMapping(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
             {
                 throw new InvalidOperationException($"{nameof(streamId)} is expected as GUID");
             }
 
-            var AOESMappings = this.configuration.GetSection("AOESMappings").Get<AOESMapping[]>();
+            var AEOSMappings = this.configuration.GetSection("AEOSMappings").Get<AEOSMapping[]>();
 
-            if (AOESMappings == null)
+            if (AEOSMappings == null)
             {
                 return null;
             }
 
-            return AOESMappings
+            return AEOSMappings
                         .Where(w => w.StreamId == streamGuid)
                         .FirstOrDefault();
         }
 
-        private AOESMapping[] getAllCameraMappings()
+        private AEOSMapping[] getAllCameraMappings()
         {
             return this.configuration
-                            .GetSection("AOESMappings")
-                            .Get<AOESMapping[]>();
+                            .GetSection("AEOSMappings")
+                            .Get<AEOSMapping[]>();
         }
     }
 }

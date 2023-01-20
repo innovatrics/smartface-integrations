@@ -7,14 +7,14 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
-using Innovatrics.SmartFace.Integrations.AOESConnector.Factories;
-using Innovatrics.SmartFace.Integrations.AOESConnector.Services;
+using Innovatrics.SmartFace.Integrations.AEOSConnector.Factories;
+using Innovatrics.SmartFace.Integrations.AEOSConnector.Services;
 
-namespace Innovatrics.SmartFace.Integrations.AOESConnector
+namespace Innovatrics.SmartFace.Integrations.AEOSConnector
 {
     public class Program
     {
-        public const string LOG_FILE_NAME = "SmartFace.Integrations.AOES.log";
+        public const string LOG_FILE_NAME = "SmartFace.Integrations.AEOS.log";
         public const string JSON_CONFIG_FILE_NAME = "appsettings.json";
 
         private static void Main(string[] args)
@@ -48,7 +48,7 @@ namespace Innovatrics.SmartFace.Integrations.AOESConnector
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
             // ReSharper disable once StringLiteralTypo
-            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AOES"));
+            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AEOS"));
             logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
@@ -77,7 +77,7 @@ namespace Innovatrics.SmartFace.Integrations.AOESConnector
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
 
-            services.AddSingleton<IAOESConnectorFactory, AOESConnectorFactory>();
+            services.AddSingleton<IAEOSConnectorFactory, AEOSConnectorFactory>();
             services.AddSingleton<IBridgeService, BridgeService>();
 
             services.AddHostedService<MainHostedService>();
@@ -91,7 +91,7 @@ namespace Innovatrics.SmartFace.Integrations.AOESConnector
                     .SetMainModuleBasePath()
                     .AddJsonFile(JSON_CONFIG_FILE_NAME, optional: false)
                     .AddEnvironmentVariables()
-                    .AddEnvironmentVariables($"SF_INT_AOES_")
+                    .AddEnvironmentVariables($"SF_INT_AEOS_")
                     .AddCommandLine(args)
                     .Build();
         }

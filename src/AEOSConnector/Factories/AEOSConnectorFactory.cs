@@ -4,17 +4,17 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-using Innovatrics.SmartFace.Integrations.AOESConnector.Connectors;
+using Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors;
 
-namespace Innovatrics.SmartFace.Integrations.AOESConnector.Factories
+namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Factories
 {
-    public class AOESConnectorFactory : IAOESConnectorFactory
+    public class AEOSConnectorFactory : IAEOSConnectorFactory
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public AOESConnectorFactory(
+        public AEOSConnectorFactory(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory
@@ -25,14 +25,14 @@ namespace Innovatrics.SmartFace.Integrations.AOESConnector.Factories
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public IAOESConnector Create(string type)
+        public IAEOSConnector Create(string type)
         {
             if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
 
-            this.logger.Information("Creating IAOESConnector for type {type}", type);
+            this.logger.Information("Creating IAEOSConnector for type {type}", type);
 
             type = type
                     .ReplaceAll(new string[] { "-", " ", "." }, new string[] { "_", "_", "_" })
@@ -41,7 +41,7 @@ namespace Innovatrics.SmartFace.Integrations.AOESConnector.Factories
             switch (type)
             {
                 default:
-                    throw new NotImplementedException($"AOES Connector of type {type} not supported");
+                    throw new NotImplementedException($"AEOS Connector of type {type} not supported");
 
                 case "AEpu":
                     return new AEpuConnector(this.logger, this.configuration, this.httpClientFactory);

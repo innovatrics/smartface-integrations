@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
-using Innovatrics.SmartFace.Integrations.AOESConnector.Connectors;
+using Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors;
 
-namespace Innovatrics.SmartFace.Integrations.AOESConnector.Factories
+namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Factories
 {
-    public interface IAOESConnectorFactory
+    public interface IAEOSConnectorFactory
     {
-        IAOESConnector Create(string type);
+        IAEOSConnector Create(string type);
     }
 }

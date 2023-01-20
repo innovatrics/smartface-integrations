@@ -7,9 +7,9 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessController.Readers;
-using Innovatrics.SmartFace.Integrations.AOESConnector.Services;
+using Innovatrics.SmartFace.Integrations.AEOSConnector.Services;
 
-namespace Innovatrics.SmartFace.Integrations.AOESConnector
+namespace Innovatrics.SmartFace.Integrations.AEOSConnector
 {
     public class MainHostedService : IHostedService
     {

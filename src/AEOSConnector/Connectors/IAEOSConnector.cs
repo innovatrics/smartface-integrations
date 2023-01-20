@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Innovatrics.SmartFace.Integrations.AOESConnector.Connectors
+namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors
 {
-    public interface IAOESConnector
+    public interface IAEOSConnector
     {
-        Task OpenAsync(string ipAddress, int port, int channel, string username = null, string password = null);
-        Task SendKeepAliveAsync(string ipAddress, int port, int? channel = null, string username = null, string password = null);
+        Task OpenAsync(string AEpuHostname, int AEpuPort, string WatchlistMemberID);
+        Task SendKeepAliveAsync(string AEpuHostname, int AEpuPort);
     }
 }

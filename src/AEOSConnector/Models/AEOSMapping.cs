@@ -1,17 +1,13 @@
 ﻿using System;
 
-namespace Innovatrics.SmartFace.Integrations.AOESConnector.Models
+namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Models
 {
-    public class AOESMapping
+    public class AEOSMapping
     {
         public string Type                              { get; set; } = "AEpu";
         public Guid StreamId                            { get; set; }
-        public string IPAddress                         { get; set; }
-        public int Port                                 { get; set; } = 80;
-        public int Channel                              { get; set; } = 0;
-
-        public string Username                          { get; set; }
-        public string Password                          { get; set; }
+        public string AEpuHostname                         { get; set; }
+        public int AEpuPort                                 { get; set; } = 80;
 
         public string[] WatchlistExternalIds            { get; set; }
     }
