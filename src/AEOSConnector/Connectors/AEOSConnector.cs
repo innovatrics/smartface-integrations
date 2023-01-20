@@ -51,7 +51,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors
                     ipAddr = ipHost.AddressList[0];
                     localEndPoint = new System.Net.IPEndPoint(ipAddr, AEpuPort);
 
-                    this.logger.Information("IP Address Received from the hostname {AEpuHostname}: {ipAddr}",AEpuHostname,ipAddr);
+                    this.logger.Information("IP Address Received for the hostname {AEpuHostname}: {ipAddr}",AEpuHostname,ipAddr);
                 }
 
                 // Creation TCP/IP Socket using
@@ -68,7 +68,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors
 
                     // We print EndPoint information
                     // that we are connected
-                    Console.WriteLine("Socket connected to -> {0} ", sender.RemoteEndPoint.ToString());
+                    this.logger.Information("Socket connected to -> {0} ", sender.RemoteEndPoint.ToString());
 
                     var clientId = WatchlistMemberID;
                     var encodedClientId = Encoding.UTF8.GetBytes(clientId);
@@ -111,10 +111,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors
                     // received, that we'll use to
                     // convert them to string
                     int byteRecv = sender.Receive(messageReceived);
-                    Console.WriteLine("Message from Server -> {0}",
-                        Encoding.ASCII.GetString(messageReceived,
-                                                    0, byteRecv));
-        
+                    this.logger.Information("Message from Server -> {0}",Encoding.ASCII.GetString(messageReceived,0, byteRecv));
+
                     // Close Socket using
                     // the method Close()
                     sender.Shutdown(SocketShutdown.Both);
@@ -123,25 +121,23 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors
                 // Manage of Socket's Exceptions
                 catch (ArgumentNullException ane) 
                 {
-                    
-                    Console.WriteLine("ArgumentNullException : {0}", ane.ToString());
+                    this.logger.Information("ArgumentNullException : {0}", ane.ToString());
                 }
                 
                 catch (SocketException se) 
-                {
-                    
-                    Console.WriteLine("SocketException : {0}", se.ToString());
+                {   
+                    this.logger.Information("SocketException : {0}", se.ToString());
                 }
                 
                 catch (Exception e) {
-                    Console.WriteLine("Unexpected exception : {0}", e.ToString());
+                    this.logger.Information("Unexpected exception : {0}", e.ToString());
                 }
 
             }
 
             catch (Exception e) 
             {
-                Console.WriteLine(e.ToString());
+                this.logger.Information(e.ToString());
             }
         
             /*

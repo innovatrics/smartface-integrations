@@ -38,7 +38,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Factories
                     .ReplaceAll(new string[] { "-", " ", "." }, new string[] { "_", "_", "_" })
                     .ToUpper();
 
-            this.logger.Information("type: {type}", type);
+            //this.logger.Information("type: {type}", type);
             switch (type)
             {
                 default:
