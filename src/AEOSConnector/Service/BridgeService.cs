@@ -95,14 +95,14 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Services
                 throw new InvalidOperationException($"{nameof(streamId)} is expected as GUID");
             }
 
-            var AEOSMappings = this.configuration.GetSection("AEOSMappings").Get<AEOSMapping[]>();
+            var AEOSMapping = this.configuration.GetSection("AEOSMapping").Get<AEOSMapping[]>();
 
-            if (AEOSMappings == null)
+            if (AEOSMapping == null)
             {
                 return null;
             }
 
-            return AEOSMappings
+            return AEOSMapping
                         .Where(w => w.StreamId == streamGuid)
                         .FirstOrDefault();
         }
@@ -110,7 +110,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Services
         private AEOSMapping[] getAllCameraMappings()
         {
             return this.configuration
-                            .GetSection("AEOSMappings")
+                            .GetSection("AEOSMapping")
                             .Get<AEOSMapping[]>();
         }
     }

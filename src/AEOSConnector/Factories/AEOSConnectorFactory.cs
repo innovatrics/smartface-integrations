@@ -38,12 +38,13 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Factories
                     .ReplaceAll(new string[] { "-", " ", "." }, new string[] { "_", "_", "_" })
                     .ToUpper();
 
+            this.logger.Information("type: {type}", type);
             switch (type)
             {
                 default:
                     throw new NotImplementedException($"AEOS Connector of type {type} not supported");
 
-                case "AEpu":
+                case "AEPU":
                     return new AEpuConnector(this.logger, this.configuration, this.httpClientFactory);
             }
         }

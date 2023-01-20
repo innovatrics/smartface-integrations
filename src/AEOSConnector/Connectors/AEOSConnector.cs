@@ -33,7 +33,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors
         public async Task OpenAsync(string AEpuHostname, int AEpuPort, string WatchlistMemberID)
         {
             this.logger.Information("Sending ipBadge to {AEpuHostname}:{AEpuPort} for user {WatchlistMemberID}", AEpuHostname, AEpuPort, WatchlistMemberID);
-            Console.WriteLine("Sending ipBadge to {AEpuHostname}:{AEpuPort} for user {WatchlistMemberID}", AEpuHostname, AEpuPort, WatchlistMemberID);
 
             try 
             {
@@ -52,7 +51,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors
                     ipAddr = ipHost.AddressList[0];
                     localEndPoint = new System.Net.IPEndPoint(ipAddr, AEpuPort);
 
-                    Console.WriteLine("IP Address Received from the hostname {AEpuHostname}: {ipAddr}",AEpuHostname,ipAddr);
                     this.logger.Information("IP Address Received from the hostname {AEpuHostname}: {ipAddr}",AEpuHostname,ipAddr);
                 }
 
