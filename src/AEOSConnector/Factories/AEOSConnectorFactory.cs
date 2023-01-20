@@ -41,10 +41,10 @@ namespace Innovatrics.SmartFace.Integrations.AOESConnector.Factories
             switch (type)
             {
                 default:
-                    throw new NotImplementedException($"AOES of type {type} not supported");
+                    throw new NotImplementedException($"AOES Connector of type {type} not supported");
 
-                case "ADVANTECH_WISE_4000":
-                    return new AdvantechWISE400Connector(this.logger, this.configuration, this.httpClientFactory);
+                case "AEpu":
+                    return new AEpuConnector(this.logger, this.configuration, this.httpClientFactory);
             }
         }
     }
