@@ -42,14 +42,6 @@ Add following pattern to existing docker compose:
     image: ${REGISTRY}integrations-AEOSSync
     container_name: SFAEOSSync
     restart: unless-stopped
-    environment:
-      - AccessController__Host=SFAccessController
-      - AccessController__Port=80
-      - AEOSSync__Server=192.168.1.25
-      - AEOSSync__Cameras__0__Source=ec0437ae-7716-4141-99d9-a9b2a4dd2106
-      - AEOSSync__Cameras__0__Target=your-checkpoint-id
-      - AEOSSync__Cameras__1__Source=d5ff8f40-f900-4492-8ecc-6a2539648964
-      - AEOSSync__Cameras__1__Target=your-another-checkpoint-id
 
 networks:
   default:
