@@ -1,0 +1,19 @@
+query GetWatchlistMembers{
+
+  watchlistMembers{
+    items{
+      id
+      fullName
+      displayName
+      tracklet{
+        faces (where: {faceType: {eq: REGULAR}})
+        {
+          createdAt
+          faceType
+          imageDataId
+        }
+      }
+    }
+  }
+  
+}
