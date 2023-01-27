@@ -50,33 +50,13 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             List<SmartFaceMember> SmartFaceAllMembers = new List<SmartFaceMember>();
 
 
-           /*  // Create a GraphQL client
-            var graphQLClient = new GraphQLHttpClient(SmartFaceGraphQL);
+          
 
-            // Create the GraphQL request
-            var request = new GraphQLRequest
-            {
-                Query = @"
-                    query {
-                        allBooks {
-                            title
-                            author
-                        }
-                    }"
-            };
-
-            // Send the request and get the response
-            var response = await graphQLClient.SendQueryAsync<dynamic>(request);
-
-            // Extract the data from the response
-            var books = response.Data.allBooks;
-            foreach (var book in books)
-            {
-                Console.WriteLine($"Title: {book.title}, Author: {book.author}");
-            } */
+          
 
             // Read All the WatchlistMembers, do it per pages for the case there is too many members.
            
+           /*
             while(allMembers == false)
             {
 
@@ -119,7 +99,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
                 }
             }
-            
+            */
 
             // check all members
             Console.WriteLine("Employees defined in SmartFace");
