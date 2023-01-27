@@ -5,9 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System.Net.Http;
-using System.Xml;
-using System.Net;
-using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
@@ -79,7 +76,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             } */
 
             // Read All the WatchlistMembers, do it per pages for the case there is too many members.
-            /*
+           
             while(allMembers == false)
             {
 
@@ -122,7 +119,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
                 }
             }
-            */
+            
 
             // check all members
             Console.WriteLine("Employees defined in SmartFace");
