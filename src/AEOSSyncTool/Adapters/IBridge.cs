@@ -5,6 +5,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 {
     public interface IBridge
     {
-        Task ProcessGrantedNotificationAsync(GrantedNotification notification);
+        Task ConnectToAEOS();
     }
 }

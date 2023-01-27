@@ -24,8 +24,16 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.AEOSSync = AEOSSync ?? throw new ArgumentNullException(nameof(AEOSSync));
+
+            
         }
 
+        public async Task ConnectToAEOS()
+        {
+            await this.AEOSSync.OpenAsync();
+        }
+
+/*
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
         {
             if (notification == null)
@@ -54,7 +62,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                 ticket_id: AEOSSyncUserId
             );
         }
-
+*/
         private string parseWatchlistId(string input)
         {
             var regexPattern = this.configuration.GetValue<string>("AEOSSync:UserIdRegEx");
