@@ -16,6 +16,7 @@ using System.ServiceModel;
 using System.ServiceModel.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Linq;
+using AEOSSyncTool;
 
 
 namespace Innovatrics.SmartFace.Integrations.AEOSSync
@@ -42,15 +43,46 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             //  1.
             // ### Get Data from SmartFace
             
-            int SmartFacePageNumber = 1;
-            int SmartFacePageSize = 10;
+            //int SmartFacePageNumber = 1;
+            int SmartFacePageSize = 100;
             
             bool allMembers = false;
 
             List<SmartFaceMember> SmartFaceAllMembers = new List<SmartFaceMember>();
 
+            // Dependency injection to ease initialization of GraphQL Client
+            var hostBuilder = Host
+                .CreateDefaultBuilder(args)
+                .ConfigureServices((context, services) =>
+                {
+                    services.AddSmartFaceGraphQLClient()
+                        .ConfigureHttpClient((serviceProvider, httpClient) =>
+                        {
+                            httpClient.BaseAddress = new Uri(SmartFaceGraphQL);
+                        });
+                });
+            using var host = hostBuilder.Build();
+            var graphQlClient = host.Services.GetRequiredService<SmartFaceGraphQLClient>();
 
-          
+            while(allMembers == false)
+            {
+                
+                { // GraphQL query Example
+                    var watchlistMembers123 = await graphQlClient.GetWatchlistMembers.ExecuteAsync(SmartFaceAllMembers.Count,SmartFacePageSize);
+                    foreach (var wm in watchlistMembers123.Data.WatchlistMembers.Items)
+                    {
+                        var imageDataId = wm.Tracklet.Faces.OrderBy(f=> f.CreatedAt).FirstOrDefault(f=> f.FaceType == FaceType.Regular)?.ImageDataId;
+                        Console.WriteLine($"{wm.Id}\t{imageDataId}\t{wm.DisplayName}");
+                        SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
+                        
+                    }
+                    if(watchlistMembers123.Data.WatchlistMembers.PageInfo.HasNextPage == false)
+                    {
+                        allMembers = true;
+                    }
+                        
+                }
+            }
 
           
 
@@ -229,6 +261,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                     if(AeosAllMembers.Where(i => i.SmartFaceId == SFMember.Id).Select(i => i.SmartFaceId).FirstOrDefault() != null)
                     {
                         Console.WriteLine($"SF Member {SFMember.fullName} with id {SFMember.Id} HAS a copy in AEOS.");
+                        
                     }
                     else
                     {

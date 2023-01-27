@@ -71,12 +71,18 @@ namespace AEOSSyncTool
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial class GetWatchlistMembers_WatchlistMembers_WatchlistMemberCollectionSegment : global::System.IEquatable<GetWatchlistMembers_WatchlistMembers_WatchlistMemberCollectionSegment>, IGetWatchlistMembers_WatchlistMembers_WatchlistMemberCollectionSegment
     {
-        public GetWatchlistMembers_WatchlistMembers_WatchlistMemberCollectionSegment(global::System.Collections.Generic.IReadOnlyList<global::AEOSSyncTool.IGetWatchlistMembers_WatchlistMembers_Items?>? items)
+        public GetWatchlistMembers_WatchlistMembers_WatchlistMemberCollectionSegment(global::System.Collections.Generic.IReadOnlyList<global::AEOSSyncTool.IGetWatchlistMembers_WatchlistMembers_Items?>? items, global::AEOSSyncTool.IGetWatchlistMembers_WatchlistMembers_PageInfo pageInfo)
         {
             Items = items;
+            PageInfo = pageInfo;
         }
 
         public global::System.Collections.Generic.IReadOnlyList<global::AEOSSyncTool.IGetWatchlistMembers_WatchlistMembers_Items?>? Items { get; }
+
+        /// <summary>
+        /// Information to aid in pagination.
+        /// </summary>
+        public global::AEOSSyncTool.IGetWatchlistMembers_WatchlistMembers_PageInfo PageInfo { get; }
 
         public virtual global::System.Boolean Equals(GetWatchlistMembers_WatchlistMembers_WatchlistMemberCollectionSegment? other)
         {
@@ -95,7 +101,7 @@ namespace AEOSSyncTool
                 return false;
             }
 
-            return (global::StrawberryShake.Helper.ComparisonHelper.SequenceEqual(Items, other.Items));
+            return (global::StrawberryShake.Helper.ComparisonHelper.SequenceEqual(Items, other.Items)) && PageInfo.Equals(other.PageInfo);
         }
 
         public override global::System.Boolean Equals(global::System.Object? obj)
@@ -134,6 +140,7 @@ namespace AEOSSyncTool
                     }
                 }
 
+                hash ^= 397 * PageInfo.GetHashCode();
                 return hash;
             }
         }
@@ -223,6 +230,73 @@ namespace AEOSSyncTool
                     hash ^= 397 * Tracklet.GetHashCode();
                 }
 
+                return hash;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Information about the offset pagination.
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class GetWatchlistMembers_WatchlistMembers_PageInfo_CollectionSegmentInfo : global::System.IEquatable<GetWatchlistMembers_WatchlistMembers_PageInfo_CollectionSegmentInfo>, IGetWatchlistMembers_WatchlistMembers_PageInfo_CollectionSegmentInfo
+    {
+        public GetWatchlistMembers_WatchlistMembers_PageInfo_CollectionSegmentInfo(global::System.Boolean hasNextPage)
+        {
+            HasNextPage = hasNextPage;
+        }
+
+        /// <summary>
+        /// Indicates whether more items exist following the set defined by the clients arguments.
+        /// </summary>
+        public global::System.Boolean HasNextPage { get; }
+
+        public virtual global::System.Boolean Equals(GetWatchlistMembers_WatchlistMembers_PageInfo_CollectionSegmentInfo? other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (other.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return (HasNextPage == other.HasNextPage);
+        }
+
+        public override global::System.Boolean Equals(global::System.Object? obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return Equals((GetWatchlistMembers_WatchlistMembers_PageInfo_CollectionSegmentInfo)obj);
+        }
+
+        public override global::System.Int32 GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 5;
+                hash ^= 397 * HasNextPage.GetHashCode();
                 return hash;
             }
         }
@@ -382,6 +456,11 @@ namespace AEOSSyncTool
     public partial interface IGetWatchlistMembers_WatchlistMembers
     {
         public global::System.Collections.Generic.IReadOnlyList<global::AEOSSyncTool.IGetWatchlistMembers_WatchlistMembers_Items?>? Items { get; }
+
+        /// <summary>
+        /// Information to aid in pagination.
+        /// </summary>
+        public global::AEOSSyncTool.IGetWatchlistMembers_WatchlistMembers_PageInfo PageInfo { get; }
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
@@ -403,6 +482,26 @@ namespace AEOSSyncTool
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial interface IGetWatchlistMembers_WatchlistMembers_Items_WatchlistMember : IGetWatchlistMembers_WatchlistMembers_Items
+    {
+    }
+
+    /// <summary>
+    /// Information about the offset pagination.
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial interface IGetWatchlistMembers_WatchlistMembers_PageInfo
+    {
+        /// <summary>
+        /// Indicates whether more items exist following the set defined by the clients arguments.
+        /// </summary>
+        public global::System.Boolean HasNextPage { get; }
+    }
+
+    /// <summary>
+    /// Information about the offset pagination.
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial interface IGetWatchlistMembers_WatchlistMembers_PageInfo_CollectionSegmentInfo : IGetWatchlistMembers_WatchlistMembers_PageInfo
     {
     }
 
@@ -465,8 +564,8 @@ namespace AEOSSyncTool
     /// <summary>
     /// Represents the operation service of the GetWatchlistMembers GraphQL operation
     /// <code>
-    /// query GetWatchlistMembers {
-    ///   watchlistMembers {
+    /// query GetWatchlistMembers($skip: Int, $take: Int) {
+    ///   watchlistMembers(skip: $skip, take: $take) {
     ///     __typename
     ///     items {
     ///       __typename
@@ -491,6 +590,10 @@ namespace AEOSSyncTool
     ///       ... on WatchlistMember {
     ///         id
     ///       }
+    ///     }
+    ///     pageInfo {
+    ///       __typename
+    ///       hasNextPage
     ///     }
     ///   }
     /// }
@@ -505,8 +608,8 @@ namespace AEOSSyncTool
 
         public static GetWatchlistMembersQueryDocument Instance { get; } = new GetWatchlistMembersQueryDocument();
         public global::StrawberryShake.OperationKind Kind => global::StrawberryShake.OperationKind.Query;
-        public global::System.ReadOnlySpan<global::System.Byte> Body => new global::System.Byte[]{0x71, 0x75, 0x65, 0x72, 0x79, 0x20, 0x47, 0x65, 0x74, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x20, 0x7b, 0x20, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x64, 0x20, 0x66, 0x75, 0x6c, 0x6c, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x74, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x66, 0x61, 0x63, 0x65, 0x73, 0x28, 0x77, 0x68, 0x65, 0x72, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x65, 0x71, 0x3a, 0x20, 0x52, 0x45, 0x47, 0x55, 0x4c, 0x41, 0x52, 0x20, 0x7d, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x20, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x46, 0x61, 0x63, 0x65, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x54, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d};
-        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "35d16f1124bc915e75b84b5e5860cbe6");
+        public global::System.ReadOnlySpan<global::System.Byte> Body => new global::System.Byte[]{0x71, 0x75, 0x65, 0x72, 0x79, 0x20, 0x47, 0x65, 0x74, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x28, 0x24, 0x73, 0x6b, 0x69, 0x70, 0x3a, 0x20, 0x49, 0x6e, 0x74, 0x2c, 0x20, 0x24, 0x74, 0x61, 0x6b, 0x65, 0x3a, 0x20, 0x49, 0x6e, 0x74, 0x29, 0x20, 0x7b, 0x20, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x28, 0x73, 0x6b, 0x69, 0x70, 0x3a, 0x20, 0x24, 0x73, 0x6b, 0x69, 0x70, 0x2c, 0x20, 0x74, 0x61, 0x6b, 0x65, 0x3a, 0x20, 0x24, 0x74, 0x61, 0x6b, 0x65, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x64, 0x20, 0x66, 0x75, 0x6c, 0x6c, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x74, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x66, 0x61, 0x63, 0x65, 0x73, 0x28, 0x77, 0x68, 0x65, 0x72, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x65, 0x71, 0x3a, 0x20, 0x52, 0x45, 0x47, 0x55, 0x4c, 0x41, 0x52, 0x20, 0x7d, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x20, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x46, 0x61, 0x63, 0x65, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x54, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x70, 0x61, 0x67, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x68, 0x61, 0x73, 0x4e, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d};
+        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "f9677890e54dca6552dcb89cb424dad0");
         public override global::System.String ToString()
         {
 #if NETSTANDARD2_0
@@ -520,8 +623,8 @@ namespace AEOSSyncTool
     /// <summary>
     /// Represents the operation service of the GetWatchlistMembers GraphQL operation
     /// <code>
-    /// query GetWatchlistMembers {
-    ///   watchlistMembers {
+    /// query GetWatchlistMembers($skip: Int, $take: Int) {
+    ///   watchlistMembers(skip: $skip, take: $take) {
     ///     __typename
     ///     items {
     ///       __typename
@@ -546,6 +649,10 @@ namespace AEOSSyncTool
     ///       ... on WatchlistMember {
     ///         id
     ///       }
+    ///     }
+    ///     pageInfo {
+    ///       __typename
+    ///       hasNextPage
     ///     }
     ///   }
     /// }
@@ -555,45 +662,74 @@ namespace AEOSSyncTool
     public partial class GetWatchlistMembersQuery : global::AEOSSyncTool.IGetWatchlistMembersQuery
     {
         private readonly global::StrawberryShake.IOperationExecutor<IGetWatchlistMembersResult> _operationExecutor;
-        public GetWatchlistMembersQuery(global::StrawberryShake.IOperationExecutor<IGetWatchlistMembersResult> operationExecutor)
+        private readonly global::StrawberryShake.Serialization.IInputValueFormatter _intFormatter;
+        public GetWatchlistMembersQuery(global::StrawberryShake.IOperationExecutor<IGetWatchlistMembersResult> operationExecutor, global::StrawberryShake.Serialization.ISerializerResolver serializerResolver)
         {
             _operationExecutor = operationExecutor ?? throw new global::System.ArgumentNullException(nameof(operationExecutor));
+            _intFormatter = serializerResolver.GetInputValueFormatter("Int");
         }
 
         global::System.Type global::StrawberryShake.IOperationRequestFactory.ResultType => typeof(IGetWatchlistMembersResult);
-        public async global::System.Threading.Tasks.Task<global::StrawberryShake.IOperationResult<IGetWatchlistMembersResult>> ExecuteAsync(global::System.Threading.CancellationToken cancellationToken = default)
+        public async global::System.Threading.Tasks.Task<global::StrawberryShake.IOperationResult<IGetWatchlistMembersResult>> ExecuteAsync(global::System.Int32? skip, global::System.Int32? take, global::System.Threading.CancellationToken cancellationToken = default)
         {
-            var request = CreateRequest();
+            var request = CreateRequest(skip, take);
             return await _operationExecutor.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
         }
 
-        public global::System.IObservable<global::StrawberryShake.IOperationResult<IGetWatchlistMembersResult>> Watch(global::StrawberryShake.ExecutionStrategy? strategy = null)
+        public global::System.IObservable<global::StrawberryShake.IOperationResult<IGetWatchlistMembersResult>> Watch(global::System.Int32? skip, global::System.Int32? take, global::StrawberryShake.ExecutionStrategy? strategy = null)
         {
-            var request = CreateRequest();
+            var request = CreateRequest(skip, take);
             return _operationExecutor.Watch(request, strategy);
         }
 
-        private global::StrawberryShake.OperationRequest CreateRequest()
+        private global::StrawberryShake.OperationRequest CreateRequest(global::System.Int32? skip, global::System.Int32? take)
         {
-            return CreateRequest(null);
+            var variables = new global::System.Collections.Generic.Dictionary<global::System.String, global::System.Object?>();
+            variables.Add("skip", FormatSkip(skip));
+            variables.Add("take", FormatTake(take));
+            return CreateRequest(variables);
         }
 
         private global::StrawberryShake.OperationRequest CreateRequest(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Object?>? variables)
         {
-            return new global::StrawberryShake.OperationRequest(id: GetWatchlistMembersQueryDocument.Instance.Hash.Value, name: "GetWatchlistMembers", document: GetWatchlistMembersQueryDocument.Instance, strategy: global::StrawberryShake.RequestStrategy.Default);
+            return new global::StrawberryShake.OperationRequest(id: GetWatchlistMembersQueryDocument.Instance.Hash.Value, name: "GetWatchlistMembers", document: GetWatchlistMembersQueryDocument.Instance, strategy: global::StrawberryShake.RequestStrategy.Default, variables: variables);
+        }
+
+        private global::System.Object? FormatSkip(global::System.Int32? value)
+        {
+            if (value is null)
+            {
+                return value;
+            }
+            else
+            {
+                return _intFormatter.Format(value);
+            }
+        }
+
+        private global::System.Object? FormatTake(global::System.Int32? value)
+        {
+            if (value is null)
+            {
+                return value;
+            }
+            else
+            {
+                return _intFormatter.Format(value);
+            }
         }
 
         global::StrawberryShake.OperationRequest global::StrawberryShake.IOperationRequestFactory.Create(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Object?>? variables)
         {
-            return CreateRequest();
+            return CreateRequest(variables!);
         }
     }
 
     /// <summary>
     /// Represents the operation service of the GetWatchlistMembers GraphQL operation
     /// <code>
-    /// query GetWatchlistMembers {
-    ///   watchlistMembers {
+    /// query GetWatchlistMembers($skip: Int, $take: Int) {
+    ///   watchlistMembers(skip: $skip, take: $take) {
     ///     __typename
     ///     items {
     ///       __typename
@@ -619,6 +755,10 @@ namespace AEOSSyncTool
     ///         id
     ///       }
     ///     }
+    ///     pageInfo {
+    ///       __typename
+    ///       hasNextPage
+    ///     }
     ///   }
     /// }
     /// </code>
@@ -626,8 +766,8 @@ namespace AEOSSyncTool
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial interface IGetWatchlistMembersQuery : global::StrawberryShake.IOperationRequestFactory
     {
-        global::System.Threading.Tasks.Task<global::StrawberryShake.IOperationResult<IGetWatchlistMembersResult>> ExecuteAsync(global::System.Threading.CancellationToken cancellationToken = default);
-        global::System.IObservable<global::StrawberryShake.IOperationResult<IGetWatchlistMembersResult>> Watch(global::StrawberryShake.ExecutionStrategy? strategy = null);
+        global::System.Threading.Tasks.Task<global::StrawberryShake.IOperationResult<IGetWatchlistMembersResult>> ExecuteAsync(global::System.Int32? skip, global::System.Int32? take, global::System.Threading.CancellationToken cancellationToken = default);
+        global::System.IObservable<global::StrawberryShake.IOperationResult<IGetWatchlistMembersResult>> Watch(global::System.Int32? skip, global::System.Int32? take, global::StrawberryShake.ExecutionStrategy? strategy = null);
     }
 
     /// <summary>
@@ -747,7 +887,7 @@ namespace AEOSSyncTool.State
             IGetWatchlistMembers_WatchlistMembers returnValue = default !;
             if (data?.__typename.Equals("WatchlistMemberCollectionSegment", global::System.StringComparison.Ordinal) ?? false)
             {
-                returnValue = new GetWatchlistMembers_WatchlistMembers_WatchlistMemberCollectionSegment(MapIGetWatchlistMembers_WatchlistMembers_ItemsArray(data.Items, snapshot));
+                returnValue = new GetWatchlistMembers_WatchlistMembers_WatchlistMemberCollectionSegment(MapIGetWatchlistMembers_WatchlistMembers_ItemsArray(data.Items, snapshot), MapNonNullableIGetWatchlistMembers_WatchlistMembers_PageInfo(data.PageInfo ?? throw new global::System.ArgumentNullException(), snapshot));
             }
             else
             {
@@ -832,6 +972,21 @@ namespace AEOSSyncTool.State
             }
 
             throw new global::System.NotSupportedException();
+        }
+
+        private global::AEOSSyncTool.IGetWatchlistMembers_WatchlistMembers_PageInfo MapNonNullableIGetWatchlistMembers_WatchlistMembers_PageInfo(global::AEOSSyncTool.State.CollectionSegmentInfoData data, global::StrawberryShake.IEntityStoreSnapshot snapshot)
+        {
+            IGetWatchlistMembers_WatchlistMembers_PageInfo returnValue = default !;
+            if (data.__typename.Equals("CollectionSegmentInfo", global::System.StringComparison.Ordinal))
+            {
+                returnValue = new GetWatchlistMembers_WatchlistMembers_PageInfo_CollectionSegmentInfo(data.HasNextPage ?? throw new global::System.ArgumentNullException());
+            }
+            else
+            {
+                throw new global::System.NotSupportedException();
+            }
+
+            return returnValue;
         }
 
         global::System.Object global::StrawberryShake.IOperationResultDataFactory.Create(global::StrawberryShake.IOperationResultDataInfo dataInfo, global::StrawberryShake.IEntityStoreSnapshot? snapshot)
@@ -1012,7 +1167,9 @@ namespace AEOSSyncTool.State
         private readonly global::StrawberryShake.IEntityIdSerializer _idSerializer;
         private readonly global::StrawberryShake.IOperationResultDataFactory<global::AEOSSyncTool.IGetWatchlistMembersResult> _resultDataFactory;
         private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.String, global::AEOSSyncTool.FaceType> _faceTypeParser;
+        private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.Int32, global::System.Int32> _intParser;
         private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.String, global::System.String> _stringParser;
+        private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.Boolean, global::System.Boolean> _booleanParser;
         private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.String, global::System.DateTimeOffset> _dateTimeParser;
         private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.String, global::System.Guid> _uUIDParser;
         public GetWatchlistMembersBuilder(global::StrawberryShake.IEntityStore entityStore, global::StrawberryShake.IEntityIdSerializer idSerializer, global::StrawberryShake.IOperationResultDataFactory<global::AEOSSyncTool.IGetWatchlistMembersResult> resultDataFactory, global::StrawberryShake.Serialization.ISerializerResolver serializerResolver)
@@ -1021,7 +1178,9 @@ namespace AEOSSyncTool.State
             _idSerializer = idSerializer ?? throw new global::System.ArgumentNullException(nameof(idSerializer));
             _resultDataFactory = resultDataFactory ?? throw new global::System.ArgumentNullException(nameof(resultDataFactory));
             _faceTypeParser = serializerResolver.GetLeafValueParser<global::System.String, global::AEOSSyncTool.FaceType>("FaceType") ?? throw new global::System.ArgumentException("No serializer for type `FaceType` found.");
+            _intParser = serializerResolver.GetLeafValueParser<global::System.Int32, global::System.Int32>("Int") ?? throw new global::System.ArgumentException("No serializer for type `Int` found.");
             _stringParser = serializerResolver.GetLeafValueParser<global::System.String, global::System.String>("String") ?? throw new global::System.ArgumentException("No serializer for type `String` found.");
+            _booleanParser = serializerResolver.GetLeafValueParser<global::System.Boolean, global::System.Boolean>("Boolean") ?? throw new global::System.ArgumentException("No serializer for type `Boolean` found.");
             _dateTimeParser = serializerResolver.GetLeafValueParser<global::System.String, global::System.DateTimeOffset>("DateTime") ?? throw new global::System.ArgumentException("No serializer for type `DateTime` found.");
             _uUIDParser = serializerResolver.GetLeafValueParser<global::System.String, global::System.Guid>("UUID") ?? throw new global::System.ArgumentException("No serializer for type `UUID` found.");
         }
@@ -1091,7 +1250,7 @@ namespace AEOSSyncTool.State
             var typename = obj.Value.GetProperty("__typename").GetString();
             if (typename?.Equals("WatchlistMemberCollectionSegment", global::System.StringComparison.Ordinal) ?? false)
             {
-                return new global::AEOSSyncTool.State.WatchlistMemberCollectionSegmentData(typename, items: UpdateIGetWatchlistMembers_WatchlistMembers_ItemsEntityArray(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "items"), entityIds));
+                return new global::AEOSSyncTool.State.WatchlistMemberCollectionSegmentData(typename, items: UpdateIGetWatchlistMembers_WatchlistMembers_ItemsEntityArray(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "items"), entityIds), pageInfo: DeserializeNonNullableIGetWatchlistMembers_WatchlistMembers_PageInfo(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "pageInfo")));
             }
 
             throw new global::System.NotSupportedException();
@@ -1246,20 +1405,66 @@ namespace AEOSSyncTool.State
 
             return _uUIDParser.Parse(obj.Value.GetString()!);
         }
+
+        private global::AEOSSyncTool.State.CollectionSegmentInfoData DeserializeNonNullableIGetWatchlistMembers_WatchlistMembers_PageInfo(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            var typename = obj.Value.GetProperty("__typename").GetString();
+            if (typename?.Equals("CollectionSegmentInfo", global::System.StringComparison.Ordinal) ?? false)
+            {
+                return new global::AEOSSyncTool.State.CollectionSegmentInfoData(typename, hasNextPage: DeserializeNonNullableBoolean(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "hasNextPage")));
+            }
+
+            throw new global::System.NotSupportedException();
+        }
+
+        private global::System.Boolean DeserializeNonNullableBoolean(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            return _booleanParser.Parse(obj.Value.GetBoolean()!);
+        }
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial class WatchlistMemberCollectionSegmentData
     {
-        public WatchlistMemberCollectionSegmentData(global::System.String __typename, global::System.Collections.Generic.IReadOnlyList<global::StrawberryShake.EntityId?>? items = default !)
+        public WatchlistMemberCollectionSegmentData(global::System.String __typename, global::System.Collections.Generic.IReadOnlyList<global::StrawberryShake.EntityId?>? items = default !, global::AEOSSyncTool.State.CollectionSegmentInfoData? pageInfo = default !)
         {
             this.__typename = __typename ?? throw new global::System.ArgumentNullException(nameof(__typename));
             Items = items;
+            PageInfo = pageInfo;
         }
 
         public global::System.String __typename { get; }
 
         public global::System.Collections.Generic.IReadOnlyList<global::StrawberryShake.EntityId?>? Items { get; }
+
+        ///<summary>Information to aid in pagination.</summary>
+        public global::AEOSSyncTool.State.CollectionSegmentInfoData? PageInfo { get; }
+    }
+
+    ///<summary>Information about the offset pagination.</summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class CollectionSegmentInfoData
+    {
+        public CollectionSegmentInfoData(global::System.String __typename, global::System.Boolean? hasNextPage = default !)
+        {
+            this.__typename = __typename ?? throw new global::System.ArgumentNullException(nameof(__typename));
+            HasNextPage = hasNextPage;
+        }
+
+        public global::System.String __typename { get; }
+
+        ///<summary>Indicates whether more items exist following the set defined by the clients arguments.</summary>
+        public global::System.Boolean? HasNextPage { get; }
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]

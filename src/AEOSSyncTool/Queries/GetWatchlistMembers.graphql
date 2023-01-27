@@ -1,6 +1,6 @@
-query GetWatchlistMembers{
+query GetWatchlistMembers($skip: Int, $take: Int){
 
-  watchlistMembers{
+  watchlistMembers(skip: $skip, take: $take){
     items{
       id
       fullName
@@ -13,6 +13,8 @@ query GetWatchlistMembers{
           imageDataId
         }
       }
+    } pageInfo{
+      hasNextPage
     }
   }
   
