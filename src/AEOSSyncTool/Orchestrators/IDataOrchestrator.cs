@@ -3,8 +3,8 @@ using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.AEOSSync
 {
-    public interface IBridge
+    public interface IDataOrchestrator
     {
-        Task ConnectToAEOS();
+        Task Synchronize();
     }
 }
