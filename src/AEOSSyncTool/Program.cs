@@ -25,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
                 var logger = ConfigureLogger(args, configurationRoot);
 
-                Log.Information("Starting up.");
+                Log.Information("Synchronization Tool Starting up.");
 
                 var hostBuilder = CreateHostBuilder(args, logger, configurationRoot);
                 using var host = hostBuilder.Build();
@@ -82,7 +82,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                             httpClient.BaseAddress = new Uri(url);
                         });
             services.AddSingleton<ILogger>(logger);
-            services.AddSingleton<ISmartFaceDataAdapter, AeosDataAdapter>();
+            services.AddSingleton<ISmartFaceDataAdapter, SmartFaceDataAdapter>();
+            services.AddSingleton<IAeosDataAdapter, AeosDataAdapter>();
             services.AddSingleton<IDataOrchestrator, DataOrchestrator>();
             services.AddHostedService<MainHostedService>();
 

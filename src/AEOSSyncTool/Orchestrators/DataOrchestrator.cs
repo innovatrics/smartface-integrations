@@ -18,84 +18,48 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly ISmartFaceDataAdapter AEOSSync;
+        private readonly ISmartFaceDataAdapter smartFaceDataAdapter;
+        private readonly IAeosDataAdapter aeosDataAdapter;
 
         private readonly SmartFaceGraphQLClient graphQlClient;       
 
         public DataOrchestrator(
             ILogger logger,
             IConfiguration configuration,
-            ISmartFaceDataAdapter AEOSSync,
-            SmartFaceGraphQLClient graphQlClient
+            SmartFaceGraphQLClient graphQlClient,
+            ISmartFaceDataAdapter smartFaceDataAdapter,
+            IAeosDataAdapter aeosDataAdapter
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.AEOSSync = AEOSSync ?? throw new ArgumentNullException(nameof(AEOSSync));
+            this.smartFaceDataAdapter = smartFaceDataAdapter ?? throw new ArgumentNullException(nameof(smartFaceDataAdapter));
             this.graphQlClient = graphQlClient ?? throw new ArgumentNullException(nameof(graphQlClient));
-            
+            this.aeosDataAdapter = aeosDataAdapter ?? throw new ArgumentNullException(nameof(aeosDataAdapter));
         }
 
         public async Task Synchronize()
         {
 
-            string SmartFaceURL = configuration.GetValue<string>("aeossync:SmartFaceServer");       
-            string SmartFaceGraphQL = configuration.GetValue<string>("aeossync:SmartFaceGraphQL");
-            string AEOSendpoint = configuration.GetValue<string>("aeossync:AeosServerWdsl");
-            string AEOSusername = configuration.GetValue<string>("aeossync:AeosServerUser");
-            string AEOSpassword = configuration.GetValue<string>("aeossync:AeosServerPass");
-
-            this.logger.Information("Data Orchestrator Initalized");
-
-            Console.WriteLine("SmartFace2AEOS Sync Initiated");
+          
+            this.logger.Debug("Data Orchestrator Initalized");            
 
             // ###
             //  1.
             // ### Get Data from SmartFace
             
-            //int SmartFacePageNumber = 1;
-            int SmartFacePageSize = 100;
-            
-            bool allMembers = false;
+            var SmartFaceAllMembers = await this.smartFaceDataAdapter.getEmployees();
 
-            List<SmartFaceMember> SmartFaceAllMembers = new List<SmartFaceMember>();
-
-           /*  // Dependency injection to ease initialization of GraphQL Client
-            var hostBuilder = Host
-                .CreateDefaultBuilder(args)
-                .ConfigureServices((context, services) =>
-                {
-                    services.AddSmartFaceGraphQLClient()
-                        .ConfigureHttpClient((serviceProvider, httpClient) =>
-                        {
-                            httpClient.BaseAddress = new Uri(SmartFaceGraphQL);
-                        });
-                });
-            
-            using var host = hostBuilder.Build();
-            var graphQlClient = host.Services.GetRequiredService<SmartFaceGraphQLClient>();
- */
-            while(allMembers == false)
+            this.logger.Debug("Employees defined in SmartFace");
+            foreach (var eachMember in SmartFaceAllMembers)
             {
-                { 
-                    var watchlistMembers123 = await graphQlClient.GetWatchlistMembers.ExecuteAsync(SmartFaceAllMembers.Count,SmartFacePageSize);
-                    foreach (var wm in watchlistMembers123.Data.WatchlistMembers.Items)
-                    {
-                        var imageDataId = wm.Tracklet.Faces.OrderBy(f=> f.CreatedAt).FirstOrDefault(f=> f.FaceType == FaceType.Regular)?.ImageDataId;
-                        //Console.WriteLine($"{wm.Id}\t{imageDataId}\t{wm.DisplayName}");
-                        SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
-                        
-                    }
-                    if(watchlistMembers123.Data.WatchlistMembers.PageInfo.HasNextPage == false)
-                    {
-                        allMembers = true;
-                    }                        
-                }
-            }
-
-            // REST API Read All the WatchlistMembers, do it per pages for the case there is too many members.
+                this.logger.Debug(eachMember.ReadMember());
+            } 
+            this.logger.Debug($"The amount of SmartFace users is {SmartFaceAllMembers.Count}");    
            
            /*
+            // REST API Read All the WatchlistMembers, do it per pages for the case there are too many members.
+            
             while(allMembers == false)
             {
 
@@ -138,188 +102,93 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
                 }
             }
-            */
-
-            // check all members
-            Console.WriteLine("\nEmployees defined in SmartFace");
-            foreach (var eachMember in SmartFaceAllMembers)
-            {
-                Console.WriteLine("Member: {0},{1},{2}", eachMember.Id, eachMember.fullName, eachMember.displayName);
-                
-            } 
-            Console.WriteLine($"The amount of SmartFace users is {SmartFaceAllMembers.Count}");
+            */          
 
             // ###
             //  2.
             // ### Get Data from AEOS       
 
-            // aeosSoapUser
-            // Innovatrics1
-
-            // Initiate SOAP Setup START
-            // load this information from the appsettings.json instead!
-
+            var AeosAllMembers = await this.aeosDataAdapter.getEmployees();
             
-            const string SmartFaceIdFreefield = "SmartFaceId";
-            var endpoint = new Uri(AEOSendpoint);
-            var endpointBinding = new BasicHttpBinding()
-            {
-                MaxBufferSize = int.MaxValue,
-                ReaderQuotas = System.Xml.XmlDictionaryReaderQuotas.Max,
-                MaxReceivedMessageSize = int.MaxValue,
-                AllowCookies = true,
-                Security =
-                {
-                    Mode = (endpoint.Scheme == "https") ? BasicHttpSecurityMode.Transport : BasicHttpSecurityMode.None,
-                    Transport =
-                    {
-                        ClientCredentialType = HttpClientCredentialType.Basic
-                    }
-                }
-            };
-            var endpointAddress = new EndpointAddress(endpoint);
-
-            var client = new AeosWebServiceTypeClient(endpointBinding, endpointAddress);
-            client.ClientCredentials.ServiceCertificate.SslCertificateAuthentication = new X509ServiceCertificateAuthentication()
-            {
-                CertificateValidationMode = X509CertificateValidationMode.None,
-                RevocationMode = X509RevocationMode.NoCheck
-            };
-            client.ClientCredentials.UserName.UserName = AEOSusername;
-            client.ClientCredentials.UserName.Password = AEOSpassword;
-
-            // Initiate SOAP Setup END
-            bool allEmployees = false;
-            int EmployeesPageSize = 100; //because the SOAP is paginated by 1000...
-            int EmployeesPageNumber = 0;
-
-            List<AeosMember> AeosAllMembers = new List<AeosMember>();
-
-            // CALL
-            while(allEmployees == false)
-            {
-                EmployeesPageNumber += 1;
-                var esi1 = new EmployeeSearchInfo();
-                esi1.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
-                //esi1.EmployeeInfo.Id = 52;
-                //esi1.EmployeeInfo.IdSpecified = true;
-                //esi1.EmployeeInfo.Gender = "Male";
-
-                // because of the pagination we need to add searching information to force the pagination
-                esi1.SearchRange = new SearchRange();
-                if(EmployeesPageNumber == 1)
-                {
-                    esi1.SearchRange.startRecordNo = 0;
-                }
-                else
-                {
-                    esi1.SearchRange.startRecordNo = (((EmployeesPageNumber)*(EmployeesPageSize))-EmployeesPageSize);
-                }
-                esi1.SearchRange.nrOfRecords = EmployeesPageSize;
-                esi1.SearchRange.nrOfRecordsSpecified = true;
-
-                var employees = await client.findEmployeeAsync(esi1);
-                
-                // let's put them together to a list
-                foreach (var employee in employees.EmployeeList)
-                {   
-                    //var smartFaceId = AeosExtensions.GetFreefieldValue(employee.EmployeeInfo, "SmartFaceId");
-                    //smartFaceId = employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield);
-
-                    //Console.WriteLine($"{employee.EmployeeInfo.Id}\t{employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield)}\t{employee.EmployeeInfo.FirstName}\t{employee.EmployeeInfo.LastName}");
-                    AeosAllMembers.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName));
-                } 
-
-                 if(employees.EmployeeList.Length == EmployeesPageSize)
-                {
-                    //Console.WriteLine($"End of page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Length}. Number of results match the pagination limit. Another page will be checked.");
-                }
-                else
-                {
-                    allEmployees = true;
-                    //Console.WriteLine($"End of last page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Length}.");
-                    break;
-                }            
-                
-            }
-
-            // check all members
-            Console.WriteLine("\nEmployees defined in Aeos");
+            this.logger.Debug("Employees defined in Aeos");
             foreach (var eachMember in AeosAllMembers)
             {
-                Console.WriteLine("Member: {0},{1},{2},{3}", eachMember.Id, eachMember.SmartFaceId, eachMember.FirstName, eachMember.LastName);
+                this.logger.Debug(eachMember.ReadMember());
             }
-            Console.WriteLine($"The amount of AEOS users is {AeosAllMembers.Count}");
+            this.logger.Debug($"The amount of AEOS users is {AeosAllMembers.Count}"); // TODO something does not work needs fixing
 
             // ###
             //  3.
             // ### Compare the list of users between Aeos and SmartFace
 
-            List<SmartFaceMember> EmployeesToBeAdded = new List<SmartFaceMember>();
-            List<SmartFaceMember> EmployeesToBeRemoved = new List<SmartFaceMember>();
-            List<SmartFaceMember> EmployeesToBeUpdated = new List<SmartFaceMember>();
+            List<AeosMember> EmployeesToBeAdded = new List<AeosMember>();
+            List<AeosMember> EmployeesToBeRemoved = new List<AeosMember>();
+            List<AeosMember> EmployeesToBeUpdated = new List<AeosMember>();
 
             if(SmartFaceAllMembers != null & AeosAllMembers != null)
             {
-                Console.WriteLine("\nComparing Lists:");
+                this.logger.Debug("Comparing Lists:");
                 foreach (var SFMember in SmartFaceAllMembers)
-                {
-                    //Console.WriteLine($"SF Member {SFMember.fullName} with id {SFMember.Id}: {AeosAllMembers.Where(i => i.SmartFaceId == SFMember.Id).Select(i => i.SmartFaceId).FirstOrDefault()}");
-                    
-                    if(AeosAllMembers.Where(i => i.SmartFaceId == SFMember.Id).Select(i => i.SmartFaceId).FirstOrDefault() != null)
+                {   
+                    var FoundAeosMember = AeosAllMembers.Where(i => i.SmartFaceId == SFMember.Id).FirstOrDefault();
+                    if(FoundAeosMember != null)
                     {
-                        Console.WriteLine($"SF Member {SFMember.fullName} with id {SFMember.Id} HAS a copy in AEOS.");
-                        
-                        // TODO
-                        // Check if an update is actually needed, if so do the update
-                        if(1==2)
+                        this.logger.Debug($"SF Member {SFMember.fullName} with id {SFMember.Id} HAS a copy in AEOS.");
+
+                        long tempid = (long)1;
+                        if(!AeosExtensions.CompareUsers(FoundAeosMember,SFMember))
                         {
-                            //EmployeesToBeUpdated.Add(new SmartFaceMember(SFMember.Id,SFMember.fullName,SFMember.displayName));
+                            // this needs to be tested
+                            this.logger.Information($"User {SFMember.fullName} with id {SFMember.Id} needs to be updated as there is a difference in data");
+                            EmployeesToBeUpdated.Add(new AeosMember(tempid,FoundAeosMember.SmartFaceId, AeosExtensions.getFirstName(SFMember.fullName), AeosExtensions.getLastName(SFMember.fullName)));
                         }
                     }
                     else
                     {
-                        Console.WriteLine($"SF Member {SFMember.fullName} with id {SFMember.Id} DOES NOT have a copy in AEOS.");
-                        EmployeesToBeAdded.Add(new SmartFaceMember(SFMember.Id,SFMember.fullName,SFMember.displayName));
-                        
-
+                        long tempid = (long)1;
+                        this.logger.Debug($"SF Member {SFMember.fullName} with id {SFMember.Id} DOES NOT have a copy in AEOS.");
+                        EmployeesToBeAdded.Add(new AeosMember(tempid,SFMember.Id,AeosExtensions.getFirstName(SFMember.fullName), AeosExtensions.getLastName(SFMember.fullName)));                                                
                     }
-
-                    /* if(SmartFaceAllMembers.Where(i => i.SmartFaceId == SFMember.Id).Select(i => i.SmartFaceId).FirstOrDefault() != null)
-                    {
-                        
-                    }
-                    {
-                        // TODO
-                        // add a logic to check if it is in AEOS but not in SF
-                        Console.WriteLine($"TODO");
-                        EmployeesToBeRemoved.Add(new SmartFaceMember(SFMember.Id,SFMember.fullName,SFMember.displayName));
-                        
-                    } */
-                     
                 }
+
+                foreach (var Member in AeosAllMembers)
+                {
+                    if(!(SmartFaceAllMembers.Where(i => i.Id == Member.SmartFaceId).Select(i => i.Id).FirstOrDefault() != null))
+                    {
+                        this.logger.Debug($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} and SmartFaceId {Member.SmartFaceId} will be removed.");
+                        EmployeesToBeRemoved.Add(new AeosMember(Member.Id,Member.SmartFaceId,Member.FirstName,Member.LastName));   
+                    }
+                }
+            }
+
+            // TODO ADDING USER
+            this.logger.Information($"The amount of employees to be added to the AEOS: {EmployeesToBeAdded.Count}");
+            // Create an user in AEOS matching the SmartFace Watchlist Member
+            foreach (var member in EmployeesToBeAdded)
+            {
 
             }
 
 
-            // TODO ADDING USER
-            Console.WriteLine($"\nThe amount of employees to be added to the AEOS: {EmployeesToBeAdded.Count}");
-            // Create an user in AEOS matching the SmartFace Watchlist Member
-
             // Create an identifier matching the SmartFaceID and add it to the Employee
+            
+
+            
 
 
             // TODO UPDATING USER
             // Update the Employee in AEOS to match data from the SmartFace
-            Console.WriteLine($"The amount of employees to be added in the AEOS: {EmployeesToBeUpdated.Count}");
+            this.logger.Information($"The amount of employees to be updated in the AEOS: {EmployeesToBeUpdated.Count}");
 
 
             // TODO REMOVING USER
             // Remove the employees that do not exist in the SmartFace anymore so they do not exist in the AEOS anymore
-            Console.WriteLine($"The amount of employees to be removed from the AEOS: {EmployeesToBeRemoved.Count}");
+            this.logger.Information($"The amount of employees to be removed from the AEOS: {EmployeesToBeRemoved.Count}");
 
 
-            await this.AEOSSync.OpenAsync();
         }
+
+
+
     }
 }

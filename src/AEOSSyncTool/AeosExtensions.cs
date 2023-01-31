@@ -13,6 +13,48 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             return freeField.value;
         }
 
+        public static string getFirstName(string fullName)
+        {
+            var names = fullName.Split(' ');
+            if(names.Length > 0)
+            {
+                return fullName.Split(' ')[0];
+            }
+            else
+            {
+                return "";
+            }
+        }
+
+        public static string getLastName(string fullName)
+        {   
+            var names = fullName.Split(' ');
+            string returnValue = "";
+
+            if(names.Length > 1)
+            {
+                for (int x=1; x<names.Length ;x++)
+                {
+                    returnValue = returnValue + " " + (string)names[x];
+                }
+                return returnValue.Trim();
+            }
+            else
+            {
+                return "";
+            }
+        }
+
+        public static bool CompareUsers(AeosMember aeosMember, SmartFaceMember smartFaceMember)
+        {
+            // future checks possible
+            if(smartFaceMember.fullName != aeosMember.FirstName + " " + aeosMember.LastName)
+            {
+                return false;
+            }
+
+            return true;
+        }
 
     }
 }

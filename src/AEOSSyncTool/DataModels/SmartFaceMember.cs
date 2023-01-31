@@ -10,4 +10,9 @@ public class SmartFaceMember
         this.fullName = fullName;
         this.displayName = displayName;
     }
+
+    public string ReadMember()
+    {
+        return $"Member: {Id},{fullName},{displayName}";   
+    }
 }

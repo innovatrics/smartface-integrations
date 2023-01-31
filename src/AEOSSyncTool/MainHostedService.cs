@@ -30,7 +30,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            this.logger.Information($"{nameof(MainHostedService)} is starting");
+            this.logger.Debug($"{nameof(MainHostedService)} is starting");
 
             timerPing = new System.Timers.Timer();
             this.timerStartSync = DateTime.UtcNow;
@@ -40,7 +40,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            this.logger.Information($"{nameof(MainHostedService)} is stopping");
+            this.logger.Debug($"{nameof(MainHostedService)} is stopping");
             var timeDiff = DateTime.UtcNow - this.timerStartSync;
             this.logger.Information($"Finishing Synchronization at {DateTime.UtcNow}");
             this.logger.Information("Synchronization took: {@ms} s", timeDiff.TotalSeconds);

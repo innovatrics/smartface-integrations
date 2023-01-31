@@ -1,14 +1,13 @@
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Innovatrics.SmartFace.Integrations.AEOSSync
 {
     public interface IAeosDataAdapter
     {
-        //Task OpenAsync(string checkpoint_id, string ticket_id, int chip_id = 12);
-        Task OpenAsync();
-        Task getEmployees();
-        Task createEmployees();
+        Task<IList <AeosMember>>  getEmployees();
+        Task<bool> createEmployees(string AEOSendpoint, string AEOSusername, string AEOSpassword, List<AeosMember> member);
         Task updateEmployees();
         Task removeEmployees();
     }

@@ -13,4 +13,9 @@ public class AeosMember
         this.FirstName = FirstName;
         this.LastName = LastName;
     }
+
+    public string ReadMember()
+    {
+            return $"Member: {Id},{SmartFaceId},{FirstName},{LastName}";   
+    }
 }
