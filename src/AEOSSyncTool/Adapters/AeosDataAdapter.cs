@@ -26,7 +26,9 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         private string AEOSusername;
         private string AEOSpassword;
         private int SmartFaceGraphQLPageSize;
-        private string SmartFaceIdFreefield = "SmartFaceId";
+        private string SmartFaceIdFreefield;
+        private string SmartFaceIdentifier;
+
         private AeosWebServiceTypeClient client;
 
         public AeosDataAdapter(
@@ -46,6 +48,9 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             AEOSServerPageSize = configuration.GetValue<int>("aeossync:AeosServerPageSize");
             AEOSusername = configuration.GetValue<string>("aeossync:AeosServerUser");
             AEOSpassword = configuration.GetValue<string>("aeossync:AeosServerPass");
+            SmartFaceIdFreefield = configuration.GetValue<string>("aeossync:AeosSmartFaceFreefield");
+            SmartFaceIdentifier = configuration.GetValue<string>("aeossync:AeosSmartFaceIdentifier");
+
 
             if(AEOSendpoint == null)
             {
@@ -110,26 +115,26 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             while(allEmployees == false)
             {
                 EmployeesPageNumber += 1;
-                var esi1 = new EmployeeSearchInfo();
-                esi1.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
+                var employeeSearch = new EmployeeSearchInfo();
+                employeeSearch.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
                 //esi1.EmployeeInfo.Id = 52;
                 //esi1.EmployeeInfo.IdSpecified = true;
                 //esi1.EmployeeInfo.Gender = "Male";
 
                 // because of the pagination we need to add searching information to force the pagination
-                esi1.SearchRange = new SearchRange();
+                employeeSearch.SearchRange = new SearchRange();
                 if(EmployeesPageNumber == 1)
                 {
-                    esi1.SearchRange.startRecordNo = 0;
+                    employeeSearch.SearchRange.startRecordNo = 0;
                 }
                 else
                 {
-                    esi1.SearchRange.startRecordNo = (((EmployeesPageNumber)*(EmployeesPageSize))-EmployeesPageSize);
+                    employeeSearch.SearchRange.startRecordNo = (((EmployeesPageNumber)*(EmployeesPageSize))-EmployeesPageSize);
                 }
-                esi1.SearchRange.nrOfRecords = EmployeesPageSize;
-                esi1.SearchRange.nrOfRecordsSpecified = true;
+                employeeSearch.SearchRange.nrOfRecords = EmployeesPageSize;
+                employeeSearch.SearchRange.nrOfRecordsSpecified = true;
 
-                var employees = await client.findEmployeeAsync(esi1);
+                var employees = await client.findEmployeeAsync(employeeSearch);
                 
                 // let's put them together to a list
                 foreach (var employee in employees.EmployeeList)
@@ -155,10 +160,17 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             return AeosAllMembersReturn;
         }
 
-        public async Task<bool> createEmployees(string AEOSendpoint, string AEOSusername, string AEOSpassword, List<AeosMember> member)
+        public async Task<bool> createEmployees(AeosMember aeosMember, long badgeIdentifierType, long FreefieldDefinitionId)
         {
-            this.logger.Information("Creating Employees");
 
+            var member = aeosMember;
+            this.logger.Information($"Creating Employee {member.FirstName} {member.LastName} width id {member.SmartFaceId}");
+            var encodedSmartFaceId = Encoding.UTF8.GetBytes(member.SmartFaceId);
+            if(encodedSmartFaceId.Length > 28)
+            {
+                this.logger.Information($"The ID is longer than supported (28 bytes). {member.SmartFaceId} has {encodedSmartFaceId.Length} bytes");
+                return false;
+            }
 
             /*
             // addEmployee
@@ -181,36 +193,96 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                 </soapenv:Body>
             </soapenv:Envelope>       
             */
+            
 
-            /*
-            //  findIdentifierType
-            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sch="http://www.nedap.com/aeosws/schema">
-            <soapenv:Header/>
-            <soapenv:Body>
-                <sch:IdentifierTypeSearchInfo>
-                    <sch:Name>SmartFaceBadge</sch:Name>
-                </sch:IdentifierTypeSearchInfo>
-            </soapenv:Body>
-            </soapenv:Envelope>
-            */
+            var addEmployee = new addEmployee() 
+            {
+                EmployeeAdd = new EmployeeInfo() 
+                {
+                    CarrierType = "Employee",
+                    Freefield = new[] 
+                    {
+                        new FreeFieldInfo() 
+                        {
+                            // TODO DEFINITION ID NEEDED
+                            DefinitionId = FreefieldDefinitionId,
+                            Name = SmartFaceIdFreefield,
+                            value = member.SmartFaceId
+                        }
+                    },
+                    FirstName = member.FirstName,
+                    LastName = member.LastName
+                }
+            };
 
-            /*
-            // assignToken
-            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sch="http://www.nedap.com/aeosws/schema">
+            var addEmployeeResponse = await client.addEmployeeAsync(addEmployee.EmployeeAdd);
+            if(addEmployeeResponse.EmployeeResult.Id != null)
+            {   
+                
+            /* var addEmployee = new addEmployee();
+            addEmployee.EmployeeAdd = new EmployeeInfo();
+            addEmployee.EmployeeAdd.CarrierType = "Employee";
+            addEmployee.EmployeeAdd.Freefield = new FreeFieldInfo[1];
+            addEmployee.EmployeeAdd.Freefield[0] = new FreeFieldInfo();
+            addEmployee.EmployeeAdd.Freefield[0].Name = "SmartFaceId";
+            addEmployee.EmployeeAdd.Freefield[0].value = member.SmartFaceId;
+            addEmployee.EmployeeAdd.FirstName = member.FirstName;
+            addEmployee.EmployeeAdd.LastName = member.LastName; */
+
+                var addIdentifier = new assignToken();
+                addIdentifier.IdentifierAdd = new CarrierIdentifierData();
+                addIdentifier.IdentifierAdd.CarrierId = addEmployeeResponse.EmployeeResult.Id;
+                addIdentifier.IdentifierAdd.IdentifierType = badgeIdentifierType;
+                addIdentifier.IdentifierAdd.BadgeNumber = member.SmartFaceId;
+
+                var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
+
+                if(addIdentifierResponse.IdentifierResult.Id != null)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+                /*
+                //  findIdentifierType
+                <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sch="http://www.nedap.com/aeosws/schema">
                 <soapenv:Header/>
                 <soapenv:Body>
-                    <sch:IdentifierAdd>
-                        <sch:CarrierId>userID</sch:CarrierId>
-                        <sch:IdentifierType>52</sch:IdentifierType>
-                        <sch:BadgeNumber>1113222</sch:BadgeNumber>
-                        <!--Optional:-->
-                        
-                    </sch:IdentifierAdd>
+                    <sch:IdentifierTypeSearchInfo>
+                        <sch:Name>SmartFaceBadge</sch:Name>
+                    </sch:IdentifierTypeSearchInfo>
                 </soapenv:Body>
                 </soapenv:Envelope>
-            */
+                */
 
-            return false;
+                /*
+                // assignToken
+                <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:sch="http://www.nedap.com/aeosws/schema">
+                    <soapenv:Header/>
+                    <soapenv:Body>
+                        <sch:IdentifierAdd>
+                            <sch:CarrierId>userID</sch:CarrierId>
+                            <sch:IdentifierType>52</sch:IdentifierType>
+                            <sch:BadgeNumber>1113222</sch:BadgeNumber>
+                            <!--Optional:-->
+                            
+                        </sch:IdentifierAdd>
+                    </soapenv:Body>
+                    </soapenv:Envelope>
+                */
+
+                // addEmployeeResponse.EmployeeResult.Id;
+
+                
+            }
+            else
+            {
+                throw new InvalidOperationException("No user was generated.");
+                return false;
+            }
+    
         }
 
         public async Task updateEmployees()
@@ -221,6 +293,42 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         public async Task removeEmployees()
         {
             this.logger.Information("Removing Employees");
+        }
+
+        public async Task<long> getBadgeIdentifierType(){
+            this.logger.Information("getSmartfaceBadgeIdentifierType");
+
+            var findIdentifierType = new findIdentifierType();
+            findIdentifierType.IdentifierTypeSearchInfo = new IdentifierTypeInfo();
+            findIdentifierType.IdentifierTypeSearchInfo.Name = SmartFaceIdentifier;
+            var getIdentifierType = await client.findIdentifierTypeAsync(findIdentifierType.IdentifierTypeSearchInfo);
+            
+            if(getIdentifierType.IdentifierTypeList.Length > 0)
+            {
+                return getIdentifierType.IdentifierTypeList[0].Id;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        public async Task<long> getFreefieldDefinitionId(){
+            this.logger.Information("getFreefieldDefinitionId");
+            
+            var getFreefieldId = new findFreeFieldDefinition();
+            getFreefieldId.FreeFieldDefinitionSearchInfo = new FreeFieldDefinitionSearchInfo();
+            getFreefieldId.FreeFieldDefinitionSearchInfo.Name = SmartFaceIdFreefield;
+            var getFreefildDefId = await client.findFreeFieldDefinitionAsync(getFreefieldId.FreeFieldDefinitionSearchInfo);
+
+            if(getFreefildDefId.FreeFieldDefinitionList.Length > 0)
+            {
+                return getFreefildDefId.FreeFieldDefinitionList[0].Id;
+            }
+            else
+            {
+                return 0;
+            }
         }
     }
 }

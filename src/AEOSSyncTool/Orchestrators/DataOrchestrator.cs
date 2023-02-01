@@ -41,8 +41,13 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         public async Task Synchronize()
         {
 
-          
             this.logger.Debug("Data Orchestrator Initalized");            
+
+            // ###
+            //  0.
+            // ### Get all the supporting data at the beginning of the cycle so it is fresh
+            SupportingData SupportData = new SupportingData(await aeosDataAdapter.getFreefieldDefinitionId(),await aeosDataAdapter.getBadgeIdentifierType());
+            //this.logger.Information($"Freefield: {SupportData.FreefieldDefinitionId}, Badge: {SupportData.SmartFaceBadgeIdentifierType}" );
 
             // ###
             //  1.
@@ -166,7 +171,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             // Create an user in AEOS matching the SmartFace Watchlist Member
             foreach (var member in EmployeesToBeAdded)
             {
-
+                var returnValue = await aeosDataAdapter.createEmployees(member, SupportData.SmartFaceBadgeIdentifierType, SupportData.FreefieldDefinitionId);
+                this.logger.Information($"User created function {member.SmartFaceId} success?: {returnValue}");
             }
 
 
