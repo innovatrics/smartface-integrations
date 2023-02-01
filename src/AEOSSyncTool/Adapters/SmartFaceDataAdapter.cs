@@ -60,7 +60,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                 throw new ArgumentNullException(nameof(SmartFaceURL));
             }
 
-            this.logger.Information("Receiving Employees from SmartFace");
+            this.logger.Debug("Receiving Employees from SmartFace");
             
             // SmartFaceAllMembers.Add(new SmartFaceMember("id123","fullName123","displayname123"));
          
