@@ -208,18 +208,21 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             }
             if(EmployeesToBeUpdatedSuccessCount > 0 || EmployeesToBeUpdatedFailCount > 0)
             {
+                this.logger.Information($"Creating new users in the AEOS:\tSuccessful: {EmployeesToBeUpdatedSuccessCount}\tFailed: {EmployeesToBeUpdatedFailCount}");
+            }
+
+            if(EmployeesToBeUpdatedSuccessCount > 0 || EmployeesToBeUpdatedFailCount > 0)
+            {
                 this.logger.Information($"Updating users in the AEOS:\tSuccessful: {EmployeesToBeUpdatedSuccessCount}\tFailed: {EmployeesToBeUpdatedFailCount}");
             }
 
-            // TODO REMOVING USER
-            // Remove the employees that do not exist in the SmartFace anymore so they do not exist in the AEOS anymore
-            this.logger.Information($"The amount of employees to be removed from the AEOS: {EmployeesToBeRemoved.Count}");
+            this.logger.Debug($"The amount of employees to be removed from the AEOS: {EmployeesToBeRemoved.Count}");
 
             int EmployeesToBeRemovedFailCount = 0;
             int EmployeesToBeRemovedSuccessCount = 0;
             foreach (var member in EmployeesToBeRemoved)
             {
-                this.logger.Information($"test->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId} member.smartfaceId {member.SmartFaceId}");
+                this.logger.Debug($"test->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId} member.smartfaceId {member.SmartFaceId}");
                 if(member.SmartFaceId != null)
                 {
                     var returnValue = await aeosDataAdapter.removeEmployee(member,SupportData.FreefieldDefinitionId);
@@ -232,22 +235,16 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                     {
                         EmployeesToBeRemovedFailCount += 1;
                     }
-
-                    if(EmployeesToBeRemovedSuccessCount > 0 || EmployeesToBeRemovedFailCount > 0)
-                    {
-                        this.logger.Information($"Removing users in the AEOS:\tSuccessful: {EmployeesToBeRemovedSuccessCount}\tFailed: {EmployeesToBeRemovedFailCount}");
-                    }
                 }
                 else
                 {
                     EmployeesToBeRemovedFailCount += 1;
                 }
-
             }
-
+            if(EmployeesToBeRemovedSuccessCount > 0 || EmployeesToBeRemovedFailCount > 0)
+            {
+                this.logger.Information($"Removing users in the AEOS:\tSuccessful: {EmployeesToBeRemovedSuccessCount}\tFailed: {EmployeesToBeRemovedFailCount}");
+            }
         }
-
-
-
     }
 }
