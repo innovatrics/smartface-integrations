@@ -61,8 +61,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             }
 
             this.logger.Debug("Receiving Employees from SmartFace");
-            
-            // SmartFaceAllMembers.Add(new SmartFaceMember("id123","fullName123","displayname123"));
          
             bool allMembers = false;
 
@@ -71,15 +69,15 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             while(allMembers == false)
             {
                 { 
-                    var watchlistMembers123 = await graphQlClient.GetWatchlistMembers.ExecuteAsync(SmartFaceAllMembers.Count,SmartFaceGraphQLPageSize);
-                    foreach (var wm in watchlistMembers123.Data.WatchlistMembers.Items)
+                    var watchlistMembers = await graphQlClient.GetWatchlistMembers.ExecuteAsync(SmartFaceAllMembers.Count,SmartFaceGraphQLPageSize);
+                    foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                     {
                         var imageDataId = wm.Tracklet.Faces.OrderBy(f=> f.CreatedAt).FirstOrDefault(f=> f.FaceType == FaceType.Regular)?.ImageDataId;
                         this.logger.Debug($"{wm.Id}\t{imageDataId}\t{wm.DisplayName}");
                         SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
                         
                     }
-                    if(watchlistMembers123.Data.WatchlistMembers.PageInfo.HasNextPage == false)
+                    if(watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
                     {
                         allMembers = true;
                     }                        
@@ -89,17 +87,68 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             return SmartFaceAllMembers;
         }
 
-        public async Task createEmployees()
+        public async Task<bool> createEmployee(SmartFaceMember member)
         {
             this.logger.Information("Creating Employees");
+
+            
+            /*
+            // REST API Read All the WatchlistMembers, do it per pages for the case there are too many members.
+            
+            while(allMembers == false)
+            {
+
+                
+                // lets try it with graphQL instead
+
+                var httpClient = new HttpClient();
+                var requestUrl = SmartFaceURL+"/api/v1/WatchlistMembers"+"?PageNumber="+SmartFacePageNumber+"&PageSize="+SmartFacePageSize;
+                var content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
+                var result = await httpClient.GetAsync(requestUrl);
+                string resultContent = await result.Content.ReadAsStringAsync();
+
+                //Console.WriteLine(resultContent);
+
+                dynamic restResults = JsonConvert.DeserializeObject(resultContent);
+
+                //Console.WriteLine((stuff.items).Count);
+                //Console.WriteLine(stuff.items[0].fullName);
+                
+
+                // add members from the rest api call into List<member> SmartFaceAllMembers
+                foreach (var person in restResults.items)
+                {
+                    //Console.WriteLine(person);
+                    //Console.WriteLine($"Member: \t{person.id}\t{person.fullName}\t{person.displayName}");
+                    SmartFaceAllMembers.Add(new SmartFaceMember((string)person.id,(string)person.fullName,(string)person.displayName));
+                }
+
+                // check if more iterations are needed
+                if((restResults.items).Count == SmartFacePageSize)
+                {
+                    // lets do it again with new page and merge data from previous and current run together
+
+                    SmartFacePageNumber += 1;
+                    //Console.WriteLine("### NEW PAGE");
+
+                }
+                else
+                {
+                    allMembers = true;
+
+                }
+            }
+            */ 
+
+            return true;
         }
 
-        public async Task updateEmployees()
+        public async Task updateEmployee()
         {
             this.logger.Information("Updating Employees");
         }
 
-        public async Task removeEmployees()
+        public async Task removeEmployee()
         {
             this.logger.Information("Removing Employees");
         }

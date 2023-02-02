@@ -45,6 +45,11 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             }
         }
 
+        public static string joinNames(string FirstName, string LastName)
+        {
+            return FirstName + " " + LastName;
+        }
+
         public static bool CompareUsers(AeosMember aeosMember, SmartFaceMember smartFaceMember)
         {
             // future checks possible

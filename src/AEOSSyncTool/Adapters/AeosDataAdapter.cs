@@ -191,7 +191,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             };
 
             var addEmployeeResponse = await client.addEmployeeAsync(addEmployee.EmployeeAdd);
-            if(addEmployeeResponse.EmployeeResult.Id != null)
+            if(addEmployeeResponse.EmployeeResult.Id != 0)
             {   
 
                 var addIdentifier = new assignToken();
@@ -202,7 +202,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
                 var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
 
-                return addIdentifierResponse.IdentifierResult.Id != null ? true : false;
+                return addIdentifierResponse.IdentifierResult.Id != 0 ? true : false;
             }
             else
             {
@@ -238,7 +238,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
                 var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
 
-                if(updateEmployeeResponse.EmployeeResult.Id != null)
+                if(updateEmployeeResponse.EmployeeResult.Id != 0)
                 {
                     this.logger.Information($"Update \tUser with SmartFaceID {member.SmartFaceId} has been updated under {updateID} with new name {member.FirstName} {member.LastName}");
                     return true;
@@ -343,7 +343,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                 this.logger.Error("Two or more users have the same Identifier! This should not occur.");
                 throw new InvalidCastException("Two or more users have the same Identifier! This should not occur.");
             }
-            else if(employeesResponse.EmployeeList.Length == 1 && employeesResponse.EmployeeList[0].EmployeeInfo.Id != null)
+            else if(employeesResponse.EmployeeList.Length == 1 && employeesResponse.EmployeeList[0].EmployeeInfo.Id != 0)
             {
                 return employeesResponse;
             }
