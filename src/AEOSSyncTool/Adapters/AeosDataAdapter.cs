@@ -142,7 +142,19 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                 foreach (var employee in employees.EmployeeList)
                 {   
                     this.logger.Debug($"{employee.EmployeeInfo.Id}\t{employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield)}\t{employee.EmployeeInfo.FirstName}\t{employee.EmployeeInfo.LastName}");
-                    AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName));
+                    //AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName));
+                    
+
+                    //this.logger.Information($"Encoding.UTF8.GetString(employee.FirstPhoto.Picture): {Encoding.UTF8.GetString(employee.FirstPhoto.Picture)}");
+                    this.logger.Information($"Encoding.UTF8.GetString(employee.FirstPhoto.Picture).ToString(): {Convert.FromBase64String(Encoding.UTF8.GetString((employee.FirstPhoto.Picture)))}");
+                    // TODO ISSUE:
+                    // maybe use this?
+                    // string inputStr = Encoding.UTF8.GetString(Convert.FromBase64String(encodedStr));
+
+                    
+                    
+                    // TODO ISSUE
+                    //AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName, Encoding.UTF8.GetString(employee.FirstPhoto.Picture).ToString()));
                 } 
                 if(employees.EmployeeList.Length == EmployeesPageSize)
                 {
@@ -207,7 +219,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             else
             {
                 throw new InvalidOperationException("No user was generated.");
-                return false;
             }
         }
 

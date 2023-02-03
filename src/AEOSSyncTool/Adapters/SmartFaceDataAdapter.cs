@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using AEOSSyncTool;
+using Innovatrics.SmartFace.Integrations.AEOSSync.Nswag;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -20,8 +21,15 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         private readonly SmartFaceGraphQLClient graphQlClient; 
         private string SmartFaceURL;
         private string SmartFaceGraphQL;   
-        private int SmartFaceGraphQLPageSize;
+        private int SmartFaceSetPageSize;
         private int SmartFacePageSize;
+        private int SmartFaceDefaultThreshold;
+
+        private int MaxFaces;
+        private int MaxFaceSize;
+        private int MinFaceSize;
+        private int ConfidenceThreshold;
+        private bool KeepAutoLearnPhotos;
 
         private string AeosWatchlistName;
 
@@ -41,9 +49,17 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
             SmartFaceURL = configuration.GetValue<string>("aeossync:SmartFaceServer");
             SmartFaceGraphQL = configuration.GetValue<string>("aeossync:SmartFaceGraphQL");
-            SmartFaceGraphQLPageSize = configuration.GetValue<int>("aeossync:SmartFaceGraphQLPageSize");
+            SmartFaceSetPageSize = configuration.GetValue<int>("aeossync:SmartFaceGraphQLPageSize");
             AeosWatchlistName = configuration.GetValue<string>("aeossync:AeosWatchlistName");
             SmartFacePageSize = configuration.GetValue<int>("aeossync:SmartFacePageSize");
+            SmartFaceDefaultThreshold = configuration.GetValue<int>("aeossync:SmartFaceDefaultThreshold");
+
+            KeepAutoLearnPhotos = configuration.GetValue<bool>("AEOSSync:KeepAutoLearnPhotos");
+
+            MaxFaces = configuration.GetValue<int>("AEOSSync:FaceDetectorConfig:MaxFaces");
+            MaxFaceSize = configuration.GetValue<int>("AEOSSync:FaceDetectorConfig:MaxFaceSize");
+            MinFaceSize = configuration.GetValue<int>("AEOSSync:FaceDetectorConfig:MinFaceSize");
+            ConfidenceThreshold = configuration.GetValue<int>("AEOSSync:FaceDetectorConfig:ConfidenceThreshold");
 
             if(SmartFaceURL == null)
             {
@@ -53,9 +69,13 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             {
                 throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
             }
-            if(SmartFaceGraphQLPageSize <= 0)
+            if(SmartFaceSetPageSize <= 0)
             {
                 throw new InvalidOperationException("The SmartFace GraphQL Page Size needs to be greater than 0.");
+            }
+            if(SmartFaceDefaultThreshold <= 0)
+            {
+                throw new InvalidOperationException("The SmartFace threshold needs to be greater than 0.");
             }
 
         }
@@ -70,16 +90,15 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             this.logger.Debug("Receiving Employees from SmartFace");
          
             bool allMembers = false;
-
             var SmartFaceAllMembers = new List<SmartFaceMember>();
 
             while(allMembers == false)
             {
                 { 
-                    var watchlistMembers = await graphQlClient.GetWatchlistMembers.ExecuteAsync(SmartFaceAllMembers.Count,SmartFaceGraphQLPageSize);
+                    var watchlistMembers = await graphQlClient.GetWatchlistMembers.ExecuteAsync(SmartFaceAllMembers.Count,SmartFaceSetPageSize);
                     foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                     {
-                        var imageDataId = wm.Tracklet.Faces.OrderBy(f=> f.CreatedAt).FirstOrDefault(f=> f.FaceType == FaceType.Regular)?.ImageDataId;
+                        var imageDataId = wm.Tracklet.Faces.OrderBy(f=> f.CreatedAt).FirstOrDefault(f=> f.FaceType == AEOSSyncTool.FaceType.Regular)?.ImageDataId;
                         this.logger.Debug($"{wm.Id}\t{imageDataId}\t{wm.DisplayName}");
                         SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
                         
@@ -94,13 +113,39 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             return SmartFaceAllMembers;
         }
 
-        public async Task<bool> createEmployee(SmartFaceMember member)
+        public async Task<bool> createEmployee(SmartFaceMember member, string WatchlistId)
         {
             this.logger.Information("Creating Employees");
 
-            // find what find what Watchlist ID to use
-
             // Add user into the watchlist
+            var httpClient = new HttpClient();   
+            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+
+            var WatchlistMemberAdd = new RegisterWatchlistMemberRequest();
+            WatchlistMemberAdd.Id = member.Id;
+            WatchlistMemberAdd.FullName = member.fullName;
+            WatchlistMemberAdd.DisplayName = member.displayName;
+            
+            this.logger.Information($"WatchlistId->{WatchlistId}");            
+            WatchlistMemberAdd.WatchlistIds.Add(WatchlistId);
+            WatchlistMemberAdd.KeepAutoLearnPhotos = KeepAutoLearnPhotos;
+            WatchlistMemberAdd.FaceDetectorConfig = new FaceDetectorConfig();
+            WatchlistMemberAdd.FaceDetectorConfig.MaxFaces = MaxFaces;
+            WatchlistMemberAdd.FaceDetectorConfig.MaxFaceSize = MaxFaceSize;
+            WatchlistMemberAdd.FaceDetectorConfig.MinFaceSize = MinFaceSize;
+            WatchlistMemberAdd.FaceDetectorConfig.ConfidenceThreshold = ConfidenceThreshold;
+
+            // TODO REFUSE IF member.ImageBase64 does not come
+            var imageAdd = new RegistrationImageData();
+            Console.WriteLine(member.ImageBase64);
+            Console.WriteLine(Encoding.Unicode.GetBytes(member.ImageBase64));
+            imageAdd.Data = Encoding.Unicode.GetBytes(member.ImageBase64);
+            
+            
+            this.logger.Information($"ImageData in bytes: {imageAdd.Data}");
+            WatchlistMemberAdd.Images.Add(imageAdd);
+
+            var restAPIresult = await restAPI.RegisterAsync(WatchlistMemberAdd);
 
 
 /* 
@@ -178,42 +223,53 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
         public async Task<string> initializeWatchlist()
         {
-            // find if a watchlist exists width variable AeosWatchlistName
-            var httpClient = new HttpClient();
-            
+            var httpClient = new HttpClient();   
+            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+            var ListAllWatchlists = new List<SmartFaceWatchlist>();
             int SmartFacePageNumber = 1;
+            bool allWatchlists = false;
             
-            // TODO Deal with pagination to cover all the data coming from the rest api
-
-            var requestUrl = SmartFaceURL+"/api/v1/Watchlists?"+"?PageNumber="+SmartFacePageNumber+"&PageSize="+SmartFacePageSize;
-            var content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
-            var result = await httpClient.GetAsync(requestUrl);
-            string resultContent = await result.Content.ReadAsStringAsync();
-
-            //Console.WriteLine(resultContent);
-            dynamic restResults = JsonConvert.DeserializeObject(resultContent);
-
-            //Console.WriteLine((stuff.items).Count);
-            //Console.WriteLine(stuff.items[0].fullName);
-
-
-            var AeosWatchlistNameId = ((IEnumerable<dynamic>)restResults.items).FirstOrDefault(f=> f.fullName == AeosWatchlistName)?.id;
-
-            // add members from the rest api call into List<member> SmartFaceAllMembers
-            /* foreach (var watchlist in restResults.items)
+            while(allWatchlists == false)
             {
-                this.logger.Information($"watchlist from data: {watchlist}");
-                //Console.WriteLine($"Member: \t{person.id}\t{person.fullName}\t{person.displayName}");
+                var restAPIresult = await restAPI.WatchlistsGETAsync(false,SmartFacePageNumber,SmartFaceSetPageSize,false);
+
+                if(restAPIresult != null)
+                {
+                    foreach(var item in restAPIresult.Items)
+                    {
+                        ListAllWatchlists.Add(new SmartFaceWatchlist(item.Id, item.FullName, item.DisplayName));
+                    }
+                }
+
+                if(restAPIresult.NextPage == null)
+                {   
+                    allWatchlists =  true;       
+                }
+                else
+                {
+                    SmartFacePageNumber += 1;
+                }
+
+            }
+
+            var AeosWatchlistNameId = ((IEnumerable<dynamic>)ListAllWatchlists).FirstOrDefault(f=> f.FullName == AeosWatchlistName)?.Id;
+
+            if(AeosWatchlistNameId != null)
+            {
+                return (string)AeosWatchlistNameId;
+            }
+            else
+            {
+                var CreateWatchlistBody = new WatchlistCreateRequest();
+                CreateWatchlistBody.Threshold = SmartFaceDefaultThreshold;
+                CreateWatchlistBody.DisplayName = AeosWatchlistName;
+                CreateWatchlistBody.FullName = AeosWatchlistName; 
+                CreateWatchlistBody.PreviewColor = "#4adf62";
                 
-            } */
+                var restAPIresult = await restAPI.WatchlistsPOSTAsync(CreateWatchlistBody);
 
-            return (string)AeosWatchlistNameId;
-            
-            // if it does return the ID, if it does not create a watchlist and return ID
-
-            //string WatchlistId = "";
-
-            //return WatchlistId;
+                return (string)restAPIresult.Id;
+            }
         }
     }
 }

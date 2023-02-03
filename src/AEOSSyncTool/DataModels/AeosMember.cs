@@ -4,9 +4,10 @@ public class AeosMember
     public string SmartFaceId { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
+    public string ImageBase64 { get; set; }
 
 
-    public AeosMember(long Id, string SmartFaceId, string FirstName, string LastName)
+    public AeosMember(long Id, string SmartFaceId, string FirstName, string LastName, string ImageBase64 = null)
     {
         this.Id = Id;
         
@@ -26,10 +27,12 @@ public class AeosMember
         {
             this.LastName = " ";
         }
+
+        this.ImageBase64 = ImageBase64;
     }
 
     public string ReadMember()
     {
-            return $"Member: {Id},{SmartFaceId},{FirstName},{LastName}";   
+            return $"Member: {Id},{SmartFaceId},{FirstName},{LastName},{ImageBase64}";   
     }
 }

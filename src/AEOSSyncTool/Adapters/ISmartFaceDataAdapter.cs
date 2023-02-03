@@ -7,7 +7,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
     public interface ISmartFaceDataAdapter
     {
         Task<IList <SmartFaceMember>> getEmployees();
-        Task<bool> createEmployee(SmartFaceMember member);
+        Task<bool> createEmployee(SmartFaceMember member, string AeosWatchlistId);
         Task updateEmployee();
         Task removeEmployee();
         Task<string> initializeWatchlist();

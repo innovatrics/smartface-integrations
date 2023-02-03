@@ -260,14 +260,14 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             else if(DataSource == "AEOS")
             {
                 AeosWatchlistId = await smartFaceDataAdapter.initializeWatchlist();
-                this.logger.Information($"ID co chcem {AeosWatchlistId}");
+                this.logger.Debug($"SmartFace watchlist ID set for storing AEOS data is: {AeosWatchlistId}");
 
                 this.logger.Information($"The amount of employees to be added to the SFACE: {EmployeesToBeAddedSmartFace.Count}");
                 int EmployeesToBeAddedFailCountSmartFace = 0;
                 int EmployeesToBeAddedSuccessCountSmartFace = 0;
                 foreach (var member in EmployeesToBeAddedSmartFace)
                 {
-                    var returnValue = await smartFaceDataAdapter.createEmployee(member);
+                    var returnValue = await smartFaceDataAdapter.createEmployee(member, AeosWatchlistId);
                     this.logger.Information($"User created {member.Id}:{member.fullName} success?: {returnValue}");
                     if(returnValue == true)
                     {
