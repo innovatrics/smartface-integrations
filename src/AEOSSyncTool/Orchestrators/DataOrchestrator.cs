@@ -23,6 +23,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
         private readonly SmartFaceGraphQLClient graphQlClient;   
         private readonly string DataSource;
+        private string AeosWatchlistId;
 
         public DataOrchestrator(
             ILogger logger,
@@ -258,6 +259,9 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
             else if(DataSource == "AEOS")
             {
+                AeosWatchlistId = await smartFaceDataAdapter.initializeWatchlist();
+                this.logger.Information($"ID co chcem {AeosWatchlistId}");
+
                 this.logger.Information($"The amount of employees to be added to the SFACE: {EmployeesToBeAddedSmartFace.Count}");
                 int EmployeesToBeAddedFailCountSmartFace = 0;
                 int EmployeesToBeAddedSuccessCountSmartFace = 0;

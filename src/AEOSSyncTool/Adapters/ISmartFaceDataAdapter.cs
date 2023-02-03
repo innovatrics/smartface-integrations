@@ -10,5 +10,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         Task<bool> createEmployee(SmartFaceMember member);
         Task updateEmployee();
         Task removeEmployee();
+        Task<string> initializeWatchlist();
+
     }
 }

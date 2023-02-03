@@ -8,6 +8,7 @@ using Serilog;
 using AEOSSyncTool;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Innovatrics.SmartFace.Integrations.AEOSSync
 {
@@ -20,6 +21,9 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         private string SmartFaceURL;
         private string SmartFaceGraphQL;   
         private int SmartFaceGraphQLPageSize;
+        private int SmartFacePageSize;
+
+        private string AeosWatchlistName;
 
         public SmartFaceDataAdapter(
             ILogger logger,
@@ -38,8 +42,10 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             SmartFaceURL = configuration.GetValue<string>("aeossync:SmartFaceServer");
             SmartFaceGraphQL = configuration.GetValue<string>("aeossync:SmartFaceGraphQL");
             SmartFaceGraphQLPageSize = configuration.GetValue<int>("aeossync:SmartFaceGraphQLPageSize");
+            AeosWatchlistName = configuration.GetValue<string>("aeossync:AeosWatchlistName");
+            SmartFacePageSize = configuration.GetValue<int>("aeossync:SmartFacePageSize");
 
-             if(SmartFaceURL == null)
+            if(SmartFaceURL == null)
             {
                 throw new InvalidOperationException("The SmartFace URL is not read.");
             }
@@ -51,9 +57,10 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             {
                 throw new InvalidOperationException("The SmartFace GraphQL Page Size needs to be greater than 0.");
             }
+
         }
 
-         public async Task<IList <SmartFaceMember>> getEmployees()
+        public async Task<IList <SmartFaceMember>> getEmployees()
         {
             if (SmartFaceURL is null)
             {
@@ -91,7 +98,22 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         {
             this.logger.Information("Creating Employees");
 
-            
+            // find what find what Watchlist ID to use
+
+            // Add user into the watchlist
+
+
+/* 
+            var httpClient = new HttpClient();
+            var requestUrl = SmartFaceURL+"/api/v1/WatchlistMembers"+"?PageNumber="+SmartFacePageNumber+"&PageSize="+SmartFacePageSize;
+            var content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
+            var result = await httpClient.GetAsync(requestUrl);
+            string resultContent = await result.Content.ReadAsStringAsync();
+
+            //Console.WriteLine(resultContent);
+
+            dynamic restResults = JsonConvert.DeserializeObject(resultContent);
+ */
             /*
             // REST API Read All the WatchlistMembers, do it per pages for the case there are too many members.
             
@@ -151,6 +173,47 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         public async Task removeEmployee()
         {
             this.logger.Information("Removing Employees");
+        }
+
+
+        public async Task<string> initializeWatchlist()
+        {
+            // find if a watchlist exists width variable AeosWatchlistName
+            var httpClient = new HttpClient();
+            
+            int SmartFacePageNumber = 1;
+            
+            // TODO Deal with pagination to cover all the data coming from the rest api
+
+            var requestUrl = SmartFaceURL+"/api/v1/Watchlists?"+"?PageNumber="+SmartFacePageNumber+"&PageSize="+SmartFacePageSize;
+            var content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
+            var result = await httpClient.GetAsync(requestUrl);
+            string resultContent = await result.Content.ReadAsStringAsync();
+
+            //Console.WriteLine(resultContent);
+            dynamic restResults = JsonConvert.DeserializeObject(resultContent);
+
+            //Console.WriteLine((stuff.items).Count);
+            //Console.WriteLine(stuff.items[0].fullName);
+
+
+            var AeosWatchlistNameId = ((IEnumerable<dynamic>)restResults.items).FirstOrDefault(f=> f.fullName == AeosWatchlistName)?.id;
+
+            // add members from the rest api call into List<member> SmartFaceAllMembers
+            /* foreach (var watchlist in restResults.items)
+            {
+                this.logger.Information($"watchlist from data: {watchlist}");
+                //Console.WriteLine($"Member: \t{person.id}\t{person.fullName}\t{person.displayName}");
+                
+            } */
+
+            return (string)AeosWatchlistNameId;
+            
+            // if it does return the ID, if it does not create a watchlist and return ID
+
+            //string WatchlistId = "";
+
+            //return WatchlistId;
         }
     }
 }
