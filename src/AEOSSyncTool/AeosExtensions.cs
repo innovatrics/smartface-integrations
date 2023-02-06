@@ -53,7 +53,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         public static bool CompareUsers(AeosMember aeosMember, SmartFaceMember smartFaceMember)
         {
             // future checks possible
-            if(smartFaceMember.fullName != aeosMember.FirstName + " " + aeosMember.LastName)
+            if(smartFaceMember.FullName != aeosMember.FirstName + " " + aeosMember.LastName)
             {
                 return false;
             }

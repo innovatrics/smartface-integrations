@@ -1,20 +1,20 @@
 public class SmartFaceMember
 {
     public string Id       { get; set; }
-    public string fullName     { get; set; }
-    public string displayName      { get; set; }
-    public string ImageBase64      { get; set; }
+    public string FullName     { get; set; }
+    public string DisplayName      { get; set; }
+    public byte[] ImageData      { get; set; }
     
-    public SmartFaceMember(string Id, string fullName, string displayName, string ImageBase64 = null)
+    public SmartFaceMember(string id, string fullName, string displayName, byte[] imageData = null)
     {
-        this.Id = Id;
-        this.fullName = fullName;
-        this.displayName = displayName;
-        this.ImageBase64 = ImageBase64;
+        this.Id = id;
+        this.FullName = fullName;
+        this.DisplayName = displayName;
+        this.ImageData = imageData;
     }
 
-    public string ReadMember()
+    public override string ToString()
     {
-        return $"Member: {Id},{fullName},{displayName},{ImageBase64}";   
+        return $"Member: {Id},{FullName},{DisplayName}";   
     }
 }

@@ -117,95 +117,41 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         {
             this.logger.Information("Creating Employees");
 
-            // Add user into the watchlist
-            var httpClient = new HttpClient();   
-            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
-
-            var WatchlistMemberAdd = new RegisterWatchlistMemberRequest();
-            WatchlistMemberAdd.Id = member.Id;
-            WatchlistMemberAdd.FullName = member.fullName;
-            WatchlistMemberAdd.DisplayName = member.displayName;
-            
-            this.logger.Information($"WatchlistId->{WatchlistId}");            
-            WatchlistMemberAdd.WatchlistIds.Add(WatchlistId);
-            WatchlistMemberAdd.KeepAutoLearnPhotos = KeepAutoLearnPhotos;
-            WatchlistMemberAdd.FaceDetectorConfig = new FaceDetectorConfig();
-            WatchlistMemberAdd.FaceDetectorConfig.MaxFaces = MaxFaces;
-            WatchlistMemberAdd.FaceDetectorConfig.MaxFaceSize = MaxFaceSize;
-            WatchlistMemberAdd.FaceDetectorConfig.MinFaceSize = MinFaceSize;
-            WatchlistMemberAdd.FaceDetectorConfig.ConfidenceThreshold = ConfidenceThreshold;
-
-            // TODO REFUSE IF member.ImageBase64 does not come
-            var imageAdd = new RegistrationImageData();
-            Console.WriteLine(member.ImageBase64);
-            Console.WriteLine(Encoding.Unicode.GetBytes(member.ImageBase64));
-            imageAdd.Data = Encoding.Unicode.GetBytes(member.ImageBase64);
-            
-            
-            this.logger.Information($"ImageData in bytes: {imageAdd.Data}");
-            WatchlistMemberAdd.Images.Add(imageAdd);
-
-            var restAPIresult = await restAPI.RegisterAsync(WatchlistMemberAdd);
-
-
-/* 
-            var httpClient = new HttpClient();
-            var requestUrl = SmartFaceURL+"/api/v1/WatchlistMembers"+"?PageNumber="+SmartFacePageNumber+"&PageSize="+SmartFacePageSize;
-            var content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
-            var result = await httpClient.GetAsync(requestUrl);
-            string resultContent = await result.Content.ReadAsStringAsync();
-
-            //Console.WriteLine(resultContent);
-
-            dynamic restResults = JsonConvert.DeserializeObject(resultContent);
- */
-            /*
-            // REST API Read All the WatchlistMembers, do it per pages for the case there are too many members.
-            
-            while(allMembers == false)
+            if(member.ImageData != null)
             {
 
+                var httpClient = new HttpClient();   
+                var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+
+                var WatchlistMemberAdd = new RegisterWatchlistMemberRequest();
+                this.logger.Information($"{member.ToString()}");
+                            
+                WatchlistMemberAdd.Id = member.Id;
+                WatchlistMemberAdd.FullName = member.FullName;
+                WatchlistMemberAdd.DisplayName = member.DisplayName;
                 
-                // lets try it with graphQL instead
-
-                var httpClient = new HttpClient();
-                var requestUrl = SmartFaceURL+"/api/v1/WatchlistMembers"+"?PageNumber="+SmartFacePageNumber+"&PageSize="+SmartFacePageSize;
-                var content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
-                var result = await httpClient.GetAsync(requestUrl);
-                string resultContent = await result.Content.ReadAsStringAsync();
-
-                //Console.WriteLine(resultContent);
-
-                dynamic restResults = JsonConvert.DeserializeObject(resultContent);
-
-                //Console.WriteLine((stuff.items).Count);
-                //Console.WriteLine(stuff.items[0].fullName);
+                this.logger.Information($"WatchlistId->{WatchlistId}");            
+                WatchlistMemberAdd.WatchlistIds.Add(WatchlistId);
+                WatchlistMemberAdd.KeepAutoLearnPhotos = KeepAutoLearnPhotos;
+                WatchlistMemberAdd.FaceDetectorConfig = new FaceDetectorConfig();
+                WatchlistMemberAdd.FaceDetectorConfig.MaxFaces = MaxFaces;
+                WatchlistMemberAdd.FaceDetectorConfig.MaxFaceSize = MaxFaceSize;
+                WatchlistMemberAdd.FaceDetectorConfig.MinFaceSize = MinFaceSize;
+                WatchlistMemberAdd.FaceDetectorConfig.ConfidenceThreshold = ConfidenceThreshold;
                 
-
-                // add members from the rest api call into List<member> SmartFaceAllMembers
-                foreach (var person in restResults.items)
-                {
-                    //Console.WriteLine(person);
-                    //Console.WriteLine($"Member: \t{person.id}\t{person.fullName}\t{person.displayName}");
-                    SmartFaceAllMembers.Add(new SmartFaceMember((string)person.id,(string)person.fullName,(string)person.displayName));
-                }
-
-                // check if more iterations are needed
-                if((restResults.items).Count == SmartFacePageSize)
-                {
-                    // lets do it again with new page and merge data from previous and current run together
-
-                    SmartFacePageNumber += 1;
-                    //Console.WriteLine("### NEW PAGE");
-
-                }
-                else
-                {
-                    allMembers = true;
-
-                }
+                var imageAdd = new RegistrationImageData[1];
+                imageAdd[0] = new RegistrationImageData();
+                imageAdd[0].Data = member.ImageData;
+                this.logger.Information($"ImageData in bytes: {imageAdd[0].Data}");
+                WatchlistMemberAdd.Images.Add(imageAdd[0]);
+            
+                restAPI.ReadResponseAsString = true;
+                var restAPIresult = await restAPI.RegisterAsync(WatchlistMemberAdd);
             }
-            */ 
+            else
+            {
+                this.logger.Information("We will not register an user without a registration image.");
+            }
 
             return true;
         }
@@ -215,11 +161,23 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             this.logger.Information("Updating Employees");
         }
 
-        public async Task removeEmployee()
+        public async Task removeEmployee(SmartFaceMember member)
         {
             this.logger.Information("Removing Employees");
-        }
 
+            var httpClient = new HttpClient();   
+            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+
+            var removeEmployee = new FaceWatchlistMemberRemoveRequest();
+            removeEmployee.FaceId = new Guid(member.Id);
+
+            // TODO
+            // chyba
+            //removeEmployee.FaceId = (System.Guid)member.Id;
+
+            var restAPIresult = await restAPI.WatchlistMembersDELETEAsync(removeEmployee.FaceId);
+
+        }
 
         public async Task<string> initializeWatchlist()
         {

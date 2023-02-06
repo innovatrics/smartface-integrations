@@ -4,12 +4,12 @@ public class AeosMember
     public string SmartFaceId { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
-    public string ImageBase64 { get; set; }
+    public byte[] ImageData { get; set; }
 
 
-    public AeosMember(long Id, string SmartFaceId, string FirstName, string LastName, string ImageBase64 = null)
+    public AeosMember(long id, string smartFaceId, string firstName, string lastName, byte[] imageData = null)
     {
-        this.Id = Id;
+        this.Id = id;
         
         /* if(SmartFaceId.Length > 28)
         {
@@ -19,20 +19,20 @@ public class AeosMember
         {
             this.SmartFaceId = SmartFaceId;
         } */
-        this.SmartFaceId = SmartFaceId;
-        this.FirstName = FirstName;
-        this.LastName = LastName;
+        this.SmartFaceId = smartFaceId;
+        this.FirstName = firstName;
+        this.LastName = lastName;
 
-        if (LastName == "")
+        if (lastName == "")
         {
             this.LastName = " ";
         }
 
-        this.ImageBase64 = ImageBase64;
+        this.ImageData = imageData;
     }
 
-    public string ReadMember()
+    public override string ToString()
     {
-            return $"Member: {Id},{SmartFaceId},{FirstName},{LastName},{ImageBase64}";   
+            return $"Member: {Id},{SmartFaceId},{FirstName},{LastName}";   
     }
 }

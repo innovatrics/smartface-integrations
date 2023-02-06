@@ -141,21 +141,17 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                 
                 foreach (var employee in employees.EmployeeList)
                 {   
-                    this.logger.Debug($"{employee.EmployeeInfo.Id}\t{employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield)}\t{employee.EmployeeInfo.FirstName}\t{employee.EmployeeInfo.LastName}");
-                    //AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName));
-                    
-
-                    //this.logger.Information($"Encoding.UTF8.GetString(employee.FirstPhoto.Picture): {Encoding.UTF8.GetString(employee.FirstPhoto.Picture)}");
-                    this.logger.Information($"Encoding.UTF8.GetString(employee.FirstPhoto.Picture).ToString(): {Convert.FromBase64String(Encoding.UTF8.GetString((employee.FirstPhoto.Picture)))}");
-                    // TODO ISSUE:
-                    // maybe use this?
-                    // string inputStr = Encoding.UTF8.GetString(Convert.FromBase64String(encodedStr));
-
-                    
-                    
-                    // TODO ISSUE
-                    //AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName, Encoding.UTF8.GetString(employee.FirstPhoto.Picture).ToString()));
+                    if(employee.FirstPhoto != null)
+                    {
+                        AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName,employee.FirstPhoto.Picture));
+                    }
+                    else
+                    {
+                        AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName));
+                    }
                 } 
+                
+                this.logger.Information("failed after");
                 if(employees.EmployeeList.Length == EmployeesPageSize)
                 {
                     this.logger.Debug($"End of page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Length}. Number of results match the pagination limit. Another page will be checked.");
@@ -167,7 +163,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                     break;
                 }             
             }
-
             return AeosAllMembersReturn;
         }
 
