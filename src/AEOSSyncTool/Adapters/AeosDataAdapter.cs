@@ -151,7 +151,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                     }
                 } 
                 
-                this.logger.Information("failed after");
                 if(employees.EmployeeList.Length == EmployeesPageSize)
                 {
                     this.logger.Debug($"End of page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Length}. Number of results match the pagination limit. Another page will be checked.");

@@ -11888,7 +11888,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync.Nswag
     {
         [Newtonsoft.Json.JsonProperty("faceId", Required = Newtonsoft.Json.Required.Always)]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        public System.Guid FaceId { get; set; }
+        //public System.Guid FaceId { get; set; }
+        public System.String FaceId { get; set; }
 
     }
 

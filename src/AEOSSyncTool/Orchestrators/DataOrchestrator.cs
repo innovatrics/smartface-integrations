@@ -69,12 +69,12 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             
             var SmartFaceAllMembers = await this.smartFaceDataAdapter.getEmployees();
 
-            this.logger.Debug("Employees defined in SmartFace");
+            this.logger.Information("Employees defined in SmartFace");
             foreach (var eachMember in SmartFaceAllMembers)
             {
-                this.logger.Debug(eachMember.ToString());
+                this.logger.Information(eachMember.ToString());
             } 
-            this.logger.Debug($"The amount of SmartFace users is {SmartFaceAllMembers.Count}");    
+            this.logger.Information($"The amount of SmartFace users is {SmartFaceAllMembers.Count}");    
            
                     
 
@@ -138,6 +138,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                             this.logger.Debug($"SF Member {SFMember.FullName} with id {SFMember.Id} DOES NOT have a copy in AEOS.");
                             EmployeesToBeAddedAeos.Add(new AeosMember(tempid,SFMember.Id,AeosExtensions.getFirstName(SFMember.FullName), AeosExtensions.getLastName(SFMember.FullName)));                                                
                         }
+                        // TODO
+                        // possibly this is where a condition and removal of users is missing. Please take a deep look in here.
                     }
                 }
 
@@ -326,7 +328,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                     this.logger.Information($"SmartFace user to be removed->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId} member.smartfaceId {member.Id}");
                     if(member.Id != null)
                     {
-                        bool returnValue = true;
+
+                        bool returnValue = await smartFaceDataAdapter.removeEmployee(member);
                         if(returnValue == true)
                         {
                             EmployeesToBeRemovedSuccessCountSmartFace += 1;

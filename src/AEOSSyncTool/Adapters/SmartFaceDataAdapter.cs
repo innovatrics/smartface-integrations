@@ -147,6 +147,15 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             
                 restAPI.ReadResponseAsString = true;
                 var restAPIresult = await restAPI.RegisterAsync(WatchlistMemberAdd);
+
+                if(restAPIresult.Id != null)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             else
             {
@@ -161,7 +170,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             this.logger.Information("Updating Employees");
         }
 
-        public async Task removeEmployee(SmartFaceMember member)
+        public async Task<bool> removeEmployee(SmartFaceMember member)
         {
             this.logger.Information("Removing Employees");
 
@@ -169,14 +178,28 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             var restAPI = new NSwagClient(SmartFaceURL, httpClient);
 
             var removeEmployee = new FaceWatchlistMemberRemoveRequest();
-            removeEmployee.FaceId = new Guid(member.Id);
+            removeEmployee.FaceId = member.Id;
+            this.logger.Information($"FaceId = {removeEmployee.FaceId}");
 
             // TODO
-            // chyba
-            //removeEmployee.FaceId = (System.Guid)member.Id;
+            // missing returning values... needs to be adjusted
 
-            var restAPIresult = await restAPI.WatchlistMembersDELETEAsync(removeEmployee.FaceId);
+            if(member.Id != null)
+            {
+                await restAPI.WatchlistMembersDELETEAsync(removeEmployee.FaceId);
+            }
+            /* if(restAPIresult.)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+ */
 
+            // dummy return
+            return true;
         }
 
         public async Task<string> initializeWatchlist()
