@@ -19,7 +19,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
         private readonly IBridgeService bridge;
         private GrpcNotificationReader grpcNotificationReader;
         private System.Timers.Timer accessControllerPingTimer;
-        private System.Timers.Timer keepAlivePingTimer;
         private DateTime lastGrpcPing;
 
         public MainHostedService(
@@ -45,8 +44,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
 
             this.startPingTimer();
 
-            this.startKeepAliveTimer();
-
             return Task.CompletedTask;
         }
 
@@ -58,8 +55,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
 
             this.accessControllerPingTimer?.Stop();
             this.accessControllerPingTimer?.Dispose();
-            this.keepAlivePingTimer?.Stop();
-            this.keepAlivePingTimer?.Dispose();
         }
 
         private GrpcNotificationReader CreateGrpcReader()
@@ -147,29 +142,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
             };
 
             accessControllerPingTimer.Start();
-        }
-
-        private void startKeepAliveTimer()
-        {
-            var keepAliveEnabled = this.configuration.GetValue<bool>("KeepAlive:Enabled", true);
-            var keepAliveInterval = this.configuration.GetValue<int>("KeepAlive:Interval", 3600);
-
-            this.logger.Information("KeepAlive configured enabled={enabled}, interval={interval}", keepAliveEnabled, keepAliveInterval);
-
-            if (keepAliveEnabled)
-            {
-                keepAlivePingTimer = new System.Timers.Timer();
-
-                keepAlivePingTimer.Interval = keepAliveInterval * 1000;
-                keepAlivePingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
-                {
-                    this.logger.Information("KeepAlive interval elapsed, process ping");
-
-                    await this.bridge.SendKeepAliveSignalAsync();
-                };
-
-                keepAlivePingTimer.Start();
-            }
         }
     }
 }
