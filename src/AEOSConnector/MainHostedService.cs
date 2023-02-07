@@ -18,7 +18,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
         private readonly GrpcReaderFactory grpcReaderFactory;
         private readonly IBridgeService bridge;
         private GrpcNotificationReader grpcNotificationReader;
-        private System.Timers.Timer accessControllerPingTimer;
         private System.Timers.Timer keepAlivePingTimer;
         private DateTime lastGrpcPing;
 
@@ -43,8 +42,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
 
             this.startReceivingGrpcNotifications();
 
-            this.startPingTimer();
-
             this.startKeepAliveTimer();
 
             return Task.CompletedTask;
@@ -56,8 +53,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
 
             await this.stopReceivingGrpcNotificationsAsync();
 
-            this.accessControllerPingTimer?.Stop();
-            this.accessControllerPingTimer?.Dispose();
             this.keepAlivePingTimer?.Stop();
             this.keepAlivePingTimer?.Dispose();
         }
@@ -111,42 +106,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
             this.logger.Debug("Notification details {@notification}", notification);
 
             await this.bridge.ProcessGrantedNotificationAsync(notification);
-        }
-
-        private void startPingTimer()
-        {
-            this.lastGrpcPing = DateTime.UtcNow;
-            accessControllerPingTimer = new System.Timers.Timer();
-
-            accessControllerPingTimer.Interval = 5000;
-            accessControllerPingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
-            {
-                var timeDiff = DateTime.UtcNow - lastGrpcPing;
-
-                this.logger.Debug("Timer ping check: {@ms} ms", timeDiff.TotalMilliseconds);
-
-                if (timeDiff.TotalSeconds > 15)
-                {
-                    this.logger.Warning("gRPC ping not received, last {@ses} sec ago", timeDiff.TotalSeconds);
-                }
-
-                if (timeDiff.TotalSeconds > 60)
-                {
-                    this.logger.Error("gRPC ping timeout reached");
-                    this.logger.Information("gRPC restarting");
-
-                    accessControllerPingTimer.Stop();
-
-                    await this.stopReceivingGrpcNotificationsAsync();
-                    this.startReceivingGrpcNotifications();
-
-                    accessControllerPingTimer.Start();
-
-                    this.logger.Information("gRPC restarted");
-                }
-            };
-
-            accessControllerPingTimer.Start();
         }
 
         private void startKeepAliveTimer()
