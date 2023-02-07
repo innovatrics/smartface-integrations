@@ -18,7 +18,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
         private readonly GrpcReaderFactory grpcReaderFactory;
         private readonly IBridgeService bridge;
         private GrpcNotificationReader grpcNotificationReader;
-        private System.Timers.Timer keepAlivePingTimer;
+        private System.Timers.Timer accessControllerPingTimer;
         private DateTime lastGrpcPing;
 
         public MainHostedService(
@@ -42,7 +42,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
 
             this.startReceivingGrpcNotifications();
 
-            this.startKeepAliveTimer();
+            this.startPingTimer();
 
             return Task.CompletedTask;
         }
@@ -53,8 +53,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
 
             await this.stopReceivingGrpcNotificationsAsync();
 
-            this.keepAlivePingTimer?.Stop();
-            this.keepAlivePingTimer?.Dispose();
+            this.accessControllerPingTimer?.Stop();
+            this.accessControllerPingTimer?.Dispose();
         }
 
         private GrpcNotificationReader CreateGrpcReader()
@@ -108,27 +108,40 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector
             await this.bridge.ProcessGrantedNotificationAsync(notification);
         }
 
-        private void startKeepAliveTimer()
+        private void startPingTimer()
         {
-            var keepAliveEnabled = this.configuration.GetValue<bool>("KeepAlive:Enabled", true);
-            var keepAliveInterval = this.configuration.GetValue<int>("KeepAlive:Interval", 3600);
+            this.lastGrpcPing = DateTime.UtcNow;
+            accessControllerPingTimer = new System.Timers.Timer();
 
-            this.logger.Information("KeepAlive configured enabled={enabled}, interval={interval}", keepAliveEnabled, keepAliveInterval);
-
-            if (keepAliveEnabled)
+            accessControllerPingTimer.Interval = 5000;
+            accessControllerPingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
             {
-                keepAlivePingTimer = new System.Timers.Timer();
+                var timeDiff = DateTime.UtcNow - lastGrpcPing;
 
-                keepAlivePingTimer.Interval = keepAliveInterval * 1000;
-                keepAlivePingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
+                this.logger.Debug("Timer ping check: {@ms} ms", timeDiff.TotalMilliseconds);
+
+                if (timeDiff.TotalSeconds > 15)
                 {
-                    this.logger.Information("KeepAlive interval elapsed, process ping");
+                    this.logger.Warning("gRPC ping not received, last {@ses} sec ago", timeDiff.TotalSeconds);
+                }
 
-                    await this.bridge.SendKeepAliveSignalAsync();
-                };
+                if (timeDiff.TotalSeconds > 60)
+                {
+                    this.logger.Error("gRPC ping timeout reached");
+                    this.logger.Information("gRPC restarting");
 
-                keepAlivePingTimer.Start();
-            }
+                    accessControllerPingTimer.Stop();
+
+                    await this.stopReceivingGrpcNotificationsAsync();
+                    this.startReceivingGrpcNotifications();
+
+                    accessControllerPingTimer.Start();
+
+                    this.logger.Information("gRPC restarted");
+                }
+            };
+
+            accessControllerPingTimer.Start();
         }
     }
 }
