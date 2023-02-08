@@ -25,7 +25,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         private int AEOSServerPageSize;
         private string AEOSusername;
         private string AEOSpassword;
-        private int SmartFaceGraphQLPageSize;
         private string SmartFaceIdFreefield;
         private string SmartFaceIdentifier;
 

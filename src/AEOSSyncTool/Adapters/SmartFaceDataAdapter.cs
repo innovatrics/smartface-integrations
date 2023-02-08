@@ -30,7 +30,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         private int MinFaceSize;
         private int ConfidenceThreshold;
         private bool KeepAutoLearnPhotos;
-        private Dictionary<string,string> SmartFaceSyncedWatchlists = new();
+        private Dictionary<string,bool> SmartFaceSyncedWatchlists = new();
 
         private string AeosWatchlistName;
 
@@ -108,7 +108,26 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
             this.logger.Debug("Receiving Employees from SmartFace");
          
-            this.logger.Information($"SmartFaceSyncedWatchlists[]: {string.Join(" ",SmartFaceSyncedWatchlists.Select(i => i.Key))}");
+            if(SmartFaceSyncedWatchlists.Count > 0)
+            {
+                this.logger.Debug($"SmartFaceSyncedWatchlists[]: {string.Join(" ",SmartFaceSyncedWatchlists.Select(i => i.Key))}");    
+                var SyncedWatchlists = new List<string>();
+
+                foreach (var item in SmartFaceSyncedWatchlists)
+                {
+                    if(item.Value == true)
+                    {
+                        SyncedWatchlists.Add(new String(item.Key));
+                    }
+                }
+                this.logger.Information($"SyncedWatchlists[]: {string.Join(" ",SyncedWatchlists)}");    
+            }
+            else
+            {
+                this.logger.Information("SmartFaceSyncedWatchlists is empty");
+            }
+            
+
 
             bool allMembers = false;
             var SmartFaceAllMembers = new List<SmartFaceMember>();
@@ -122,7 +141,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                         var imageDataId = wm.Tracklet.Faces.OrderBy(f=> f.CreatedAt).FirstOrDefault(f=> f.FaceType == AEOSSyncTool.FaceType.Regular)?.ImageDataId;
                         this.logger.Debug($"{wm.Id}\t{imageDataId}\t{wm.DisplayName}");
                         SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
-                        
                     }
                     if(watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
                     {
