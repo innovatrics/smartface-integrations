@@ -9931,7 +9931,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync.Nswag
         /// <param name="id">Id of the watchlist member.</param>
         /// <returns>The watchlist member with given id was deleted successfully.</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task WatchlistMembersDELETEAsync(string id)
+        public virtual System.Threading.Tasks.Task<bool> WatchlistMembersDELETEAsync(string id)
         {
             return WatchlistMembersDELETEAsync(id, System.Threading.CancellationToken.None);
         }
@@ -9943,7 +9943,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync.Nswag
         /// <param name="id">Id of the watchlist member.</param>
         /// <returns>The watchlist member with given id was deleted successfully.</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task WatchlistMembersDELETEAsync(string id, System.Threading.CancellationToken cancellationToken)
+        //public virtual async System.Threading.Tasks.Task WatchlistMembersDELETEAsync(string id, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<bool> WatchlistMembersDELETEAsync(string id, System.Threading.CancellationToken cancellationToken)
         {
             if (id == null)
                 throw new System.ArgumentNullException("id");
@@ -9983,7 +9984,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync.Nswag
                         var status_ = (int)response_.StatusCode;
                         if (status_ == 204)
                         {
-                            return;
+                            return response_.IsSuccessStatusCode;
+                            //return;
                         }
                         else
                         if (status_ == 404)

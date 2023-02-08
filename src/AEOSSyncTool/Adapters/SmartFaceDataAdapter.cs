@@ -165,9 +165,28 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             return true;
         }
 
-        public async Task updateEmployee()
+        public async Task<bool> updateEmployee(SmartFaceMember member)
         {
             this.logger.Information("Updating Employees");
+
+            var httpClient = new HttpClient();   
+            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+
+            var updateEmployee = new WatchlistMemberUpsertRequest();
+            updateEmployee.Id = member.Id;
+            updateEmployee.FullName = member.FullName;
+            updateEmployee.DisplayName = member.DisplayName;
+
+            var restAPIresult = await restAPI.WatchlistMembersPUTAsync(updateEmployee);
+
+            if(restAPIresult.Id != null)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public async Task<bool> removeEmployee(SmartFaceMember member)
@@ -181,25 +200,15 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             removeEmployee.FaceId = member.Id;
             this.logger.Information($"FaceId = {removeEmployee.FaceId}");
 
-            // TODO
-            // missing returning values... needs to be adjusted
-
             if(member.Id != null)
             {
-                await restAPI.WatchlistMembersDELETEAsync(removeEmployee.FaceId);
-            }
-            /* if(restAPIresult.)
-            {
-                return true;
+                var restAPIresult = await restAPI.WatchlistMembersDELETEAsync(removeEmployee.FaceId);
+                return restAPIresult;
             }
             else
             {
                 return false;
-            }
- */
-
-            // dummy return
-            return true;
+            }   
         }
 
         public async Task<string> initializeWatchlist()
