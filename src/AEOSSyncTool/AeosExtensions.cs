@@ -1,11 +1,11 @@
 using System.Linq;
 using ServiceReference;
 
-namespace Innovatrics.SmartFace.Integrations.AEOSSync 
+namespace Innovatrics.SmartFace.Integrations.AEOSSync
 {
-    public static class AeosExtensions 
+    public static class AeosExtensions
     {
-        public static string GetFreefieldValue(this EmployeeInfo employeeInfo, string freefieldName, string defaultValue = null) 
+        public static string GetFreefieldValue(this EmployeeInfo employeeInfo, string freefieldName, string defaultValue = null)
         {
             var freeField = employeeInfo.Freefield?.FirstOrDefault(f => f.Name == freefieldName);
             if (freeField == null)
@@ -16,7 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         public static string getFirstName(string fullName)
         {
             var names = fullName.Split(' ');
-            if(names.Length > 0)
+            if (names.Length > 0)
             {
                 return fullName.Split(' ')[0];
             }
@@ -27,13 +27,13 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         }
 
         public static string getLastName(string fullName)
-        {   
+        {
             var names = fullName.Split(' ');
             string returnValue = "";
 
-            if(names.Length > 1)
+            if (names.Length > 1)
             {
-                for (int x=1; x<names.Length ;x++)
+                for (int x = 1; x < names.Length; x++)
                 {
                     returnValue = returnValue + " " + (string)names[x];
                 }
@@ -53,7 +53,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         public static bool CompareUsers(AeosMember aeosMember, SmartFaceMember smartFaceMember)
         {
             // future checks possible
-            if(smartFaceMember.FullName != aeosMember.FirstName + " " + aeosMember.LastName)
+            if (smartFaceMember.FullName != aeosMember.FirstName + " " + aeosMember.LastName)
             {
                 return false;
             }
