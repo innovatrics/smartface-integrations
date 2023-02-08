@@ -69,12 +69,12 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             
             var SmartFaceAllMembers = await this.smartFaceDataAdapter.getEmployees();
 
-            this.logger.Debug("Employees defined in SmartFace");
+            this.logger.Information("Employees defined in SmartFace");
             foreach (var eachMember in SmartFaceAllMembers)
             {
-                this.logger.Debug(eachMember.ToString());
+                this.logger.Information(eachMember.ToString());
             } 
-            this.logger.Debug($"The amount of SmartFace users is {SmartFaceAllMembers.Count}");    
+            this.logger.Information($"The amount of SmartFace users is {SmartFaceAllMembers.Count}");    
 
             // ###
             //  2.
@@ -309,7 +309,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                 int EmployeesToBeRemovedSuccessCountSmartFace = 0;
                 foreach (var member in EmployeesToBeRemovedSmartFace)
                 {
-                    this.logger.Information($"SmartFace user to be removed->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId} member.smartfaceId {member.Id}");
+                    this.logger.Information($"SmartFace user to be removed->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId}, member.Id {member.Id}, member.FullName {member.FullName}, member.DisplayName {member.DisplayName}");
                     if(member.Id != null)
                     {
 

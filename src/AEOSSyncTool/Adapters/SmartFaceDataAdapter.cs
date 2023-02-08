@@ -59,7 +59,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             MaxFaceSize = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:MaxFaceSize");
             MinFaceSize = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:MinFaceSize");
             ConfidenceThreshold = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:ConfidenceThreshold");
-            configuration.Bind("AEOSSync:SmartFace:SyncedWatchlists", SmartFaceSyncedWatchlists);
+            configuration.Bind("AEOSSync:SmartFace:Export:SyncedWatchlists", SmartFaceSyncedWatchlists);
 
             if(SmartFaceURL == null)
             {
@@ -131,11 +131,13 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             
 
 
-            bool allMembers = false;
+            //bool allMembers = false;
             var SmartFaceAllMembers = new List<SmartFaceMember>();
 
             if(SyncedWatchlists.Count() == 0)
             {
+                bool allMembers = false;
+
                 while(allMembers == false)
                 {
                     { 
@@ -143,7 +145,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet.Faces.OrderBy(f=> f.CreatedAt).FirstOrDefault(f=> f.FaceType == AEOSSyncTool.FaceType.Regular)?.ImageDataId;
-                            this.logger.Debug($"{wm.Id}\t{imageDataId}\t{wm.DisplayName}");
+                            this.logger.Information($"SF: {wm.Id}\t{imageDataId}\t{wm.DisplayName}");
                             SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
                         }
                         if(watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
@@ -155,24 +157,31 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             }
             else
             {
-                foreach (item in SyncedWatchlists)
+                this.logger.Information("Checking users from defined Watchlists");
+                foreach (var item in SyncedWatchlists)
                 {
+                    this.logger.Information($"item: {item}");
+
+
+                    int MemberCount = 0;
+                    bool allMembers = false;
                     while(allMembers == false)
-                {
-                    { 
-                        var watchlistMembers = await graphQlClient.GetWatchlistMembersPerWatchlist.ExecuteAsync(SmartFaceAllMembers.Count,SmartFaceSetPageSize,);
+                    {
+                        this.logger.Information($"MemberCount:{MemberCount},SmartFaceSetPageSize:{SmartFaceSetPageSize},item:{item}");
+                        var watchlistMembers = await graphQlClient.GetWatchlistMembersPerWatchlist.ExecuteAsync(MemberCount,SmartFaceSetPageSize,item);
+                        this.logger.Information($"watchlistMembers.Data.WatchlistMembers.Items.Count: {watchlistMembers.Data.WatchlistMembers.Items.Count}");
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet.Faces.OrderBy(f=> f.CreatedAt).FirstOrDefault(f=> f.FaceType == AEOSSyncTool.FaceType.Regular)?.ImageDataId;
-                            this.logger.Debug($"{wm.Id}\t{imageDataId}\t{wm.DisplayName}");
+                            MemberCount += 1;
+                            this.logger.Information($"SF: {wm.Id}\t{imageDataId}\t{wm.DisplayName}\t{MemberCount}");
                             SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
                         }
                         if(watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
                         {
                             allMembers = true;
-                        }                        
+                        }
                     }
-                }
                 }
             }
             return SmartFaceAllMembers;
