@@ -73,7 +73,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             services.AddSmartFaceGraphQLClient()
                         .ConfigureHttpClient((serviceProvider, httpClient) =>
                         {
-                            var url = configuration.GetValue<string>("aeossync:SmartFaceGraphQL");
+                            var url = configuration.GetValue<string>("aeossync:SmartFace:GraphQL:ServerUrl");
 
                             if(url == null)
                             {

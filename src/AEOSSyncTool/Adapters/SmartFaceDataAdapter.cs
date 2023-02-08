@@ -30,6 +30,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         private int MinFaceSize;
         private int ConfidenceThreshold;
         private bool KeepAutoLearnPhotos;
+        private Dictionary<string,string> SmartFaceSyncedWatchlists = new();
 
         private string AeosWatchlistName;
 
@@ -47,19 +48,18 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             this.graphQlClient = graphQlClient ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.logger.Debug("SmartFaceDataAdapter Initiated");
 
-            SmartFaceURL = configuration.GetValue<string>("aeossync:SmartFaceServer");
-            SmartFaceGraphQL = configuration.GetValue<string>("aeossync:SmartFaceGraphQL");
-            SmartFaceSetPageSize = configuration.GetValue<int>("aeossync:SmartFaceGraphQLPageSize");
-            AeosWatchlistName = configuration.GetValue<string>("aeossync:AeosWatchlistName");
-            SmartFacePageSize = configuration.GetValue<int>("aeossync:SmartFacePageSize");
-            SmartFaceDefaultThreshold = configuration.GetValue<int>("aeossync:SmartFaceDefaultThreshold");
-
-            KeepAutoLearnPhotos = configuration.GetValue<bool>("AEOSSync:KeepAutoLearnPhotos");
-
-            MaxFaces = configuration.GetValue<int>("AEOSSync:FaceDetectorConfig:MaxFaces");
-            MaxFaceSize = configuration.GetValue<int>("AEOSSync:FaceDetectorConfig:MaxFaceSize");
-            MinFaceSize = configuration.GetValue<int>("AEOSSync:FaceDetectorConfig:MinFaceSize");
-            ConfidenceThreshold = configuration.GetValue<int>("AEOSSync:FaceDetectorConfig:ConfidenceThreshold");
+            SmartFaceURL = configuration.GetValue<string>("aeossync:SmartFace:RestApi:ServerUrl");
+            SmartFaceGraphQL = configuration.GetValue<string>("aeossync:SmartFace:GraphQL:ServerUrl");
+            SmartFaceSetPageSize = configuration.GetValue<int>("aeossync:SmartFace:GraphQL:PageSize");
+            AeosWatchlistName = configuration.GetValue<string>("aeossync:SmartFace:Import:Watchlist");
+            SmartFacePageSize = configuration.GetValue<int>("aeossync:SmartFace:RestApi:PageSize");
+            SmartFaceDefaultThreshold = configuration.GetValue<int>("aeossync:SmartFace:Import:DefaultThreshold");
+            KeepAutoLearnPhotos = configuration.GetValue<bool>("AEOSSync:SmartFace:Import:KeepAutoLearnPhotos");
+            MaxFaces = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:MaxFaces");
+            MaxFaceSize = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:MaxFaceSize");
+            MinFaceSize = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:MinFaceSize");
+            ConfidenceThreshold = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:ConfidenceThreshold");
+            configuration.Bind("AEOSSync:SmartFace:SyncedWatchlists", SmartFaceSyncedWatchlists);
 
             if(SmartFaceURL == null)
             {
@@ -77,7 +77,26 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             {
                 throw new InvalidOperationException("The SmartFace threshold needs to be greater than 0.");
             }
-
+            if(MaxFaces <= 0)
+            {
+                throw new InvalidOperationException("The MaxFace value should be at least 1.");
+            }
+            if(MaxFaceSize <= 0)
+            {
+                throw new InvalidOperationException("The MaxFaceSize needs to be a positive value.");
+            }
+            if(MinFaceSize <= 0)
+            {
+                throw new InvalidOperationException("The MinFaceSize needs to be a positive value.");
+            }
+            if(ConfidenceThreshold <= 0)
+            {
+                throw new InvalidOperationException("The ConfidenceThreshold needs to be a positive value.");
+            }
+            if(AeosWatchlistName == null)
+            {
+                throw new InvalidOperationException("The watchlist name for importing into SmartFace is necessary.");
+            }
         }
 
         public async Task<IList <SmartFaceMember>> getEmployees()
@@ -89,6 +108,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
             this.logger.Debug("Receiving Employees from SmartFace");
          
+            this.logger.Information($"SmartFaceSyncedWatchlists[]: {string.Join(" ",SmartFaceSyncedWatchlists.Select(i => i.Key))}");
+
             bool allMembers = false;
             var SmartFaceAllMembers = new List<SmartFaceMember>();
 

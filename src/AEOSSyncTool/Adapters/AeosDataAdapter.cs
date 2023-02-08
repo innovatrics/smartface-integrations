@@ -43,14 +43,12 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
             this.logger.Debug("AeosDataAdapter Initiated");
 
-           
-            AEOSendpoint = configuration.GetValue<string>("aeossync:AeosServerWdsl");
-            AEOSServerPageSize = configuration.GetValue<int>("aeossync:AeosServerPageSize");
-            AEOSusername = configuration.GetValue<string>("aeossync:AeosServerUser");
-            AEOSpassword = configuration.GetValue<string>("aeossync:AeosServerPass");
-            SmartFaceIdFreefield = configuration.GetValue<string>("aeossync:AeosSmartFaceFreefield");
-            SmartFaceIdentifier = configuration.GetValue<string>("aeossync:AeosSmartFaceIdentifier");
-
+            AEOSendpoint = configuration.GetValue<string>("aeossync:Aeos:Server:Wdsl");
+            AEOSServerPageSize = configuration.GetValue<int>("aeossync:Aeos:Server:PageSize");
+            AEOSusername = configuration.GetValue<string>("aeossync:Aeos:Server:User");
+            AEOSpassword = configuration.GetValue<string>("aeossync:Aeos:Server:Pass");
+            SmartFaceIdFreefield = configuration.GetValue<string>("aeossync:Aeos:Integration:Freefield");
+            SmartFaceIdentifier = configuration.GetValue<string>("aeossync:Aeos:Integration:Identifier");
 
             if(AEOSendpoint == null)
             {
