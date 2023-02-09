@@ -313,13 +313,14 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                     if(member.Id != null)
                     {
 
-                        bool returnValue = await smartFaceDataAdapter.removeEmployee(member);
-                        if(returnValue == true)
+                        try
                         {
+                            await smartFaceDataAdapter.removeEmployee(member);
                             EmployeesToBeRemovedSuccessCountSmartFace += 1;
                         }
-                        else
+                        catch
                         {
+                            
                             EmployeesToBeRemovedFailCountSmartFace += 1;
                         }
                     }
