@@ -24,10 +24,10 @@
     <!-- <PackageReference Include="SmartFace.Contract" Version="4.1.0.1379" /> -->
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Shared\AccessController\AccessController.csproj" />
+    <ProjectReference Include="..\..\Shared\AccessController\AccessController.csproj" />
   </ItemGroup>    
   <ItemGroup>  
-    <Compile Include="..\Shared\GeneratedApiClasses\SmartFaceApi.cs" Link="SmartFaceApi.cs" />
+    <Compile Include="..\..\Shared\GeneratedApiClasses\SmartFaceApi.cs" Link="SmartFaceApi.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="appsettings.json">

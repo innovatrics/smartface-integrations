@@ -10,7 +10,7 @@
       "hashAlgorithm": "md5",
       "useSingleFile": true,
       "requestStrategy": "Default",
-      "outputDirectoryName": "../Shared/GeneratedApiClasses/StrawberryShake",
+      "outputDirectoryName": "../../Shared/GeneratedApiClasses/StrawberryShake",
       "noStore": false,
       "emitGeneratedCode": true,
       "razorComponents": false,
