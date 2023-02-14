@@ -6,7 +6,5 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Services
     public interface IBridgeService
     {
         Task ProcessGrantedNotificationAsync(GrantedNotification notification);
-        
-        Task SendKeepAliveSignalAsync();
     }
 }

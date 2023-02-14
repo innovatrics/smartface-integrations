@@ -60,34 +60,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Services
             );
         }
 
-        public async Task SendKeepAliveSignalAsync()
-        {
-            var cameraToAEOSMappings = this.getAllCameraMappings();
-
-            if (cameraToAEOSMappings == null)
-            {
-                this.logger.Warning("No mapping to AEOS configured");
-                return;
-            }
-
-            var uniqueAEOSs = cameraToAEOSMappings.GroupBy(g => new
-            {
-                g.Type,
-                g.AEpuHostname,
-                g.AEpuPort
-            }).ToArray();
-
-            foreach (var cameraToAEOSMapping in uniqueAEOSs)
-            {
-                var AEOSConnector = this.AEOSConnectorFactory.Create(cameraToAEOSMapping.Key.Type);
-
-                await AEOSConnector.SendKeepAliveAsync(
-                    AEpuHostname: cameraToAEOSMapping.Key.AEpuHostname,
-                    AEpuPort: cameraToAEOSMapping.Key.AEpuPort
-                );
-            }
-        }
-
         private AEOSMapping getCameraMapping(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
