@@ -16,10 +16,10 @@ To run the application locally, follow these steps
 ### Deploy to Docker
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AOESConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:1.0 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-AOESconnector:1.0 registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-AOESconnector:1.0`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-AOESconnector:latest`
+ - `docker build -f src/AEpuConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:1.0 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:1.0 registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:1.0`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:latest`
 
 ## Usage
 Add the following pattern to an existing docker compose:
@@ -28,10 +28,11 @@ Add the following pattern to an existing docker compose:
       
   ...
 
-  AOESconnector:
+  AEpuConnector:
     image: ${REGISTRY}integrations-AEpuConnector
-    container_name: SFAOESConnector
+    container_name: SFAEpuConnector
     restart: unless-stopped
+    env_file: .env.aepu
 
 networks:
   default:

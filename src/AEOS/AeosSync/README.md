@@ -42,6 +42,7 @@ Add the following pattern to an existing docker compose:
     image: ${REGISTRY}integrations-AeosSync
     container_name: SFAeosSync
     restart: unless-stopped
+    env_file: .env.aeos
 
 networks:
   default:
