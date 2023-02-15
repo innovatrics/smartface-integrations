@@ -6,11 +6,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public interface ISmartFaceDataAdapter
     {
-        Task<IList <SmartFaceMember>> getEmployees();
-        Task<bool> createEmployee(SmartFaceMember member, string aeosWatchlistId);
-        Task<bool> updateEmployee(SmartFaceMember member);
-        Task<bool> removeEmployee(SmartFaceMember member);
-        Task<string> initializeWatchlist();
+        Task<IList <SmartFaceMember>> GetEmployees();
+        Task<bool> CreateEmployee(SmartFaceMember member, string aeosWatchlistId);
+        Task<bool> UpdateEmployee(SmartFaceMember member);
+        Task<bool> RemoveEmployee(SmartFaceMember member);
+        Task<string> InitializeWatchlist();
 
     }
 }

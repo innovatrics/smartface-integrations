@@ -42,39 +42,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             this.logger.Debug("AeosDataAdapter Initiated");
 
-            AeosEndpoint = configuration.GetValue<string>("aeossync:Aeos:Server:Wdsl");
+            AeosEndpoint = configuration.GetValue<string>("aeossync:Aeos:Server:Wdsl") ?? throw new InvalidOperationException("The AEOS SOAP API URL is not read.");
+            AeosUsername = configuration.GetValue<string>("aeossync:Aeos:Server:User") ?? throw new InvalidOperationException("The AEOS username is not read.");
+            AeosPassword = configuration.GetValue<string>("aeossync:Aeos:Server:Pass") ?? throw new InvalidOperationException("The AEOS password is not read.");
+            SmartFaceIdFreefield = configuration.GetValue<string>("aeossync:Aeos:Integration:Freefield") ?? throw new InvalidOperationException("The AEOS SmartFaceIdFreefield is not read.");
+            SmartFaceIdentifier = configuration.GetValue<string>("aeossync:Aeos:Integration:Identifier") ?? throw new InvalidOperationException("The AEOS SmartFaceIdentifier is not read.");
             AeosServerPageSize = configuration.GetValue<int>("aeossync:Aeos:Server:PageSize");
-            AeosUsername = configuration.GetValue<string>("aeossync:Aeos:Server:User");
-            AeosPassword = configuration.GetValue<string>("aeossync:Aeos:Server:Pass");
-            SmartFaceIdFreefield = configuration.GetValue<string>("aeossync:Aeos:Integration:Freefield");
-            SmartFaceIdentifier = configuration.GetValue<string>("aeossync:Aeos:Integration:Identifier");
 
-            if(AeosEndpoint == null)
-            {
-                throw new InvalidOperationException("The AEOS SOAP API URL is not read.");
-            }
             if(AeosServerPageSize <= 0)
             {
                 throw new InvalidOperationException("The SmartFace GraphQL Page Size needs to be greater than 0.");
             }
-            if(AeosUsername == null)
-            {
-                throw new InvalidOperationException("The AEOS username is not read.");
-            }
-            if(AeosPassword == null)
-            {
-                throw new InvalidOperationException("The AEOS password is not read.");
-            }
-           
-            if(SmartFaceIdFreefield == null)
-            {
-                throw new InvalidOperationException("The AEOS SmartFaceIdFreefield is not read.");
-            }
-            if(SmartFaceIdentifier == null)
-            {
-                throw new InvalidOperationException("The AEOS SmartFaceIdentifier is not read.");
-            }
-
             
             var endpoint = new Uri(AeosEndpoint);
             var endpointBinding = new BasicHttpBinding()
@@ -104,7 +82,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             client.ClientCredentials.UserName.Password = AeosPassword;
         }
 
-        public async Task<IList <AeosMember>> getEmployees()
+        public async Task<IList <AeosMember>> GetEmployees()
         {
             this.logger.Debug("Receiving Employees from AEOS");
 
@@ -162,7 +140,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             return AeosAllMembersReturn;
         }
 
-        public async Task<bool> createEmployees(AeosMember aeosMember, long badgeIdentifierType, long freefieldDefinitionId)
+        public async Task<bool> CreateEmployees(AeosMember aeosMember, long badgeIdentifierType, long freefieldDefinitionId)
         {
 
             var member = aeosMember;
@@ -213,11 +191,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
-        public async Task<bool> updateEmployee(AeosMember member, long FreefieldDefinitionId)
+        public async Task<bool> UpdateEmployee(AeosMember member, long FreefieldDefinitionId)
         {
             this.logger.Information($"Updating Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
 
-            findEmployeeResponse returnedUser = await getEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
+            findEmployeeResponse returnedUser = await GetEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
 
             if(returnedUser != null)
             {
@@ -242,7 +220,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 if(updateEmployeeResponse.EmployeeResult.Id != 0)
                 {
-                    this.logger.Information($"Update \tUser with SmartFaceID {member.SmartFaceId} has been updated under {updateID} with new name {member.FirstName} {member.LastName}");
+                    this.logger.Information($"Update> user with SmartFaceID {member.SmartFaceId} has been updated under {updateID} with new name {member.FirstName} {member.LastName}");
                     return true;
                 }
                 else
@@ -257,15 +235,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         }
 
-        public async Task<bool> removeEmployee(AeosMember member, long FreefieldDefinitionId)
+        public async Task<bool> RemoveEmployee(AeosMember member, long FreefieldDefinitionId)
         {
             this.logger.Debug("Removing Employee");
             this.logger.Debug($"Updating Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
-            findEmployeeResponse returnedUser = await getEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
+            findEmployeeResponse returnedUser = await GetEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
 
             if(returnedUser != null)
             {
-                this.logger.Information($"DELETE \tFound a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeList[0].EmployeeInfo.Id} {returnedUser.EmployeeList[0].EmployeeInfo.FirstName} {returnedUser.EmployeeList[0].EmployeeInfo.LastName}");
+                this.logger.Information($"DELETE> Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeList[0].EmployeeInfo.Id} {returnedUser.EmployeeList[0].EmployeeInfo.FirstName} {returnedUser.EmployeeList[0].EmployeeInfo.LastName}");
                 var removeID = returnedUser.EmployeeList[0].EmployeeInfo.Id;
 
                 var removeUser = new removeEmployee();
@@ -286,7 +264,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
-        public async Task<long> getBadgeIdentifierType(){
+        public async Task<long> GetBadgeIdentifierType(){
             this.logger.Debug("getSmartfaceBadgeIdentifierType");
 
             var findIdentifierType = new findIdentifierType();
@@ -304,7 +282,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
-        public async Task<long> getFreefieldDefinitionId()
+        public async Task<long> GetFreefieldDefinitionId()
         {
             this.logger.Debug("getFreefieldDefinitionId");
             
@@ -323,7 +301,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
-        public async Task<findEmployeeResponse> getEmployeeId(string localSmartFaceId, long localFreefieldDefId)
+        public async Task<findEmployeeResponse> GetEmployeeId(string localSmartFaceId, long localFreefieldDefId)
         {
             this.logger.Information("getEmployeeId");
 

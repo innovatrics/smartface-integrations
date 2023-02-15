@@ -13,7 +13,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             return freeField.value;
         }
 
-        public static string getFirstName(string fullName)
+        public static string GetFirstName(string fullName)
         {
             var names = fullName.Split(' ');
             if (names.Length > 0)
@@ -26,7 +26,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
-        public static string getLastName(string fullName)
+        public static string GetLastName(string fullName)
         {
             var names = fullName.Split(' ');
             string returnValue = "";
@@ -45,7 +45,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
-        public static string joinNames(string firstName, string lastName)
+        public static string JoinNames(string firstName, string lastName)
         {
             return firstName + " " + lastName;
         }

@@ -48,10 +48,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.graphQlClient = graphQlClient ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.logger.Debug("SmartFaceDataAdapter Initiated");
 
-            SmartFaceURL = configuration.GetValue<string>("AeosSync:SmartFace:RestApi:ServerUrl");
-            SmartFaceGraphQL = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:ServerUrl");
+            SmartFaceURL = configuration.GetValue<string>("AeosSync:SmartFace:RestApi:ServerUrl") ?? throw new InvalidOperationException("The SmartFace URL is not read.");
+            SmartFaceGraphQL = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:ServerUrl") ?? throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
             SmartFaceSetPageSize = configuration.GetValue<int>("AeosSync:SmartFace:GraphQL:PageSize");
-            AeosWatchlistName = configuration.GetValue<string>("AeosSync:SmartFace:Import:Watchlist");
+            AeosWatchlistName = configuration.GetValue<string>("AeosSync:SmartFace:Import:Watchlist") ?? throw new InvalidOperationException("The watchlist name for importing into SmartFace is necessary.");
             SmartFacePageSize = configuration.GetValue<int>("AeosSync:SmartFace:RestApi:PageSize");
             SmartFaceDefaultThreshold = configuration.GetValue<int>("AeosSync:SmartFace:Import:DefaultThreshold");
             KeepAutoLearnPhotos = configuration.GetValue<bool>("AeosSync:SmartFace:Import:KeepAutoLearnPhotos");
@@ -61,14 +61,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             ConfidenceThreshold = configuration.GetValue<int>("AeosSync:SmartFace:Import:FaceDetectorConfig:ConfidenceThreshold");
             configuration.Bind("AeosSync:SmartFace:Export:SyncedWatchlists", SmartFaceSyncedWatchlists);
 
-            if (SmartFaceURL == null)
-            {
-                throw new InvalidOperationException("The SmartFace URL is not read.");
-            }
-            if (SmartFaceGraphQL == null)
-            {
-                throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
-            }
             if (SmartFaceSetPageSize <= 0)
             {
                 throw new InvalidOperationException("The SmartFace GraphQL Page Size needs to be greater than 0.");
@@ -93,13 +85,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 throw new InvalidOperationException("The ConfidenceThreshold needs to be a positive value.");
             }
-            if (AeosWatchlistName == null)
-            {
-                throw new InvalidOperationException("The watchlist name for importing into SmartFace is necessary.");
-            }
+
         }
 
-        public async Task<IList<SmartFaceMember>> getEmployees()
+        public async Task<IList<SmartFaceMember>> GetEmployees()
         {
             if (SmartFaceURL is null)
             {
@@ -142,7 +131,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
-                            this.logger.Information($"SF: {wm.Id}\t{imageDataId}\t{wm.DisplayName}");
+                            this.logger.Information($"SF: {wm.Id} {imageDataId} {wm.DisplayName}");
                             SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
                         }
                         if (watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
@@ -170,7 +159,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         {
                             var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
                             MemberCount += 1;
-                            this.logger.Information($"SF: {wm.Id}\t{imageDataId}\t{wm.DisplayName}\t{MemberCount}");
+                            this.logger.Information($"SF: {wm.Id} {imageDataId} {wm.DisplayName} {MemberCount}");
                             SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
                         }
                         if (watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
@@ -183,7 +172,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             return SmartFaceAllMembers;
         }
 
-        public async Task<bool> createEmployee(SmartFaceMember member, string watchlistId)
+        public async Task<bool> CreateEmployee(SmartFaceMember member, string watchlistId)
         {
             this.logger.Information("Creating Employees");
 
@@ -235,7 +224,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             return true;
         }
 
-        public async Task<bool> updateEmployee(SmartFaceMember member)
+        public async Task<bool> UpdateEmployee(SmartFaceMember member)
         {
             this.logger.Information("Updating Employees");
 
@@ -259,7 +248,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
-        public async Task<bool> removeEmployee(SmartFaceMember member)
+        public async Task<bool> RemoveEmployee(SmartFaceMember member)
         {
             this.logger.Information("Removing Employees");
 
@@ -281,7 +270,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
-        public async Task<string> initializeWatchlist()
+        public async Task<string> InitializeWatchlist()
         {
             var httpClient = new HttpClient();
             var restAPI = new NSwagClient(SmartFaceURL, httpClient);

@@ -40,9 +40,9 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
 
             this.logger.Information("Start receiving gRPC notifications");
 
-            this.startReceivingGrpcNotifications();
+            this.StartReceivingGrpcNotifications();
 
-            this.startPingTimer();
+            this.StartPingTimer();
 
             return Task.CompletedTask;
         }
@@ -51,7 +51,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
         {
             this.logger.Information($"{nameof(MainHostedService)} is stopping");
 
-            await this.stopReceivingGrpcNotificationsAsync();
+            await this.StopReceivingGrpcNotificationsAsync();
 
             this.accessControllerPingTimer?.Stop();
             this.accessControllerPingTimer?.Dispose();
@@ -67,7 +67,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
             return this.grpcReaderFactory.Create(grpcHost, grpcPort);
         }
 
-        private void startReceivingGrpcNotifications()
+        private void StartReceivingGrpcNotifications()
         {
             this.logger.Information("Start receiving gRPC notifications");
 
@@ -79,7 +79,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
             grpcNotificationReader.StartReceiving();
         }
 
-        private async Task stopReceivingGrpcNotificationsAsync()
+        private async Task StopReceivingGrpcNotificationsAsync()
         {
             this.grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
             this.grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
@@ -108,7 +108,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
             await this.bridge.ProcessGrantedNotificationAsync(notification);
         }
 
-        private void startPingTimer()
+        private void StartPingTimer()
         {
             this.lastGrpcPing = DateTime.UtcNow;
             accessControllerPingTimer = new System.Timers.Timer();
@@ -132,8 +132,8 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
 
                     accessControllerPingTimer.Stop();
 
-                    await this.stopReceivingGrpcNotificationsAsync();
-                    this.startReceivingGrpcNotifications();
+                    await this.StopReceivingGrpcNotificationsAsync();
+                    this.StartReceivingGrpcNotifications();
 
                     accessControllerPingTimer.Start();
 

@@ -7,12 +7,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public interface IAeosDataAdapter
     {
-        Task<IList<AeosMember>> getEmployees();
-        Task<bool> createEmployees(AeosMember member, long badgeIdentifierType, long freefieldDefinitionId);
-        Task<bool> updateEmployee(AeosMember member, long freefieldDefinitionId);
-        Task<bool> removeEmployee(AeosMember member, long freefieldDefinitionId);
-        Task<findEmployeeResponse> getEmployeeId(string localSmartFaceId, long localFreefieldDefId);
-        Task<long> getBadgeIdentifierType();
-        Task<long> getFreefieldDefinitionId();
+        Task<IList<AeosMember>> GetEmployees();
+        Task<bool> CreateEmployees(AeosMember member, long badgeIdentifierType, long freefieldDefinitionId);
+        Task<bool> UpdateEmployee(AeosMember member, long freefieldDefinitionId);
+        Task<bool> RemoveEmployee(AeosMember member, long freefieldDefinitionId);
+        Task<findEmployeeResponse> GetEmployeeId(string localSmartFaceId, long localFreefieldDefId);
+        Task<long> GetBadgeIdentifierType();
+        Task<long> GetFreefieldDefinitionId();
     }
 }
