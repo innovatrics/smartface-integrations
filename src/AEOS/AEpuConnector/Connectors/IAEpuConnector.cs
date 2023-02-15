@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors
+namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
 {
-    public interface IAEOSConnector
+    public interface IAEpuConnector
     {
         Task OpenAsync(string AEpuHostname, int AEpuPort, string WatchlistMemberID);
     }

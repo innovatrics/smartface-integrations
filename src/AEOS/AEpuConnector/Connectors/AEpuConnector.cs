@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace Innovatrics.SmartFace.Integrations.AEOSConnector.Connectors
+namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
 {
-    public class AEpuConnector : IAEOSConnector
+    public class AEpuConnector : IAEpuConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
