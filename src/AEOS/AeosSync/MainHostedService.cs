@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 
-namespace Innovatrics.SmartFace.Integrations.AEOSSync
+namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public class MainHostedService : IHostedService
     {

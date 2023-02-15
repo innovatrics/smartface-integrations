@@ -5,13 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using AEOSSyncTool;
-using Innovatrics.SmartFace.Integrations.AEOSSync.Nswag;
+using AeosSync;
+using Innovatrics.SmartFace.Integrations.AeosSync.Nswag;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 
-namespace Innovatrics.SmartFace.Integrations.AEOSSync
+namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public class SmartFaceDataAdapter : ISmartFaceDataAdapter
     {
@@ -48,18 +48,18 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             this.graphQlClient = graphQlClient ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.logger.Debug("SmartFaceDataAdapter Initiated");
 
-            SmartFaceURL = configuration.GetValue<string>("aeossync:SmartFace:RestApi:ServerUrl");
-            SmartFaceGraphQL = configuration.GetValue<string>("aeossync:SmartFace:GraphQL:ServerUrl");
-            SmartFaceSetPageSize = configuration.GetValue<int>("aeossync:SmartFace:GraphQL:PageSize");
-            AeosWatchlistName = configuration.GetValue<string>("aeossync:SmartFace:Import:Watchlist");
-            SmartFacePageSize = configuration.GetValue<int>("aeossync:SmartFace:RestApi:PageSize");
-            SmartFaceDefaultThreshold = configuration.GetValue<int>("aeossync:SmartFace:Import:DefaultThreshold");
-            KeepAutoLearnPhotos = configuration.GetValue<bool>("AEOSSync:SmartFace:Import:KeepAutoLearnPhotos");
-            MaxFaces = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:MaxFaces");
-            MaxFaceSize = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:MaxFaceSize");
-            MinFaceSize = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:MinFaceSize");
-            ConfidenceThreshold = configuration.GetValue<int>("AEOSSync:SmartFace:Import:FaceDetectorConfig:ConfidenceThreshold");
-            configuration.Bind("AEOSSync:SmartFace:Export:SyncedWatchlists", SmartFaceSyncedWatchlists);
+            SmartFaceURL = configuration.GetValue<string>("AeosSync:SmartFace:RestApi:ServerUrl");
+            SmartFaceGraphQL = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:ServerUrl");
+            SmartFaceSetPageSize = configuration.GetValue<int>("AeosSync:SmartFace:GraphQL:PageSize");
+            AeosWatchlistName = configuration.GetValue<string>("AeosSync:SmartFace:Import:Watchlist");
+            SmartFacePageSize = configuration.GetValue<int>("AeosSync:SmartFace:RestApi:PageSize");
+            SmartFaceDefaultThreshold = configuration.GetValue<int>("AeosSync:SmartFace:Import:DefaultThreshold");
+            KeepAutoLearnPhotos = configuration.GetValue<bool>("AeosSync:SmartFace:Import:KeepAutoLearnPhotos");
+            MaxFaces = configuration.GetValue<int>("AeosSync:SmartFace:Import:FaceDetectorConfig:MaxFaces");
+            MaxFaceSize = configuration.GetValue<int>("AeosSync:SmartFace:Import:FaceDetectorConfig:MaxFaceSize");
+            MinFaceSize = configuration.GetValue<int>("AeosSync:SmartFace:Import:FaceDetectorConfig:MinFaceSize");
+            ConfidenceThreshold = configuration.GetValue<int>("AeosSync:SmartFace:Import:FaceDetectorConfig:ConfidenceThreshold");
+            configuration.Bind("AeosSync:SmartFace:Export:SyncedWatchlists", SmartFaceSyncedWatchlists);
 
             if (SmartFaceURL == null)
             {
@@ -141,7 +141,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                         var watchlistMembers = await graphQlClient.GetWatchlistMembers.ExecuteAsync(SmartFaceAllMembers.Count, SmartFaceSetPageSize);
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
-                            var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == AEOSSyncTool.FaceType.Regular)?.ImageDataId;
+                            var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
                             this.logger.Information($"SF: {wm.Id}\t{imageDataId}\t{wm.DisplayName}");
                             SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
                         }
@@ -168,7 +168,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                         this.logger.Information($"watchlistMembers.Data.WatchlistMembers.Items.Count: {watchlistMembers.Data.WatchlistMembers.Items.Count}");
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
-                            var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == AEOSSyncTool.FaceType.Regular)?.ImageDataId;
+                            var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
                             MemberCount += 1;
                             this.logger.Information($"SF: {wm.Id}\t{imageDataId}\t{wm.DisplayName}\t{MemberCount}");
                             SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
@@ -183,7 +183,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             return SmartFaceAllMembers;
         }
 
-        public async Task<bool> createEmployee(SmartFaceMember member, string WatchlistId)
+        public async Task<bool> createEmployee(SmartFaceMember member, string watchlistId)
         {
             this.logger.Information("Creating Employees");
 
@@ -200,8 +200,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                 WatchlistMemberAdd.FullName = member.FullName;
                 WatchlistMemberAdd.DisplayName = member.DisplayName;
 
-                this.logger.Information($"WatchlistId->{WatchlistId}");
-                WatchlistMemberAdd.WatchlistIds.Add(WatchlistId);
+                this.logger.Information($"WatchlistId->{watchlistId}");
+                WatchlistMemberAdd.WatchlistIds.Add(watchlistId);
                 WatchlistMemberAdd.KeepAutoLearnPhotos = KeepAutoLearnPhotos;
                 WatchlistMemberAdd.FaceDetectorConfig = new FaceDetectorConfig();
                 WatchlistMemberAdd.FaceDetectorConfig.MaxFaces = MaxFaces;

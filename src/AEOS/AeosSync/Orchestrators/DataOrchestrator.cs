@@ -10,9 +10,9 @@ using ServiceReference;
 using System.ServiceModel;
 using System.ServiceModel.Security;
 using System.Security.Cryptography.X509Certificates;
-using AEOSSyncTool;
+using AeosSync;
 
-namespace Innovatrics.SmartFace.Integrations.AEOSSync
+namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public class DataOrchestrator : IDataOrchestrator
     {
@@ -39,7 +39,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             this.graphQlClient = graphQlClient ?? throw new ArgumentNullException(nameof(graphQlClient));
             this.aeosDataAdapter = aeosDataAdapter ?? throw new ArgumentNullException(nameof(aeosDataAdapter));
 
-            DataSource = configuration.GetValue<string>("aeossync:DataSource");
+            DataSource = configuration.GetValue<string>("AeosSync:DataSource");
 
             if (DataSource == null)
             {
@@ -57,15 +57,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
             this.logger.Debug("Data Orchestrator Initalized");
 
-            // ###
-            //  0.
-            // ### Get all the supporting data at the beginning of the cycle so it is fresh
             SupportingData SupportData = new SupportingData(await aeosDataAdapter.getFreefieldDefinitionId(), await aeosDataAdapter.getBadgeIdentifierType());
             this.logger.Debug($"SupportData.FreefieldDefinitionId: {SupportData.FreefieldDefinitionId}, SupportData.SmartFaceBadgeIdentifierType: {SupportData.SmartFaceBadgeIdentifierType}");
-
-            // ###
-            //  1.
-            // ### Get Data from SmartFace
 
             var SmartFaceAllMembers = await this.smartFaceDataAdapter.getEmployees();
 
@@ -76,10 +69,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             }
             this.logger.Information($"The amount of SmartFace users is {SmartFaceAllMembers.Count}");
 
-            // ###
-            //  2.
-            // ### Get Data from AEOS       
-
             var AeosAllMembers = await this.aeosDataAdapter.getEmployees();
 
             this.logger.Debug("Employees defined in Aeos");
@@ -88,10 +77,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                 this.logger.Debug(eachMember.ToString());
             }
             this.logger.Debug($"The amount of AEOS users is {AeosAllMembers.Count}");
-
-            // ###
-            //  3.
-            // ### Compare the list of users between Aeos and SmartFace
 
             List<AeosMember> EmployeesToBeAddedAeos = new List<AeosMember>();
             List<AeosMember> EmployeesToBeRemovedAeos = new List<AeosMember>();
@@ -162,7 +147,6 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                         else if (DataSource == "AEOS")
                         {
 
-                            // ADD USER TO SMARTFACE TO MATCH AEOS
                             if (Member.SmartFaceId != null && Member.ImageData != null)
                             {
                                 this.logger.Information($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} and SmartFaceId {Member.SmartFaceId} is not present in the SmartFace. It will be added into the SmartFace");

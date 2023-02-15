@@ -31,14 +31,14 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(string AEpuHostname, int AEpuPort, string WatchlistMemberID)
+        public async Task OpenAsync(string aepuHostname, int aepuPort, string watchlistMemberID)
         {
-            this.logger.Information("Sending ipBadge to {AEpuHostname}:{AEpuPort} for user {WatchlistMemberID}", AEpuHostname, AEpuPort, WatchlistMemberID);
+            this.logger.Information("Sending ipBadge to {AEpuHostname}:{AEpuPort} for user {WatchlistMemberID}", aepuHostname, aepuPort, watchlistMemberID);
 
             try
             {
 
-                if (Dns.GetHostAddresses(AEpuHostname).Length == 0)
+                if (Dns.GetHostAddresses(aepuHostname).Length == 0)
                 {
                     throw new ArgumentException(
                         "Unable to retrieve address from specified host name.",
@@ -47,11 +47,11 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
                 }
                 else
                 {
-                    System.Net.IPHostEntry ipHost = Dns.GetHostEntry(AEpuHostname);
+                    System.Net.IPHostEntry ipHost = Dns.GetHostEntry(aepuHostname);
                     ipAddr = ipHost.AddressList[0];
-                    localEndPoint = new System.Net.IPEndPoint(ipAddr, AEpuPort);
+                    localEndPoint = new System.Net.IPEndPoint(ipAddr, aepuPort);
 
-                    this.logger.Information("IP Address Received for the hostname {AEpuHostname}: {ipAddr}", AEpuHostname, ipAddr);
+                    this.logger.Information("IP Address Received for the hostname {AEpuHostname}: {ipAddr}", aepuHostname, ipAddr);
                 }
 
                 var sender = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -63,7 +63,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
 
                     this.logger.Information("Socket connected to -> {0} ", sender.RemoteEndPoint.ToString());
 
-                    var clientId = WatchlistMemberID;
+                    var clientId = watchlistMemberID;
                     var encodedClientId = Encoding.UTF8.GetBytes(clientId);
 
                     if (encodedClientId.Length > 28)

@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.Collections.Generic;
-using AEOSSyncTool;
+using AeosSync;
 using ServiceReference;
 using System.ServiceModel;
 using System.ServiceModel.Security;
 using System.Security.Cryptography.X509Certificates;
 
-namespace Innovatrics.SmartFace.Integrations.AEOSSync
+namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public class AeosDataAdapter : IAeosDataAdapter
     {
@@ -21,10 +21,10 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
         private readonly IHttpClientFactory httpClientFactory;
 
         
-        private string AEOSendpoint;
-        private int AEOSServerPageSize;
-        private string AEOSusername;
-        private string AEOSpassword;
+        private string AeosEndpoint;
+        private int AeosServerPageSize;
+        private string AeosUsername;
+        private string AeosPassword;
         private string SmartFaceIdFreefield;
         private string SmartFaceIdentifier;
 
@@ -42,26 +42,26 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
 
             this.logger.Debug("AeosDataAdapter Initiated");
 
-            AEOSendpoint = configuration.GetValue<string>("aeossync:Aeos:Server:Wdsl");
-            AEOSServerPageSize = configuration.GetValue<int>("aeossync:Aeos:Server:PageSize");
-            AEOSusername = configuration.GetValue<string>("aeossync:Aeos:Server:User");
-            AEOSpassword = configuration.GetValue<string>("aeossync:Aeos:Server:Pass");
+            AeosEndpoint = configuration.GetValue<string>("aeossync:Aeos:Server:Wdsl");
+            AeosServerPageSize = configuration.GetValue<int>("aeossync:Aeos:Server:PageSize");
+            AeosUsername = configuration.GetValue<string>("aeossync:Aeos:Server:User");
+            AeosPassword = configuration.GetValue<string>("aeossync:Aeos:Server:Pass");
             SmartFaceIdFreefield = configuration.GetValue<string>("aeossync:Aeos:Integration:Freefield");
             SmartFaceIdentifier = configuration.GetValue<string>("aeossync:Aeos:Integration:Identifier");
 
-            if(AEOSendpoint == null)
+            if(AeosEndpoint == null)
             {
                 throw new InvalidOperationException("The AEOS SOAP API URL is not read.");
             }
-            if(AEOSServerPageSize <= 0)
+            if(AeosServerPageSize <= 0)
             {
                 throw new InvalidOperationException("The SmartFace GraphQL Page Size needs to be greater than 0.");
             }
-            if(AEOSusername == null)
+            if(AeosUsername == null)
             {
                 throw new InvalidOperationException("The AEOS username is not read.");
             }
-            if(AEOSpassword == null)
+            if(AeosPassword == null)
             {
                 throw new InvalidOperationException("The AEOS password is not read.");
             }
@@ -76,7 +76,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             }
 
             
-            var endpoint = new Uri(AEOSendpoint);
+            var endpoint = new Uri(AeosEndpoint);
             var endpointBinding = new BasicHttpBinding()
             {
                 MaxBufferSize = int.MaxValue,
@@ -100,8 +100,8 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                 CertificateValidationMode = X509CertificateValidationMode.None,
                 RevocationMode = X509RevocationMode.NoCheck
             };
-            client.ClientCredentials.UserName.UserName = AEOSusername;
-            client.ClientCredentials.UserName.Password = AEOSpassword;
+            client.ClientCredentials.UserName.UserName = AeosUsername;
+            client.ClientCredentials.UserName.Password = AeosPassword;
         }
 
         public async Task<IList <AeosMember>> getEmployees()
@@ -111,7 +111,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             List<AeosMember> AeosAllMembers = new List<AeosMember>();
 
             bool allEmployees = false;
-            int EmployeesPageSize = AEOSServerPageSize; 
+            int EmployeesPageSize = AeosServerPageSize; 
             int EmployeesPageNumber = 0;
 
             List<AeosMember> AeosAllMembersReturn = new List<AeosMember>();
@@ -162,7 +162,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             return AeosAllMembersReturn;
         }
 
-        public async Task<bool> createEmployees(AeosMember aeosMember, long badgeIdentifierType, long FreefieldDefinitionId)
+        public async Task<bool> createEmployees(AeosMember aeosMember, long badgeIdentifierType, long freefieldDefinitionId)
         {
 
             var member = aeosMember;
@@ -183,7 +183,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                     {
                         new FreeFieldInfo() 
                         {
-                            DefinitionId = FreefieldDefinitionId,
+                            DefinitionId = freefieldDefinitionId,
                             Name = SmartFaceIdFreefield,
                             value = member.SmartFaceId
                         }

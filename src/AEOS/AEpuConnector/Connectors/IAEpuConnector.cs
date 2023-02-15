@@ -5,6 +5,6 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
 {
     public interface IAEpuConnector
     {
-        Task OpenAsync(string AEpuHostname, int AEpuPort, string WatchlistMemberID);
+        Task OpenAsync(string aepuHostname, int aepuPort, string watchlistMemberID);
     }
 }

@@ -11,14 +11,6 @@ public class AeosMember
     {
         this.Id = id;
         
-        /* if(SmartFaceId.Length > 28)
-        {
-            throw new System.Exception();
-        }
-        else
-        {
-            this.SmartFaceId = SmartFaceId;
-        } */
         this.SmartFaceId = smartFaceId;
         this.FirstName = firstName;
         this.LastName = lastName;

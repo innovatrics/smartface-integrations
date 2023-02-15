@@ -1,7 +1,7 @@
 using System.Linq;
 using ServiceReference;
 
-namespace Innovatrics.SmartFace.Integrations.AEOSSync
+namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public static class AeosExtensions
     {
@@ -45,14 +45,13 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             }
         }
 
-        public static string joinNames(string FirstName, string LastName)
+        public static string joinNames(string firstName, string lastName)
         {
-            return FirstName + " " + LastName;
+            return firstName + " " + lastName;
         }
 
         public static bool CompareUsers(AeosMember aeosMember, SmartFaceMember smartFaceMember)
         {
-            // future checks possible
             if (smartFaceMember.FullName != aeosMember.FirstName + " " + aeosMember.LastName)
             {
                 return false;

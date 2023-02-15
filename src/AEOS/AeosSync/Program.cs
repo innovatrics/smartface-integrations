@@ -8,11 +8,11 @@ using System.Net.Http;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
 
-namespace Innovatrics.SmartFace.Integrations.AEOSSync
+namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public class Program
     {
-        public const string LOG_FILE_NAME = "SmartFace.Integrations.AEOSSync.log";
+        public const string LOG_FILE_NAME = "SmartFace.Integrations.AeosSync.log";
         public const string JSON_CONFIG_FILE_NAME = "appsettings.json";
 
         private static readonly HttpClient httpClientSoap = new HttpClient();
@@ -48,7 +48,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
             // ReSharper disable once StringLiteralTypo
-            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AEOSSync"));
+            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AeosSync"));
             logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
@@ -96,7 +96,7 @@ namespace Innovatrics.SmartFace.Integrations.AEOSSync
                     .SetMainModuleBasePath()
                     .AddJsonFile(JSON_CONFIG_FILE_NAME, optional: false)
                     .AddEnvironmentVariables()
-                    .AddEnvironmentVariables($"SF_INT_AEOSSync_")
+                    .AddEnvironmentVariables($"SF_INT_AeosSync_")
                     .AddCommandLine(args)
                     .Build();
         }
