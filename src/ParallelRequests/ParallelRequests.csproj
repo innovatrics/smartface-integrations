@@ -11,6 +11,7 @@
     <PackageReference Include="OpenCvSharp4" Version="4.5.1.20210123" />
     <PackageReference Include="Innovatrics.IFace" Version="4.20.0" />
     <PackageReference Include="Innovatrics.IFace.x64.Runtime" Version="4.20.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 </ItemGroup>
 
 </Project>

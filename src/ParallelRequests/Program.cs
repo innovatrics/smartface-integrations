@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace SmartFace.Integrations.IFaceManualCall
 {
@@ -35,28 +36,39 @@ namespace SmartFace.Integrations.IFaceManualCall
 
         private async static Task SendRequest(string file, string index)
         {
-            var httpClient = new HttpClient();
+            var requestsSentCount = 0;
 
-            var payload = new StringContent(file, Encoding.UTF8, "application/json");
+            var payloadObject = JsonConvert.DeserializeObject<dynamic>(file);
 
-            using (var request = new HttpRequestMessage(
-                HttpMethod.Post,
-                "https://noauth-demo.smartfacecloud.com/api/v1/Watchlists/Search"
-            ))
+            while (requestsSentCount < 1000)
             {
-                // request.Headers.Authorization = new AuthenticationHeaderValue("Basic", "");
-                request.Content = payload;
+                var httpClient = new HttpClient();
 
-                Console.WriteLine($"Sending {index}");
+                // set custom properties
+                // payloadObject.id = Guid.NewGuid();
 
-                var stopwatch = Stopwatch.StartNew();
+                var payload = new StringContent(JsonConvert.SerializeObject(payloadObject), Encoding.UTF8, "application/json");
 
-                var response = await httpClient.SendAsync(request);
+                using (var request = new HttpRequestMessage(
+                    HttpMethod.Post,
+                    "https://noauth-demo.smartfacecloud.com/api/v1/Watchlists/Search"
+                ))
+                {
+                    request.Content = payload;
 
-                stopwatch.Stop();
+                    Console.WriteLine($"Sending {index}");
 
-                Console.WriteLine($"Sent {index} in {stopwatch.ElapsedMilliseconds}ms, response {response.StatusCode}");
-            };
+                    var stopwatch = Stopwatch.StartNew();
+
+                    var response = await httpClient.SendAsync(request);
+
+                    stopwatch.Stop();
+
+                    Console.WriteLine($"Sent {index} in {stopwatch.ElapsedMilliseconds}ms, response {response.StatusCode}");
+                };
+
+                requestsSentCount++;
+            }
         }
     }
 }
