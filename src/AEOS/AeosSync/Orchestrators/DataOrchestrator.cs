@@ -218,6 +218,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     this.logger.Debug($"test->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId} member.smartfaceId {member.SmartFaceId}");
                     if (member.SmartFaceId != null)
                     {
+                        this.logger.Information("member.SmartFaceId = " + member.SmartFaceId);
                         var returnValue = await aeosDataAdapter.RemoveEmployee(member, SupportData.FreefieldDefinitionId);
 
                         if (returnValue == true)
@@ -231,6 +232,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     }
                     else
                     {
+                        this.logger.Warning($"User {AeosExtensions.JoinNames(member.FirstName,member.LastName)} does not have SmartFaceId value.");
                         EmployeesToBeRemovedFailCountAeos += 1;
                     }
                 }

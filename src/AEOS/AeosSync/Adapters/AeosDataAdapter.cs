@@ -148,7 +148,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             var encodedSmartFaceId = Encoding.UTF8.GetBytes(member.SmartFaceId);
             if(encodedSmartFaceId.Length > 28)
             {
-                this.logger.Debug($"The ID is longer than supported (28 bytes). {member.SmartFaceId} has {encodedSmartFaceId.Length} bytes");
+                this.logger.Warning($"The ID is longer than supported (28 bytes). {member.SmartFaceId} has {encodedSmartFaceId.Length} bytes");
                 return false;
             }          
 
@@ -237,8 +237,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> RemoveEmployee(AeosMember member, long FreefieldDefinitionId)
         {
-            this.logger.Debug("Removing Employee");
-            this.logger.Debug($"Updating Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
+            //this.logger.Debug("Removing Employee");
+            this.logger.Information($"Removing Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
             findEmployeeResponse returnedUser = await GetEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
 
             if(returnedUser != null)
