@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Net.Sockets;
 
 namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
 {

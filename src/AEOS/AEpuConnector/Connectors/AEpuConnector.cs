@@ -16,9 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        private System.Net.IPAddress ipAddr;
-
-        private System.Net.IPEndPoint localEndPoint;
+        private Socket socket;
 
         public AEpuConnector(
             ILogger logger,
@@ -29,6 +27,29 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+
+            this.socket = null;
+        }
+
+        private async Task<Socket> OpenSocketAsync(string aepuHostname, int aepuPort)
+        {
+            Socket newSocket = null;
+            
+            try
+            {
+                newSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                await newSocket.ConnectAsync(aepuHostname,aepuPort);
+                this.logger.Information($"Socket connected to -> {aepuHostname}:{aepuPort} ");
+            }
+            catch (Exception ex)
+            {
+                newSocket?.Shutdown(SocketShutdown.Both);
+                newSocket?.Dispose();
+                this.logger.Error(ex,$"Failed to Connect to Socket {aepuHostname}:{aepuPort}.");
+                throw;
+            }
+            
+            return newSocket;
         }
 
         public async Task OpenAsync(string aepuHostname, int aepuPort, string watchlistMemberID)
@@ -38,30 +59,13 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
             try
             {
 
-                if (Dns.GetHostAddresses(aepuHostname).Length == 0)
+                if(socket == null)
                 {
-                    throw new ArgumentException(
-                        "Unable to retrieve address from specified host name.",
-                        "hostName"
-                    );
+                    socket = await OpenSocketAsync(aepuHostname,aepuPort);
                 }
-                else
-                {
-                    System.Net.IPHostEntry ipHost = Dns.GetHostEntry(aepuHostname);
-                    ipAddr = ipHost.AddressList[0];
-                    localEndPoint = new System.Net.IPEndPoint(ipAddr, aepuPort);
-
-                    this.logger.Information("IP Address Received for the hostname {AEpuHostname}: {ipAddr}", aepuHostname, ipAddr);
-                }
-
-                var sender = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
                 try
-                {
-
-                    sender.Connect(localEndPoint);
-
-                    this.logger.Information("Socket connected to -> {0} ", sender.RemoteEndPoint.ToString());
+                {                   
 
                     var clientId = watchlistMemberID;
                     var encodedClientId = Encoding.UTF8.GetBytes(clientId);
@@ -87,15 +91,13 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
                     messageBytes[messageBytes.Length - 2] = checksum;
                     messageBytes[messageBytes.Length - 1] = 0x03;
 
-                    int byteSent = sender.Send(messageBytes);
+                    int byteSent = socket.Send(messageBytes);
 
                     byte[] messageReceived = new byte[1024];
 
-                    int byteRecv = sender.Receive(messageReceived);
+                    int byteRecv = socket.Receive(messageReceived);
                     this.logger.Information("Message from Server -> {0}", Encoding.ASCII.GetString(messageReceived, 0, byteRecv));
 
-                    sender.Shutdown(SocketShutdown.Both);
-                    sender.Close();
                 }
                 catch (ArgumentNullException ane)
                 {
@@ -104,6 +106,9 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
                 catch (SocketException se)
                 {
                     this.logger.Error("SocketException : {0}", se.ToString());
+                    socket?.Shutdown(SocketShutdown.Both);
+                    socket?.Dispose();
+                    socket = null;
                 }
                 catch (Exception e)
                 {
