@@ -11,6 +11,7 @@ using ServiceReference;
 using System.ServiceModel;
 using System.ServiceModel.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Linq;
 
 namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
@@ -27,6 +28,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private string AeosPassword;
         private string SmartFaceIdFreefield;
         private string SmartFaceIdentifier;
+        private string KeepUserField;
+        private Dictionary<string, bool> DefaultTemplates = new();
 
         private AeosWebServiceTypeClient client;
 
@@ -48,6 +51,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             SmartFaceIdFreefield = configuration.GetValue<string>("aeossync:Aeos:Integration:Freefield") ?? throw new InvalidOperationException("The AEOS SmartFaceIdFreefield is not read.");
             SmartFaceIdentifier = configuration.GetValue<string>("aeossync:Aeos:Integration:Identifier") ?? throw new InvalidOperationException("The AEOS SmartFaceIdentifier is not read.");
             AeosServerPageSize = configuration.GetValue<int>("aeossync:Aeos:Server:PageSize");
+            KeepUserField = configuration.GetValue<string>("aeossync:Aeos:Integration:KeepUserField") ?? throw new InvalidOperationException("The AEOS KeepUserField is not read.");
+            configuration.Bind("aeossync:Aeos:Integration:DefaultTemplates", DefaultTemplates);
 
             if(AeosServerPageSize <= 0)
             {
@@ -171,10 +176,33 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 }
             };
 
+
+            // add locker behaviour template(s) to each registered user
+            var RegisteringTemplates = new List<string>();
+
+            if (DefaultTemplates.Count > 0)
+            {
+                this.logger.Debug($"DefaultTemplates[]: {string.Join(" ", DefaultTemplates.Select(i => i.Key))}");
+
+
+                foreach (var item in DefaultTemplates)
+                {
+                    if (item.Value == true)
+                    {
+                        RegisteringTemplates.Add(new String(item.Key));
+                    }
+                }
+                this.logger.Information($"RegisteringTemplates[]: {string.Join(" ", RegisteringTemplates)}");
+            }
+            else
+            {
+                this.logger.Information("DefaultTemplates is empty");
+            }
+
+
             var addEmployeeResponse = await client.addEmployeeAsync(addEmployee.EmployeeAdd);
             if(addEmployeeResponse.EmployeeResult.Id != 0)
             {   
-
                 var addIdentifier = new assignToken();
                 addIdentifier.IdentifierAdd = new CarrierIdentifierData();
                 addIdentifier.IdentifierAdd.CarrierId = addEmployeeResponse.EmployeeResult.Id;
@@ -183,12 +211,25 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
 
-                return addIdentifierResponse.IdentifierResult.Id != 0 ? true : false;
+                if(addIdentifierResponse.IdentifierResult.Id != 0)
+                {
+                    this.logger.Information($"Adding user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} - SUCCESS");
+                    return true;
+                }
+                else
+                {
+                    this.logger.Information($"Adding user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} - FAIL");
+                    return false;
+                }
+
+                //return addIdentifierResponse.IdentifierResult.Id != 0 ? true : false;
             }
             else
             {
                 throw new InvalidOperationException("No user was generated.");
             }
+
+            
         }
 
         public async Task<bool> UpdateEmployee(AeosMember member, long FreefieldDefinitionId)
