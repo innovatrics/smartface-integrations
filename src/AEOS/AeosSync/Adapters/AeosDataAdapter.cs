@@ -51,7 +51,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             SmartFaceIdFreefield = configuration.GetValue<string>("aeossync:Aeos:Integration:Freefield") ?? throw new InvalidOperationException("The AEOS SmartFaceIdFreefield is not read.");
             SmartFaceIdentifier = configuration.GetValue<string>("aeossync:Aeos:Integration:Identifier") ?? throw new InvalidOperationException("The AEOS SmartFaceIdentifier is not read.");
             AeosServerPageSize = configuration.GetValue<int>("aeossync:Aeos:Server:PageSize");
-            KeepUserField = configuration.GetValue<string>("aeossync:Aeos:Integration:KeepUserField") ?? throw new InvalidOperationException("The AEOS KeepUserField is not read.");
+            KeepUserField = configuration.GetValue<string>("aeossync:Aeos:Integration:SmartFaceKeepUser") ?? throw new InvalidOperationException("The AEOS SmartFaceKeepUser is not read.");
             configuration.Bind("aeossync:Aeos:Integration:DefaultTemplates", DefaultTemplates);
 
             if(AeosServerPageSize <= 0)
@@ -327,9 +327,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> RemoveEmployee(AeosMember member, long FreefieldDefinitionId)
         {
-            //this.logger.Debug("Removing Employee");
             this.logger.Information($"Removing Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
             findEmployeeResponse returnedUser = await GetEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
+
+            foreach (var item in returnedUser.EmployeeList[0].EmployeeInfo.Freefield)
+            {
+                this.logger.Debug($"{item.value} {item.Name}");  
+            }
 
             if(returnedUser != null)
             {
@@ -352,6 +356,27 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 return false;
             }
+        }
+
+        public async Task<bool> RemoveEmployeebyId(long employeeId)
+        {
+            this.logger.Information($"Removing Employee with ID = {employeeId}");
+           
+            var removeUser = new removeEmployee();
+            removeUser.EmployeeId = employeeId;
+            var removeUserResponse = await client.removeEmployeeAsync(employeeId);
+            
+            //this.logger.Information(removeUserResponse.RemoveResult.ToString());
+
+            if(removeUserResponse.RemoveResult != null)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+            
         }
 
         public async Task<long> GetBadgeIdentifierType(){
@@ -393,7 +418,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<findEmployeeResponse> GetEmployeeId(string localSmartFaceId, long localFreefieldDefId)
         {
-            this.logger.Information("getEmployeeId");
 
             var employeeSearch = new EmployeeSearchInfo();
             employeeSearch.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
@@ -403,10 +427,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             employeeSearch.EmployeeInfo.Freefield[0].Name = SmartFaceIdFreefield;
             employeeSearch.EmployeeInfo.Freefield[0].value = localSmartFaceId;
 
-            this.logger.Information("getEmployeeId1");
             var employeesResponse = await client.findEmployeeAsync(employeeSearch);
 
-            this.logger.Information("getEmployeeId2");
 
             if(employeesResponse.EmployeeList.Length > 1)
             {
@@ -422,6 +444,29 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 return null;
             }
 
+
+        }
+
+        public async Task<bool> GetKeepUserStatus(long userId)
+        {
+            var employeeSearch = new EmployeeSearchInfo();
+            employeeSearch.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
+            employeeSearch.EmployeeInfo.Id = userId;
+            employeeSearch.EmployeeInfo.IdSpecified = true;
+
+            var getKeepUserStatusResponse = await client.findEmployeeAsync(employeeSearch);
+
+            foreach(var item in getKeepUserStatusResponse.EmployeeList[0].EmployeeInfo.Freefield)
+            {
+                if(item.Name == KeepUserField && item.value == "true")
+                {
+                    this.logger.Debug($"User has: {item.Name} with value {item.value}.");
+                    return true;
+                }
+                
+            }
+
+            return false;
 
         }
 

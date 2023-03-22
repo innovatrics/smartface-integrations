@@ -218,7 +218,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     this.logger.Debug($"test->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId} member.smartfaceId {member.SmartFaceId}");
                     if (member.SmartFaceId != null)
                     {
-                        this.logger.Information("member.SmartFaceId = " + member.SmartFaceId);
+                        this.logger.Debug("member.SmartFaceId = " + member.SmartFaceId);
                         var returnValue = await aeosDataAdapter.RemoveEmployee(member, SupportData.FreefieldDefinitionId);
 
                         if (returnValue == true)
@@ -232,8 +232,25 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     }
                     else
                     {
-                        this.logger.Warning($"User {AeosExtensions.JoinNames(member.FirstName,member.LastName)} does not have SmartFaceId value.");
-                        EmployeesToBeRemovedFailCountAeos += 1;
+                        if(await aeosDataAdapter.GetKeepUserStatus(member.Id) == true)
+                        {
+                            this.logger.Information($"User {AeosExtensions.JoinNames(member.FirstName,member.LastName)} has KeepUser as true. User will not be removed.");
+                        }
+                        else
+                        {
+                            this.logger.Warning($"User {AeosExtensions.JoinNames(member.FirstName,member.LastName)} does not have SmartFaceId value. User will be removed.");
+
+                            var returnValue = await aeosDataAdapter.RemoveEmployeebyId(member.Id);
+                            if (returnValue == true)
+                            {
+                                EmployeesToBeRemovedSuccessCountAeos += 1;
+                            }
+                            else
+                            {
+                                EmployeesToBeRemovedFailCountAeos += 1;
+                            }
+                        }
+                        
                     }
                 }
                 if (EmployeesToBeRemovedSuccessCountAeos > 0 || EmployeesToBeRemovedFailCountAeos > 0)
