@@ -8,7 +8,7 @@ using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 
 namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
-    public class MainHostedService : IHostedService
+    public class MainHostedService : BackgroundService
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
@@ -16,6 +16,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private System.Timers.Timer timerPing;
 
         private DateTime timerStartSync = new DateTime();
+        private int SyncPeriodMs = new int();
+        private DateTime lastSync;
 
         public MainHostedService(
             ILogger logger,
@@ -26,25 +28,40 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
+
+            SyncPeriodMs = configuration.GetValue<int>("AeosSync:SyncPeriodMs");
+            if(SyncPeriodMs == 0)
+            {
+                throw new InvalidOperationException("The SyncPeriodMs needs to be greater than 0.");
+            }
+
+            lastSync = DateTime.UtcNow;
         }
-
-        public Task StartAsync(CancellationToken cancellationToken)
+         
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            this.logger.Debug($"{nameof(MainHostedService)} is starting");
 
-            timerPing = new System.Timers.Timer();
-            this.timerStartSync = DateTime.UtcNow;
-            this.logger.Information($"Initialization Synchronization at {DateTime.UtcNow}");
-            return this.bridge.Synchronize();
-        }
+            while(!cancellationToken.IsCancellationRequested)
+            {
+                this.logger.Information("Waiting for {SyncPeriodMs}ms for another sync.", SyncPeriodMs);
+                try
+                {
+                    await Task.Delay(SyncPeriodMs,cancellationToken);
+                    await this.bridge.Synchronize();
+                }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
-        {
-            this.logger.Debug($"{nameof(MainHostedService)} is stopping");
-            var timeDiff = DateTime.UtcNow - this.timerStartSync;
-            this.logger.Information($"Finishing Synchronization at {DateTime.UtcNow}");
-            this.logger.Information("Synchronization took: {@ms} s", timeDiff.TotalSeconds);
-            timerPing.Stop();
+                catch (OperationCanceledException)
+                {
+                    this.logger.Information($"The Service is being shut.");
+                }
+
+                catch (Exception e)
+                {
+                    this.logger.Error(e,"The sycn tool failed unexpectedly.");
+                }
+
+            }           
+            
         }
 
     }
