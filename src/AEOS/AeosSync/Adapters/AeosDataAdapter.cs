@@ -176,8 +176,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 }
             };
 
-
-            // add locker behaviour template(s) to each registered user
             var RegisteringTemplates = new List<string>();
 
             if (DefaultTemplates.Count > 0)
@@ -192,17 +190,70 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         RegisteringTemplates.Add(new String(item.Key));
                     }
                 }
-                this.logger.Information($"RegisteringTemplates[]: {string.Join(" ", RegisteringTemplates)}");
+                this.logger.Debug($"RegisteringTemplates[]: {string.Join(" ", RegisteringTemplates)}");
             }
             else
             {
-                this.logger.Information("DefaultTemplates is empty");
+                this.logger.Debug("DefaultTemplates is empty");
             }
 
+            var RegisteringTemplatesId = new List<long>();
+
+            var findTemplate = new findTemplate();
+            findTemplate.TemplateSearchInfo = new TemplateSearchInfo();
+            findTemplate.TemplateSearchInfo.TemplateInfo = new TemplateInfo();
+            findTemplate.TemplateSearchInfo.TemplateInfo.UnitOfAuthType = UnitOfAuthType.Locker;
+            
+            var findLockerTemplate = await client.findTemplateAsync(findTemplate.TemplateSearchInfo);
+            if(findLockerTemplate.TemplateList.Length > 0)
+            {
+                foreach (var item in findLockerTemplate.TemplateList)
+                {
+                    this.logger.Debug($"Template IDs found: {item.Name} {item.Id}");
+                    if(RegisteringTemplates.Contains(item.Name))
+                    {
+                        this.logger.Debug($"Template ID to be assigned: {item.Name} {item.Id}");
+                        RegisteringTemplatesId.Add(item.Id);
+                    }
+                }
+            }
 
             var addEmployeeResponse = await client.addEmployeeAsync(addEmployee.EmployeeAdd);
             if(addEmployeeResponse.EmployeeResult.Id != 0)
             {   
+
+                this.logger.Information($"Added user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} with ID = {addEmployeeResponse.EmployeeResult.Id}");
+
+                if(RegisteringTemplatesId.Count() > 0)
+                {
+                    var changeCarrier = new changeCarrierProfile();
+                    changeCarrier.ProfileChange = new ProfileInfo();
+                    changeCarrier.ProfileChange.CarrierId = addEmployeeResponse.EmployeeResult.Id;
+                    changeCarrier.ProfileChange.AuthorisationLocker = new AuthorisationLocker();
+                    changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation = new TemplateAuthorisationLocker[RegisteringTemplatesId.Count()];
+                    this.logger.Debug($"RegisteringTemplatesId.Count() = {RegisteringTemplatesId.Count()}");
+                    for(int x = 0; x < RegisteringTemplatesId.Count();x++)
+                    {
+                        this.logger.Information($"RegisteringTemplatesId[{x}] = {RegisteringTemplatesId[x]} for Carrier ID = {changeCarrier.ProfileChange.CarrierId} - {AeosExtensions.JoinNames(member.FirstName,member.LastName)}");
+                        changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x] = new TemplateAuthorisationLocker();
+                        changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x].TemplateId = RegisteringTemplatesId[x];
+                        changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x].Enabled = true;
+                    }
+
+                    try
+                    {
+                        var changeCarrierResponse = await client.changeCarrierProfileAsync(changeCarrier.ProfileChange);
+                        if(changeCarrierResponse.ProfileResult.CarrierId == 0)
+                        {
+                            this.logger.Error($"It was not possible to add profile templates to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} - FAIL");
+                            return false;
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        throw new Exception(e+"Something went wrong while adding carrier profiles.");
+                    }
+                }
                 var addIdentifier = new assignToken();
                 addIdentifier.IdentifierAdd = new CarrierIdentifierData();
                 addIdentifier.IdentifierAdd.CarrierId = addEmployeeResponse.EmployeeResult.Id;
@@ -213,16 +264,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 if(addIdentifierResponse.IdentifierResult.Id != 0)
                 {
-                    this.logger.Information($"Adding user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} - SUCCESS");
+                    this.logger.Information($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} - SUCCESS");
                     return true;
                 }
                 else
                 {
-                    this.logger.Information($"Adding user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} - FAIL");
+                    this.logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} - FAIL");
                     return false;
                 }
-
-                //return addIdentifierResponse.IdentifierResult.Id != 0 ? true : false;
             }
             else
             {

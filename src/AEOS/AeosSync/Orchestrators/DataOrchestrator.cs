@@ -62,12 +62,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             var SmartFaceAllMembers = await this.smartFaceDataAdapter.GetEmployees();
 
-            this.logger.Information("Employees defined in SmartFace");
+            this.logger.Debug("Employees defined in SmartFace");
             foreach (var eachMember in SmartFaceAllMembers)
             {
-                this.logger.Information(eachMember.ToString());
+                this.logger.Debug(eachMember.ToString());
             }
-            this.logger.Information($"The amount of SmartFace users is {SmartFaceAllMembers.Count}");
+            this.logger.Debug($"The amount of SmartFace users is {SmartFaceAllMembers.Count}");
 
             var AeosAllMembers = await this.aeosDataAdapter.GetEmployees();
 
@@ -88,7 +88,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             if (SmartFaceAllMembers != null & AeosAllMembers != null)
             {
-                this.logger.Information("Comparing Lists:");
+                this.logger.Debug("Comparing Lists:");
                 foreach (var SFMember in SmartFaceAllMembers)
                 {
                     var FoundAeosMember = AeosAllMembers.Where(i => i.SmartFaceId == SFMember.Id).FirstOrDefault();

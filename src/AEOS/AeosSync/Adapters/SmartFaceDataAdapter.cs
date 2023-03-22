@@ -111,11 +111,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         SyncedWatchlists.Add(new String(item.Key));
                     }
                 }
-                this.logger.Information($"SyncedWatchlists[]: {string.Join(" ", SyncedWatchlists)}");
+                this.logger.Debug($"SyncedWatchlists[]: {string.Join(" ", SyncedWatchlists)}");
             }
             else
             {
-                this.logger.Information("SmartFaceSyncedWatchlists is empty");
+                this.logger.Debug("SmartFaceSyncedWatchlists is empty");
             }
 
             var SmartFaceAllMembers = new List<SmartFaceMember>();
@@ -131,7 +131,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
-                            this.logger.Information($"SF: {wm.Id} {imageDataId} {wm.DisplayName}");
+                            this.logger.Debug($"SF: {wm.Id} {imageDataId} {wm.DisplayName}");
                             SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
                         }
                         if (watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
@@ -143,23 +143,23 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
             else
             {
-                this.logger.Information("Checking users from defined Watchlists");
+                this.logger.Debug("Checking users from defined Watchlists");
                 foreach (var item in SyncedWatchlists)
                 {
-                    this.logger.Information($"item: {item}");
+                    this.logger.Debug($"item: {item}");
 
                     int MemberCount = 0;
                     bool allMembers = false;
                     while (allMembers == false)
                     {
-                        this.logger.Information($"MemberCount:{MemberCount},SmartFaceSetPageSize:{SmartFaceSetPageSize},item:{item}");
+                        this.logger.Debug($"MemberCount:{MemberCount},SmartFaceSetPageSize:{SmartFaceSetPageSize},item:{item}");
                         var watchlistMembers = await graphQlClient.GetWatchlistMembersPerWatchlist.ExecuteAsync(MemberCount, SmartFaceSetPageSize, item);
-                        this.logger.Information($"watchlistMembers.Data.WatchlistMembers.Items.Count: {watchlistMembers.Data.WatchlistMembers.Items.Count}");
+                        this.logger.Debug($"watchlistMembers.Data.WatchlistMembers.Items.Count: {watchlistMembers.Data.WatchlistMembers.Items.Count}");
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
                             MemberCount += 1;
-                            this.logger.Information($"SF: {wm.Id} {imageDataId} {wm.DisplayName} {MemberCount}");
+                            this.logger.Debug($"SF: {wm.Id} {imageDataId} {wm.DisplayName} {MemberCount}");
                             SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
                         }
                         if (watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
