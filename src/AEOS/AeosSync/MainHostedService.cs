@@ -57,7 +57,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 catch (Exception e)
                 {
-                    this.logger.Error(e,"The sycn tool failed unexpectedly.");
+                    this.logger.Error(e,"The sync tool failed unexpectedly.");
                 }
 
             }           

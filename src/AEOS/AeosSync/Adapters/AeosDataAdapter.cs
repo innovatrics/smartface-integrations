@@ -330,6 +330,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.logger.Information($"Removing Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
             findEmployeeResponse returnedUser = await GetEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
 
+
             foreach (var item in returnedUser.EmployeeList[0].EmployeeInfo.Freefield)
             {
                 this.logger.Debug($"{item.value} {item.Name}");  
@@ -339,6 +340,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 this.logger.Information($"DELETE> Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeList[0].EmployeeInfo.Id} {returnedUser.EmployeeList[0].EmployeeInfo.FirstName} {returnedUser.EmployeeList[0].EmployeeInfo.LastName}");
                 var removeID = returnedUser.EmployeeList[0].EmployeeInfo.Id;
+
+                this.logger.Information("RemoveId =" + removeID);
+                
+                if(!await RemoveAssignedLockers(removeID))
+                {
+                    return false;
+                }
 
                 var removeUser = new removeEmployee();
                 removeUser.EmployeeId = removeID;
@@ -362,12 +370,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         {
             this.logger.Information($"Removing Employee with ID = {employeeId}");
            
+            if(!await RemoveAssignedLockers(employeeId))
+            {
+                return false;
+            }
+
             var removeUser = new removeEmployee();
             removeUser.EmployeeId = employeeId;
             var removeUserResponse = await client.removeEmployeeAsync(employeeId);
             
-            //this.logger.Information(removeUserResponse.RemoveResult.ToString());
-
             if(removeUserResponse.RemoveResult != null)
             {
                 return true;
@@ -468,6 +479,71 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             return false;
 
+        }
+
+        public async Task<bool> RemoveAssignedLockers(long userId)
+        {
+            
+            this.logger.Information($"userId = {userId}");
+
+            var findLockersResponse = await client.findCarrierProfileAsync(userId);
+            
+            bool removalFailedTest = false;
+
+            if(findLockersResponse.ProfileResult.AuthorisationLocker.LockerAuthorisation != null)
+            {
+                foreach (var item in findLockersResponse.ProfileResult.AuthorisationLocker.LockerAuthorisation)
+                {
+                    this.logger.Information($"Locker found with an ID: {item.LockerId.ToString()}");
+
+                    var findLockerById = new findLocker();
+                    findLockerById.LockerSearchInfo = new LockerSearchInfo();
+                    findLockerById.LockerSearchInfo.LockerSearch = new LockerSearch();
+                    findLockerById.LockerSearchInfo.LockerSearch.Id = item.LockerId;
+                    findLockerById.LockerSearchInfo.LockerSearch.IdSpecified = true;
+
+                    var findLockerByIdReponse = await client.findLockerAsync(findLockerById.LockerSearchInfo);
+
+                    if(findLockerByIdReponse.LockerList.Count() > 0)
+                    {
+                        
+                        foreach (var locker in findLockerByIdReponse.LockerList)
+                        {
+                            this.logger.Information($"Removing a locker-> Id: {locker.Id}, Name: {locker.Name}, Location: {locker.Location}, HostName: {locker.HostName}");
+
+                            var removeLockerAuthorisationResponse = await client.removeCarrierLockerAuthorizationAsync(locker.Id);
+                            
+                            if(removeLockerAuthorisationResponse.ProfileResult != null)
+                            {
+                                this.logger.Information($"The locker was successfully removed");
+                            }
+                            else
+                            {
+                                this.logger.Information($"The locker removal failed");
+                                removalFailedTest = true;
+                            }
+
+                        }
+                        
+                    }
+                    
+                }
+
+                if(removalFailedTest)
+                {
+                    this.logger.Information($"Issue with locker removal occured.");
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                return true;
+            }
+            
         }
 
     }

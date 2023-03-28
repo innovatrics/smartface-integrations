@@ -16,5 +16,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         Task<long> GetBadgeIdentifierType();
         Task<long> GetFreefieldDefinitionId();
         Task<bool> GetKeepUserStatus(long userId);
+        Task<bool> RemoveAssignedLockers(long userId);
     }
 }
