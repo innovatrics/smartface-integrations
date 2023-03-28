@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace ChangiDataExport.Models
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Models
 {
     public class CreateVideoRecordResponse
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ChangiDataExport.Models.Odata
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Models.Odata
 {
     public record Individual
     {

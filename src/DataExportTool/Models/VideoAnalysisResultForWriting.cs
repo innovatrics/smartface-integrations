@@ -1,7 +1,7 @@
 using System;
-using ChangiDataExport.Commands;
+using Innovatrics.SmartFace.Integrations.DataExportTool.Commands;
 
-namespace ChangiDataExport.Models
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Models
 {
     public class VideoAnalysisResultForWriting
     {

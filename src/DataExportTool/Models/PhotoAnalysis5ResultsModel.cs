@@ -1,6 +1,6 @@
 using System;
 
-namespace ChangiDataExport.Models
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Models
 {
     public class PhotoAnalysis5ResultsModel : IPhotoAnalysisResultModel
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ChangiDataExport.Models.Odata
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Models.Odata
 {
     public record Face
     {

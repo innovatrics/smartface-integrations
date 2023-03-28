@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ChangiDataExport.Models
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Models
 {
     public class MemberFacesModel
     {

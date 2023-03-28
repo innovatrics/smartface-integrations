@@ -4,12 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using ClosedXML.Excel;
-using ChangiDataExport.Models;
+using Innovatrics.SmartFace.Integrations.DataExportTool.Models;
 using CsvHelper;
 using System.Globalization;
 using CsvHelper.Configuration;
 
-namespace ChangiDataExport.Csv
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Csv
 {
     public class ResultsCsvExporter
     {

@@ -1,4 +1,4 @@
-namespace ChangiDataExport.Commands
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Commands
 {
     public enum ExportFormat
     {

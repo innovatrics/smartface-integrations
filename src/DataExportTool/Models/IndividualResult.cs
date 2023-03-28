@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
-using ChangiDataExport.Models.Odata;
+using Innovatrics.SmartFace.Integrations.DataExportTool.Models.Odata;
 using CsvHelper.Configuration.Attributes;
 
-namespace ChangiDataExport.Models
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Models
 {
     public class IndividualResult
     {

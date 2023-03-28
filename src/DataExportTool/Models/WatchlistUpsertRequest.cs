@@ -1,4 +1,4 @@
-﻿namespace ChangiDataExport.Models
+﻿namespace Innovatrics.SmartFace.Integrations.DataExportTool.Models
 {
     public record WatchlistUpsertRequest : WatchlistCreateRequest
     {

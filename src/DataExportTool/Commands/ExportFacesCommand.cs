@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text;
 using CsvHelper;
-using ChangiDataExport.Export;
-using ChangiDataExport.Models;
-using ChangiDataExport.Csv;
-using ChangiDataExport.Models.Odata;
+using Innovatrics.SmartFace.Integrations.DataExportTool.Export;
+using Innovatrics.SmartFace.Integrations.DataExportTool.Models;
+using Innovatrics.SmartFace.Integrations.DataExportTool.Csv;
+using Innovatrics.SmartFace.Integrations.DataExportTool.Models.Odata;
 
-namespace ChangiDataExport.Commands
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Commands
 {
     public class ExportFacesCommand : Command
     {

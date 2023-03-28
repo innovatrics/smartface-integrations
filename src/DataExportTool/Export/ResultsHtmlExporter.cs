@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using ChangiDataExport.Models;
+using Innovatrics.SmartFace.Integrations.DataExportTool.Models;
 
-namespace ChangiDataExport.Export
+namespace Innovatrics.SmartFace.Integrations.DataExportTool.Export
 {
     public class ResultsHtmlExporter
     {
