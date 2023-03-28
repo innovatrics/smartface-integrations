@@ -223,45 +223,9 @@ namespace Innovatrics.SmartFace.Integrations.DataExportTool.Commands
 
                 cancellation.ThrowIfCancellationRequested();
 
-                //         var firstTrackletId = face.Tracklets.OrderBy(o => o.TimeAppeared).Select(s => s.Id).FirstOrDefault();
-                //         var lastTrackletId = face.Tracklets.OrderBy(o => o.TimeDisappeared).Select(s => s.Id).LastOrDefault();
-
-                //         var trackletIds = new Guid[] { firstTrackletId, lastTrackletId };
-
-                //         var queryUrl = generateTrackletsQueryUrl(trackletIds.Where(w => w != null).Distinct().ToArray());
-
-                //         var tracklets =
-                //             (await odataClient.GetGenericAsync<ResultsListWrapper<Tracklet>>(queryUrl, cancellation))
-                //             .Value;
-
-                //         Console.WriteLine($"{count}/{faces.Length} faces updated...");
-
-                //         var firstTracklet = tracklets.Where(w => w.Id == firstTrackletId).SingleOrDefault();
-                //         var lastTracklet = tracklets.Where(w => w.Id == lastTrackletId).SingleOrDefault();
-
-                //         var firstFace = firstTracklet.Faces.OrderBy(o => o.TemplateQuality).LastOrDefault();
-                //         var lastFace = lastTracklet.Faces.OrderBy(o => o.TemplateQuality).LastOrDefault();
-
                 var faceResult = FaceResult.FromDbResult(face);
 
                 faceResult.Image = await this.downloadImageAsync(restClient, face.ImageDataId);
-
-                //         if (firstFace != null)
-                //         {
-                //             faceResult.FirstFace = await this.downloadImageAsync(restClient, firstFace.ImageDataId);
-                //         }
-
-                //         if (lastFace?.ImageDataId != null
-                //         // && firstFace.ImageDataId != lastFace.ImageDataId
-                //         )
-                //         {
-                //             faceResult.LastFace = await this.downloadImageAsync(restClient, lastFace.ImageDataId);
-                //         }
-
-                //         faceResult.EntranceCamera = firstTracklet.Stream?.Name;
-                //         faceResult.ExitCamera = lastTracklet.Stream?.Name;
-
-                //         faceResult.ExitTime = lastTracklet.TimeDisappeared;
 
                 Console.WriteLine($"{count}/{faces.Length} Faces updated...");
 
