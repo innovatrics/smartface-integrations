@@ -174,22 +174,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> CreateEmployee(SmartFaceMember member, string watchlistId)
         {
-            this.logger.Information("Creating Employees");
+            this.logger.Information($"Adding Employee > {member.ToString()} into WatchlistId->{watchlistId}");
 
             if (member.ImageData != null)
             {
 
                 var httpClient = new HttpClient();
                 var restAPI = new NSwagClient(SmartFaceURL, httpClient);
-
                 var WatchlistMemberAdd = new RegisterWatchlistMemberRequest();
-                this.logger.Information($"{member.ToString()}");
 
                 WatchlistMemberAdd.Id = member.Id;
                 WatchlistMemberAdd.FullName = member.FullName;
                 WatchlistMemberAdd.DisplayName = member.DisplayName;
 
-                this.logger.Information($"WatchlistId->{watchlistId}");
                 WatchlistMemberAdd.WatchlistIds.Add(watchlistId);
                 WatchlistMemberAdd.KeepAutoLearnPhotos = KeepAutoLearnPhotos;
                 WatchlistMemberAdd.FaceDetectorConfig = new FaceDetectorConfig();
@@ -201,7 +198,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 var imageAdd = new RegistrationImageData[1];
                 imageAdd[0] = new RegistrationImageData();
                 imageAdd[0].Data = member.ImageData;
-                this.logger.Information($"ImageData in bytes: {imageAdd[0].Data}");
+                this.logger.Debug($"ImageData in bytes: {imageAdd[0].Data}");
                 WatchlistMemberAdd.Images.Add(imageAdd[0]);
 
                 restAPI.ReadResponseAsString = true;
@@ -226,7 +223,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> UpdateEmployee(SmartFaceMember member)
         {
-            this.logger.Information("Updating Employees");
+            this.logger.Information($"Updating Employee > {member.FullName}");
 
             var httpClient = new HttpClient();
             var restAPI = new NSwagClient(SmartFaceURL, httpClient);
@@ -250,14 +247,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> RemoveEmployee(SmartFaceMember member)
         {
-            this.logger.Information("Removing Employees");
+            this.logger.Information($"Removing Employee > {member.FullName} with ID: {member.Id}");
 
             var httpClient = new HttpClient();
             var restAPI = new NSwagClient(SmartFaceURL, httpClient);
 
             var removeEmployee = new FaceWatchlistMemberRemoveRequest();
             removeEmployee.FaceId = member.Id;
-            this.logger.Information($"FaceId = {removeEmployee.FaceId}");
+            this.logger.Debug($"FaceId = {removeEmployee.FaceId}");
 
             if (member.Id != null)
             {
@@ -266,6 +263,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
             else
             {
+                this.logger.Error($"FaceId of user {member.FullName} is NULL");
                 return false;
             }
         }

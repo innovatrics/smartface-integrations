@@ -29,6 +29,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private string SmartFaceIdFreefield;
         private string SmartFaceIdentifier;
         private string KeepUserField;
+        private string FirstNameOrder;
         private Dictionary<string, bool> DefaultTemplates = new();
 
         private AeosWebServiceTypeClient client;
@@ -53,6 +54,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             AeosServerPageSize = configuration.GetValue<int>("aeossync:Aeos:Server:PageSize");
             KeepUserField = configuration.GetValue<string>("aeossync:Aeos:Integration:SmartFaceKeepUser") ?? throw new InvalidOperationException("The AEOS SmartFaceKeepUser is not read.");
             configuration.Bind("aeossync:Aeos:Integration:DefaultTemplates", DefaultTemplates);
+            FirstNameOrder = configuration.GetValue<string>("AeosSync:SmartFace:FirstNameOrder");
+
 
             if(AeosServerPageSize <= 0)
             {
@@ -222,7 +225,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             if(addEmployeeResponse.EmployeeResult.Id != 0)
             {   
 
-                this.logger.Information($"Added user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} with ID = {addEmployeeResponse.EmployeeResult.Id}");
+                this.logger.Information($"Added user {AeosExtensions.JoinNames(member.FirstName,member.LastName, FirstNameOrder)} with ID = {addEmployeeResponse.EmployeeResult.Id}");
 
                 if(RegisteringTemplatesId.Count() > 0)
                 {
@@ -234,7 +237,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     this.logger.Debug($"RegisteringTemplatesId.Count() = {RegisteringTemplatesId.Count()}");
                     for(int x = 0; x < RegisteringTemplatesId.Count();x++)
                     {
-                        this.logger.Information($"RegisteringTemplatesId[{x}] = {RegisteringTemplatesId[x]} for Carrier ID = {changeCarrier.ProfileChange.CarrierId} - {AeosExtensions.JoinNames(member.FirstName,member.LastName)}");
+                        this.logger.Information($"RegisteringTemplatesId[{x}] = {RegisteringTemplatesId[x]} for Carrier ID = {changeCarrier.ProfileChange.CarrierId} - {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)}");
                         changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x] = new TemplateAuthorisationLocker();
                         changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x].TemplateId = RegisteringTemplatesId[x];
                         changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x].Enabled = true;
@@ -245,7 +248,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         var changeCarrierResponse = await client.changeCarrierProfileAsync(changeCarrier.ProfileChange);
                         if(changeCarrierResponse.ProfileResult.CarrierId == 0)
                         {
-                            this.logger.Error($"It was not possible to add profile templates to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} - FAIL");
+                            this.logger.Error($"It was not possible to add profile templates to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)} - FAIL");
                             return false;
                         }
                     }
@@ -264,12 +267,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 if(addIdentifierResponse.IdentifierResult.Id != 0)
                 {
-                    this.logger.Information($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} - SUCCESS");
+                    this.logger.Information($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)} - SUCCESS");
                     return true;
                 }
                 else
                 {
-                    this.logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName)} - FAIL");
+                    this.logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)} - FAIL");
                     return false;
                 }
             }
@@ -543,7 +546,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 return true;
             }
-            
+
         }
 
     }
