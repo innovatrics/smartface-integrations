@@ -16,10 +16,10 @@ To run the application locally, follow these steps
 ### Deploy to Docker
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AEpuConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:1.0 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:1.0 registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:1.0`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-AEpuConnector:latest`
+ - `docker build -f src/AEOS/AEpuConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aepuconnector:0.1 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aepuconnector:0.1 registry.gitlab.com/innovatrics/smartface/integrations-aepuconnector:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aepuconnector:0.1`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aepuconnector:latest`
 
 ## Usage
 Add the following pattern to an existing docker compose:

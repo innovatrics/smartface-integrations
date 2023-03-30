@@ -18,10 +18,10 @@ To run the application locally, follow these steps
 ### Deploy to Docker
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AeosSync/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-AeosSync:1.0 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-AeosSync:1.0 registry.gitlab.com/innovatrics/smartface/integrations-AeosSync:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-AeosSync:1.0`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-AeosSync:latest`
+ - `docker build -f src/AEOS/AeosSync/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeossync:0.1 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeossync:0.1 registry.gitlab.com/innovatrics/smartface/integrations-aeossync:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeossync:0.1`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeossync:latest`
 
 ## Usage
 Add the following pattern to an existing docker compose:
