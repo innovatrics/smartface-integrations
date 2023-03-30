@@ -94,14 +94,29 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         {
             if(firstNameOrder == "first")
             {
-                if (smartFaceMember.FullName != aeosMember.FirstName + " " + aeosMember.LastName)
+                if (GetLastName(smartFaceMember.FullName,firstNameOrder)!= "")
                 {
-                    return false;
+                    if (smartFaceMember.FullName != aeosMember.FirstName + " " + aeosMember.LastName)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
                 }
                 else
                 {
-                    return true;
+                   if (smartFaceMember.FullName != aeosMember.FirstName)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    } 
                 }
+                
             }
             else if(firstNameOrder == "last")
             {

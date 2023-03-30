@@ -295,8 +295,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 this.logger.Information($"Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeList[0].EmployeeInfo.Id} {returnedUser.EmployeeList[0].EmployeeInfo.FirstName} {returnedUser.EmployeeList[0].EmployeeInfo.LastName}");
                 var updateID = returnedUser.EmployeeList[0].EmployeeInfo.Id;
 
-                // update the user under the AeosID
-
                 var updateEmployee = new changeEmployee();
                 updateEmployee.EmployeeChange = new EmployeeInfo();
                 updateEmployee.EmployeeChange.Id = updateID;
