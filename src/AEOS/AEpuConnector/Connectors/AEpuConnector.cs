@@ -51,7 +51,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
 
         public async Task OpenAsync(string aepuHostname, int aepuPort, byte[] encodedClientId)
         {
-            this.logger.Information("Sending ipBadge to {AEpuHostname}:{AEpuPort} for user {WatchlistMemberID}", aepuHostname, aepuPort, encodedClientId);
+            this.logger.Information("Sending ipBadge to {AEpuHostname}:{AEpuPort}", aepuHostname, aepuPort);
 
             try
             {

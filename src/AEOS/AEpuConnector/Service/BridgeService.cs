@@ -63,6 +63,8 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Services
 
             var AEpuConnector = this.AEpuConnectorFactory.Create(cameraToAEpuMapping.Type);
 
+            this.logger.Information("Open {AEpuHostname} for user {WatchlistMemberFullName} ({WatchlistMemberID})", cameraToAEpuMapping.AEpuHostname, notification.WatchlistMemberFullName, notification.WatchlistExternalId);
+
             await AEpuConnector.OpenAsync(
                 aepuHostname: cameraToAEpuMapping.AEpuHostname,
                 aepuPort: cameraToAEpuMapping.AEpuPort,
