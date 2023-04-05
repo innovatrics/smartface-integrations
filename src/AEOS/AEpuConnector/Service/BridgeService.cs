@@ -1,12 +1,16 @@
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Text;
 using System.Threading.Tasks;
+
 using Microsoft.Extensions.Configuration;
+
 using Serilog;
+
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AEpuConnector.Models;
 using Innovatrics.SmartFace.Integrations.AEpuConnector.Factories;
+
 
 namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Services
 {
@@ -38,7 +42,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Services
 
             if (cameraToAEpuMapping == null)
             {
-                this.logger.Warning("Stream {streamId} has not any mapping to AEpu", notification.StreamId);
+                this.logger.Information("Stream {streamId} has not any mapping to AEpu", notification.StreamId);
                 return;
             }
 
@@ -51,13 +55,37 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Services
                 }
             }
 
+            if (!this.tryParseClientId(notification.WatchlistExternalId, out var encodedClientId))
+            {
+                this.logger.Information("Watchlist {watchlistExternalId} did not pass validation criteria", notification.WatchlistExternalId);
+                return;
+            }
+
             var AEpuConnector = this.AEpuConnectorFactory.Create(cameraToAEpuMapping.Type);
 
             await AEpuConnector.OpenAsync(
                 aepuHostname: cameraToAEpuMapping.AEpuHostname,
                 aepuPort: cameraToAEpuMapping.AEpuPort,
-                watchlistMemberID: notification.WatchlistMemberId                
+                clientId: encodedClientId
             );
+        }
+
+        private bool tryParseClientId(
+            string watchlistExternalId,
+            out byte[] clientId
+        )
+        {
+            clientId = null;
+            var watchlistIdAsBytes = Encoding.UTF8.GetBytes(watchlistExternalId);
+
+            if (watchlistIdAsBytes.Length > 28 || watchlistIdAsBytes.Length < 1)
+            {
+                this.logger.Debug($"{nameof(watchlistExternalId)} converted to byte[] must be in range of 1 to 28 bytes, current length: {watchlistIdAsBytes.Length}");
+                return false;
+            }
+
+            clientId = watchlistIdAsBytes;
+            return true;
         }
 
         private AEpuMapping getCameraMapping(string streamId)

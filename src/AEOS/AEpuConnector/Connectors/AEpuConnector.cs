@@ -31,81 +31,79 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
             this.socket = null;
         }
 
-        private async Task<Socket> OpenSocketAsync(string aepuHostname, int aepuPort)
+        private async Task<Socket> CreateOpenSocketAsync(string aepuHostname, int aepuPort)
         {
-            Socket newSocket = null;
-            
             try
             {
-                newSocket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                await newSocket.ConnectAsync(aepuHostname,aepuPort);
-                this.logger.Information($"Socket connected to -> {aepuHostname}:{aepuPort} ");
+                var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                await socket.ConnectAsync(aepuHostname, aepuPort);
+
+                this.logger.Information($"Socket connected to {aepuHostname}:{aepuPort}");
+
+                return socket;
             }
             catch (Exception ex)
             {
-                newSocket?.Shutdown(SocketShutdown.Both);
-                newSocket?.Dispose();
-                this.logger.Error(ex,$"Failed to Connect to Socket {aepuHostname}:{aepuPort}.");
-                throw;
+                this.logger.Error(ex, $"Socket failed to connect to {aepuHostname}:{aepuPort}");
+                throw ex;
             }
-            
-            return newSocket;
         }
 
-        public async Task OpenAsync(string aepuHostname, int aepuPort, string watchlistMemberID)
+        public async Task OpenAsync(string aepuHostname, int aepuPort, byte[] encodedClientId)
         {
-            this.logger.Information("Sending ipBadge to {AEpuHostname}:{AEpuPort} for user {WatchlistMemberID}", aepuHostname, aepuPort, watchlistMemberID);
+            this.logger.Information("Sending ipBadge to {AEpuHostname}:{AEpuPort} for user {WatchlistMemberID}", aepuHostname, aepuPort, encodedClientId);
 
             try
             {
-
-                if(socket == null)
+                if (socket == null)
                 {
-                    socket = await OpenSocketAsync(aepuHostname,aepuPort);
+                    socket = await CreateOpenSocketAsync(aepuHostname, aepuPort);
                 }
+
+                if (encodedClientId.Length > 28 || encodedClientId.Length < 1)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(encodedClientId), encodedClientId, "ClientID must be in range of 1 to 28 bytes");
+                }
+
+                var messageBytes = new byte[2 + encodedClientId.Length + 2];
+                messageBytes[0] = 0x02;
+                messageBytes[1] = (byte)encodedClientId.Length;
+                for (int i = 0; i < encodedClientId.Length; i++)
+                {
+                    messageBytes[2 + i] = encodedClientId[i];
+                }
+
+                byte checksum = 0;
+
+                for (int i = 0; i < encodedClientId.Length + 1; i++)
+                {
+                    checksum = (byte)(checksum ^ messageBytes[1 + i]);
+                }
+
+                messageBytes[messageBytes.Length - 2] = checksum;
+                messageBytes[messageBytes.Length - 1] = 0x03;
 
                 try
-                {                   
-
-                    var clientId = watchlistMemberID;
-                    var encodedClientId = Encoding.UTF8.GetBytes(clientId);
-
-                    if (encodedClientId.Length > 28)
-                        throw new ApplicationException("Client ID is too long");
-
-                    var messageBytes = new byte[2 + encodedClientId.Length + 2];
-                    messageBytes[0] = 0x02;
-                    messageBytes[1] = (byte)encodedClientId.Length;
-                    for (int i = 0; i < encodedClientId.Length; i++)
-                    {
-                        messageBytes[2 + i] = encodedClientId[i];
-                    }
-
-                    byte checksum = 0;
-
-                    for (int i = 0; i < encodedClientId.Length + 1; i++)
-                    {
-                        checksum = (byte)(checksum ^ messageBytes[1 + i]);
-                    }
-
-                    messageBytes[messageBytes.Length - 2] = checksum;
-                    messageBytes[messageBytes.Length - 1] = 0x03;
-
-                    int byteSent = socket.Send(messageBytes);
-
-                    byte[] messageReceived = new byte[1024];
-
-                    int byteRecv = socket.Receive(messageReceived);
-                    this.logger.Information("Message from Server -> {0}", Encoding.ASCII.GetString(messageReceived, 0, byteRecv));
-
-                }
-                catch (ArgumentNullException ane)
                 {
-                    this.logger.Error("ArgumentNullException : {0}", ane.ToString());
+                    this.logger.Debug($"Sending {messageBytes.Length} bytes to socket");
+                    
+                    var bytesSent = socket.Send(messageBytes);
+                    
+                    this.logger.Debug($"Sent {bytesSent} bytes");
+
+                    var messageReceived = new byte[1024];
+
+                    this.logger.Debug($"Reading from socket");
+
+                    var bytesReceived = socket.Receive(messageReceived);
+
+                    this.logger.Debug($"Read {bytesReceived} bytes from socket");
+
+                    this.logger.Information("Message from socket {0}", Encoding.ASCII.GetString(messageReceived, 0, bytesReceived));
                 }
                 catch (SocketException se)
                 {
-                    this.logger.Error("SocketException : {0}", se.ToString());
+                    this.logger.Error($"SocketException: {se.Message}, Code {se.SocketErrorCode}");
                     socket?.Shutdown(SocketShutdown.Both);
                     socket?.Dispose();
                     socket = null;
