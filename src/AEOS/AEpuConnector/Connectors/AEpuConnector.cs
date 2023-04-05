@@ -49,7 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
             }
         }
 
-        public async Task OpenAsync(string aepuHostname, int aepuPort, byte[] encodedClientId)
+        public async Task OpenAsync(string aepuHostname, int aepuPort, byte[] clientId)
         {
             this.logger.Information("Sending ipBadge to {AEpuHostname}:{AEpuPort}", aepuHostname, aepuPort);
 
@@ -60,22 +60,22 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
                     socket = await CreateOpenSocketAsync(aepuHostname, aepuPort);
                 }
 
-                if (encodedClientId.Length > 28 || encodedClientId.Length < 1)
+                if (clientId.Length > 28 || clientId.Length < 1)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(encodedClientId), encodedClientId, "ClientID must be in range of 1 to 28 bytes");
+                    throw new ArgumentOutOfRangeException(nameof(clientId), clientId, "ClientID must be in range of 1 to 28 bytes");
                 }
 
-                var messageBytes = new byte[2 + encodedClientId.Length + 2];
+                var messageBytes = new byte[2 + clientId.Length + 2];
                 messageBytes[0] = 0x02;
-                messageBytes[1] = (byte)encodedClientId.Length;
-                for (int i = 0; i < encodedClientId.Length; i++)
+                messageBytes[1] = (byte)clientId.Length;
+                for (int i = 0; i < clientId.Length; i++)
                 {
-                    messageBytes[2 + i] = encodedClientId[i];
+                    messageBytes[2 + i] = clientId[i];
                 }
 
                 byte checksum = 0;
 
-                for (int i = 0; i < encodedClientId.Length + 1; i++)
+                for (int i = 0; i < clientId.Length + 1; i++)
                 {
                     checksum = (byte)(checksum ^ messageBytes[1 + i]);
                 }
@@ -86,9 +86,9 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors
                 try
                 {
                     this.logger.Debug($"Sending {messageBytes.Length} bytes to socket");
-                    
+
                     var bytesSent = socket.Send(messageBytes);
-                    
+
                     this.logger.Debug($"Sent {bytesSent} bytes");
 
                     var messageReceived = new byte[1024];

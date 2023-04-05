@@ -55,9 +55,9 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Services
                 }
             }
 
-            if (!this.tryParseClientId(notification.WatchlistExternalId, out var encodedClientId))
+            if (!this.tryParseClientId(notification.WatchlistMemberExternalId, out var encodedClientId))
             {
-                this.logger.Information("Watchlist {watchlistExternalId} did not pass validation criteria", notification.WatchlistExternalId);
+                this.logger.Information("WatchlistMember {WatchlistMemberExternalId} did not pass validation criteria", notification.WatchlistMemberExternalId);
                 return;
             }
 
