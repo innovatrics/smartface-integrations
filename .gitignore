@@ -32,7 +32,9 @@ amd64
 Output/*
 */*/bin
 */*/obj
+*/*/publish
 /*/publish
 */.vscode/*
 /NuGetFiles/*
 src/GrpcCamera/stream-out/*
+src/DataExportTool/Output/*
