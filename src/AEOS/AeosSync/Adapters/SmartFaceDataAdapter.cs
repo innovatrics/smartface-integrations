@@ -60,6 +60,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             MinFaceSize = configuration.GetValue<int>("AeosSync:SmartFace:Import:FaceDetectorConfig:MinFaceSize");
             ConfidenceThreshold = configuration.GetValue<int>("AeosSync:SmartFace:Import:FaceDetectorConfig:ConfidenceThreshold");
             configuration.Bind("AeosSync:SmartFace:Export:SyncedWatchlists", SmartFaceSyncedWatchlists);
+            
 
             if (SmartFaceSetPageSize <= 0)
             {
@@ -118,28 +119,37 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 this.logger.Debug("SmartFaceSyncedWatchlists is empty");
             }
 
-            var SmartFaceAllMembers = new List<SmartFaceMember>();
+            var smartFaceAllMembers = new List<SmartFaceMember>();
 
+            this.logger.Debug($"SyncedWatchlists.Count: {SyncedWatchlists.Count()}");
             if (SyncedWatchlists.Count() == 0)
             {
                 bool allMembers = false;
-
+                int skipValue = 0;
                 while (allMembers == false)
                 {
-                    {
-                        var watchlistMembers = await graphQlClient.GetWatchlistMembers.ExecuteAsync(SmartFaceAllMembers.Count, SmartFaceSetPageSize);
+                       
+                        var watchlistMembers = await graphQlClient.GetWatchlistMembers.ExecuteAsync(skipValue, SmartFaceSetPageSize);
+                        skipValue += SmartFaceSetPageSize;
+
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
                             this.logger.Debug($"SF: {wm.Id} {imageDataId} {wm.DisplayName}");
-                            SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
+                            this.logger.Debug($"Trying user {wm.Id}-{wm.FullName}:{wm.DisplayName}");
+                            
+                            smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
+                            
                         }
+
+                        
                         if (watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
                         {
                             allMembers = true;
-                        }
-                    }
+                        }                        
+                    
                 }
+                this.logger.Debug($"Amount of member found altogether: {smartFaceAllMembers.Count()}");
             }
             else
             {
@@ -148,19 +158,22 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 {
                     this.logger.Debug($"item: {item}");
 
-                    int MemberCount = 0;
+                    int skipValue = 0;
                     bool allMembers = false;
                     while (allMembers == false)
                     {
-                        this.logger.Debug($"MemberCount:{MemberCount},SmartFaceSetPageSize:{SmartFaceSetPageSize},item:{item}");
-                        var watchlistMembers = await graphQlClient.GetWatchlistMembersPerWatchlist.ExecuteAsync(MemberCount, SmartFaceSetPageSize, item);
+                        this.logger.Debug($"MemberCount:{skipValue},SmartFaceSetPageSize:{SmartFaceSetPageSize},item:{item}");
+                        
+                        var watchlistMembers = await graphQlClient.GetWatchlistMembersPerWatchlist.ExecuteAsync(skipValue, SmartFaceSetPageSize, item);
+                        skipValue += SmartFaceSetPageSize;
+
                         this.logger.Debug($"watchlistMembers.Data.WatchlistMembers.Items.Count: {watchlistMembers.Data.WatchlistMembers.Items.Count}");
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
-                            MemberCount += 1;
-                            this.logger.Debug($"SF: {wm.Id} {imageDataId} {wm.DisplayName} {MemberCount}");
-                            SmartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
+                            
+                            this.logger.Debug($"SF: {wm.Id} {imageDataId} {wm.DisplayName} {skipValue}");
+                            smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName));
                         }
                         if (watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
                         {
@@ -169,12 +182,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     }
                 }
             }
-            return SmartFaceAllMembers;
+
+            var result = smartFaceAllMembers.GroupBy(m => m.Id).Select(g => g.First()).ToList();
+            return result;
         }
 
         public async Task<bool> CreateEmployee(SmartFaceMember member, string watchlistId)
         {
-            this.logger.Information($"Adding Employee > {member.ToString()} into WatchlistId->{watchlistId}");
+            this.logger.Debug($"Adding Employee > {member.ToString()} into WatchlistId->{watchlistId}");
 
             if (member.ImageData != null)
             {
@@ -215,10 +230,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
             else
             {
-                this.logger.Information("We will not register an user without a registration image.");
+                this.logger.Warning("We will not register an user without a registration image.");
             }
 
             return true;
+        }
+
+        public async Task<bool> EmployeeExists(List<SmartFaceMember> employeeList, SmartFaceMember member)
+        {
+            bool containsItem = employeeList.Any(item => item.Id == member.Id);
+            
+            return containsItem;
         }
 
         public async Task<bool> UpdateEmployee(SmartFaceMember member)

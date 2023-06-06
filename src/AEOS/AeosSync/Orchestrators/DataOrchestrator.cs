@@ -130,7 +130,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         {
                             long tempid = (long)1;
                             this.logger.Debug($"SF Member {SFMember.FullName} with id {SFMember.Id} DOES NOT have a copy in AEOS.");
-                            EmployeesToBeAddedAeos.Add(new AeosMember(tempid, SFMember.Id, AeosExtensions.GetFirstName(SFMember.FullName,FirstNameOrder), AeosExtensions.GetLastName(SFMember.FullName,FirstNameOrder)));
+                            var returnValue = await aeosDataAdapter.GetEmployeeId(SFMember.Id,SupportData.FreefieldDefinitionId);
+                            if(returnValue != null)
+                            {
+                                this.logger.Debug($"User DOES have and ID: {returnValue.EmployeeInfo.Id} in AEOS already. User will not be added.");
+                            }
+                            else
+                            {  
+                                EmployeesToBeAddedAeos.Add(new AeosMember(tempid, SFMember.Id, AeosExtensions.GetFirstName(SFMember.FullName,FirstNameOrder), AeosExtensions.GetLastName(SFMember.FullName,FirstNameOrder)));
+                            }
+                            
                         }
                         else if (DataSource == "AEOS")
                         {
@@ -181,10 +190,18 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 this.logger.Debug($"The amount of employees to be added to the AEOS: {EmployeesToBeAddedAeos.Count}");
                 int EmployeesToBeAddedFailCountAeos = 0;
                 int EmployeesToBeAddedSuccessCountAeos = 0;
+
+                this.logger.Debug("DEBUG: Employees to be Added Aeos");
+                foreach (var item in EmployeesToBeAddedAeos)
+                {
+                    this.logger.Debug($"{item.FirstName} {item.LastName} - {item.SmartFaceId}");
+                }
+
                 foreach (var member in EmployeesToBeAddedAeos)
                 {
+                    this.logger.Debug($"Adding: {member.LastName} {member.FirstName} - {member.SmartFaceId}");
                     var returnValue = await aeosDataAdapter.CreateEmployees(member, SupportData.SmartFaceBadgeIdentifierType, SupportData.FreefieldDefinitionId);
-                    this.logger.Debug($"User created function {member.SmartFaceId} success?: {returnValue}");
+                    this.logger.Debug($"Success: {returnValue}");
                     if (returnValue == true)
                     {
                         EmployeesToBeAddedSuccessCountAeos += 1;
