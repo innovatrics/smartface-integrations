@@ -25,6 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private readonly string DataSource;
         private string AeosWatchlistId;
         private string FirstNameOrder;
+        private bool NoImageWarningNotification;
 
         public DataOrchestrator(
             ILogger logger,
@@ -39,9 +40,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.smartFaceDataAdapter = smartFaceDataAdapter ?? throw new ArgumentNullException(nameof(smartFaceDataAdapter));
             this.graphQlClient = graphQlClient ?? throw new ArgumentNullException(nameof(graphQlClient));
             this.aeosDataAdapter = aeosDataAdapter ?? throw new ArgumentNullException(nameof(aeosDataAdapter));
+            
 
             DataSource = configuration.GetValue<string>("AeosSync:DataSource");
             FirstNameOrder = configuration.GetValue<string>("AeosSync:SmartFace:FirstNameOrder");
+            NoImageWarningNotification = configuration.GetValue<bool>("AeosSync:Aeos:NoImageWarningNotification");
 
             if (DataSource == null)
             {
@@ -109,7 +112,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             if (!AeosExtensions.CompareUsers(FoundAeosMember, SFMember, FirstNameOrder))
                             {
 
-                                this.logger.Debug($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated as there is a difference in data");
+                                this.logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated as there is a difference in data");
                                 EmployeesToBeUpdatedAeos.Add(new AeosMember(tempid, FoundAeosMember.SmartFaceId, AeosExtensions.GetFirstName(SFMember.FullName,FirstNameOrder), AeosExtensions.GetLastName(SFMember.FullName,FirstNameOrder)));
                             }
                         }
@@ -133,7 +136,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             var returnValue = await aeosDataAdapter.GetEmployeeId(SFMember.Id,SupportData.FreefieldDefinitionId);
                             if(returnValue != null)
                             {
-                                this.logger.Debug($"User DOES have and ID: {returnValue.EmployeeInfo.Id} in AEOS already. User will not be added.");
+                                this.logger.Debug($"User DOES have an ID: {returnValue.EmployeeInfo.Id} in AEOS already. User will not be added.");
                             }
                             else
                             {  
@@ -176,7 +179,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                                 }
                                 if(Member.ImageData == null)
                                 {
-                                    this.logger.Warning($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} does not have an user photo. This user will not be migrated.");
+                                    if(NoImageWarningNotification)
+                                    {
+                                        this.logger.Warning($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} does not have an user photo. This user will not be migrated.");
+                                    }
                                 }
                                 
                             }
@@ -187,92 +193,76 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             if (DataSource == "SFACE")
             {
-                this.logger.Debug($"The amount of employees to be added to the AEOS: {EmployeesToBeAddedAeos.Count}");
-                int EmployeesToBeAddedFailCountAeos = 0;
-                int EmployeesToBeAddedSuccessCountAeos = 0;
-
-                this.logger.Debug("DEBUG: Employees to be Added Aeos");
-                foreach (var item in EmployeesToBeAddedAeos)
+                if(EmployeesToBeAddedAeos.Count > 0)
                 {
-                    this.logger.Debug($"{item.FirstName} {item.LastName} - {item.SmartFaceId}");
-                }
-
-                foreach (var member in EmployeesToBeAddedAeos)
-                {
-                    this.logger.Debug($"Adding: {member.LastName} {member.FirstName} - {member.SmartFaceId}");
-                    var returnValue = await aeosDataAdapter.CreateEmployees(member, SupportData.SmartFaceBadgeIdentifierType, SupportData.FreefieldDefinitionId);
-                    this.logger.Debug($"Success: {returnValue}");
-                    if (returnValue == true)
+                    this.logger.Information($"The amount of employees to be added to the AEOS: {EmployeesToBeAddedAeos.Count}");
+                    int EmployeesToBeAddedFailCountAeos = 0;
+                    int EmployeesToBeAddedSuccessCountAeos = 0;
+                
+                    this.logger.Debug("DEBUG: Employees to be Added Aeos");
+                    foreach (var item in EmployeesToBeAddedAeos)
                     {
-                        EmployeesToBeAddedSuccessCountAeos += 1;
+                        this.logger.Debug($"{item.FirstName} {item.LastName} - {item.SmartFaceId}");
                     }
-                    else
-                    {
-                        EmployeesToBeAddedFailCountAeos += 1;
-                    }
-                }
-                if (EmployeesToBeAddedSuccessCountAeos > 0 || EmployeesToBeAddedFailCountAeos > 0)
-                {
-                    this.logger.Information($"Creating new users in the AEOS: Successful: {EmployeesToBeAddedSuccessCountAeos} Failed: {EmployeesToBeAddedFailCountAeos}");
-                }
 
-                this.logger.Debug($"The amount of employees to be updated in the AEOS: {EmployeesToBeUpdatedAeos.Count}");
-                int EmployeesToBeUpdatedFailCountAeos = 0;
-                int EmployeesToBeUpdatedSuccessCountAeos = 0;
-                foreach (var member in EmployeesToBeUpdatedAeos)
-                {
-                    var returnValue = await aeosDataAdapter.UpdateEmployee(member, SupportData.FreefieldDefinitionId);
-                    this.logger.Debug($"User Updated function {member.SmartFaceId} success?: {returnValue}");
-                    if (returnValue == true)
+                    foreach (var member in EmployeesToBeAddedAeos)
                     {
-                        EmployeesToBeUpdatedSuccessCountAeos += 1;
-                    }
-                    else
-                    {
-                        EmployeesToBeUpdatedFailCountAeos += 1;
-                    }
-                }
-                if (EmployeesToBeUpdatedSuccessCountAeos > 0 || EmployeesToBeUpdatedFailCountAeos > 0)
-                {
-                    this.logger.Information($"Creating new users in the AEOS: Successful: {EmployeesToBeUpdatedSuccessCountAeos} Failed: {EmployeesToBeUpdatedFailCountAeos}");
-                }
-
-                if (EmployeesToBeUpdatedSuccessCountAeos > 0 || EmployeesToBeUpdatedFailCountAeos > 0)
-                {
-                    this.logger.Information($"Updating users in the AEOS: Successful: {EmployeesToBeUpdatedSuccessCountAeos} Failed: {EmployeesToBeUpdatedFailCountAeos}");
-                }
-
-                this.logger.Debug($"The amount of employees to be removed from the AEOS: {EmployeesToBeRemovedAeos.Count}");
-                int EmployeesToBeRemovedFailCountAeos = 0;
-                int EmployeesToBeRemovedSuccessCountAeos = 0;
-                foreach (var member in EmployeesToBeRemovedAeos)
-                {
-                    this.logger.Debug($"test->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId} member.smartfaceId {member.SmartFaceId}");
-                    if (member.SmartFaceId != null)
-                    {
-                        this.logger.Debug("member.SmartFaceId = " + member.SmartFaceId);
-                        var returnValue = await aeosDataAdapter.RemoveEmployee(member, SupportData.FreefieldDefinitionId);
-
+                        this.logger.Debug($"Adding: {member.LastName} {member.FirstName} - {member.SmartFaceId}");
+                        var returnValue = await aeosDataAdapter.CreateEmployees(member, SupportData.SmartFaceBadgeIdentifierType, SupportData.FreefieldDefinitionId);
+                        this.logger.Debug($"Success: {returnValue}");
                         if (returnValue == true)
                         {
-                            EmployeesToBeRemovedSuccessCountAeos += 1;
+                            EmployeesToBeAddedSuccessCountAeos += 1;
                         }
                         else
                         {
-                            EmployeesToBeRemovedFailCountAeos += 1;
+                            EmployeesToBeAddedFailCountAeos += 1;
                         }
                     }
-                    else
+                    if (EmployeesToBeAddedSuccessCountAeos > 0 || EmployeesToBeAddedFailCountAeos > 0)
                     {
-                        if(await aeosDataAdapter.GetKeepUserStatus(member.Id) == true)
+                        this.logger.Information($"Creating new users in the AEOS: Successful: {EmployeesToBeAddedSuccessCountAeos} Failed: {EmployeesToBeAddedFailCountAeos}");
+                    }
+                }
+                if(EmployeesToBeUpdatedAeos.Count>0)
+                {
+                    this.logger.Information($"The amount of employees to be updated in the AEOS: {EmployeesToBeUpdatedAeos.Count}");
+                    int EmployeesToBeUpdatedFailCountAeos = 0;
+                    int EmployeesToBeUpdatedSuccessCountAeos = 0;
+                    foreach (var member in EmployeesToBeUpdatedAeos)
+                    {
+                        var returnValue = await aeosDataAdapter.UpdateEmployee(member, SupportData.FreefieldDefinitionId);
+                        this.logger.Debug($"User {member.SmartFaceId} updated, success?: {returnValue}");
+                        if (returnValue == true)
                         {
-                            this.logger.Information($"User {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)} has KeepUser as true. User will not be removed.");
+                            EmployeesToBeUpdatedSuccessCountAeos += 1;
                         }
                         else
                         {
-                            this.logger.Warning($"User {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)} does not have SmartFaceId value. User will be removed.");
+                            EmployeesToBeUpdatedFailCountAeos += 1;
+                        }
+                    }
 
-                            var returnValue = await aeosDataAdapter.RemoveEmployeebyId(member.Id);
+                    if (EmployeesToBeUpdatedSuccessCountAeos > 0 || EmployeesToBeUpdatedFailCountAeos > 0)
+                    {
+                        this.logger.Information($"Updating users in the AEOS: Successful: {EmployeesToBeUpdatedSuccessCountAeos} Failed: {EmployeesToBeUpdatedFailCountAeos}");
+                    }
+                }
+
+                if(EmployeesToBeRemovedAeos.Count >0)
+                {
+                    this.logger.Information($"The amount of employees to be removed from the AEOS: {EmployeesToBeRemovedAeos.Count}");
+                
+                    int EmployeesToBeRemovedFailCountAeos = 0;
+                    int EmployeesToBeRemovedSuccessCountAeos = 0;
+                    foreach (var member in EmployeesToBeRemovedAeos)
+                    {
+                        this.logger.Debug($"test->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId} member.smartfaceId {member.SmartFaceId}");
+                        if (member.SmartFaceId != null)
+                        {
+                            this.logger.Debug("member.SmartFaceId = " + member.SmartFaceId);
+                            var returnValue = await aeosDataAdapter.RemoveEmployee(member, SupportData.FreefieldDefinitionId);
+
                             if (returnValue == true)
                             {
                                 EmployeesToBeRemovedSuccessCountAeos += 1;
@@ -282,39 +272,63 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                                 EmployeesToBeRemovedFailCountAeos += 1;
                             }
                         }
-                        
+                        else
+                        {
+                            if(await aeosDataAdapter.GetKeepUserStatus(member.Id) == true)
+                            {
+                                this.logger.Information($"User {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)} has KeepUser as true. User will not be removed.");
+                            }
+                            else
+                            {
+                                this.logger.Warning($"User {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)} does not have SmartFaceId value. User will be removed.");
+
+                                var returnValue = await aeosDataAdapter.RemoveEmployeebyId(member.Id);
+                                if (returnValue == true)
+                                {
+                                    EmployeesToBeRemovedSuccessCountAeos += 1;
+                                }
+                                else
+                                {
+                                    EmployeesToBeRemovedFailCountAeos += 1;
+                                }
+                            }
+                        }
+                    }
+                    if (EmployeesToBeRemovedSuccessCountAeos > 0 || EmployeesToBeRemovedFailCountAeos > 0)
+                    {
+                        this.logger.Information($"Removing users in the AEOS: Successful: {EmployeesToBeRemovedSuccessCountAeos} Failed: {EmployeesToBeRemovedFailCountAeos}");
                     }
                 }
-                if (EmployeesToBeRemovedSuccessCountAeos > 0 || EmployeesToBeRemovedFailCountAeos > 0)
-                {
-                    this.logger.Information($"Removing users in the AEOS: Successful: {EmployeesToBeRemovedSuccessCountAeos} Failed: {EmployeesToBeRemovedFailCountAeos}");
-                }
             }
-
 
             else if (DataSource == "AEOS")
             {
                 AeosWatchlistId = await smartFaceDataAdapter.InitializeWatchlist();
                 this.logger.Debug($"SmartFace watchlist ID set for storing AEOS data is: {AeosWatchlistId}");
-                this.logger.Debug($"The amount of employees to be added to the SFACE: {EmployeesToBeAddedSmartFace.Count}");
-                int EmployeesToBeAddedFailCountSmartFace = 0;
-                int EmployeesToBeAddedSuccessCountSmartFace = 0;
-                foreach (var member in EmployeesToBeAddedSmartFace)
+                
+                if(EmployeesToBeAddedSmartFace.Count >0)
                 {
-                    var returnValue = await smartFaceDataAdapter.CreateEmployee(member, AeosWatchlistId);
-                    this.logger.Information($"User created {member.Id}:{member.FullName} success?: {returnValue}");
-                    if (returnValue == true)
+                
+                    this.logger.Debug($"The amount of employees to be added to the SFACE: {EmployeesToBeAddedSmartFace.Count}");
+                    int EmployeesToBeAddedFailCountSmartFace = 0;
+                    int EmployeesToBeAddedSuccessCountSmartFace = 0;
+                    foreach (var member in EmployeesToBeAddedSmartFace)
                     {
-                        EmployeesToBeAddedSuccessCountSmartFace += 1;
+                        var returnValue = await smartFaceDataAdapter.CreateEmployee(member, AeosWatchlistId);
+                        this.logger.Information($"User created {member.Id}:{member.FullName} success?: {returnValue}");
+                        if (returnValue == true)
+                        {
+                            EmployeesToBeAddedSuccessCountSmartFace += 1;
+                        }
+                        else
+                        {
+                            EmployeesToBeAddedFailCountSmartFace += 1;
+                        }
                     }
-                    else
+                    if (EmployeesToBeAddedSuccessCountSmartFace > 0 || EmployeesToBeAddedFailCountSmartFace > 0)
                     {
-                        EmployeesToBeAddedFailCountSmartFace += 1;
+                        this.logger.Information($"Creating new users in the SmartFace: Successful: {EmployeesToBeAddedSuccessCountSmartFace} Failed: {EmployeesToBeAddedFailCountSmartFace}");
                     }
-                }
-                if (EmployeesToBeAddedSuccessCountSmartFace > 0 || EmployeesToBeAddedFailCountSmartFace > 0)
-                {
-                    this.logger.Information($"Creating new users in the SmartFace: Successful: {EmployeesToBeAddedSuccessCountSmartFace} Failed: {EmployeesToBeAddedFailCountSmartFace}");
                 }
 
                 if(EmployeesToBeUpdatedSmartFace.Count > 0)
@@ -325,7 +339,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     foreach (var member in EmployeesToBeUpdatedSmartFace)
                     {
                         var returnValue = await smartFaceDataAdapter.UpdateEmployee(member);
-                        this.logger.Information($"User Updated function {member.Id} success?: {returnValue}");
+                        this.logger.Information($"User {member.Id} updated, success?: {returnValue}");
                         if (returnValue == true)
                         {
                             EmployeesToBeUpdatedSuccessCountSmartFace += 1;
@@ -342,35 +356,37 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     }
                 }
                 
-
-                this.logger.Debug($"The amount of employees to be removed from the SmartFace: {EmployeesToBeRemovedSmartFace.Count}");
-                int EmployeesToBeRemovedFailCountSmartFace = 0;
-                int EmployeesToBeRemovedSuccessCountSmartFace = 0;
-                foreach (var member in EmployeesToBeRemovedSmartFace)
+                if(EmployeesToBeRemovedSmartFace.Count > 0)
                 {
-                    this.logger.Debug($"SmartFace user to be removed->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId}, member.Id {member.Id}, member.FullName {member.FullName}, member.DisplayName {member.DisplayName}");
-                    if (member.Id != null)
+                    this.logger.Debug($"The amount of employees to be removed from the SmartFace: {EmployeesToBeRemovedSmartFace.Count}");
+                    int EmployeesToBeRemovedFailCountSmartFace = 0;
+                    int EmployeesToBeRemovedSuccessCountSmartFace = 0;
+                    foreach (var member in EmployeesToBeRemovedSmartFace)
                     {
-
-                        try
+                        this.logger.Debug($"SmartFace user to be removed->SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId}, member.Id {member.Id}, member.FullName {member.FullName}, member.DisplayName {member.DisplayName}");
+                        if (member.Id != null)
                         {
-                            await smartFaceDataAdapter.RemoveEmployee(member);
-                            EmployeesToBeRemovedSuccessCountSmartFace += 1;
+
+                            try
+                            {
+                                await smartFaceDataAdapter.RemoveEmployee(member);
+                                EmployeesToBeRemovedSuccessCountSmartFace += 1;
+                            }
+                            catch
+                            {
+
+                                EmployeesToBeRemovedFailCountSmartFace += 1;
+                            }
                         }
-                        catch
+                        else
                         {
-
                             EmployeesToBeRemovedFailCountSmartFace += 1;
                         }
                     }
-                    else
+                    if (EmployeesToBeRemovedSuccessCountSmartFace > 0 || EmployeesToBeRemovedFailCountSmartFace > 0)
                     {
-                        EmployeesToBeRemovedFailCountSmartFace += 1;
+                        this.logger.Information($"Removing users in the SmartFace: Successful: {EmployeesToBeRemovedSuccessCountSmartFace} Failed: {EmployeesToBeRemovedFailCountSmartFace}");
                     }
-                }
-                if (EmployeesToBeRemovedSuccessCountSmartFace > 0 || EmployeesToBeRemovedFailCountSmartFace > 0)
-                {
-                    this.logger.Information($"Removing users in the SmartFace: Successful: {EmployeesToBeRemovedSuccessCountSmartFace} Failed: {EmployeesToBeRemovedFailCountSmartFace}");
                 }
             }
         }

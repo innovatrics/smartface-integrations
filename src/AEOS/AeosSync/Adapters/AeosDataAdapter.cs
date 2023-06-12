@@ -20,7 +20,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
-
         
         private string AeosEndpoint;
         private int AeosServerPageSize;
@@ -159,9 +158,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 return false;
             }          
 
-            // check if an employee with such ID already exists: member.SmartFaceId
-
-
             var addEmployee = new addEmployee() 
             {
                 EmployeeAdd = new EmployeeInfo() 
@@ -290,13 +286,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> UpdateEmployee(AeosMember member, long FreefieldDefinitionId)
         {
-            this.logger.Information($"Updating Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
+            this.logger.Debug($"Updating Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
 
             var returnedUser = await GetEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
 
             if(returnedUser != null)
             {
-                this.logger.Information($"Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeInfo.Id} {returnedUser.EmployeeInfo.FirstName} {returnedUser.EmployeeInfo.LastName}");
+                this.logger.Debug($"Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeInfo.Id} {returnedUser.EmployeeInfo.FirstName} {returnedUser.EmployeeInfo.LastName}");
                 var updateID = returnedUser.EmployeeInfo.Id;
 
                 var updateEmployee = new changeEmployee();
@@ -449,74 +445,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             return foundEmployee;
 
-
-            // if(employeesResponse.EmployeeList.Length > 1)
-            // {
-            //     this.logger.Error($"Two or more users have the same Identifier! This should not occur. employeesResponse.EmployeeList.Length: {employeesResponse.EmployeeList.Length}");
-            //     this.logger.Information("Values used for searching:");
-            //     this.logger.Information($"employeeSearch.EmployeeInfo.Freefield[0].DefinitionId:{employeeSearch.EmployeeInfo.Freefield[0].DefinitionId }");
-            //     this.logger.Information($"employeeSearch.EmployeeInfo.Freefield[0].Name:{employeeSearch.EmployeeInfo.Freefield[0].Name }");
-            //     this.logger.Information($"employeeSearch.EmployeeInfo.Freefield[0].value:{employeeSearch.EmployeeInfo.Freefield[0].value }");
-                
-            //     bool tempFoundEmployee = false;
-            //     int tempFoundEmployeeNr = 0;
-
-            //     // var foundEmployee = employeesResponse.EmployeeList
-            //     //     .FirstOrDefault(e => e.EmployeeInfo.Freefield.Any(ff => ff.Name == SmartFaceIdFreefield && ff.value == localSmartFaceId));
-
-            //     // return foundEmployee;
-
-            //     // foreach(var item in employeesResponse.EmployeeList)
-            //     // {
-            //     //     this.logger.Information($"{item.EmployeeInfo.Id}-{item.EmployeeInfo.LastName} {item.EmployeeInfo.FirstName}:");
-                    
-
-            //     //     foreach (var field in item.EmployeeInfo.Freefield)
-            //     //     {
-                            
-            //     //             if(tempFoundEmployee == true)
-            //     //             {
-            //     //                 break;
-            //     //             }                        
-            //     //             if(field.Name == SmartFaceIdFreefield && field.value == localSmartFaceId)
-            //     //             {
-            //     //                 this.logger.Information($"---> {field.Name}: {field.value} -> FOUND");
-            //     //                 tempFoundEmployee = true;
-            //     //                 break;
-            //     //             }
-            //     //             else
-            //     //             {
-            //     //                 this.logger.Information($"---> {field.Name}: {field.value}");
-            //     //             }
-            //     //     }
-            //     //     tempFoundEmployeeNr += 1;
-            //     // }
-                    
-            //     // if(tempFoundEmployee)
-            //     // {
-            //     //     //employeesResponse.EmployeeList[tempFoundEmployeeNr-1]
-            //     //     return employeesResponse;
-            //     //     //return employeesResponse.EmployeeList[tempFoundEmployeeNr-1];
-            //     // }
-            //     // else
-            //     // {
-            //     //     this.logger.Information("A person with such employeeID was not found.");
-            //     //     //throw new InvalidCastException("Issue occured while identifying the employeeID! This should not occur.");
-            //     // }
-
-                
-            // }
-            // else if(employeesResponse.EmployeeList.Length == 1 && employeesResponse.EmployeeList[0].EmployeeInfo.Id != 0)
-            // {
-            //     return employeesResponse;
-            // }
-            // else
-            // {
-            //     this.logger.Debug($"The AEOS user with id: {localSmartFaceId} does not exist.");
-            //     return employeesResponse;
-            // }
-
-
         }
 
         public async Task<bool> GetKeepUserStatus(long userId)
@@ -551,8 +479,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             
             bool removalFailedTest = false;
             bool lockerRemovalInitiated = false;
-
-            //this.logger.Information($"findLockersResponse.ProfileResult.AuthorisationLocker.LockerAuthorisation {findLockersResponse.ProfileResult.AuthorisationLocker.LockerAuthorisation}");
             
             this.logger.Information($"findLockersResponse.ProfileResult.ToString():{findLockersResponse.ProfileResult.ToString()}");
             if(findLockersResponse.ProfileResult.AuthorisationLocker != null)
