@@ -43,11 +43,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             while(!cancellationToken.IsCancellationRequested)
             {
-                this.logger.Information("Waiting for {SyncPeriodMs}ms for another sync.", SyncPeriodMs);
+                
                 try
                 {
-                    await Task.Delay(SyncPeriodMs,cancellationToken);
                     await this.bridge.Synchronize();
+                    this.logger.Information("Waiting for {SyncPeriodMs}ms for another sync.", SyncPeriodMs);    
+                    await Task.Delay(SyncPeriodMs,cancellationToken);
                 }
 
                 catch (OperationCanceledException)
