@@ -225,6 +225,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 }
                 else
                 {
+                    this.logger.Warning($"User {member.FullName} was not registered.");
                     return false;
                 }
             }

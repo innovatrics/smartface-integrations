@@ -115,6 +115,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 {
                     employeeSearch.SearchRange.startRecordNo = (((EmployeesPageNumber)*(EmployeesPageSize))-EmployeesPageSize);
                 }
+
+                //adding sort order
+                employeeSearch.SortOrder = new PersonSortOrderItem[1];
+                employeeSearch.SortOrder[0] = new PersonSortOrderItem();
+                employeeSearch.SortOrder[0].Order = SortDirection.A;
+                employeeSearch.SortOrder[0].FieldName = PersonSortFields.LastName;
+
                 employeeSearch.SearchRange.nrOfRecords = EmployeesPageSize;
                 employeeSearch.SearchRange.nrOfRecordsSpecified = true;
 
