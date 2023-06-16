@@ -168,14 +168,33 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         else if (DataSource == "AEOS")
                         {
 
-                            if (Member.SmartFaceId != null && Member.ImageData != null)
+                            if ((Member.SmartFaceId == null || Member.SmartFaceId == "@NotEnabled" ) && Member.ImageData != null)
+                            {
+                                this.logger.Debug($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} is being checked for enabling biometry.");
+
+                                var returnValue = await this.aeosDataAdapter.EnableBiometryOnEmployee(Member.Id, SupportData.FreefieldDefinitionId, SupportData.SmartFaceBadgeIdentifierType);
+                                
+                                if(returnValue)
+                                {
+                                    this.logger.Information($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id}> biometry was enabled.");
+                                    var employeeResponse = await this.aeosDataAdapter.GetEmployeeByAeosId(Member.Id);
+                                    if(employeeResponse != null)
+                                    {
+                                        Member.SmartFaceId = employeeResponse.SmartFaceId;
+                                    }
+                                }
+
+                            }
+
+                            if ((Member.SmartFaceId != null && Member.SmartFaceId != "@NotEnabled")  && Member.ImageData != null)
                             {
                                 this.logger.Information($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} and SmartFaceId {Member.SmartFaceId} is not present in the SmartFace. User will be added into the SmartFace");
+
                                 EmployeesToBeAddedSmartFace.Add(new SmartFaceMember(Member.SmartFaceId, AeosExtensions.JoinNames(Member.FirstName, Member.LastName,FirstNameOrder), AeosExtensions.JoinNames(Member.FirstName, Member.LastName,FirstNameOrder), Member.ImageData));
                             }
                             else
                             {
-                                if(Member.SmartFaceId == null)
+                                if(Member.SmartFaceId == null || Member.SmartFaceId == "@NotEnabled")
                                 {
                                     this.logger.Warning($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} does not have SmartFace Id defined as a custom field. This user will not be migrated.");
                                 }
