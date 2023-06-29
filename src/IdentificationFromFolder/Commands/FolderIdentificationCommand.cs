@@ -90,9 +90,11 @@ namespace Innovatrics.SmartFace.Integrations.IdentificationFromFolder.Commands
 
             Console.WriteLine($"Found {(sources?.Length) ?? 0} sources");
 
+            var ext = new List<string> { "jpg", "jpeg", "png" };
+
             foreach (var directory in sources)
             {
-                var filesInSource = Directory.GetFiles(directory, "*.*");
+                var filesInSource = Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories).Where(s => ext.Contains(Path.GetExtension(s).TrimStart('.').ToLowerInvariant()));
 
                 files.AddRange(filesInSource);
             }
@@ -111,13 +113,25 @@ namespace Innovatrics.SmartFace.Integrations.IdentificationFromFolder.Commands
 
             foreach (var file in files)
             {
-                var r = await sendSearchRequestAsync(instance, file);
+                var response = await sendSearchRequestAsync(instance, file);
+
+                var r = response.FirstOrDefault()?.MatchResults.Select(s => new SearchResult()
+                {
+                    File = file,
+                    Score = s.Score,
+                    WatchlistDisplayName = s.WatchlistDisplayName,
+                    WatchlistFullName = s.WatchlistFullName,
+                    WatchlistMemberId = s.WatchlistMemberId,
+                    DisplayName = s.DisplayName
+                });
+
+                results.AddRange(r);
             }
 
             return results.ToArray();
         }
 
-        private async static Task<SearchResponse> sendSearchRequestAsync(string instance, string imageFile)
+        private async static Task<SearchResponse[]> sendSearchRequestAsync(string instance, string imageFile)
         {
             var imageData = await File.ReadAllBytesAsync(imageFile);
 
@@ -168,7 +182,7 @@ namespace Innovatrics.SmartFace.Integrations.IdentificationFromFolder.Commands
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = await response.Content.ReadAsStringAsync();
-                    return JsonConvert.DeserializeObject<SearchResponse>(responseString);
+                    return JsonConvert.DeserializeObject<SearchResponse[]>(responseString);
                 }
 
                 return null;
