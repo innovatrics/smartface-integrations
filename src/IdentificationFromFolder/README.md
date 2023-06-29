@@ -12,6 +12,7 @@ How to run
 1. Download `win-x64.zip` and unzip
 2. Navigate to the folder
 3. Execute `.\IdentificationFromFolder.exe folder --source "C:\Users\user\Desktop\SamplePictures" --instance "http://some-smartface-server:8098"`
+4. Script will aggregate results into a file named `result-yyyy-MM-dd-HH-mm.html` into the `--source` folder
 
 ```
 PS C:\Users\user\Downloads\win-x64> .\IdentificationFromFolder.exe folder --source "C:\Users\user\Desktop\SamplePictures" --instance "http://some-smartface-server:8098"
