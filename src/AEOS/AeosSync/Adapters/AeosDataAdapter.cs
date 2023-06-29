@@ -31,6 +31,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private string FirstNameOrder;
         private bool AutoBiometryEnablement;
         private string AutoBiometryPrefix;
+        private string BiometricEnrollmentStatus;
         private Dictionary<string, bool> DefaultTemplates = new();
 
         private AeosWebServiceTypeClient client;
@@ -58,6 +59,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             FirstNameOrder = configuration.GetValue<string>("AeosSync:SmartFace:FirstNameOrder");
             AutoBiometryEnablement = configuration.GetValue<bool>("aeossync:Aeos:AutoBiometryEnablement");
             AutoBiometryPrefix = configuration.GetValue<string>("aeossync:Aeos:AutoBiometryPrefix");
+            BiometricEnrollmentStatus = configuration.GetValue<string>("aeossync:Aeos:Integration:BiometricEnrollmentStatus");
+
+            if(BiometricEnrollmentStatus == null)
+            {
+                throw new InvalidOperationException("BiometricEnrollmentStatus was not set.");
+            }
+            
 
             if(AutoBiometryEnablement && AutoBiometryPrefix == null)
             {
@@ -651,6 +659,84 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 return true;
             }
 
+        }
+
+        public async Task<bool> UpdateBiometricStatus(long userId, string biometricStatus)
+        {
+
+            this.logger.Debug($"getFreefieldDefinitionId for UpdateBiometricStatus;{userId},{biometricStatus},{BiometricEnrollmentStatus}");
+            var getFreefieldId = new findFreeFieldDefinition();
+            getFreefieldId.FreeFieldDefinitionSearchInfo = new FreeFieldDefinitionSearchInfo();
+            getFreefieldId.FreeFieldDefinitionSearchInfo.Name = BiometricEnrollmentStatus;
+            var getFreefieldDefId = await client.findFreeFieldDefinitionAsync(getFreefieldId.FreeFieldDefinitionSearchInfo);
+
+            long biometricStatusFreefield = 0;
+
+            if(getFreefieldDefId.FreeFieldDefinitionList.Length > 0)
+            {
+                biometricStatusFreefield = getFreefieldDefId.FreeFieldDefinitionList[0].Id;
+            }
+            else
+            {
+                this.logger.Information($"BiometricStatusFreefield was not found, current value: {biometricStatusFreefield}");
+                return false;
+            }
+            this.logger.Debug($"biometricStatusFreefield: {biometricStatusFreefield}, userId: {userId}, BiometricEnrollmentStatus: {BiometricEnrollmentStatus}");
+
+            var response = await this.GetEmployeeByAeosId(userId);
+            if(response != null)
+            {
+                    this.logger.Debug($"GetEmployeeByAeosId response was NOT null");
+                    var updateEmployee = new changeEmployee();
+                    updateEmployee.EmployeeChange = new EmployeeInfo();
+                    updateEmployee.EmployeeChange.Id = response.Id;
+                    updateEmployee.EmployeeChange.IdSpecified = true;
+                    updateEmployee.EmployeeChange.FirstName = response.FirstName;
+                    updateEmployee.EmployeeChange.LastName = response.LastName;
+                    updateEmployee.EmployeeChange.Freefield = new FreeFieldInfo[1];
+                    updateEmployee.EmployeeChange.Freefield[0] = new FreeFieldInfo();
+                    updateEmployee.EmployeeChange.Freefield[0].DefinitionId = biometricStatusFreefield;
+                    updateEmployee.EmployeeChange.Freefield[0].Name = BiometricEnrollmentStatus;
+                    updateEmployee.EmployeeChange.Freefield[0].value = biometricStatus;
+
+                    var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
+                    if(updateEmployeeResponse == null)
+                    {
+                        this.logger.Warning($"It was not possible to change the Biometric Enrollment Status.");
+                        return false;
+                    }
+                    else
+                    {
+                        this.logger.Information($"The {BiometricEnrollmentStatus} was updated to {biometricStatus}");
+                        return true;
+                    }
+            }
+            else
+            {
+                this.logger.Debug($"GetEmployeeByAeosId response was NOT null");
+                return false;
+            }
+        
+        }
+
+        public async Task<bool> UpdateBiometricStatusWithSFMember(SmartFaceMember member, string biometricStatus, SupportingData supportData)
+        {
+
+            var EmployeeByIdResponse = GetEmployeeId(member.Id, supportData.FreefieldDefinitionId);
+
+            if (EmployeeByIdResponse?.Result?.EmployeeInfo?.Id != null)
+            {
+                var EmployeeById = EmployeeByIdResponse.Result.EmployeeInfo.Id;
+
+                this.logger.Debug($"EmployeeByIdResponse: {EmployeeById}");
+                var updatedBiometricStatus = await UpdateBiometricStatus(EmployeeById, biometricStatus);
+                
+                return updatedBiometricStatus;
+            }
+            else
+            {
+                return false;
+            }
         }
 
     }

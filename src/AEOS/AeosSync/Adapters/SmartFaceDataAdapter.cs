@@ -10,6 +10,7 @@ using Innovatrics.SmartFace.Integrations.AeosSync.Nswag;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
@@ -19,6 +20,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
         private readonly SmartFaceGraphQLClient graphQlClient;
+        private readonly IAeosDataAdapter aeosDataAdapter;
         private string SmartFaceURL;
         private string SmartFaceGraphQL;
         private int SmartFaceSetPageSize;
@@ -38,7 +40,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
-            SmartFaceGraphQLClient graphQlClient
+            SmartFaceGraphQLClient graphQlClient,
+            IAeosDataAdapter aeosDataAdapter
 
         )
         {
@@ -46,6 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.graphQlClient = graphQlClient ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            this.aeosDataAdapter = aeosDataAdapter ?? throw new ArgumentNullException(nameof(aeosDataAdapter));
             this.logger.Debug("SmartFaceDataAdapter Initiated");
 
             SmartFaceURL = configuration.GetValue<string>("AeosSync:SmartFace:RestApi:ServerUrl") ?? throw new InvalidOperationException("The SmartFace URL is not read.");
@@ -217,32 +221,57 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 WatchlistMemberAdd.Images.Add(imageAdd[0]);
 
                 restAPI.ReadResponseAsString = true;
-                var restAPIresult = await restAPI.RegisterAsync(WatchlistMemberAdd);
+                var restAPIexception = false;
+                try 
+                {
+                    var restAPIresult = await restAPI.RegisterAsync(WatchlistMemberAdd);
 
-                if (restAPIresult.Id != null)
+                    if (restAPIresult.Id == null)
+                    {
+                        this.logger.Warning($"User {member.FullName} was not registered.");
+
+                        SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
+                        var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member,"Not Enabled - registration issue",SupportData);
+                        
+                        return false;
+                    }
+                    
+                }
+                catch (ApiException e)
+                {
+                    var root= JObject.Parse(e.Response);
+                    this.logger.Warning($"Status Code: {e.StatusCode}, {root["detail"]}");
+
+                    SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
+                    var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member,$"Not Enabled - {root["detail"]}",SupportData);
+
+                    restAPIexception = true;
+                    return false;
+                }
+                
+                if(restAPIexception == false)
                 {
                     return true;
                 }
-                else
-                {
-                    this.logger.Warning($"User {member.FullName} was not registered.");
-                    return false;
-                }
+
             }
             else
             {
                 this.logger.Warning("We will not register an user without a registration image.");
+
+                SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
+                var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member,$"Not Enabled - incorrect image",SupportData);
             }
 
             return true;
         }
 
-        public async Task<bool> EmployeeExists(List<SmartFaceMember> employeeList, SmartFaceMember member)
+        /* public async Task<bool> EmployeeExists(List<SmartFaceMember> employeeList, SmartFaceMember member)
         {
             bool containsItem = employeeList.Any(item => item.Id == member.Id);
             
             return containsItem;
-        }
+        } */
 
         public async Task<bool> UpdateEmployee(SmartFaceMember member)
         {

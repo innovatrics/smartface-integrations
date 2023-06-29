@@ -20,5 +20,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         Task<long> GetFreefieldDefinitionId();
         Task<bool> GetKeepUserStatus(long userId);
         Task<bool> RemoveAssignedLockers(long userId);
+        Task<bool> UpdateBiometricStatus(long userId, string biometricStatus);
+        Task<bool> UpdateBiometricStatusWithSFMember(SmartFaceMember member, string biometricStatus, SupportingData supportData);
     }
 }

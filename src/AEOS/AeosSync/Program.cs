@@ -25,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 var logger = ConfigureLogger(args, configurationRoot);
 
-                Log.Information("Synchronization Tool Starting up.");
+                Log.Information("SmartFace <-> Aeos Synchronization Tool Starting up.");
 
                 var hostBuilder = CreateHostBuilder(args, logger, configurationRoot);
                 using var host = hostBuilder.Build();
