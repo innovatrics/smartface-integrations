@@ -9,6 +9,4 @@ dotnet publish "IdentificationFromFolder.csproj" -c Release -r win-x64 --self-co
 
 How to run
 
-```
-dotnet run individuals -i http://10.11.12.13 --format html -mc 0 
-```
+PS C:\Users\user\Downloads\win-x64> .\IdentificationFromFolder.exe folder --source "C:\Users\user\Desktop\SamplePictures" --instance "http://some-smartface-server:8098"
