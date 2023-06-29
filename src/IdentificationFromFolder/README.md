@@ -13,6 +13,7 @@ PS C:\Users\user\Downloads\win-x64> .\IdentificationFromFolder.exe folder --sour
 ```
 
 ## Developers
+In case of forking own version of the code
 
 ### How to build & publish
 Command to publish
