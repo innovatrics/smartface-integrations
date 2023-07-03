@@ -1,10 +1,14 @@
 using System.Linq;
 using ServiceReference;
+using System.Security.Cryptography;
+using System.Text;
+using System;
 
 namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public static class AeosExtensions
     {
+        
         public static string GetFreefieldValue(this EmployeeInfo employeeInfo, string freefieldName, string defaultValue = null)
         {
             var freeField = employeeInfo.Freefield?.FirstOrDefault(f => f.Name == freefieldName);
@@ -92,6 +96,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public static bool CompareUsers(AeosMember aeosMember, SmartFaceMember smartFaceMember, string firstNameOrder)
         {
+
             if(firstNameOrder == "first")
             {
                 if (GetLastName(smartFaceMember.FullName,firstNameOrder)!= "")
@@ -134,6 +139,45 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 return false;
             }
 
+        }
+        public static bool CompareUserPhoto(AeosMember aeosMember, SmartFaceMember smartFaceMember, string firstNameOrder, bool keepPhotoUpToDate)
+        {
+            if(keepPhotoUpToDate)
+            {
+                if(aeosMember.ImageData!= null)
+                {
+                    if(getImageHash(aeosMember.ImageData).SequenceEqual(smartFaceMember.Note))
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public static string getImageHash(byte[] imageData=null)
+        {            
+
+            if(imageData != null)
+            {
+                byte[] tmpHash = new MD5CryptoServiceProvider().ComputeHash(imageData);
+                return Encoding.Default.GetString(tmpHash);
+            }
+            else
+            {
+                return null;
+            }            
         }
 
     }

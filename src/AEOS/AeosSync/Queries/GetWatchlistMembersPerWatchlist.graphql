@@ -5,6 +5,7 @@ query GetWatchlistMembersPerWatchlist($skip: Int, $take: Int, $watchlistId: Stri
       id
       fullName
       displayName
+      note
       tracklet{
         faces (where: {faceType: {eq: REGULAR}})
         {

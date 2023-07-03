@@ -4,6 +4,241 @@
 namespace AeosSync
 {
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class GetFaceByImageDataIdResult : global::System.IEquatable<GetFaceByImageDataIdResult>, IGetFaceByImageDataIdResult
+    {
+        public GetFaceByImageDataIdResult(global::AeosSync.IGetFaceByImageDataId_Faces? faces)
+        {
+            Faces = faces;
+        }
+
+        public global::AeosSync.IGetFaceByImageDataId_Faces? Faces { get; }
+
+        public virtual global::System.Boolean Equals(GetFaceByImageDataIdResult? other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (other.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return (((Faces is null && other.Faces is null) || Faces != null && Faces.Equals(other.Faces)));
+        }
+
+        public override global::System.Boolean Equals(global::System.Object? obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return Equals((GetFaceByImageDataIdResult)obj);
+        }
+
+        public override global::System.Int32 GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 5;
+                if (Faces != null)
+                {
+                    hash ^= 397 * Faces.GetHashCode();
+                }
+
+                return hash;
+            }
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class GetFaceByImageDataId_Faces_FaceCollectionSegment : global::System.IEquatable<GetFaceByImageDataId_Faces_FaceCollectionSegment>, IGetFaceByImageDataId_Faces_FaceCollectionSegment
+    {
+        public GetFaceByImageDataId_Faces_FaceCollectionSegment(global::System.Collections.Generic.IReadOnlyList<global::AeosSync.IGetFaceByImageDataId_Faces_Items?>? items)
+        {
+            Items = items;
+        }
+
+        public global::System.Collections.Generic.IReadOnlyList<global::AeosSync.IGetFaceByImageDataId_Faces_Items?>? Items { get; }
+
+        public virtual global::System.Boolean Equals(GetFaceByImageDataId_Faces_FaceCollectionSegment? other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (other.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return (global::StrawberryShake.Helper.ComparisonHelper.SequenceEqual(Items, other.Items));
+        }
+
+        public override global::System.Boolean Equals(global::System.Object? obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return Equals((GetFaceByImageDataId_Faces_FaceCollectionSegment)obj);
+        }
+
+        public override global::System.Int32 GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 5;
+                if (Items != null)
+                {
+                    foreach (var Items_elm in Items)
+                    {
+                        if (Items_elm != null)
+                        {
+                            hash ^= 397 * Items_elm.GetHashCode();
+                        }
+                    }
+                }
+
+                return hash;
+            }
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class GetFaceByImageDataId_Faces_Items_Face : global::System.IEquatable<GetFaceByImageDataId_Faces_Items_Face>, IGetFaceByImageDataId_Faces_Items_Face
+    {
+        public GetFaceByImageDataId_Faces_Items_Face(global::System.Guid id, global::System.Guid? imageDataId)
+        {
+            Id = id;
+            ImageDataId = imageDataId;
+        }
+
+        public global::System.Guid Id { get; }
+
+        public global::System.Guid? ImageDataId { get; }
+
+        public virtual global::System.Boolean Equals(GetFaceByImageDataId_Faces_Items_Face? other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            if (other.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return (Id.Equals(other.Id)) && ((ImageDataId is null && other.ImageDataId is null) || ImageDataId != null && ImageDataId.Equals(other.ImageDataId));
+        }
+
+        public override global::System.Boolean Equals(global::System.Object? obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return Equals((GetFaceByImageDataId_Faces_Items_Face)obj);
+        }
+
+        public override global::System.Int32 GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 5;
+                hash ^= 397 * Id.GetHashCode();
+                if (ImageDataId != null)
+                {
+                    hash ^= 397 * ImageDataId.GetHashCode();
+                }
+
+                return hash;
+            }
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial interface IGetFaceByImageDataIdResult
+    {
+        public global::AeosSync.IGetFaceByImageDataId_Faces? Faces { get; }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial interface IGetFaceByImageDataId_Faces
+    {
+        public global::System.Collections.Generic.IReadOnlyList<global::AeosSync.IGetFaceByImageDataId_Faces_Items?>? Items { get; }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial interface IGetFaceByImageDataId_Faces_FaceCollectionSegment : IGetFaceByImageDataId_Faces
+    {
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial interface IGetFaceByImageDataId_Faces_Items
+    {
+        public global::System.Guid Id { get; }
+
+        public global::System.Guid? ImageDataId { get; }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial interface IGetFaceByImageDataId_Faces_Items_Face : IGetFaceByImageDataId_Faces_Items
+    {
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial class GetWatchlistMembersResult : global::System.IEquatable<GetWatchlistMembersResult>, IGetWatchlistMembersResult
     {
         public GetWatchlistMembersResult(global::AeosSync.IGetWatchlistMembers_WatchlistMembers? watchlistMembers)
@@ -149,11 +384,12 @@ namespace AeosSync
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial class GetWatchlistMembers_WatchlistMembers_Items_WatchlistMember : global::System.IEquatable<GetWatchlistMembers_WatchlistMembers_Items_WatchlistMember>, IGetWatchlistMembers_WatchlistMembers_Items_WatchlistMember
     {
-        public GetWatchlistMembers_WatchlistMembers_Items_WatchlistMember(global::System.String? id, global::System.String? fullName, global::System.String? displayName, global::AeosSync.IGetWatchlistMembers_WatchlistMembers_Items_Tracklet? tracklet)
+        public GetWatchlistMembers_WatchlistMembers_Items_WatchlistMember(global::System.String? id, global::System.String? fullName, global::System.String? displayName, global::System.String? note, global::AeosSync.IGetWatchlistMembers_WatchlistMembers_Items_Tracklet? tracklet)
         {
             Id = id;
             FullName = fullName;
             DisplayName = displayName;
+            Note = note;
             Tracklet = tracklet;
         }
 
@@ -162,6 +398,8 @@ namespace AeosSync
         public global::System.String? FullName { get; }
 
         public global::System.String? DisplayName { get; }
+
+        public global::System.String? Note { get; }
 
         public global::AeosSync.IGetWatchlistMembers_WatchlistMembers_Items_Tracklet? Tracklet { get; }
 
@@ -182,7 +420,7 @@ namespace AeosSync
                 return false;
             }
 
-            return (((Id is null && other.Id is null) || Id != null && Id.Equals(other.Id))) && ((FullName is null && other.FullName is null) || FullName != null && FullName.Equals(other.FullName)) && ((DisplayName is null && other.DisplayName is null) || DisplayName != null && DisplayName.Equals(other.DisplayName)) && ((Tracklet is null && other.Tracklet is null) || Tracklet != null && Tracklet.Equals(other.Tracklet));
+            return (((Id is null && other.Id is null) || Id != null && Id.Equals(other.Id))) && ((FullName is null && other.FullName is null) || FullName != null && FullName.Equals(other.FullName)) && ((DisplayName is null && other.DisplayName is null) || DisplayName != null && DisplayName.Equals(other.DisplayName)) && ((Note is null && other.Note is null) || Note != null && Note.Equals(other.Note)) && ((Tracklet is null && other.Tracklet is null) || Tracklet != null && Tracklet.Equals(other.Tracklet));
         }
 
         public override global::System.Boolean Equals(global::System.Object? obj)
@@ -223,6 +461,11 @@ namespace AeosSync
                 if (DisplayName != null)
                 {
                     hash ^= 397 * DisplayName.GetHashCode();
+                }
+
+                if (Note != null)
+                {
+                    hash ^= 397 * Note.GetHashCode();
                 }
 
                 if (Tracklet != null)
@@ -477,6 +720,8 @@ namespace AeosSync
 
         public global::System.String? DisplayName { get; }
 
+        public global::System.String? Note { get; }
+
         public global::AeosSync.IGetWatchlistMembers_WatchlistMembers_Items_Tracklet? Tracklet { get; }
     }
 
@@ -677,11 +922,12 @@ namespace AeosSync
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial class GetWatchlistMembersPerWatchlist_WatchlistMembers_Items_WatchlistMember : global::System.IEquatable<GetWatchlistMembersPerWatchlist_WatchlistMembers_Items_WatchlistMember>, IGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_WatchlistMember
     {
-        public GetWatchlistMembersPerWatchlist_WatchlistMembers_Items_WatchlistMember(global::System.String? id, global::System.String? fullName, global::System.String? displayName, global::AeosSync.IGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_Tracklet? tracklet)
+        public GetWatchlistMembersPerWatchlist_WatchlistMembers_Items_WatchlistMember(global::System.String? id, global::System.String? fullName, global::System.String? displayName, global::System.String? note, global::AeosSync.IGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_Tracklet? tracklet)
         {
             Id = id;
             FullName = fullName;
             DisplayName = displayName;
+            Note = note;
             Tracklet = tracklet;
         }
 
@@ -690,6 +936,8 @@ namespace AeosSync
         public global::System.String? FullName { get; }
 
         public global::System.String? DisplayName { get; }
+
+        public global::System.String? Note { get; }
 
         public global::AeosSync.IGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_Tracklet? Tracklet { get; }
 
@@ -710,7 +958,7 @@ namespace AeosSync
                 return false;
             }
 
-            return (((Id is null && other.Id is null) || Id != null && Id.Equals(other.Id))) && ((FullName is null && other.FullName is null) || FullName != null && FullName.Equals(other.FullName)) && ((DisplayName is null && other.DisplayName is null) || DisplayName != null && DisplayName.Equals(other.DisplayName)) && ((Tracklet is null && other.Tracklet is null) || Tracklet != null && Tracklet.Equals(other.Tracklet));
+            return (((Id is null && other.Id is null) || Id != null && Id.Equals(other.Id))) && ((FullName is null && other.FullName is null) || FullName != null && FullName.Equals(other.FullName)) && ((DisplayName is null && other.DisplayName is null) || DisplayName != null && DisplayName.Equals(other.DisplayName)) && ((Note is null && other.Note is null) || Note != null && Note.Equals(other.Note)) && ((Tracklet is null && other.Tracklet is null) || Tracklet != null && Tracklet.Equals(other.Tracklet));
         }
 
         public override global::System.Boolean Equals(global::System.Object? obj)
@@ -751,6 +999,11 @@ namespace AeosSync
                 if (DisplayName != null)
                 {
                     hash ^= 397 * DisplayName.GetHashCode();
+                }
+
+                if (Note != null)
+                {
+                    hash ^= 397 * Note.GetHashCode();
                 }
 
                 if (Tracklet != null)
@@ -1005,6 +1258,8 @@ namespace AeosSync
 
         public global::System.String? DisplayName { get; }
 
+        public global::System.String? Note { get; }
+
         public global::AeosSync.IGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_Tracklet? Tracklet { get; }
     }
 
@@ -1090,6 +1345,142 @@ namespace AeosSync
     }
 
     /// <summary>
+    /// Represents the operation service of the GetFaceByImageDataId GraphQL operation
+    /// <code>
+    /// query GetFaceByImageDataId($imageDataId: UUID) {
+    ///   faces(where: { imageDataId: { eq: $imageDataId } }) {
+    ///     __typename
+    ///     items {
+    ///       __typename
+    ///       id
+    ///       imageDataId
+    ///       ... on Face {
+    ///         id
+    ///       }
+    ///     }
+    ///   }
+    /// }
+    /// </code>
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class GetFaceByImageDataIdQueryDocument : global::StrawberryShake.IDocument
+    {
+        private GetFaceByImageDataIdQueryDocument()
+        {
+        }
+
+        public static GetFaceByImageDataIdQueryDocument Instance { get; } = new GetFaceByImageDataIdQueryDocument();
+        public global::StrawberryShake.OperationKind Kind => global::StrawberryShake.OperationKind.Query;
+        public global::System.ReadOnlySpan<global::System.Byte> Body => new global::System.Byte[]{0x71, 0x75, 0x65, 0x72, 0x79, 0x20, 0x47, 0x65, 0x74, 0x46, 0x61, 0x63, 0x65, 0x42, 0x79, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x28, 0x24, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x3a, 0x20, 0x55, 0x55, 0x49, 0x44, 0x29, 0x20, 0x7b, 0x20, 0x66, 0x61, 0x63, 0x65, 0x73, 0x28, 0x77, 0x68, 0x65, 0x72, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x3a, 0x20, 0x7b, 0x20, 0x65, 0x71, 0x3a, 0x20, 0x24, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x64, 0x20, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x46, 0x61, 0x63, 0x65, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d};
+        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "8f4353c2ca71fae054eccf9510b9b877");
+        public override global::System.String ToString()
+        {
+#if NETSTANDARD2_0
+        return global::System.Text.Encoding.UTF8.GetString(Body.ToArray());
+#else
+            return global::System.Text.Encoding.UTF8.GetString(Body);
+#endif
+        }
+    }
+
+    /// <summary>
+    /// Represents the operation service of the GetFaceByImageDataId GraphQL operation
+    /// <code>
+    /// query GetFaceByImageDataId($imageDataId: UUID) {
+    ///   faces(where: { imageDataId: { eq: $imageDataId } }) {
+    ///     __typename
+    ///     items {
+    ///       __typename
+    ///       id
+    ///       imageDataId
+    ///       ... on Face {
+    ///         id
+    ///       }
+    ///     }
+    ///   }
+    /// }
+    /// </code>
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class GetFaceByImageDataIdQuery : global::AeosSync.IGetFaceByImageDataIdQuery
+    {
+        private readonly global::StrawberryShake.IOperationExecutor<IGetFaceByImageDataIdResult> _operationExecutor;
+        private readonly global::StrawberryShake.Serialization.IInputValueFormatter _uUIDFormatter;
+        public GetFaceByImageDataIdQuery(global::StrawberryShake.IOperationExecutor<IGetFaceByImageDataIdResult> operationExecutor, global::StrawberryShake.Serialization.ISerializerResolver serializerResolver)
+        {
+            _operationExecutor = operationExecutor ?? throw new global::System.ArgumentNullException(nameof(operationExecutor));
+            _uUIDFormatter = serializerResolver.GetInputValueFormatter("UUID");
+        }
+
+        global::System.Type global::StrawberryShake.IOperationRequestFactory.ResultType => typeof(IGetFaceByImageDataIdResult);
+        public async global::System.Threading.Tasks.Task<global::StrawberryShake.IOperationResult<IGetFaceByImageDataIdResult>> ExecuteAsync(global::System.Guid? imageDataId, global::System.Threading.CancellationToken cancellationToken = default)
+        {
+            var request = CreateRequest(imageDataId);
+            return await _operationExecutor.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+
+        public global::System.IObservable<global::StrawberryShake.IOperationResult<IGetFaceByImageDataIdResult>> Watch(global::System.Guid? imageDataId, global::StrawberryShake.ExecutionStrategy? strategy = null)
+        {
+            var request = CreateRequest(imageDataId);
+            return _operationExecutor.Watch(request, strategy);
+        }
+
+        private global::StrawberryShake.OperationRequest CreateRequest(global::System.Guid? imageDataId)
+        {
+            var variables = new global::System.Collections.Generic.Dictionary<global::System.String, global::System.Object?>();
+            variables.Add("imageDataId", FormatImageDataId(imageDataId));
+            return CreateRequest(variables);
+        }
+
+        private global::StrawberryShake.OperationRequest CreateRequest(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Object?>? variables)
+        {
+            return new global::StrawberryShake.OperationRequest(id: GetFaceByImageDataIdQueryDocument.Instance.Hash.Value, name: "GetFaceByImageDataId", document: GetFaceByImageDataIdQueryDocument.Instance, strategy: global::StrawberryShake.RequestStrategy.Default, variables: variables);
+        }
+
+        private global::System.Object? FormatImageDataId(global::System.Guid? value)
+        {
+            if (value is null)
+            {
+                return value;
+            }
+            else
+            {
+                return _uUIDFormatter.Format(value);
+            }
+        }
+
+        global::StrawberryShake.OperationRequest global::StrawberryShake.IOperationRequestFactory.Create(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Object?>? variables)
+        {
+            return CreateRequest(variables!);
+        }
+    }
+
+    /// <summary>
+    /// Represents the operation service of the GetFaceByImageDataId GraphQL operation
+    /// <code>
+    /// query GetFaceByImageDataId($imageDataId: UUID) {
+    ///   faces(where: { imageDataId: { eq: $imageDataId } }) {
+    ///     __typename
+    ///     items {
+    ///       __typename
+    ///       id
+    ///       imageDataId
+    ///       ... on Face {
+    ///         id
+    ///       }
+    ///     }
+    ///   }
+    /// }
+    /// </code>
+    /// </summary>
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial interface IGetFaceByImageDataIdQuery : global::StrawberryShake.IOperationRequestFactory
+    {
+        global::System.Threading.Tasks.Task<global::StrawberryShake.IOperationResult<IGetFaceByImageDataIdResult>> ExecuteAsync(global::System.Guid? imageDataId, global::System.Threading.CancellationToken cancellationToken = default);
+        global::System.IObservable<global::StrawberryShake.IOperationResult<IGetFaceByImageDataIdResult>> Watch(global::System.Guid? imageDataId, global::StrawberryShake.ExecutionStrategy? strategy = null);
+    }
+
+    /// <summary>
     /// Represents the operation service of the GetWatchlistMembers GraphQL operation
     /// <code>
     /// query GetWatchlistMembers($skip: Int, $take: Int) {
@@ -1100,6 +1491,7 @@ namespace AeosSync
     ///       id
     ///       fullName
     ///       displayName
+    ///       note
     ///       tracklet {
     ///         __typename
     ///         faces(where: { faceType: { eq: REGULAR } }) {
@@ -1136,8 +1528,8 @@ namespace AeosSync
 
         public static GetWatchlistMembersQueryDocument Instance { get; } = new GetWatchlistMembersQueryDocument();
         public global::StrawberryShake.OperationKind Kind => global::StrawberryShake.OperationKind.Query;
-        public global::System.ReadOnlySpan<global::System.Byte> Body => new global::System.Byte[]{0x71, 0x75, 0x65, 0x72, 0x79, 0x20, 0x47, 0x65, 0x74, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x28, 0x24, 0x73, 0x6b, 0x69, 0x70, 0x3a, 0x20, 0x49, 0x6e, 0x74, 0x2c, 0x20, 0x24, 0x74, 0x61, 0x6b, 0x65, 0x3a, 0x20, 0x49, 0x6e, 0x74, 0x29, 0x20, 0x7b, 0x20, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x28, 0x73, 0x6b, 0x69, 0x70, 0x3a, 0x20, 0x24, 0x73, 0x6b, 0x69, 0x70, 0x2c, 0x20, 0x74, 0x61, 0x6b, 0x65, 0x3a, 0x20, 0x24, 0x74, 0x61, 0x6b, 0x65, 0x2c, 0x20, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x3a, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x3a, 0x20, 0x41, 0x53, 0x43, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x64, 0x20, 0x66, 0x75, 0x6c, 0x6c, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x74, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x66, 0x61, 0x63, 0x65, 0x73, 0x28, 0x77, 0x68, 0x65, 0x72, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x65, 0x71, 0x3a, 0x20, 0x52, 0x45, 0x47, 0x55, 0x4c, 0x41, 0x52, 0x20, 0x7d, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x20, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x46, 0x61, 0x63, 0x65, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x54, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x70, 0x61, 0x67, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x68, 0x61, 0x73, 0x4e, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d};
-        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "89859e7a27fbaacc87de1c1e9df6415c");
+        public global::System.ReadOnlySpan<global::System.Byte> Body => new global::System.Byte[]{0x71, 0x75, 0x65, 0x72, 0x79, 0x20, 0x47, 0x65, 0x74, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x28, 0x24, 0x73, 0x6b, 0x69, 0x70, 0x3a, 0x20, 0x49, 0x6e, 0x74, 0x2c, 0x20, 0x24, 0x74, 0x61, 0x6b, 0x65, 0x3a, 0x20, 0x49, 0x6e, 0x74, 0x29, 0x20, 0x7b, 0x20, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x28, 0x73, 0x6b, 0x69, 0x70, 0x3a, 0x20, 0x24, 0x73, 0x6b, 0x69, 0x70, 0x2c, 0x20, 0x74, 0x61, 0x6b, 0x65, 0x3a, 0x20, 0x24, 0x74, 0x61, 0x6b, 0x65, 0x2c, 0x20, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x3a, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x3a, 0x20, 0x41, 0x53, 0x43, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x64, 0x20, 0x66, 0x75, 0x6c, 0x6c, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x6e, 0x6f, 0x74, 0x65, 0x20, 0x74, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x66, 0x61, 0x63, 0x65, 0x73, 0x28, 0x77, 0x68, 0x65, 0x72, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x65, 0x71, 0x3a, 0x20, 0x52, 0x45, 0x47, 0x55, 0x4c, 0x41, 0x52, 0x20, 0x7d, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x20, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x46, 0x61, 0x63, 0x65, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x54, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x70, 0x61, 0x67, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x68, 0x61, 0x73, 0x4e, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d};
+        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "9cdd965f39e41a8c43f002be2dbc6d4d");
         public override global::System.String ToString()
         {
 #if NETSTANDARD2_0
@@ -1159,6 +1551,7 @@ namespace AeosSync
     ///       id
     ///       fullName
     ///       displayName
+    ///       note
     ///       tracklet {
     ///         __typename
     ///         faces(where: { faceType: { eq: REGULAR } }) {
@@ -1264,6 +1657,7 @@ namespace AeosSync
     ///       id
     ///       fullName
     ///       displayName
+    ///       note
     ///       tracklet {
     ///         __typename
     ///         faces(where: { faceType: { eq: REGULAR } }) {
@@ -1309,6 +1703,7 @@ namespace AeosSync
     ///       id
     ///       fullName
     ///       displayName
+    ///       note
     ///       tracklet {
     ///         __typename
     ///         faces(where: { faceType: { eq: REGULAR } }) {
@@ -1345,8 +1740,8 @@ namespace AeosSync
 
         public static GetWatchlistMembersPerWatchlistQueryDocument Instance { get; } = new GetWatchlistMembersPerWatchlistQueryDocument();
         public global::StrawberryShake.OperationKind Kind => global::StrawberryShake.OperationKind.Query;
-        public global::System.ReadOnlySpan<global::System.Byte> Body => new global::System.Byte[]{0x71, 0x75, 0x65, 0x72, 0x79, 0x20, 0x47, 0x65, 0x74, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x50, 0x65, 0x72, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x28, 0x24, 0x73, 0x6b, 0x69, 0x70, 0x3a, 0x20, 0x49, 0x6e, 0x74, 0x2c, 0x20, 0x24, 0x74, 0x61, 0x6b, 0x65, 0x3a, 0x20, 0x49, 0x6e, 0x74, 0x2c, 0x20, 0x24, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x49, 0x64, 0x3a, 0x20, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x29, 0x20, 0x7b, 0x20, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x28, 0x73, 0x6b, 0x69, 0x70, 0x3a, 0x20, 0x24, 0x73, 0x6b, 0x69, 0x70, 0x2c, 0x20, 0x74, 0x61, 0x6b, 0x65, 0x3a, 0x20, 0x24, 0x74, 0x61, 0x6b, 0x65, 0x2c, 0x20, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x3a, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x3a, 0x20, 0x41, 0x53, 0x43, 0x20, 0x7d, 0x2c, 0x20, 0x77, 0x68, 0x65, 0x72, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x73, 0x3a, 0x20, 0x7b, 0x20, 0x61, 0x6c, 0x6c, 0x3a, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x3a, 0x20, 0x7b, 0x20, 0x65, 0x71, 0x3a, 0x20, 0x24, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x49, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x64, 0x20, 0x66, 0x75, 0x6c, 0x6c, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x74, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x66, 0x61, 0x63, 0x65, 0x73, 0x28, 0x77, 0x68, 0x65, 0x72, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x65, 0x71, 0x3a, 0x20, 0x52, 0x45, 0x47, 0x55, 0x4c, 0x41, 0x52, 0x20, 0x7d, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x20, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x46, 0x61, 0x63, 0x65, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x54, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x70, 0x61, 0x67, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x68, 0x61, 0x73, 0x4e, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d};
-        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "cd78ae062dfd04a53a420db7735f4879");
+        public global::System.ReadOnlySpan<global::System.Byte> Body => new global::System.Byte[]{0x71, 0x75, 0x65, 0x72, 0x79, 0x20, 0x47, 0x65, 0x74, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x50, 0x65, 0x72, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x28, 0x24, 0x73, 0x6b, 0x69, 0x70, 0x3a, 0x20, 0x49, 0x6e, 0x74, 0x2c, 0x20, 0x24, 0x74, 0x61, 0x6b, 0x65, 0x3a, 0x20, 0x49, 0x6e, 0x74, 0x2c, 0x20, 0x24, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x49, 0x64, 0x3a, 0x20, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x29, 0x20, 0x7b, 0x20, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x73, 0x28, 0x73, 0x6b, 0x69, 0x70, 0x3a, 0x20, 0x24, 0x73, 0x6b, 0x69, 0x70, 0x2c, 0x20, 0x74, 0x61, 0x6b, 0x65, 0x3a, 0x20, 0x24, 0x74, 0x61, 0x6b, 0x65, 0x2c, 0x20, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x3a, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x3a, 0x20, 0x41, 0x53, 0x43, 0x20, 0x7d, 0x2c, 0x20, 0x77, 0x68, 0x65, 0x72, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x73, 0x3a, 0x20, 0x7b, 0x20, 0x61, 0x6c, 0x6c, 0x3a, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x3a, 0x20, 0x7b, 0x20, 0x65, 0x71, 0x3a, 0x20, 0x24, 0x77, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x49, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x74, 0x65, 0x6d, 0x73, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x69, 0x64, 0x20, 0x66, 0x75, 0x6c, 0x6c, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x64, 0x69, 0x73, 0x70, 0x6c, 0x61, 0x79, 0x4e, 0x61, 0x6d, 0x65, 0x20, 0x6e, 0x6f, 0x74, 0x65, 0x20, 0x74, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x66, 0x61, 0x63, 0x65, 0x73, 0x28, 0x77, 0x68, 0x65, 0x72, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x3a, 0x20, 0x7b, 0x20, 0x65, 0x71, 0x3a, 0x20, 0x52, 0x45, 0x47, 0x55, 0x4c, 0x41, 0x52, 0x20, 0x7d, 0x20, 0x7d, 0x29, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x63, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x41, 0x74, 0x20, 0x66, 0x61, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x20, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x44, 0x61, 0x74, 0x61, 0x49, 0x64, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x46, 0x61, 0x63, 0x65, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x54, 0x72, 0x61, 0x63, 0x6b, 0x6c, 0x65, 0x74, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x2e, 0x2e, 0x2e, 0x20, 0x6f, 0x6e, 0x20, 0x57, 0x61, 0x74, 0x63, 0x68, 0x6c, 0x69, 0x73, 0x74, 0x4d, 0x65, 0x6d, 0x62, 0x65, 0x72, 0x20, 0x7b, 0x20, 0x69, 0x64, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x70, 0x61, 0x67, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x20, 0x7b, 0x20, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x6e, 0x61, 0x6d, 0x65, 0x20, 0x68, 0x61, 0x73, 0x4e, 0x65, 0x78, 0x74, 0x50, 0x61, 0x67, 0x65, 0x20, 0x7d, 0x20, 0x7d, 0x20, 0x7d};
+        public global::StrawberryShake.DocumentHash Hash { get; } = new global::StrawberryShake.DocumentHash("md5Hash", "49efe1a64af3f80ea14ad5893d44c3bb");
         public override global::System.String ToString()
         {
 #if NETSTANDARD2_0
@@ -1368,6 +1763,7 @@ namespace AeosSync
     ///       id
     ///       fullName
     ///       displayName
+    ///       note
     ///       tracklet {
     ///         __typename
     ///         faces(where: { faceType: { eq: REGULAR } }) {
@@ -1488,6 +1884,7 @@ namespace AeosSync
     ///       id
     ///       fullName
     ///       displayName
+    ///       note
     ///       tracklet {
     ///         __typename
     ///         faces(where: { faceType: { eq: REGULAR } }) {
@@ -1528,15 +1925,18 @@ namespace AeosSync
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial class SmartFaceGraphQLClient : global::AeosSync.ISmartFaceGraphQLClient
     {
+        private readonly global::AeosSync.IGetFaceByImageDataIdQuery _getFaceByImageDataId;
         private readonly global::AeosSync.IGetWatchlistMembersQuery _getWatchlistMembers;
         private readonly global::AeosSync.IGetWatchlistMembersPerWatchlistQuery _getWatchlistMembersPerWatchlist;
-        public SmartFaceGraphQLClient(global::AeosSync.IGetWatchlistMembersQuery getWatchlistMembers, global::AeosSync.IGetWatchlistMembersPerWatchlistQuery getWatchlistMembersPerWatchlist)
+        public SmartFaceGraphQLClient(global::AeosSync.IGetFaceByImageDataIdQuery getFaceByImageDataId, global::AeosSync.IGetWatchlistMembersQuery getWatchlistMembers, global::AeosSync.IGetWatchlistMembersPerWatchlistQuery getWatchlistMembersPerWatchlist)
         {
+            _getFaceByImageDataId = getFaceByImageDataId ?? throw new global::System.ArgumentNullException(nameof(getFaceByImageDataId));
             _getWatchlistMembers = getWatchlistMembers ?? throw new global::System.ArgumentNullException(nameof(getWatchlistMembers));
             _getWatchlistMembersPerWatchlist = getWatchlistMembersPerWatchlist ?? throw new global::System.ArgumentNullException(nameof(getWatchlistMembersPerWatchlist));
         }
 
         public static global::System.String ClientName => "SmartFaceGraphQLClient";
+        public global::AeosSync.IGetFaceByImageDataIdQuery GetFaceByImageDataId => _getFaceByImageDataId;
         public global::AeosSync.IGetWatchlistMembersQuery GetWatchlistMembers => _getWatchlistMembers;
         public global::AeosSync.IGetWatchlistMembersPerWatchlistQuery GetWatchlistMembersPerWatchlist => _getWatchlistMembersPerWatchlist;
     }
@@ -1547,6 +1947,8 @@ namespace AeosSync
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial interface ISmartFaceGraphQLClient
     {
+        global::AeosSync.IGetFaceByImageDataIdQuery GetFaceByImageDataId { get; }
+
         global::AeosSync.IGetWatchlistMembersQuery GetWatchlistMembers { get; }
 
         global::AeosSync.IGetWatchlistMembersPerWatchlistQuery GetWatchlistMembersPerWatchlist { get; }
@@ -1556,13 +1958,34 @@ namespace AeosSync
 namespace AeosSync.State
 {
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class FaceEntity
+    {
+        public FaceEntity(global::System.Guid id = default !, global::System.Guid? imageDataId = default !, global::System.DateTimeOffset createdAt = default !, global::AeosSync.FaceType faceType = default !)
+        {
+            Id = id;
+            ImageDataId = imageDataId;
+            CreatedAt = createdAt;
+            FaceType = faceType;
+        }
+
+        public global::System.Guid Id { get; }
+
+        public global::System.Guid? ImageDataId { get; }
+
+        public global::System.DateTimeOffset CreatedAt { get; }
+
+        public global::AeosSync.FaceType FaceType { get; }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial class WatchlistMemberEntity
     {
-        public WatchlistMemberEntity(global::System.String? id = default !, global::System.String? fullName = default !, global::System.String? displayName = default !, global::StrawberryShake.EntityId? tracklet = default !)
+        public WatchlistMemberEntity(global::System.String? id = default !, global::System.String? fullName = default !, global::System.String? displayName = default !, global::System.String? note = default !, global::StrawberryShake.EntityId? tracklet = default !)
         {
             Id = id;
             FullName = fullName;
             DisplayName = displayName;
+            Note = note;
             Tracklet = tracklet;
         }
 
@@ -1571,6 +1994,8 @@ namespace AeosSync.State
         public global::System.String? FullName { get; }
 
         public global::System.String? DisplayName { get; }
+
+        public global::System.String? Note { get; }
 
         public global::StrawberryShake.EntityId? Tracklet { get; }
     }
@@ -1587,20 +2012,129 @@ namespace AeosSync.State
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
-    public partial class FaceEntity
+    public partial class GetFaceByImageDataIdResultFactory : global::StrawberryShake.IOperationResultDataFactory<global::AeosSync.GetFaceByImageDataIdResult>
     {
-        public FaceEntity(global::System.DateTimeOffset createdAt = default !, global::AeosSync.FaceType faceType = default !, global::System.Guid? imageDataId = default !)
+        private readonly global::StrawberryShake.IEntityStore _entityStore;
+        private readonly global::StrawberryShake.IEntityMapper<global::AeosSync.State.FaceEntity, GetFaceByImageDataId_Faces_Items_Face> _getFaceByImageDataId_Faces_Items_FaceFromFaceEntityMapper;
+        public GetFaceByImageDataIdResultFactory(global::StrawberryShake.IEntityStore entityStore, global::StrawberryShake.IEntityMapper<global::AeosSync.State.FaceEntity, GetFaceByImageDataId_Faces_Items_Face> getFaceByImageDataId_Faces_Items_FaceFromFaceEntityMapper)
         {
-            CreatedAt = createdAt;
-            FaceType = faceType;
-            ImageDataId = imageDataId;
+            _entityStore = entityStore ?? throw new global::System.ArgumentNullException(nameof(entityStore));
+            _getFaceByImageDataId_Faces_Items_FaceFromFaceEntityMapper = getFaceByImageDataId_Faces_Items_FaceFromFaceEntityMapper ?? throw new global::System.ArgumentNullException(nameof(getFaceByImageDataId_Faces_Items_FaceFromFaceEntityMapper));
         }
 
-        public global::System.DateTimeOffset CreatedAt { get; }
+        global::System.Type global::StrawberryShake.IOperationResultDataFactory.ResultType => typeof(global::AeosSync.IGetFaceByImageDataIdResult);
+        public GetFaceByImageDataIdResult Create(global::StrawberryShake.IOperationResultDataInfo dataInfo, global::StrawberryShake.IEntityStoreSnapshot? snapshot = null)
+        {
+            if (snapshot is null)
+            {
+                snapshot = _entityStore.CurrentSnapshot;
+            }
 
-        public global::AeosSync.FaceType FaceType { get; }
+            if (dataInfo is GetFaceByImageDataIdResultInfo info)
+            {
+                return new GetFaceByImageDataIdResult(MapIGetFaceByImageDataId_Faces(info.Faces, snapshot));
+            }
 
-        public global::System.Guid? ImageDataId { get; }
+            throw new global::System.ArgumentException("GetFaceByImageDataIdResultInfo expected.");
+        }
+
+        private global::AeosSync.IGetFaceByImageDataId_Faces? MapIGetFaceByImageDataId_Faces(global::AeosSync.State.FaceCollectionSegmentData? data, global::StrawberryShake.IEntityStoreSnapshot snapshot)
+        {
+            if (data is null)
+            {
+                return null;
+            }
+
+            IGetFaceByImageDataId_Faces returnValue = default !;
+            if (data?.__typename.Equals("FaceCollectionSegment", global::System.StringComparison.Ordinal) ?? false)
+            {
+                returnValue = new GetFaceByImageDataId_Faces_FaceCollectionSegment(MapIGetFaceByImageDataId_Faces_ItemsArray(data.Items, snapshot));
+            }
+            else
+            {
+                throw new global::System.NotSupportedException();
+            }
+
+            return returnValue;
+        }
+
+        private global::System.Collections.Generic.IReadOnlyList<global::AeosSync.IGetFaceByImageDataId_Faces_Items?>? MapIGetFaceByImageDataId_Faces_ItemsArray(global::System.Collections.Generic.IReadOnlyList<global::StrawberryShake.EntityId?>? list, global::StrawberryShake.IEntityStoreSnapshot snapshot)
+        {
+            if (list is null)
+            {
+                return null;
+            }
+
+            var faces = new global::System.Collections.Generic.List<global::AeosSync.IGetFaceByImageDataId_Faces_Items?>();
+            foreach (global::StrawberryShake.EntityId? child in list)
+            {
+                faces.Add(MapIGetFaceByImageDataId_Faces_Items(child, snapshot));
+            }
+
+            return faces;
+        }
+
+        private global::AeosSync.IGetFaceByImageDataId_Faces_Items? MapIGetFaceByImageDataId_Faces_Items(global::StrawberryShake.EntityId? entityId, global::StrawberryShake.IEntityStoreSnapshot snapshot)
+        {
+            if (entityId is null)
+            {
+                return null;
+            }
+
+            if (entityId.Value.Name.Equals("Face", global::System.StringComparison.Ordinal))
+            {
+                return _getFaceByImageDataId_Faces_Items_FaceFromFaceEntityMapper.Map(snapshot.GetEntity<global::AeosSync.State.FaceEntity>(entityId.Value) ?? throw new global::StrawberryShake.GraphQLClientException());
+            }
+
+            throw new global::System.NotSupportedException();
+        }
+
+        global::System.Object global::StrawberryShake.IOperationResultDataFactory.Create(global::StrawberryShake.IOperationResultDataInfo dataInfo, global::StrawberryShake.IEntityStoreSnapshot? snapshot)
+        {
+            return Create(dataInfo, snapshot);
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class GetFaceByImageDataIdResultInfo : global::StrawberryShake.IOperationResultDataInfo
+    {
+        private readonly global::System.Collections.Generic.IReadOnlyCollection<global::StrawberryShake.EntityId> _entityIds;
+        private readonly global::System.UInt64 _version;
+        public GetFaceByImageDataIdResultInfo(global::AeosSync.State.FaceCollectionSegmentData? faces, global::System.Collections.Generic.IReadOnlyCollection<global::StrawberryShake.EntityId> entityIds, global::System.UInt64 version)
+        {
+            Faces = faces;
+            _entityIds = entityIds ?? throw new global::System.ArgumentNullException(nameof(entityIds));
+            _version = version;
+        }
+
+        public global::AeosSync.State.FaceCollectionSegmentData? Faces { get; }
+
+        public global::System.Collections.Generic.IReadOnlyCollection<global::StrawberryShake.EntityId> EntityIds => _entityIds;
+        public global::System.UInt64 Version => _version;
+        public global::StrawberryShake.IOperationResultDataInfo WithVersion(global::System.UInt64 version)
+        {
+            return new GetFaceByImageDataIdResultInfo(Faces, _entityIds, version);
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class GetFaceByImageDataId_Faces_Items_FaceFromFaceEntityMapper : global::StrawberryShake.IEntityMapper<global::AeosSync.State.FaceEntity, GetFaceByImageDataId_Faces_Items_Face>
+    {
+        private readonly global::StrawberryShake.IEntityStore _entityStore;
+        public GetFaceByImageDataId_Faces_Items_FaceFromFaceEntityMapper(global::StrawberryShake.IEntityStore entityStore)
+        {
+            _entityStore = entityStore ?? throw new global::System.ArgumentNullException(nameof(entityStore));
+        }
+
+        public GetFaceByImageDataId_Faces_Items_Face Map(global::AeosSync.State.FaceEntity entity, global::StrawberryShake.IEntityStoreSnapshot? snapshot = null)
+        {
+            if (snapshot is null)
+            {
+                snapshot = _entityStore.CurrentSnapshot;
+            }
+
+            return new GetFaceByImageDataId_Faces_Items_Face(entity.Id, entity.ImageDataId);
+        }
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
@@ -1794,7 +2328,7 @@ namespace AeosSync.State
                 snapshot = _entityStore.CurrentSnapshot;
             }
 
-            return new GetWatchlistMembers_WatchlistMembers_Items_WatchlistMember(entity.Id, entity.FullName, entity.DisplayName, MapIGetWatchlistMembers_WatchlistMembers_Items_Tracklet(entity.Tracklet, snapshot));
+            return new GetWatchlistMembers_WatchlistMembers_Items_WatchlistMember(entity.Id, entity.FullName, entity.DisplayName, entity.Note, MapIGetWatchlistMembers_WatchlistMembers_Items_Tracklet(entity.Tracklet, snapshot));
         }
 
         private global::AeosSync.IGetWatchlistMembers_WatchlistMembers_Items_Tracklet? MapIGetWatchlistMembers_WatchlistMembers_Items_Tracklet(global::StrawberryShake.EntityId? entityId, global::StrawberryShake.IEntityStoreSnapshot snapshot)
@@ -2108,7 +2642,7 @@ namespace AeosSync.State
                 snapshot = _entityStore.CurrentSnapshot;
             }
 
-            return new GetWatchlistMembersPerWatchlist_WatchlistMembers_Items_WatchlistMember(entity.Id, entity.FullName, entity.DisplayName, MapIGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_Tracklet(entity.Tracklet, snapshot));
+            return new GetWatchlistMembersPerWatchlist_WatchlistMembers_Items_WatchlistMember(entity.Id, entity.FullName, entity.DisplayName, entity.Note, MapIGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_Tracklet(entity.Tracklet, snapshot));
         }
 
         private global::AeosSync.IGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_Tracklet? MapIGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_Tracklet(global::StrawberryShake.EntityId? entityId, global::StrawberryShake.IEntityStoreSnapshot snapshot)
@@ -2228,6 +2762,155 @@ namespace AeosSync.State
             }
 
             return new GetWatchlistMembersPerWatchlist_WatchlistMembers_Items_Tracklet_Faces_Face(entity.CreatedAt, entity.FaceType, entity.ImageDataId);
+        }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class GetFaceByImageDataIdBuilder : global::StrawberryShake.IOperationResultBuilder<global::System.Text.Json.JsonDocument, global::AeosSync.IGetFaceByImageDataIdResult>
+    {
+        private readonly global::StrawberryShake.IEntityStore _entityStore;
+        private readonly global::StrawberryShake.IEntityIdSerializer _idSerializer;
+        private readonly global::StrawberryShake.IOperationResultDataFactory<global::AeosSync.IGetFaceByImageDataIdResult> _resultDataFactory;
+        private readonly global::StrawberryShake.Serialization.ILeafValueParser<global::System.String, global::System.Guid> _uUIDParser;
+        public GetFaceByImageDataIdBuilder(global::StrawberryShake.IEntityStore entityStore, global::StrawberryShake.IEntityIdSerializer idSerializer, global::StrawberryShake.IOperationResultDataFactory<global::AeosSync.IGetFaceByImageDataIdResult> resultDataFactory, global::StrawberryShake.Serialization.ISerializerResolver serializerResolver)
+        {
+            _entityStore = entityStore ?? throw new global::System.ArgumentNullException(nameof(entityStore));
+            _idSerializer = idSerializer ?? throw new global::System.ArgumentNullException(nameof(idSerializer));
+            _resultDataFactory = resultDataFactory ?? throw new global::System.ArgumentNullException(nameof(resultDataFactory));
+            _uUIDParser = serializerResolver.GetLeafValueParser<global::System.String, global::System.Guid>("UUID") ?? throw new global::System.ArgumentException("No serializer for type `UUID` found.");
+        }
+
+        public global::StrawberryShake.IOperationResult<IGetFaceByImageDataIdResult> Build(global::StrawberryShake.Response<global::System.Text.Json.JsonDocument> response)
+        {
+            (IGetFaceByImageDataIdResult Result, GetFaceByImageDataIdResultInfo Info)? data = null;
+            global::System.Collections.Generic.IReadOnlyList<global::StrawberryShake.IClientError>? errors = null;
+            if (response.Exception is null)
+            {
+                try
+                {
+                    if (response.Body != null)
+                    {
+                        if (response.Body.RootElement.TryGetProperty("data", out global::System.Text.Json.JsonElement dataElement) && dataElement.ValueKind == global::System.Text.Json.JsonValueKind.Object)
+                        {
+                            data = BuildData(dataElement);
+                        }
+
+                        if (response.Body.RootElement.TryGetProperty("errors", out global::System.Text.Json.JsonElement errorsElement))
+                        {
+                            errors = global::StrawberryShake.Json.JsonErrorParser.ParseErrors(errorsElement);
+                        }
+                    }
+                }
+                catch (global::System.Exception ex)
+                {
+                    errors = new global::StrawberryShake.IClientError[]{new global::StrawberryShake.ClientError(ex.Message, exception: ex, extensions: new global::System.Collections.Generic.Dictionary<global::System.String, global::System.Object?>{{"body", response.Body?.RootElement.ToString()}})};
+                }
+            }
+            else
+            {
+                if (response.Body != null && response.Body.RootElement.TryGetProperty("errors", out global::System.Text.Json.JsonElement errorsElement))
+                {
+                    errors = global::StrawberryShake.Json.JsonErrorParser.ParseErrors(errorsElement);
+                }
+                else
+                {
+                    errors = new global::StrawberryShake.IClientError[]{new global::StrawberryShake.ClientError(response.Exception.Message, exception: response.Exception, extensions: new global::System.Collections.Generic.Dictionary<global::System.String, global::System.Object?>{{"body", response.Body?.RootElement.ToString()}})};
+                }
+            }
+
+            return new global::StrawberryShake.OperationResult<IGetFaceByImageDataIdResult>(data?.Result, data?.Info, _resultDataFactory, errors);
+        }
+
+        private (IGetFaceByImageDataIdResult, GetFaceByImageDataIdResultInfo) BuildData(global::System.Text.Json.JsonElement obj)
+        {
+            var entityIds = new global::System.Collections.Generic.HashSet<global::StrawberryShake.EntityId>();
+            global::StrawberryShake.IEntityStoreSnapshot snapshot = default !;
+            global::AeosSync.State.FaceCollectionSegmentData? facesId = default !;
+            _entityStore.Update(session =>
+            {
+                facesId = DeserializeIGetFaceByImageDataId_Faces(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "faces"), entityIds);
+                snapshot = session.CurrentSnapshot;
+            });
+            var resultInfo = new GetFaceByImageDataIdResultInfo(facesId, entityIds, snapshot.Version);
+            return (_resultDataFactory.Create(resultInfo), resultInfo);
+        }
+
+        private global::AeosSync.State.FaceCollectionSegmentData? DeserializeIGetFaceByImageDataId_Faces(global::StrawberryShake.IEntityStoreUpdateSession session, global::System.Text.Json.JsonElement? obj, global::System.Collections.Generic.ISet<global::StrawberryShake.EntityId> entityIds)
+        {
+            if (!obj.HasValue)
+            {
+                return null;
+            }
+
+            var typename = obj.Value.GetProperty("__typename").GetString();
+            if (typename?.Equals("FaceCollectionSegment", global::System.StringComparison.Ordinal) ?? false)
+            {
+                return new global::AeosSync.State.FaceCollectionSegmentData(typename, items: UpdateIGetFaceByImageDataId_Faces_ItemsEntityArray(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "items"), entityIds));
+            }
+
+            throw new global::System.NotSupportedException();
+        }
+
+        private global::System.Collections.Generic.IReadOnlyList<global::StrawberryShake.EntityId?>? UpdateIGetFaceByImageDataId_Faces_ItemsEntityArray(global::StrawberryShake.IEntityStoreUpdateSession session, global::System.Text.Json.JsonElement? obj, global::System.Collections.Generic.ISet<global::StrawberryShake.EntityId> entityIds)
+        {
+            if (!obj.HasValue)
+            {
+                return null;
+            }
+
+            var faces = new global::System.Collections.Generic.List<global::StrawberryShake.EntityId?>();
+            foreach (global::System.Text.Json.JsonElement child in obj.Value.EnumerateArray())
+            {
+                faces.Add(UpdateIGetFaceByImageDataId_Faces_ItemsEntity(session, child, entityIds));
+            }
+
+            return faces;
+        }
+
+        private global::StrawberryShake.EntityId? UpdateIGetFaceByImageDataId_Faces_ItemsEntity(global::StrawberryShake.IEntityStoreUpdateSession session, global::System.Text.Json.JsonElement? obj, global::System.Collections.Generic.ISet<global::StrawberryShake.EntityId> entityIds)
+        {
+            if (!obj.HasValue)
+            {
+                return null;
+            }
+
+            global::StrawberryShake.EntityId entityId = _idSerializer.Parse(obj.Value);
+            entityIds.Add(entityId);
+            if (entityId.Name.Equals("Face", global::System.StringComparison.Ordinal))
+            {
+                if (session.CurrentSnapshot.TryGetEntity(entityId, out global::AeosSync.State.FaceEntity? entity))
+                {
+                    session.SetEntity(entityId, new global::AeosSync.State.FaceEntity(DeserializeNonNullableGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), DeserializeGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "imageDataId")), entity.CreatedAt, entity.FaceType));
+                }
+                else
+                {
+                    session.SetEntity(entityId, new global::AeosSync.State.FaceEntity(DeserializeNonNullableGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), DeserializeGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "imageDataId")), default !, default !));
+                }
+
+                return entityId;
+            }
+
+            throw new global::System.NotSupportedException();
+        }
+
+        private global::System.Guid DeserializeNonNullableGuid(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                throw new global::System.ArgumentNullException();
+            }
+
+            return _uUIDParser.Parse(obj.Value.GetString()!);
+        }
+
+        private global::System.Guid? DeserializeGuid(global::System.Text.Json.JsonElement? obj)
+        {
+            if (!obj.HasValue)
+            {
+                return null;
+            }
+
+            return _uUIDParser.Parse(obj.Value.GetString()!);
         }
     }
 
@@ -2356,11 +3039,11 @@ namespace AeosSync.State
             {
                 if (session.CurrentSnapshot.TryGetEntity(entityId, out global::AeosSync.State.WatchlistMemberEntity? entity))
                 {
-                    session.SetEntity(entityId, new global::AeosSync.State.WatchlistMemberEntity(DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "fullName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "displayName")), UpdateIGetWatchlistMembers_WatchlistMembers_Items_TrackletEntity(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "tracklet"), entityIds)));
+                    session.SetEntity(entityId, new global::AeosSync.State.WatchlistMemberEntity(DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "fullName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "displayName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "note")), UpdateIGetWatchlistMembers_WatchlistMembers_Items_TrackletEntity(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "tracklet"), entityIds)));
                 }
                 else
                 {
-                    session.SetEntity(entityId, new global::AeosSync.State.WatchlistMemberEntity(DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "fullName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "displayName")), UpdateIGetWatchlistMembers_WatchlistMembers_Items_TrackletEntity(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "tracklet"), entityIds)));
+                    session.SetEntity(entityId, new global::AeosSync.State.WatchlistMemberEntity(DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "fullName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "displayName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "note")), UpdateIGetWatchlistMembers_WatchlistMembers_Items_TrackletEntity(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "tracklet"), entityIds)));
                 }
 
                 return entityId;
@@ -2434,11 +3117,11 @@ namespace AeosSync.State
             {
                 if (session.CurrentSnapshot.TryGetEntity(entityId, out global::AeosSync.State.FaceEntity? entity))
                 {
-                    session.SetEntity(entityId, new global::AeosSync.State.FaceEntity(DeserializeNonNullableDateTimeOffset(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "createdAt")), DeserializeNonNullableFaceType(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "faceType")), DeserializeGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "imageDataId"))));
+                    session.SetEntity(entityId, new global::AeosSync.State.FaceEntity(entity.Id, DeserializeGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "imageDataId")), DeserializeNonNullableDateTimeOffset(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "createdAt")), DeserializeNonNullableFaceType(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "faceType"))));
                 }
                 else
                 {
-                    session.SetEntity(entityId, new global::AeosSync.State.FaceEntity(DeserializeNonNullableDateTimeOffset(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "createdAt")), DeserializeNonNullableFaceType(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "faceType")), DeserializeGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "imageDataId"))));
+                    session.SetEntity(entityId, new global::AeosSync.State.FaceEntity(default !, DeserializeGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "imageDataId")), DeserializeNonNullableDateTimeOffset(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "createdAt")), DeserializeNonNullableFaceType(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "faceType"))));
                 }
 
                 return entityId;
@@ -2629,11 +3312,11 @@ namespace AeosSync.State
             {
                 if (session.CurrentSnapshot.TryGetEntity(entityId, out global::AeosSync.State.WatchlistMemberEntity? entity))
                 {
-                    session.SetEntity(entityId, new global::AeosSync.State.WatchlistMemberEntity(DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "fullName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "displayName")), UpdateIGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_TrackletEntity(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "tracklet"), entityIds)));
+                    session.SetEntity(entityId, new global::AeosSync.State.WatchlistMemberEntity(DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "fullName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "displayName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "note")), UpdateIGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_TrackletEntity(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "tracklet"), entityIds)));
                 }
                 else
                 {
-                    session.SetEntity(entityId, new global::AeosSync.State.WatchlistMemberEntity(DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "fullName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "displayName")), UpdateIGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_TrackletEntity(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "tracklet"), entityIds)));
+                    session.SetEntity(entityId, new global::AeosSync.State.WatchlistMemberEntity(DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "id")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "fullName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "displayName")), DeserializeString(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "note")), UpdateIGetWatchlistMembersPerWatchlist_WatchlistMembers_Items_TrackletEntity(session, global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "tracklet"), entityIds)));
                 }
 
                 return entityId;
@@ -2707,11 +3390,11 @@ namespace AeosSync.State
             {
                 if (session.CurrentSnapshot.TryGetEntity(entityId, out global::AeosSync.State.FaceEntity? entity))
                 {
-                    session.SetEntity(entityId, new global::AeosSync.State.FaceEntity(DeserializeNonNullableDateTimeOffset(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "createdAt")), DeserializeNonNullableFaceType(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "faceType")), DeserializeGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "imageDataId"))));
+                    session.SetEntity(entityId, new global::AeosSync.State.FaceEntity(entity.Id, DeserializeGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "imageDataId")), DeserializeNonNullableDateTimeOffset(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "createdAt")), DeserializeNonNullableFaceType(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "faceType"))));
                 }
                 else
                 {
-                    session.SetEntity(entityId, new global::AeosSync.State.FaceEntity(DeserializeNonNullableDateTimeOffset(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "createdAt")), DeserializeNonNullableFaceType(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "faceType")), DeserializeGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "imageDataId"))));
+                    session.SetEntity(entityId, new global::AeosSync.State.FaceEntity(default !, DeserializeGuid(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "imageDataId")), DeserializeNonNullableDateTimeOffset(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "createdAt")), DeserializeNonNullableFaceType(global::StrawberryShake.Json.JsonElementExtensions.GetPropertyOrNull(obj, "faceType"))));
                 }
 
                 return entityId;
@@ -2778,6 +3461,20 @@ namespace AeosSync.State
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
+    public partial class FaceCollectionSegmentData
+    {
+        public FaceCollectionSegmentData(global::System.String __typename, global::System.Collections.Generic.IReadOnlyList<global::StrawberryShake.EntityId?>? items = default !)
+        {
+            this.__typename = __typename ?? throw new global::System.ArgumentNullException(nameof(__typename));
+            Items = items;
+        }
+
+        public global::System.String __typename { get; }
+
+        public global::System.Collections.Generic.IReadOnlyList<global::StrawberryShake.EntityId?>? Items { get; }
+    }
+
+    [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
     public partial class WatchlistMemberCollectionSegmentData
     {
         public WatchlistMemberCollectionSegmentData(global::System.String __typename, global::System.Collections.Generic.IReadOnlyList<global::StrawberryShake.EntityId?>? items = default !, global::AeosSync.State.CollectionSegmentInfoData? pageInfo = default !)
@@ -2821,9 +3518,9 @@ namespace AeosSync.State
             global::System.String __typename = obj.GetProperty("__typename").GetString()!;
             return __typename switch
             {
+                "Face" => ParseFaceEntityId(obj, __typename),
                 "WatchlistMember" => ParseWatchlistMemberEntityId(obj, __typename),
                 "Tracklet" => ParseTrackletEntityId(obj, __typename),
-                "Face" => ParseFaceEntityId(obj, __typename),
                 _ => throw new global::System.NotSupportedException()};
         }
 
@@ -2831,10 +3528,27 @@ namespace AeosSync.State
         {
             return entityId.Name switch
             {
+                "Face" => FormatFaceEntityId(entityId),
                 "WatchlistMember" => FormatWatchlistMemberEntityId(entityId),
                 "Tracklet" => FormatTrackletEntityId(entityId),
-                "Face" => FormatFaceEntityId(entityId),
                 _ => throw new global::System.NotSupportedException()};
+        }
+
+        private global::StrawberryShake.EntityId ParseFaceEntityId(global::System.Text.Json.JsonElement obj, global::System.String type)
+        {
+            return new global::StrawberryShake.EntityId(type, obj.GetProperty("id").GetString()!);
+        }
+
+        private global::System.String FormatFaceEntityId(global::StrawberryShake.EntityId entityId)
+        {
+            using var writer = new global::StrawberryShake.Internal.ArrayWriter();
+            using var jsonWriter = new global::System.Text.Json.Utf8JsonWriter(writer, _options);
+            jsonWriter.WriteStartObject();
+            jsonWriter.WriteString("__typename", entityId.Name);
+            jsonWriter.WriteString("id", (global::System.String)entityId.Value);
+            jsonWriter.WriteEndObject();
+            jsonWriter.Flush();
+            return global::System.Text.Encoding.UTF8.GetString(writer.GetInternalBuffer(), 0, writer.Length);
         }
 
         private global::StrawberryShake.EntityId ParseWatchlistMemberEntityId(global::System.Text.Json.JsonElement obj, global::System.String type)
@@ -2870,23 +3584,6 @@ namespace AeosSync.State
             jsonWriter.Flush();
             return global::System.Text.Encoding.UTF8.GetString(writer.GetInternalBuffer(), 0, writer.Length);
         }
-
-        private global::StrawberryShake.EntityId ParseFaceEntityId(global::System.Text.Json.JsonElement obj, global::System.String type)
-        {
-            return new global::StrawberryShake.EntityId(type, obj.GetProperty("id").GetString()!);
-        }
-
-        private global::System.String FormatFaceEntityId(global::StrawberryShake.EntityId entityId)
-        {
-            using var writer = new global::StrawberryShake.Internal.ArrayWriter();
-            using var jsonWriter = new global::System.Text.Json.Utf8JsonWriter(writer, _options);
-            jsonWriter.WriteStartObject();
-            jsonWriter.WriteString("__typename", entityId.Name);
-            jsonWriter.WriteString("id", (global::System.String)entityId.Value);
-            jsonWriter.WriteEndObject();
-            jsonWriter.Flush();
-            return global::System.Text.Encoding.UTF8.GetString(writer.GetInternalBuffer(), 0, writer.Length);
-        }
     }
 
     [global::System.CodeDom.Compiler.GeneratedCode("StrawberryShake", "12.16.0.0")]
@@ -2912,6 +3609,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 return new ClientServiceProvider(global::Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(serviceCollection));
             });
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => new global::AeosSync.State.SmartFaceGraphQLClientStoreAccessor(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IOperationStore>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IEntityStore>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IEntityIdSerializer>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::System.Collections.Generic.IEnumerable<global::StrawberryShake.IOperationRequestFactory>>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::System.Collections.Generic.IEnumerable<global::StrawberryShake.IOperationResultDataFactory>>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp))));
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::AeosSync.GetFaceByImageDataIdQuery>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::AeosSync.GetWatchlistMembersQuery>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::AeosSync.GetWatchlistMembersPerWatchlistQuery>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::AeosSync.SmartFaceGraphQLClient>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ClientServiceProvider>(sp)));
@@ -2928,6 +3626,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 var clientFactory = global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::System.Net.Http.IHttpClientFactory>(parentServices);
                 return new global::StrawberryShake.Transport.Http.HttpConnection(() => clientFactory.CreateClient("SmartFaceGraphQLClient"));
             });
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IEntityMapper<global::AeosSync.State.FaceEntity, global::AeosSync.GetFaceByImageDataId_Faces_Items_Face>, global::AeosSync.State.GetFaceByImageDataId_Faces_Items_FaceFromFaceEntityMapper>(services);
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IEntityMapper<global::AeosSync.State.WatchlistMemberEntity, global::AeosSync.GetWatchlistMembers_WatchlistMembers_Items_WatchlistMember>, global::AeosSync.State.GetWatchlistMembers_WatchlistMembers_Items_WatchlistMemberFromWatchlistMemberEntityMapper>(services);
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IEntityMapper<global::AeosSync.State.TrackletEntity, global::AeosSync.GetWatchlistMembers_WatchlistMembers_Items_Tracklet_Tracklet>, global::AeosSync.State.GetWatchlistMembers_WatchlistMembers_Items_Tracklet_TrackletFromTrackletEntityMapper>(services);
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IEntityMapper<global::AeosSync.State.FaceEntity, global::AeosSync.GetWatchlistMembers_WatchlistMembers_Items_Tracklet_Faces_Face>, global::AeosSync.State.GetWatchlistMembers_WatchlistMembers_Items_Tracklet_Faces_FaceFromFaceEntityMapper>(services);
@@ -2952,6 +3651,13 @@ namespace Microsoft.Extensions.DependencyInjection
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.Serialization.ISerializer, global::StrawberryShake.Serialization.TimeSpanSerializer>(services);
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.Serialization.ISerializer, global::StrawberryShake.Serialization.JsonSerializer>(services);
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.Serialization.ISerializerResolver>(services, sp => new global::StrawberryShake.Serialization.SerializerResolver(global::System.Linq.Enumerable.Concat(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::System.Collections.Generic.IEnumerable<global::StrawberryShake.Serialization.ISerializer>>(parentServices), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::System.Collections.Generic.IEnumerable<global::StrawberryShake.Serialization.ISerializer>>(sp))));
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationResultDataFactory<global::AeosSync.IGetFaceByImageDataIdResult>, global::AeosSync.State.GetFaceByImageDataIdResultFactory>(services);
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationResultDataFactory>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IOperationResultDataFactory<global::AeosSync.IGetFaceByImageDataIdResult>>(sp));
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationRequestFactory>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::AeosSync.IGetFaceByImageDataIdQuery>(sp));
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationResultBuilder<global::System.Text.Json.JsonDocument, global::AeosSync.IGetFaceByImageDataIdResult>, global::AeosSync.State.GetFaceByImageDataIdBuilder>(services);
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationExecutor<global::AeosSync.IGetFaceByImageDataIdResult>>(services, sp => new global::StrawberryShake.OperationExecutor<global::System.Text.Json.JsonDocument, global::AeosSync.IGetFaceByImageDataIdResult>(global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.Transport.Http.IHttpConnection>(sp), () => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IOperationResultBuilder<global::System.Text.Json.JsonDocument, global::AeosSync.IGetFaceByImageDataIdResult>>(sp), global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IOperationStore>(sp), strategy));
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::AeosSync.GetFaceByImageDataIdQuery>(services);
+            global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::AeosSync.IGetFaceByImageDataIdQuery>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::AeosSync.GetFaceByImageDataIdQuery>(sp));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationResultDataFactory<global::AeosSync.IGetWatchlistMembersResult>, global::AeosSync.State.GetWatchlistMembersResultFactory>(services);
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationResultDataFactory>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::StrawberryShake.IOperationResultDataFactory<global::AeosSync.IGetWatchlistMembersResult>>(sp));
             global::Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<global::StrawberryShake.IOperationRequestFactory>(services, sp => global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::AeosSync.IGetWatchlistMembersQuery>(sp));
