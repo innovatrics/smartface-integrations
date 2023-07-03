@@ -39,7 +39,7 @@ Add the following pattern to an existing docker compose:
     env_file: .env.sfstation
 
   AeosSync:
-    image: ${REGISTRY}integrations-AeosSync:[version]
+    image: ${REGISTRY}integrations-aeossync:[version]
     container_name: SFAeosSync
     restart: unless-stopped
     env_file: .env.aeos
