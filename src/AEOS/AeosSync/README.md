@@ -18,9 +18,9 @@ To run the application locally, follow these steps
 ### Deploy to Docker
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AEOS/AeosSync/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeossync:0.1 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeossync:0.1 registry.gitlab.com/innovatrics/smartface/integrations-aeossync:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeossync:0.1`
+ - `docker build -f src/AEOS/AeosSync/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeossync:0.2 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeossync:0.2 registry.gitlab.com/innovatrics/smartface/integrations-aeossync:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeossync:0.2`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeossync:latest`
 
 ## Usage
@@ -39,7 +39,7 @@ Add the following pattern to an existing docker compose:
     env_file: .env.sfstation
 
   AeosSync:
-    image: ${REGISTRY}integrations-AeosSync
+    image: ${REGISTRY}integrations-AeosSync:[version]
     container_name: SFAeosSync
     restart: unless-stopped
     env_file: .env.aeos
