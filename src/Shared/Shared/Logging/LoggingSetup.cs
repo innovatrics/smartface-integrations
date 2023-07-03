@@ -19,14 +19,32 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
         private const int ERROR_LOG_FILE_SIZE_LIMIT_MEGABYTES = 100;
         private const int ERROR_LOG_FILE_COUNT_LIMIT = 1;
 
+        private static LoggerConfiguration CreateConfiguration()
+        {
+            return new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .WriteTo.LiterateConsole(
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {Message:j} {Properties:j} {NewLine}{Exception}"
+                );
+        }
+
+        public static ILogger SetupBasicLogging()
+        {
+            var logger = CreateConfiguration().CreateLogger();
+
+            Log.Logger = logger;
+
+            return logger;
+        }
+
         public static ILogger SetupBasicLogging(string appName, string logFileName = null, string errorLogFileName = null)
         {
             var loggingFile = AbsLogFilePathForFile(appName, logFileName ?? "main");
             var errorLogFile = AbsLogFilePathForFile(appName, errorLogFileName ?? "error");
 
-            var logger = new LoggerConfiguration().
-                WithBasicConfiguration(loggingFile, errorLogFile)
-                .CreateLogger();
+            var logger = CreateConfiguration()
+                            .WithBasicConfiguration(loggingFile, errorLogFile)
+                            .CreateLogger();
 
             Log.Logger = logger;
 
@@ -36,10 +54,6 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
         private static LoggerConfiguration WithBasicConfiguration(this LoggerConfiguration loggerConfiguration, string absLogFilePath, string absErrLogFilePath)
         {
             return loggerConfiguration
-                .Enrich.FromLogContext()
-                .WriteTo.LiterateConsole(
-                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {Message:j} {Properties:j} {NewLine}{Exception}")
-                // Send copies of error log events to separate error log file
                 .WithRollingFile(absLogFilePath, LOG_FILE_SIZE_LIMIT_MEGABYTES, LOG_FILE_COUNT_LIMIT)
                 .WriteTo.Logger(lc =>
                 {
