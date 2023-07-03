@@ -9,10 +9,4 @@ public class SupportingData
         this.SmartFaceBadgeIdentifierType = smartFaceBadgeIdentifierType;
     }
 
-    public SupportingData()
-    {
-        
-    }
-
-
 }

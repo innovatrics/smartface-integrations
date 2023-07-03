@@ -8,7 +8,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public static class AeosExtensions
     {
-        
+
         public static string GetFreefieldValue(this EmployeeInfo employeeInfo, string freefieldName, string defaultValue = null)
         {
             var freeField = employeeInfo.Freefield?.FirstOrDefault(f => f.Name == freefieldName);
@@ -22,19 +22,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             var names = fullName.Split(' ');
             if (names.Length > 0)
             {
-                if(firstNameOrder == "first")
+                if (firstNameOrder == "first")
                 {
                     return names[0];
                 }
-                else if(firstNameOrder == "last")
+                else if (firstNameOrder == "last")
                 {
-                    return names[names.Length -1];
+                    return names[names.Length - 1];
                 }
                 else
                 {
                     return "";
                 }
-                
+
             }
             else
             {
@@ -49,7 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             if (names.Length > 1)
             {
-                if(firstNameOrder == "first")
+                if (firstNameOrder == "first")
                 {
                     for (int x = 1; x < names.Length; x++)
                     {
@@ -57,9 +57,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     }
                     return returnValue.Trim();
                 }
-                else if(firstNameOrder == "last")
+                else if (firstNameOrder == "last")
                 {
-                    for (int x = 0; x < names.Length -1; x++)
+                    for (int x = 0; x < names.Length - 1; x++)
                     {
                         returnValue = returnValue + " " + (string)names[x];
                     }
@@ -69,7 +69,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 {
                     return returnValue;
                 }
-                
+
             }
             else
             {
@@ -77,13 +77,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
-        public static string JoinNames(string firstName, string lastName,string firstNameOrder)
+        public static string JoinNames(string firstName, string lastName, string firstNameOrder)
         {
-            if(firstNameOrder == "first")
+            if (firstNameOrder == "first")
             {
                 return firstName + " " + lastName;
             }
-            else if(firstNameOrder == "last")
+            else if (firstNameOrder == "last")
             {
                 return lastName + " " + firstName;
             }
@@ -91,15 +91,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 throw new System.Exception($"Incorrect value for firstNameOrder was used: {firstNameOrder}.");
             }
-            
+
         }
 
         public static bool CompareUsers(AeosMember aeosMember, SmartFaceMember smartFaceMember, string firstNameOrder)
         {
 
-            if(firstNameOrder == "first")
+            if (firstNameOrder == "first")
             {
-                if (GetLastName(smartFaceMember.FullName,firstNameOrder)!= "")
+                if (GetLastName(smartFaceMember.FullName, firstNameOrder) != "")
                 {
                     if (smartFaceMember.FullName != aeosMember.FirstName + " " + aeosMember.LastName)
                     {
@@ -112,18 +112,18 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 }
                 else
                 {
-                   if (smartFaceMember.FullName != aeosMember.FirstName)
+                    if (smartFaceMember.FullName != aeosMember.FirstName)
                     {
                         return false;
                     }
                     else
                     {
                         return true;
-                    } 
+                    }
                 }
-                
+
             }
-            else if(firstNameOrder == "last")
+            else if (firstNameOrder == "last")
             {
                 if (smartFaceMember.FullName != aeosMember.LastName + " " + aeosMember.FirstName)
                 {
@@ -142,11 +142,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         }
         public static bool CompareUserPhoto(AeosMember aeosMember, SmartFaceMember smartFaceMember, string firstNameOrder, bool keepPhotoUpToDate)
         {
-            if(keepPhotoUpToDate)
+            if (keepPhotoUpToDate)
             {
-                if(aeosMember.ImageData!= null)
+                if (aeosMember.ImageData != null)
                 {
-                    if(getImageHash(aeosMember.ImageData).SequenceEqual(smartFaceMember.Note))
+                    if (getImageHash(aeosMember.ImageData).SequenceEqual(smartFaceMember.Note))
                     {
                         return true;
                     }
@@ -166,10 +166,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
-        public static string getImageHash(byte[] imageData=null)
-        {            
+        public static string getImageHash(byte[] imageData = null)
+        {
 
-            if(imageData != null)
+            if (imageData != null)
             {
                 byte[] tmpHash = new MD5CryptoServiceProvider().ComputeHash(imageData);
                 return Encoding.Default.GetString(tmpHash);
@@ -177,7 +177,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             else
             {
                 return null;
-            }            
+            }
         }
 
     }

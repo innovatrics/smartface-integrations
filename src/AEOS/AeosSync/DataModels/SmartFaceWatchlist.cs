@@ -1,8 +1,8 @@
 public class SmartFaceWatchlist
 {
-    public string Id       { get; set; }
-    public string FullName     { get; set; }
-    public string DisplayName      { get; set; }
+    public string Id { get; set; }
+    public string FullName { get; set; }
+    public string DisplayName { get; set; }
 
     public SmartFaceWatchlist(string Id, string fullName, string displayName)
     {
@@ -13,6 +13,6 @@ public class SmartFaceWatchlist
 
     public string ReadWatchlist()
     {
-        return $"Member: {Id},{FullName},{DisplayName}";   
+        return $"Member: {Id},{FullName},{DisplayName}";
     }
 }

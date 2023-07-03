@@ -133,51 +133,51 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 int skipValue = 0;
                 while (allMembers == false)
                 {
-                       
-                        var watchlistMembers = await graphQlClient.GetWatchlistMembers.ExecuteAsync(skipValue, SmartFaceSetPageSize);
-                        skipValue += SmartFaceSetPageSize;
 
-                        foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
+                    var watchlistMembers = await graphQlClient.GetWatchlistMembers.ExecuteAsync(skipValue, SmartFaceSetPageSize);
+                    skipValue += SmartFaceSetPageSize;
+
+                    foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
+                    {
+
+                        var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
+                        if (KeepPhotoUpToDate)
                         {
-                            
-                            var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
-                            if(KeepPhotoUpToDate)
-                            {                               
-                                if(imageDataId != null)
-                                {
-                                    
-                                    var imageDataBytes = await GetImageData(imageDataId.ToString());
-                                    
-                                    if(imageDataBytes != null)
-                                    {
-                                        
-                                        this.logger.Debug($"{wm.Id}, {wm.FullName}, {wm.DisplayName}, {imageDataBytes}, {wm.Note},{imageDataId.ToString()}");
-                                        smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, wm.Note,imageDataId.ToString()));        
-
-                                    }
-                                    else
-                                    {
-                                        this.logger.Debug($"{wm.Id}, {wm.FullName}, {wm.DisplayName}, {imageDataBytes}, {wm.Note},{imageDataId.ToString()}");
-                                        smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note,imageDataId.ToString()));
-                                    }
-                                    
-                                }   
-                            }
-                            else
+                            if (imageDataId != null)
                             {
-                                this.logger.Debug($"SF: {wm.Id} {imageDataId} {wm.DisplayName}, {wm.Note}:{imageDataId}");
-                                this.logger.Debug($"Trying user {wm.Id}-{wm.FullName}:{wm.DisplayName}, {wm.Note}");
-                            
-                                smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName,null,wm.Note,imageDataId.ToString()));
+
+                                var imageDataBytes = await GetImageData(imageDataId.ToString());
+
+                                if (imageDataBytes != null)
+                                {
+
+                                    this.logger.Debug($"{wm.Id}, {wm.FullName}, {wm.DisplayName}, {imageDataBytes}, {wm.Note},{imageDataId.ToString()}");
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, wm.Note, imageDataId.ToString()));
+
+                                }
+                                else
+                                {
+                                    this.logger.Debug($"{wm.Id}, {wm.FullName}, {wm.DisplayName}, {imageDataBytes}, {wm.Note},{imageDataId.ToString()}");
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
+                                }
+
                             }
-                            
                         }
-                        
-                        if (watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
+                        else
                         {
-                            allMembers = true;
-                        }                        
-                    
+                            this.logger.Debug($"SF: {wm.Id} {imageDataId} {wm.DisplayName}, {wm.Note}:{imageDataId}");
+                            this.logger.Debug($"Trying user {wm.Id}-{wm.FullName}:{wm.DisplayName}, {wm.Note}");
+
+                            smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
+                        }
+
+                    }
+
+                    if (watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
+                    {
+                        allMembers = true;
+                    }
+
                 }
                 this.logger.Debug($"Amount of member found altogether: {smartFaceAllMembers.Count()}");
             }
@@ -193,7 +193,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     while (allMembers == false)
                     {
                         this.logger.Debug($"MemberCount:{skipValue},SmartFaceSetPageSize:{SmartFaceSetPageSize},item:{item}");
-                        
+
                         var watchlistMembers = await graphQlClient.GetWatchlistMembersPerWatchlist.ExecuteAsync(skipValue, SmartFaceSetPageSize, item);
                         skipValue += SmartFaceSetPageSize;
 
@@ -201,21 +201,21 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
-                            if(KeepPhotoUpToDate)
+                            if (KeepPhotoUpToDate)
                             {
                                 var imageDataBytes = await GetImageData(imageDataId.ToString());
-                                if(imageDataBytes != null)
+                                if (imageDataBytes != null)
                                 {
-                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName,imageDataBytes,wm.Note,imageDataId.ToString()));
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, wm.Note, imageDataId.ToString()));
                                 }
                                 else
                                 {
-                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName,null,wm.Note,imageDataId.ToString()));
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
                                 }
                             }
                             else
                             {
-                                smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName,null,wm.Note,imageDataId.ToString()));
+                                smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
                             }
                         }
                         if (watchlistMembers.Data.WatchlistMembers.PageInfo.HasNextPage == false)
@@ -261,7 +261,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 restAPI.ReadResponseAsString = true;
                 var restAPIexception = false;
-                try 
+                try
                 {
                     var restAPIresult = await restAPI.RegisterAsync(WatchlistMemberAdd);
 
@@ -270,25 +270,25 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         this.logger.Warning($"User {member.FullName} was not registered.");
 
                         SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
-                        var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member,"Not Enabled - registration issue",SupportData);
-                        
+                        var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Not Enabled - registration issue", SupportData);
+
                         return false;
                     }
-                    
+
                 }
                 catch (ApiException e)
                 {
-                    var root= JObject.Parse(e.Response);
+                    var root = JObject.Parse(e.Response);
                     this.logger.Warning($"Status Code: {e.StatusCode}, {root["detail"]}");
 
                     SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
-                    var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member,$"Not Enabled - {root["detail"]}",SupportData);
+                    var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {root["detail"]}", SupportData);
 
                     restAPIexception = true;
                     return false;
                 }
-                
-                if(restAPIexception == false)
+
+                if (restAPIexception == false)
                 {
                     return true;
                 }
@@ -299,13 +299,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 this.logger.Warning("We will not register an user without a registration image.");
 
                 SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
-                var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member,$"Not Enabled - incorrect image",SupportData);
+                var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - incorrect image", SupportData);
             }
 
             return true;
         }
 
-        public async Task<bool> UpdateEmployee(SmartFaceMember member,bool keepPhotoUpToDate)
+        public async Task<bool> UpdateEmployee(SmartFaceMember member, bool keepPhotoUpToDate)
         {
             this.logger.Information($"Updating Employee > {member.FullName};{member.Id}");
 
@@ -319,7 +319,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             updateEmployee.Note = member.Note;
 
             var restAPIresult = await restAPI.WatchlistMembersPUTAsync(updateEmployee);
-            
+
             var processingIssue = false;
             if (restAPIresult.Id != null)
             {
@@ -330,54 +330,37 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 processingIssue = false;
             }
 
-            if(keepPhotoUpToDate)
+            if (keepPhotoUpToDate)
             {
                 this.logger.Debug($"keepPhotoUpToDate: {keepPhotoUpToDate}");
                 string watchlistmemberId = member.Id;
-                this.logger.Information($"watchlistmemberId:{watchlistmemberId};member.ImageDataId:{member.ImageDataId}");
-                
-                /* find the current regular photos and remove it*/
-                // remove current regular photo
+                this.logger.Debug($"watchlistmemberId:{watchlistmemberId};member.ImageDataId:{member.ImageDataId}");
 
-                if(member.ImageDataId!= null)
+                if (member.ImageDataId != null)
                 {
-                    
-                    // here we find photo ID based on the ImageDataId
-
-                    //var FaceId = await graphQlClient.GetFa.ExecuteAsync(skipValue, SmartFaceSetPageSize);
-                    //var FaceIdData = await graphQlClient.GetFaceByImageDataId(member.ImageDataId);
-
-                    //foreach (var face in watchlistMembers.Data.WatchlistMembers.Items)
-                    /* foreach (var face in FaceIdData.Data.Faces.Items)
-                    {
-                        
-                        var imageId = face.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
-                    } */
-                    //var FaceIdData = await graphQlClient.GetFaceByImageDataId.ExecuteAsync(member.ImageDataId);
                     var FaceIdData = await graphQlClient.GetFaceByImageDataId.ExecuteAsync(Guid.Parse(member.ImageDataId));
-                    
+
                     string FaceId = "";
-                    // lepsie prepisat cez linq !!!
+
                     foreach (var face in FaceIdData.Data.Faces.Items)
                     {
-                        if(face.Id != null)
+                        if (face.Id != null)
                         {
-                            this.logger.Information($"FaceId:{face.Id}");
+                            this.logger.Debug($"FaceId:{face.Id}");
                             FaceId = face.Id.ToString();
                             break;
                         }
                     }
 
-                    //this.logger.Information(FaceIdData);
-                    // upratat to poriadne nech tam nie je co nema byt.
-                    if(FaceId!= null)
+                    if (FaceId != null)
                     {
                         var removeEmployeePhoto = new FaceWatchlistMemberRemoveRequest();
-                        removeEmployeePhoto.FaceId =  FaceId; 
-                        this.logger.Information($"removeEmployeePhoto.FaceId:{removeEmployeePhoto.FaceId}, watchlistmemberId:{watchlistmemberId}");
+                        removeEmployeePhoto.FaceId = FaceId;
+                        this.logger.Debug($"removeEmployeePhoto.FaceId:{removeEmployeePhoto.FaceId}, watchlistmemberId:{watchlistmemberId}");
 
-                        try{
-                            await restAPI.RemoveFaceAsync(watchlistmemberId,removeEmployeePhoto);
+                        try
+                        {
+                            await restAPI.RemoveFaceAsync(watchlistmemberId, removeEmployeePhoto);
                         }
                         catch (ApiException e)
                         {
@@ -391,13 +374,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     this.logger.Information("member.ImageDataId is empty. No image was removed.");
                 }
 
-                if(member.ImageData != null)
+                if (member.ImageData != null)
                 {
                     var addEmployeePhoto = new AddNewFaceRequest();
                     var imageAdd = new RegistrationImageData[1];
                     imageAdd[0] = new RegistrationImageData();
                     imageAdd[0].Data = member.ImageData;
-                    
+
                     addEmployeePhoto.ImageData.Data = imageAdd[0].Data;
                     addEmployeePhoto.FaceDetectorConfig = new FaceDetectorConfig();
                     addEmployeePhoto.FaceDetectorConfig.MaxFaces = MaxFaces;
@@ -405,12 +388,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     addEmployeePhoto.FaceDetectorConfig.MinFaceSize = MinFaceSize;
                     addEmployeePhoto.FaceDetectorConfig.MaxFaceSize = MaxFaceSize;
 
-                    var restAPIresultFace = await restAPI.AddNewFaceAsync(watchlistmemberId,addEmployeePhoto);
-                    
-                    if(restAPIresultFace != null)
+                    var restAPIresultFace = await restAPI.AddNewFaceAsync(watchlistmemberId, addEmployeePhoto);
+
+                    if (restAPIresultFace != null)
                     {
                         this.logger.Debug($"New image ImageDataId: {restAPIresultFace.ImageDataId}");
-                        processingIssue = true;        
+                        processingIssue = true;
                     }
                     else
                     {
@@ -501,19 +484,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         }
 
         public async Task<byte[]> GetImageData(string imageDataId)
-        {             
+        {
             var httpClient = new HttpClient();
             var restAPI = new NSwagClient(SmartFaceURL, httpClient);
-            
+
             var guidId = Guid.Parse(imageDataId);
 
-            var response = await restAPI.ImagesAsync(guidId,null,null);            
+            var response = await restAPI.ImagesAsync(guidId, null, null);
             var memoryStream = new System.IO.MemoryStream();
             await response.Stream.CopyToAsync(memoryStream);
             byte[] byteArray = memoryStream.ToArray();
 
             return byteArray;
-            
+
         }
     }
 }

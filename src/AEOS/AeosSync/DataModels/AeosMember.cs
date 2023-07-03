@@ -10,7 +10,7 @@ public class AeosMember
     public AeosMember(long id, string smartFaceId, string firstName, string lastName, byte[] imageData = null)
     {
         this.Id = id;
-        
+
         this.SmartFaceId = smartFaceId;
         this.FirstName = firstName;
         this.LastName = lastName;
@@ -25,6 +25,6 @@ public class AeosMember
 
     public override string ToString()
     {
-            return $"Member: {Id},{SmartFaceId},{FirstName},{LastName}";   
+        return $"Member: {Id},{SmartFaceId},{FirstName},{LastName}";
     }
 }

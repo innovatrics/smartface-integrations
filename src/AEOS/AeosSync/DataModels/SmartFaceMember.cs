@@ -2,13 +2,13 @@ using System;
 
 public class SmartFaceMember
 {
-    public string Id       { get; set; }
-    public string FullName     { get; set; }
-    public string DisplayName      { get; set; }
-    public string Note {get;set;}
-    public byte[] ImageData      { get; set; }
-    public string ImageDataId   {get;set;}
-    
+    public string Id { get; set; }
+    public string FullName { get; set; }
+    public string DisplayName { get; set; }
+    public string Note { get; set; }
+    public byte[] ImageData { get; set; }
+    public string ImageDataId { get; set; }
+
     public SmartFaceMember(string id, string fullName, string displayName, byte[] imageData = null, string note = null, string imageDataId = null)
     {
         this.Id = id;
@@ -22,6 +22,6 @@ public class SmartFaceMember
 
     public override string ToString()
     {
-        return $"Member: {Id},{FullName},{DisplayName},{Note},{ImageDataId}";   
+        return $"Member: {Id},{FullName},{DisplayName},{Note},{ImageDataId}";
     }
 }

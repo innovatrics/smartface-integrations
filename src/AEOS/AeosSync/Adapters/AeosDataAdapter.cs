@@ -20,7 +20,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
-        
+
         private string AeosEndpoint;
         private int AeosServerPageSize;
         private string AeosUsername;
@@ -61,22 +61,22 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             AutoBiometryPrefix = configuration.GetValue<string>("aeossync:Aeos:AutoBiometryPrefix");
             BiometricEnrollmentStatus = configuration.GetValue<string>("aeossync:Aeos:Integration:BiometricEnrollmentStatus");
 
-            if(BiometricEnrollmentStatus == null)
+            if (BiometricEnrollmentStatus == null)
             {
                 throw new InvalidOperationException("BiometricEnrollmentStatus was not set.");
             }
-            
 
-            if(AutoBiometryEnablement && AutoBiometryPrefix == null)
+
+            if (AutoBiometryEnablement && AutoBiometryPrefix == null)
             {
                 throw new InvalidOperationException("AutoBiometryEnablement is enabled and the AutoBiometryPrefix is missing.");
             }
 
-            if(AeosServerPageSize <= 0)
+            if (AeosServerPageSize <= 0)
             {
                 throw new InvalidOperationException("The SmartFace GraphQL Page Size needs to be greater than 0.");
             }
-            
+
             var endpoint = new Uri(AeosEndpoint);
             var endpointBinding = new BasicHttpBinding()
             {
@@ -105,32 +105,32 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             client.ClientCredentials.UserName.Password = AeosPassword;
         }
 
-        public async Task<IList <AeosMember>> GetEmployees()
+        public async Task<IList<AeosMember>> GetEmployees()
         {
             this.logger.Debug("Receiving Employees from AEOS");
 
             List<AeosMember> AeosAllMembers = new List<AeosMember>();
 
             bool allEmployees = false;
-            int EmployeesPageSize = AeosServerPageSize; 
+            int EmployeesPageSize = AeosServerPageSize;
             int EmployeesPageNumber = 0;
 
             List<AeosMember> AeosAllMembersReturn = new List<AeosMember>();
 
-            while(allEmployees == false)
+            while (allEmployees == false)
             {
                 EmployeesPageNumber += 1;
                 var employeeSearch = new EmployeeSearchInfo();
                 employeeSearch.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
-                
+
                 employeeSearch.SearchRange = new SearchRange();
-                if(EmployeesPageNumber == 1)
+                if (EmployeesPageNumber == 1)
                 {
                     employeeSearch.SearchRange.startRecordNo = 0;
                 }
                 else
                 {
-                    employeeSearch.SearchRange.startRecordNo = (((EmployeesPageNumber)*(EmployeesPageSize))-EmployeesPageSize);
+                    employeeSearch.SearchRange.startRecordNo = (((EmployeesPageNumber) * (EmployeesPageSize)) - EmployeesPageSize);
                 }
 
                 //adding sort order
@@ -143,20 +143,20 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 employeeSearch.SearchRange.nrOfRecordsSpecified = true;
 
                 var employees = await client.findEmployeeAsync(employeeSearch);
-                
+
                 foreach (var employee in employees.EmployeeList)
-                {   
-                    if(employee.FirstPhoto != null)
+                {
+                    if (employee.FirstPhoto != null)
                     {
-                        AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName,employee.FirstPhoto.Picture));
+                        AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName, employee.FirstPhoto.Picture));
                     }
                     else
                     {
                         AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName));
                     }
-                } 
-                
-                if(employees.EmployeeList.Length == EmployeesPageSize)
+                }
+
+                if (employees.EmployeeList.Length == EmployeesPageSize)
                 {
                     this.logger.Debug($"End of page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Length}. Number of results match the pagination limit. Another page will be checked.");
                 }
@@ -165,7 +165,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     allEmployees = true;
                     this.logger.Debug($"End of last page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Length}.");
                     break;
-                }             
+                }
             }
             return AeosAllMembersReturn;
         }
@@ -176,20 +176,20 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             var member = aeosMember;
             this.logger.Information($"Creating Employee {member.FirstName} {member.LastName} width id {member.SmartFaceId}");
             var encodedSmartFaceId = Encoding.UTF8.GetBytes(member.SmartFaceId);
-            if(encodedSmartFaceId.Length > 28)
+            if (encodedSmartFaceId.Length > 28)
             {
                 this.logger.Warning($"The ID is longer than supported (28 bytes). {member.SmartFaceId} has {encodedSmartFaceId.Length} bytes");
                 return false;
-            }          
+            }
 
-            var addEmployee = new addEmployee() 
+            var addEmployee = new addEmployee()
             {
-                EmployeeAdd = new EmployeeInfo() 
+                EmployeeAdd = new EmployeeInfo()
                 {
                     CarrierType = "Employee",
-                    Freefield = new[] 
+                    Freefield = new[]
                     {
-                        new FreeFieldInfo() 
+                        new FreeFieldInfo()
                         {
                             DefinitionId = freefieldDefinitionId,
                             Name = SmartFaceIdFreefield,
@@ -228,14 +228,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             findTemplate.TemplateSearchInfo = new TemplateSearchInfo();
             findTemplate.TemplateSearchInfo.TemplateInfo = new TemplateInfo();
             findTemplate.TemplateSearchInfo.TemplateInfo.UnitOfAuthType = UnitOfAuthType.Locker;
-            
+
             var findLockerTemplate = await client.findTemplateAsync(findTemplate.TemplateSearchInfo);
-            if(findLockerTemplate.TemplateList.Length > 0)
+            if (findLockerTemplate.TemplateList.Length > 0)
             {
                 foreach (var item in findLockerTemplate.TemplateList)
                 {
                     this.logger.Debug($"Template IDs found: {item.Name} {item.Id}");
-                    if(RegisteringTemplates.Contains(item.Name))
+                    if (RegisteringTemplates.Contains(item.Name))
                     {
                         this.logger.Debug($"Template ID to be assigned: {item.Name} {item.Id}");
                         RegisteringTemplatesId.Add(item.Id);
@@ -245,12 +245,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             var addEmployeeResponse = await client.addEmployeeAsync(addEmployee.EmployeeAdd);
             this.logger.Debug($"Adding employee {addEmployee.EmployeeAdd.LastName} {addEmployee.EmployeeAdd.FirstName} - {addEmployee.EmployeeAdd.Freefield[0].value}");
-            if(addEmployeeResponse.EmployeeResult.Id != 0)
-            {   
+            if (addEmployeeResponse.EmployeeResult.Id != 0)
+            {
 
-                this.logger.Information($"Added user {AeosExtensions.JoinNames(member.FirstName,member.LastName, FirstNameOrder)} with ID = {addEmployeeResponse.EmployeeResult.Id}");
+                this.logger.Information($"Added user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} with ID = {addEmployeeResponse.EmployeeResult.Id}");
 
-                if(RegisteringTemplatesId.Count() > 0)
+                if (RegisteringTemplatesId.Count() > 0)
                 {
                     var changeCarrier = new changeCarrierProfile();
                     changeCarrier.ProfileChange = new ProfileInfo();
@@ -258,9 +258,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     changeCarrier.ProfileChange.AuthorisationLocker = new AuthorisationLocker();
                     changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation = new TemplateAuthorisationLocker[RegisteringTemplatesId.Count()];
                     this.logger.Debug($"RegisteringTemplatesId.Count() = {RegisteringTemplatesId.Count()}");
-                    for(int x = 0; x < RegisteringTemplatesId.Count();x++)
+                    for (int x = 0; x < RegisteringTemplatesId.Count(); x++)
                     {
-                        this.logger.Information($"RegisteringTemplatesId[{x}] = {RegisteringTemplatesId[x]} for Carrier ID = {changeCarrier.ProfileChange.CarrierId} - {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)}");
+                        this.logger.Information($"RegisteringTemplatesId[{x}] = {RegisteringTemplatesId[x]} for Carrier ID = {changeCarrier.ProfileChange.CarrierId} - {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)}");
                         changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x] = new TemplateAuthorisationLocker();
                         changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x].TemplateId = RegisteringTemplatesId[x];
                         changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x].Enabled = true;
@@ -269,15 +269,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     try
                     {
                         var changeCarrierResponse = await client.changeCarrierProfileAsync(changeCarrier.ProfileChange);
-                        if(changeCarrierResponse.ProfileResult.CarrierId == 0)
+                        if (changeCarrierResponse.ProfileResult.CarrierId == 0)
                         {
-                            this.logger.Error($"It was not possible to add profile templates to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)} - FAIL");
+                            this.logger.Error($"It was not possible to add profile templates to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - FAIL");
                             return false;
                         }
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
-                        throw new Exception(e+"Something went wrong while adding carrier profiles.");
+                        throw new Exception(e + "Something went wrong while adding carrier profiles.");
                     }
                 }
                 var addIdentifier = new assignToken();
@@ -288,14 +288,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
 
-                if(addIdentifierResponse.IdentifierResult.Id != 0)
+                if (addIdentifierResponse.IdentifierResult.Id != 0)
                 {
-                    this.logger.Information($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)} - SUCCESS");
+                    this.logger.Information($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - SUCCESS");
                     return true;
                 }
                 else
                 {
-                    this.logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName,member.LastName,FirstNameOrder)} - FAIL");
+                    this.logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - FAIL");
                     return false;
                 }
             }
@@ -305,7 +305,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 throw new InvalidOperationException("No user was generated.");
             }
 
-            
+
         }
 
         public async Task<bool> UpdateEmployee(AeosMember member, long FreefieldDefinitionId)
@@ -314,7 +314,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             var returnedUser = await GetEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
 
-            if(returnedUser != null)
+            if (returnedUser != null)
             {
                 this.logger.Information($"Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeInfo.Id} {returnedUser.EmployeeInfo.FirstName} {returnedUser.EmployeeInfo.LastName}");
                 var updateID = returnedUser.EmployeeInfo.Id;
@@ -333,13 +333,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
 
-                if(updateEmployeeResponse.EmployeeResult.Id != 0)
+                if (updateEmployeeResponse.EmployeeResult.Id != 0)
                 {
                     this.logger.Information($"Update> user with SmartFaceID {member.SmartFaceId} has been updated under {updateID} with new name {member.FirstName} {member.LastName}");
                     return true;
                 }
                 else
-                {   
+                {
                     return false;
                 }
             }
@@ -352,50 +352,50 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> EnableBiometryOnEmployee(long memberId, long FreefieldDefinitionId, long badgeIdentifierType)
         {
-            if(AutoBiometryEnablement)
+            if (AutoBiometryEnablement)
             {
                 var response = await this.GetEmployeeByAeosId(memberId);
-                if(response != null)
+                if (response != null)
                 {
-                        var updateEmployee = new changeEmployee();
-                        updateEmployee.EmployeeChange = new EmployeeInfo();
-                        updateEmployee.EmployeeChange.Id = response.Id;
-                        updateEmployee.EmployeeChange.IdSpecified = true;
-                        updateEmployee.EmployeeChange.FirstName = response.FirstName;
-                        updateEmployee.EmployeeChange.LastName = response.LastName;
-                        updateEmployee.EmployeeChange.Freefield = new FreeFieldInfo[1];
-                        updateEmployee.EmployeeChange.Freefield[0] = new FreeFieldInfo();
-                        updateEmployee.EmployeeChange.Freefield[0].DefinitionId = FreefieldDefinitionId;
-                        updateEmployee.EmployeeChange.Freefield[0].Name = SmartFaceIdFreefield;
-                        updateEmployee.EmployeeChange.Freefield[0].value = AutoBiometryPrefix + response.SmartFaceId;
+                    var updateEmployee = new changeEmployee();
+                    updateEmployee.EmployeeChange = new EmployeeInfo();
+                    updateEmployee.EmployeeChange.Id = response.Id;
+                    updateEmployee.EmployeeChange.IdSpecified = true;
+                    updateEmployee.EmployeeChange.FirstName = response.FirstName;
+                    updateEmployee.EmployeeChange.LastName = response.LastName;
+                    updateEmployee.EmployeeChange.Freefield = new FreeFieldInfo[1];
+                    updateEmployee.EmployeeChange.Freefield[0] = new FreeFieldInfo();
+                    updateEmployee.EmployeeChange.Freefield[0].DefinitionId = FreefieldDefinitionId;
+                    updateEmployee.EmployeeChange.Freefield[0].Name = SmartFaceIdFreefield;
+                    updateEmployee.EmployeeChange.Freefield[0].value = AutoBiometryPrefix + response.SmartFaceId;
 
-                        var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
-                        if(updateEmployeeResponse == null)
+                    var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
+                    if (updateEmployeeResponse == null)
+                    {
+                        this.logger.Warning($"It was not possible to add SmartFaceId.");
+                        return false;
+                    }
+                    else
+                    {
+                        var addIdentifier = new assignToken();
+                        addIdentifier.IdentifierAdd = new CarrierIdentifierData();
+                        addIdentifier.IdentifierAdd.CarrierId = response.Id;
+                        addIdentifier.IdentifierAdd.IdentifierType = badgeIdentifierType;
+                        addIdentifier.IdentifierAdd.BadgeNumber = AutoBiometryPrefix + response.SmartFaceId;
+
+                        var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
+                        if (addIdentifierResponse.IdentifierResult.Id != 0)
                         {
-                            this.logger.Warning($"It was not possible to add SmartFaceId.");
-                            return false;
+                            this.logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - SUCCESS");
+                            return true;
                         }
                         else
                         {
-                            var addIdentifier = new assignToken();
-                            addIdentifier.IdentifierAdd = new CarrierIdentifierData();
-                            addIdentifier.IdentifierAdd.CarrierId = response.Id;
-                            addIdentifier.IdentifierAdd.IdentifierType = badgeIdentifierType;
-                            addIdentifier.IdentifierAdd.BadgeNumber = AutoBiometryPrefix + response.SmartFaceId;
-
-                            var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
-                            if(addIdentifierResponse.IdentifierResult.Id != 0)
-                            {
-                                this.logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName,response.LastName,FirstNameOrder)} - SUCCESS");
-                                return true;
-                            }
-                            else
-                            {
-                                this.logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName,response.LastName,FirstNameOrder)} - FAIL");
-                                return false;
-                            }
+                            this.logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - FAIL");
+                            return false;
                         }
-                   
+                    }
+
                 }
                 else
                 {
@@ -406,42 +406,42 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             else
             {
                 return false;
-            }   
-            
+            }
+
         }
 
-        
+
         public async Task<AeosMember> GetEmployeeByAeosId(long employeeId)
         {
 
-                var employeeSearch = new EmployeeSearchInfo();
-                employeeSearch.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
-                employeeSearch.EmployeeInfo.Id = employeeId;
-                employeeSearch.EmployeeInfo.IdSpecified =  true;
-                
-                var employee = await client.findEmployeeAsync(employeeSearch);
-                if(employee.EmployeeList.Count() == 0)
+            var employeeSearch = new EmployeeSearchInfo();
+            employeeSearch.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
+            employeeSearch.EmployeeInfo.Id = employeeId;
+            employeeSearch.EmployeeInfo.IdSpecified = true;
+
+            var employee = await client.findEmployeeAsync(employeeSearch);
+            if (employee.EmployeeList.Count() == 0)
+            {
+                return null;
+            }
+            else
+            {
+                var memberID = employee.EmployeeList[0].EmployeeInfo.Id;
+                var memberSmartFaceId = employee.EmployeeList[0].EmployeeInfo.Id.ToString();
+                var memberFirstName = employee.EmployeeList[0].EmployeeInfo.FirstName;
+                var memberLastName = employee.EmployeeList[0].EmployeeInfo.LastName;
+                var memberPicture = employee.EmployeeList[0].FirstPhoto.Picture;
+
+                if (memberPicture != null)
                 {
-                    return null;
+                    return new AeosMember(memberID, memberSmartFaceId, memberFirstName, memberLastName, memberPicture);
                 }
                 else
                 {
-                    var memberID = employee.EmployeeList[0].EmployeeInfo.Id;
-                    var memberSmartFaceId = employee.EmployeeList[0].EmployeeInfo.Id.ToString();
-                    var memberFirstName = employee.EmployeeList[0].EmployeeInfo.FirstName;
-                    var memberLastName = employee.EmployeeList[0].EmployeeInfo.LastName;
-                    var memberPicture = employee.EmployeeList[0].FirstPhoto.Picture;
-
-                    if(memberPicture != null)
-                    {
-                        return new AeosMember(memberID,memberSmartFaceId,memberFirstName,memberLastName,memberPicture);
-                    }
-                    else
-                    {
-                        return new AeosMember(memberID,memberSmartFaceId,memberFirstName,memberLastName);
-                    }
-                    
+                    return new AeosMember(memberID, memberSmartFaceId, memberFirstName, memberLastName);
                 }
+
+            }
 
         }
 
@@ -449,7 +449,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         {
             this.logger.Information($"Removing Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
             var returnedUser = await GetEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
-            if (returnedUser == null) 
+            if (returnedUser == null)
             {
                 return false;
             }
@@ -457,15 +457,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             foreach (var item in returnedUser.EmployeeInfo.Freefield)
             {
-                this.logger.Debug($"{item.value} {item.Name}");  
+                this.logger.Debug($"{item.value} {item.Name}");
             }
 
             this.logger.Information($"DELETE> Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeInfo.Id} {returnedUser.EmployeeInfo.FirstName} {returnedUser.EmployeeInfo.LastName}");
             var removeID = returnedUser.EmployeeInfo.Id;
 
             this.logger.Information("RemoveId =" + removeID);
-            
-            if(!await RemoveAssignedLockers(removeID))
+
+            if (!await RemoveAssignedLockers(removeID))
             {
                 return false;
             }
@@ -473,7 +473,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             var removeUser = new removeEmployee();
             removeUser.EmployeeId = removeID;
             var removeUserResponse = await client.removeEmployeeAsync(removeUser.EmployeeId);
-            if(removeUserResponse.RemoveResult != null)
+            if (removeUserResponse.RemoveResult != null)
             {
                 this.logger.Information("User was removed.");
                 return true;
@@ -482,14 +482,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 return false;
             }
-            
+
         }
 
         public async Task<bool> RemoveEmployeebyId(long employeeId)
         {
             this.logger.Information($"Removing Employee with ID = {employeeId}");
-           
-            if(!await RemoveAssignedLockers(employeeId))
+
+            if (!await RemoveAssignedLockers(employeeId))
             {
                 return false;
             }
@@ -497,8 +497,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             var removeUser = new removeEmployee();
             removeUser.EmployeeId = employeeId;
             var removeUserResponse = await client.removeEmployeeAsync(employeeId);
-            
-            if(removeUserResponse.RemoveResult != null)
+
+            if (removeUserResponse.RemoveResult != null)
             {
                 return true;
             }
@@ -506,18 +506,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 return false;
             }
-            
+
         }
 
-        public async Task<long> GetBadgeIdentifierType(){
+        public async Task<long> GetBadgeIdentifierType()
+        {
             this.logger.Debug("getSmartfaceBadgeIdentifierType");
 
             var findIdentifierType = new findIdentifierType();
             findIdentifierType.IdentifierTypeSearchInfo = new IdentifierTypeInfo();
             findIdentifierType.IdentifierTypeSearchInfo.Name = SmartFaceIdentifier;
             var getIdentifierType = await client.findIdentifierTypeAsync(findIdentifierType.IdentifierTypeSearchInfo);
-            
-            if(getIdentifierType.IdentifierTypeList.Length > 0)
+
+            if (getIdentifierType.IdentifierTypeList.Length > 0)
             {
                 return getIdentifierType.IdentifierTypeList[0].Id;
             }
@@ -530,13 +531,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         public async Task<long> GetFreefieldDefinitionId()
         {
             this.logger.Debug("getFreefieldDefinitionId");
-            
+
             var getFreefieldId = new findFreeFieldDefinition();
             getFreefieldId.FreeFieldDefinitionSearchInfo = new FreeFieldDefinitionSearchInfo();
             getFreefieldId.FreeFieldDefinitionSearchInfo.Name = SmartFaceIdFreefield;
             var getFreefildDefId = await client.findFreeFieldDefinitionAsync(getFreefieldId.FreeFieldDefinitionSearchInfo);
 
-            if(getFreefildDefId.FreeFieldDefinitionList.Length > 0)
+            if (getFreefildDefId.FreeFieldDefinitionList.Length > 0)
             {
                 return getFreefildDefId.FreeFieldDefinitionList[0].Id;
             }
@@ -575,14 +576,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             var getKeepUserStatusResponse = await client.findEmployeeAsync(employeeSearch);
 
-            foreach(var item in getKeepUserStatusResponse.EmployeeList[0].EmployeeInfo.Freefield)
+            foreach (var item in getKeepUserStatusResponse.EmployeeList[0].EmployeeInfo.Freefield)
             {
-                if(item.Name == KeepUserField && item.value == "true")
+                if (item.Name == KeepUserField && item.value == "true")
                 {
                     this.logger.Debug($"User has: {item.Name} with value {item.value}.");
                     return true;
                 }
-                
+
             }
 
             return false;
@@ -595,12 +596,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.logger.Information($"userId = {userId}");
 
             var findLockersResponse = await client.findCarrierProfileAsync(userId);
-            
+
             bool removalFailedTest = false;
             bool lockerRemovalInitiated = false;
-            
+
             this.logger.Information($"findLockersResponse.ProfileResult.ToString():{findLockersResponse.ProfileResult.ToString()}");
-            if(findLockersResponse.ProfileResult.AuthorisationLocker != null)
+            if (findLockersResponse.ProfileResult.AuthorisationLocker != null)
             {
                 foreach (var item in findLockersResponse.ProfileResult.AuthorisationLocker.LockerAuthorisation)
                 {
@@ -614,16 +615,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                     var findLockerByIdReponse = await client.findLockerAsync(findLockerById.LockerSearchInfo);
 
-                    if(findLockerByIdReponse.LockerList.Count() > 0)
+                    if (findLockerByIdReponse.LockerList.Count() > 0)
                     {
-                        
+
                         foreach (var locker in findLockerByIdReponse.LockerList)
                         {
                             this.logger.Information($"Removing a locker-> Id: {locker.Id}, Name: {locker.Name}, Location: {locker.Location}, HostName: {locker.HostName}");
 
                             var removeLockerAuthorisationResponse = await client.removeCarrierLockerAuthorizationAsync(locker.Id);
-                            
-                            if(removeLockerAuthorisationResponse.ProfileResult != null)
+
+                            if (removeLockerAuthorisationResponse.ProfileResult != null)
                             {
                                 this.logger.Information($"The locker was successfully removed");
                             }
@@ -634,17 +635,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             }
 
                         }
-                        
+
                     }
-                    
+
                 }
 
-                if(lockerRemovalInitiated)
+                if (lockerRemovalInitiated)
                 {
                     this.logger.Information("Lockers removed.");
                 }
 
-                if(removalFailedTest)
+                if (removalFailedTest)
                 {
                     this.logger.Information($"Issue with locker removal occured.");
                     return false;
@@ -672,7 +673,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             long biometricStatusFreefield = 0;
 
-            if(getFreefieldDefId.FreeFieldDefinitionList.Length > 0)
+            if (getFreefieldDefId.FreeFieldDefinitionList.Length > 0)
             {
                 biometricStatusFreefield = getFreefieldDefId.FreeFieldDefinitionList[0].Id;
             }
@@ -684,39 +685,39 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.logger.Debug($"biometricStatusFreefield: {biometricStatusFreefield}, userId: {userId}, BiometricEnrollmentStatus: {BiometricEnrollmentStatus}");
 
             var response = await this.GetEmployeeByAeosId(userId);
-            if(response != null)
+            if (response != null)
             {
-                    this.logger.Debug($"GetEmployeeByAeosId response was NOT null");
-                    var updateEmployee = new changeEmployee();
-                    updateEmployee.EmployeeChange = new EmployeeInfo();
-                    updateEmployee.EmployeeChange.Id = response.Id;
-                    updateEmployee.EmployeeChange.IdSpecified = true;
-                    updateEmployee.EmployeeChange.FirstName = response.FirstName;
-                    updateEmployee.EmployeeChange.LastName = response.LastName;
-                    updateEmployee.EmployeeChange.Freefield = new FreeFieldInfo[1];
-                    updateEmployee.EmployeeChange.Freefield[0] = new FreeFieldInfo();
-                    updateEmployee.EmployeeChange.Freefield[0].DefinitionId = biometricStatusFreefield;
-                    updateEmployee.EmployeeChange.Freefield[0].Name = BiometricEnrollmentStatus;
-                    updateEmployee.EmployeeChange.Freefield[0].value = biometricStatus;
+                this.logger.Debug($"GetEmployeeByAeosId response was NOT null");
+                var updateEmployee = new changeEmployee();
+                updateEmployee.EmployeeChange = new EmployeeInfo();
+                updateEmployee.EmployeeChange.Id = response.Id;
+                updateEmployee.EmployeeChange.IdSpecified = true;
+                updateEmployee.EmployeeChange.FirstName = response.FirstName;
+                updateEmployee.EmployeeChange.LastName = response.LastName;
+                updateEmployee.EmployeeChange.Freefield = new FreeFieldInfo[1];
+                updateEmployee.EmployeeChange.Freefield[0] = new FreeFieldInfo();
+                updateEmployee.EmployeeChange.Freefield[0].DefinitionId = biometricStatusFreefield;
+                updateEmployee.EmployeeChange.Freefield[0].Name = BiometricEnrollmentStatus;
+                updateEmployee.EmployeeChange.Freefield[0].value = biometricStatus;
 
-                    var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
-                    if(updateEmployeeResponse == null)
-                    {
-                        this.logger.Warning($"It was not possible to change the Biometric Enrollment Status.");
-                        return false;
-                    }
-                    else
-                    {
-                        this.logger.Information($"The {BiometricEnrollmentStatus} was updated to {biometricStatus}");
-                        return true;
-                    }
+                var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
+                if (updateEmployeeResponse == null)
+                {
+                    this.logger.Warning($"It was not possible to change the Biometric Enrollment Status.");
+                    return false;
+                }
+                else
+                {
+                    this.logger.Information($"The {BiometricEnrollmentStatus} was updated to {biometricStatus}");
+                    return true;
+                }
             }
             else
             {
                 this.logger.Debug($"GetEmployeeByAeosId response was NOT null");
                 return false;
             }
-        
+
         }
 
         public async Task<bool> UpdateBiometricStatusWithSFMember(SmartFaceMember member, string biometricStatus, SupportingData supportData)
@@ -730,7 +731,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 this.logger.Debug($"EmployeeByIdResponse: {EmployeeById}");
                 var updatedBiometricStatus = await UpdateBiometricStatus(EmployeeById, biometricStatus);
-                
+
                 return updatedBiometricStatus;
             }
             else
