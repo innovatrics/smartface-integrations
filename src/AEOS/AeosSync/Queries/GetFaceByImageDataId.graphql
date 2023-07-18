@@ -1,0 +1,11 @@
+query GetFaceByImageDataId($imageDataId: UUID){
+
+  faces(where: {imageDataId: {eq: $imageDataId }}) 
+  {
+    items
+    {
+      id,
+      imageDataId
+    }
+  }
+}

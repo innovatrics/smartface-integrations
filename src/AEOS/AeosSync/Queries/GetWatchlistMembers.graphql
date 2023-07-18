@@ -1,0 +1,22 @@
+query GetWatchlistMembers($skip: Int, $take: Int){
+
+  watchlistMembers(skip: $skip, take: $take, order: { id: ASC }){
+    items{
+      id
+      fullName
+      displayName
+      note
+      tracklet{
+        faces (where: {faceType: {eq: REGULAR}})
+        {
+          createdAt
+          faceType
+          imageDataId
+        }
+      }
+    } pageInfo{
+      hasNextPage
+    }
+  }
+  
+}
