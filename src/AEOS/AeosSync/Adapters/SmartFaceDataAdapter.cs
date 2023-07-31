@@ -279,7 +279,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 catch (ApiException e)
                 {
                     var root = JObject.Parse(e.Response);
-                    this.logger.Warning($"Status Code: {e.StatusCode}, {root["detail"]}");
+                    this.logger.Debug($"Status Code: {e.StatusCode}, {root["detail"]}");
 
                     SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
                     var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {root["detail"]}", SupportData);

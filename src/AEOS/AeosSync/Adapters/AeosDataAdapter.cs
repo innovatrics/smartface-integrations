@@ -703,12 +703,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
                 if (updateEmployeeResponse == null)
                 {
-                    this.logger.Warning($"It was not possible to change the Biometric Enrollment Status.");
+                    this.logger.Warning($"It was not possible to change the Biometric Enrollment Status for {response.FirstName} {response.LastName} with id {response.SmartFaceId}.");
                     return false;
                 }
                 else
                 {
-                    this.logger.Information($"The {BiometricEnrollmentStatus} was updated to {biometricStatus}");
+                    this.logger.Debug($"The {BiometricEnrollmentStatus} was updated to {biometricStatus}");
                     return true;
                 }
             }
