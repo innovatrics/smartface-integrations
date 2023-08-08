@@ -5,34 +5,70 @@ using GraphQL;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 
+// use at least version
+// SF_VERSION=v5_4.21.0
+// AC_VERSION=v5_1.9.1
+// SFS_VERSION=v5_1.18.0
+
+
+
 namespace BirdWatching
 {
-    
+
     class Program
     {
-
         private GraphQLHttpClient _graphQlClient;
-        private string serverUrl;
-        private string graphQlPort;
-        private string restApiPort;
-        private string webhookUrl;
+        private GraphQLHttpClient _graphQlClientQuery;
+        private static string serverUrl = "http://sface-integ-2u";
+        private static string graphQlPort = "8097";
+        private static string graphQlDir = "graphql";
+        private string restApiPort = "8098";
+        private string webhookUrl = "https://chat.googleapis.com/v1/spaces/AAAADC3POn0/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=Z-nuJXJtqQ8W6GkQ59M05YZEI0EOlUTmisDUcCS7r2c";       
+
+        public enum GenericObjectType
+        {
+            Car = 3,
+            Bus = 4,
+            Truck = 5,
+            Motorcycle = 6,
+            Bicycle = 7,
+            Boat = 8,
+            Airplane = 9,
+            Train = 10,
+            Bird = 11,
+            Cat = 12,
+            Dog = 13,
+            Horse = 14,
+            Sheep = 15,
+            Cow = 16,
+            Bear = 17,
+            Elephant = 18,
+            Giraffe = 19,
+            Zebra = 20,
+            Suitcase = 21,
+            Backpack = 22,
+            Handbag = 23,
+            Umbrella = 24,
+            Knife = 25
+        }
 
         public void GraphQLSubscriptionInitialize()
         {
             // Initialize the GraphQLHttpClient
             var graphQLOptions = new GraphQLHttpClientOptions
             {
-                EndPoint = new Uri($"http://{serverUrl}:{graphQlPort}/")
+                EndPoint = new Uri($"{serverUrl}:{graphQlPort}/")
+                
             };
+            Console.WriteLine("Subscription EndPoint: " + graphQLOptions.EndPoint);
 
             _graphQlClient = new GraphQLHttpClient(graphQLOptions, new NewtonsoftJsonSerializer());
         }
 
-        public async Task SendMessageToGoogleSpace(string messageText, string webhookUrl)
+        public async Task SendMessageToGoogleSpaceAsync(string messageText, string webhookUrl)
         {
             // Create a JSON payload for the message
-            //string messageText = "Hello from C#! This is a test message.";
-            var request = new {
+                var request = new {
                 text = messageText
             };
 
@@ -64,49 +100,6 @@ namespace BirdWatching
                     Console.WriteLine($"An error occurred: {ex.Message}");
                 }
             }
-
-        }
-
-        public async Task<Guid> GetImageDataId(Guid frameId)
-        {
-
-            // ADD THE MAGIC HERE
-
-            /*\
-            using GraphQL;
-            using GraphQL.Client.Http;
-            using GraphQL.Client.Serializer.SystemTextJson;
-
-            // Create a client with your GraphQL endpoint
-            var graphQlClient = new GraphQLHttpClient("https://example.com/graphql", new SystemTextJsonSerializer());
-
-            // Create the GraphQL request
-            var request = new GraphQLHttpRequest(query);
-
-            // Send the request and receive the response
-            var response = await graphQlClient.SendQueryAsync<dynamic>(request);
-
-            if (response.Errors != null)
-            {
-                foreach (var error in response.Errors)
-                {
-                    // Handle errors
-                    Console.WriteLine($"GraphQL Error: {error.Message}");
-                }
-            }
-            else
-            {
-                // Access the data in the response
-                var data = response.Data;
-                Console.WriteLine($"Person ID: {data.person.id}");
-                Console.WriteLine($"Person Name: {data.person.name}");
-                Console.WriteLine($"Person Age: {data.person.age}");
-            }
-
-
-            */
-
-            return frameId;
         }
 
         public async Task ListenToGraphQLSubscriptions()
@@ -115,24 +108,19 @@ namespace BirdWatching
             {
                 Query = @"
                 subscription {
-                    objectProcessed {
-                        frameInformation {
-                        streamId
-                        frameId
-
-                        }
-                        objectInformation {
+                    objectInserted {
                         id
-                        type
+                        imageDataId                        
                         quality
-                        trackletId
+                        genericObjectType
                         size
                         objectOrderOnFrameForType
                         objectsOnFrameCountForType
                         areaOnFrame
-                        cropImage
-                        
-                        }
+                        cropLeftTopX
+                        cropLeftTopY
+                        cropRightBottomX
+                        cropRightBottomY
                     }
                     }"
             };
@@ -142,29 +130,39 @@ namespace BirdWatching
 
             using var objectExtractedSubscription = _graphQlClient.CreateSubscriptionStream<JObject>(subscriptionQuery)
                 .Subscribe(async response => { 
-                    Console.WriteLine(response.Data["objectProcessed"]["objectInformation"]["type"]); 
+                    Console.WriteLine(response.Data["objectInserted"]["genericObjectType"]); 
 
                     DateTime now = DateTime.Now;
-                    Guid imageDataId;
+                    string imageDataId;
 
-                    var message_type = response.Data["objectProcessed"]["objectInformation"]["type"];
-                    var message_quality = response.Data["objectProcessed"]["objectInformation"]["quality"];
-                    var message_size = response.Data["objectProcessed"]["objectInformation"]["size"];
-                    var message_frameId = response.Data["objectProcessed"]["objectInformation"]["size"];
-                    var message_streamId = response.Data["objectProcessed"]["objectInformation"]["streamId"];
+                    var message_type = response.Data["objectInserted"]["genericObjectType"];
+                    var message_quality = response.Data["objectInserted"]["quality"];
+                    var message_size = response.Data["objectInserted"]["size"];
+                    var message_streamId = response.Data["objectInserted"]["streamId"];
+                    var message_imageDataId = response.Data["objectInserted"]["imageDataId"];
 
-                    Guid newFrameIdGuide = Guid.Parse(message_frameId.ToString());
-                    // dotiahni foto z query a object position
+                    Console.WriteLine(message_imageDataId);
 
+                    // chyba tu
+                    string objectTypeString = Enum.GetName(typeof(GenericObjectType), message_type);
+                    
+                    
+                    Console.WriteLine(objectTypeString);
                     string imageString = "";
 
-                    if(message_frameId != null)
+                    if(message_imageDataId != null)
                     {
-                        imageDataId = await GetImageDataId(newFrameIdGuide);
-                        imageString += $"image: http://{serverUrl}:{restApiPort}/api/v1/Images/{imageDataId}";
+                        imageString += $"image: {serverUrl}:{restApiPort}/api/v1/Images/{message_imageDataId}";
+
+                        Console.WriteLine($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}; streamId: {message_streamId} ] at {now.ToLocalTime()} | {imageString}", webhookUrl);
+                        SendMessageToGoogleSpaceAsync($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}; streamId: {message_streamId} ] at {now.ToLocalTime()} {imageString}", webhookUrl);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Error: {message_type} [size: {message_size}px; detection quality: {message_quality}; streamId: {message_streamId} ] at {now.ToLocalTime()} | {imageString}", webhookUrl);
                     }
 
-                    SendMessageToGoogleSpace($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}; frameId: {message_frameId}; streamId: {message_streamId} ] at {now.ToLocalTime()} {imageString}", webhookUrl);
+                    
                 }, onError: err => Console.WriteLine("Error:"+err));
 
             while (true)
@@ -178,11 +176,6 @@ namespace BirdWatching
             Console.WriteLine("Initializing the object detection.");
             
             var program = new Program();
-            program.serverUrl = "http://sface-integ-2u";
-            program.graphQlPort = "8097";
-            program.restApiPort = "8098";
-            program.webhookUrl = "https://chat.googleapis.com/v1/spaces/AAAADC3POn0/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=Z-nuJXJtqQ8W6GkQ59M05YZEI0EOlUTmisDUcCS7r2c";
-
             program.GraphQLSubscriptionInitialize();
             await program.ListenToGraphQLSubscriptions();
             return 0;
