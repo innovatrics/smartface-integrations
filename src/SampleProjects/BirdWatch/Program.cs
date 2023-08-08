@@ -19,11 +19,11 @@ namespace BirdWatching
     {
         private GraphQLHttpClient _graphQlClient;
         private GraphQLHttpClient _graphQlClientQuery;
-        private static string serverUrl = "http://sface-integ-2u";
+        private static string serverUrl = "";
         private static string graphQlPort = "8097";
         private static string graphQlDir = "graphql";
         private string restApiPort = "8098";
-        private string webhookUrl = "https://chat.googleapis.com/v1/spaces/AAAADC3POn0/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=Z-nuJXJtqQ8W6GkQ59M05YZEI0EOlUTmisDUcCS7r2c";       
+        private string webhookUrl = "";       
 
         public enum GenericObjectType
         {
@@ -88,7 +88,7 @@ namespace BirdWatching
                     // Check if the response was successful
                     if (response.IsSuccessStatusCode)
                     {
-                        Console.WriteLine("Message sent successfully.");
+                        //Console.WriteLine("Message sent successfully.");
                     }
                     else
                     {
@@ -130,36 +130,27 @@ namespace BirdWatching
 
             using var objectExtractedSubscription = _graphQlClient.CreateSubscriptionStream<JObject>(subscriptionQuery)
                 .Subscribe(async response => { 
-                    Console.WriteLine(response.Data["objectInserted"]["genericObjectType"]); 
 
                     DateTime now = DateTime.Now;
                     string imageDataId;
-
-                    var message_type = response.Data["objectInserted"]["genericObjectType"];
+                    var message_type = (GenericObjectType) response.Data["objectInserted"]["genericObjectType"].Value<int>();
                     var message_quality = response.Data["objectInserted"]["quality"];
                     var message_size = response.Data["objectInserted"]["size"];
                     var message_streamId = response.Data["objectInserted"]["streamId"];
                     var message_imageDataId = response.Data["objectInserted"]["imageDataId"];
 
-                    Console.WriteLine(message_imageDataId);
-
-                    // chyba tu
-                    string objectTypeString = Enum.GetName(typeof(GenericObjectType), message_type);
-                    
-                    
-                    Console.WriteLine(objectTypeString);
                     string imageString = "";
 
                     if(message_imageDataId != null)
                     {
                         imageString += $"image: {serverUrl}:{restApiPort}/api/v1/Images/{message_imageDataId}";
 
-                        Console.WriteLine($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}; streamId: {message_streamId} ] at {now.ToLocalTime()} | {imageString}", webhookUrl);
-                        SendMessageToGoogleSpaceAsync($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}; streamId: {message_streamId} ] at {now.ToLocalTime()} {imageString}", webhookUrl);
+                        Console.WriteLine($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}] at {now.ToLocalTime()} | {imageString}", webhookUrl);
+                        SendMessageToGoogleSpaceAsync($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}] at {now.ToLocalTime()} {imageString}", webhookUrl);
                     }
                     else
                     {
-                        Console.WriteLine($"Error: {message_type} [size: {message_size}px; detection quality: {message_quality}; streamId: {message_streamId} ] at {now.ToLocalTime()} | {imageString}", webhookUrl);
+                        Console.WriteLine($"Error: \n{message_type} [size: {message_size}px; detection quality: {message_quality}; streamId: {message_streamId} ] at {now.ToLocalTime()} | {imageString}", webhookUrl);
                     }
 
                     
