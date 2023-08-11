@@ -5,12 +5,10 @@ using GraphQL;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 
-// use at least version
+// This code is usable with a version as below or newer:
 // SF_VERSION=v5_4.21.0
 // AC_VERSION=v5_1.9.1
 // SFS_VERSION=v5_1.18.0
-
-
 
 namespace BirdWatching
 {
@@ -19,12 +17,17 @@ namespace BirdWatching
     {
         private GraphQLHttpClient _graphQlClient;
         private GraphQLHttpClient _graphQlClientQuery;
+
+        // Setup the URLs, ports and the Google Chat webhook for your Google Space
         private static string serverUrl = "";
         private static string graphQlPort = "8097";
-        private static string graphQlDir = "graphql";
         private string restApiPort = "8098";
         private string webhookUrl = "";       
 
+        // We can keep this as default
+        private static string graphQlDir = "graphql";
+
+        // This is the list of object types. We will use it to understand what objects are being received
         public enum GenericObjectType
         {
             Car = 3,
@@ -52,19 +55,19 @@ namespace BirdWatching
             Knife = 25
         }
 
+        // Function to initialize the GraphQLHttpClient
         public void GraphQLSubscriptionInitialize()
         {
-            // Initialize the GraphQLHttpClient
             var graphQLOptions = new GraphQLHttpClientOptions
             {
                 EndPoint = new Uri($"{serverUrl}:{graphQlPort}/")
                 
             };
             Console.WriteLine("Subscription EndPoint: " + graphQLOptions.EndPoint);
-
             _graphQlClient = new GraphQLHttpClient(graphQLOptions, new NewtonsoftJsonSerializer());
         }
 
+        // Function to send a message into Google Space
         public async Task SendMessageToGoogleSpaceAsync(string messageText, string webhookUrl)
         {
             // Create a JSON payload for the message
@@ -88,7 +91,7 @@ namespace BirdWatching
                     // Check if the response was successful
                     if (response.IsSuccessStatusCode)
                     {
-                        //Console.WriteLine("Message sent successfully.");
+                        //Console.WriteLine("Message sent successfully."); // Optional
                     }
                     else
                     {
@@ -102,10 +105,12 @@ namespace BirdWatching
             }
         }
 
+        // Function to listen to the GraphQL Subscriptions
         public async Task ListenToGraphQLSubscriptions()
         {
             var subscriptionQuery = new GraphQLRequest
             {
+                // This is a query used to listen to GraphQL Subscriptions. This can be expanded as needed
                 Query = @"
                 subscription {
                     objectInserted {
@@ -128,6 +133,7 @@ namespace BirdWatching
             var extractions = new List<JObject>();
             var subscriptionExceptions = new List<Exception>();
 
+            // Process the notifications here
             using var objectExtractedSubscription = _graphQlClient.CreateSubscriptionStream<JObject>(subscriptionQuery)
                 .Subscribe(async response => { 
 
@@ -146,6 +152,8 @@ namespace BirdWatching
                         imageString += $"image: {serverUrl}:{restApiPort}/api/v1/Images/{message_imageDataId}";
 
                         Console.WriteLine($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}] at {now.ToLocalTime()} | {imageString}", webhookUrl);
+
+                        // Sending the information to the Google Space
                         SendMessageToGoogleSpaceAsync($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}] at {now.ToLocalTime()} {imageString}", webhookUrl);
                     }
                     else
@@ -156,12 +164,14 @@ namespace BirdWatching
                     
                 }, onError: err => Console.WriteLine("Error:"+err));
 
-            while (true)
-            {
-                
-            }
+                // This while loop will keep the listening until the application is closed
+                while (true)
+                {
+                    
+                }
         }
 
+        // This is the main function of the application
         public static async Task<int> Main()
         {
             Console.WriteLine("Initializing the object detection.");
