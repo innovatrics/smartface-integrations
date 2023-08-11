@@ -31,7 +31,7 @@ def main():
     print("Liveness Test")
 
     if (len(args) == 0):
-        print("\nThis script will take zip files (*.zip) inside the 'inputs' folder and put the output logs into the 'outputs' folder. For more information run the script with --help or -h parameter.")
+        print("\nThis script will take zip files (*.zip) inside the 'inputs' folder and put the output logs into the 'results' folder. For more information run the script with --help or -h parameter.")
 
     if len(args) == 1 and (args[0] == '--help' or args[0] == '-h'):
         print("\nPlease adjust the variables inside the script to set up your test. Additional options are possible:\n")
