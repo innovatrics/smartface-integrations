@@ -64,11 +64,11 @@ def apply_curl_to_items(api_url, image_data_ids, save_to_folder):
 
 
 if __name__ == '__main__':
-    graphql_url = 'http://YOUR-URL:8097/graphql/'  # Replace with the actual GraphQL API endpoint URL
+    graphql_url = 'http://YOUR-URL:8097/graphql/'   # Replace with the actual GraphQL API endpoint URL
     api_url = 'http://YOUR-URL:8098/api/v1/Images'  # Replace with the actual API endpoint for image retrieval
-    save_to_folder = "./images/"
-    timefrom = "2023-07-31T12:46:00"
-    timeto = "2023-07-31T12:50:00"
+    save_to_folder = "./images/"                  
+    timefrom = "2023-07-31T12:46:00"                # Replace with your DATETIME
+    timeto = "2023-07-31T12:50:00"                  # Replace with your DATETIME
 
     query = '''
     query {
