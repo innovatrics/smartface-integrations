@@ -79,6 +79,26 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
             grpcNotificationReader = this.CreateGrpcReader();
 
             grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
+            grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
+            {
+                this.logger.Information("Processing 'DENIED' notification {@notification}", new
+                {
+                    FaceDetectedAt = notification.FaceDetectedAt,
+                    StreamId = notification.StreamId
+                });
+            };
+
+            grpcNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
+            {
+                this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
+                {
+                    WatchlistMemberFullName = notification.WatchlistMemberFullName,
+                    WatchlistMemberId = notification.WatchlistMemberId,
+                    FaceDetectedAt = notification.FaceDetectedAt,
+                    StreamId = notification.StreamId
+                });
+            };
+
             grpcNotificationReader.OnGrpcPing += OnGrpcPing;
 
             grpcNotificationReader.StartReceiving();
@@ -110,7 +130,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
 
             this.logger.Debug("Notification details {@notification}", notification);
 
-            await this.bridge.ProcessGrantedNotificationAsync(notification);
+            // await this.bridge.ProcessGrantedNotificationAsync(notification);
         }
 
         private void startPingTimer()

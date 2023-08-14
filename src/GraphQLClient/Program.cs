@@ -8,7 +8,7 @@ public class Program
 {
     private static void Main()
     {
-        var graphQLClient = new GraphQLHttpClient("http://192.168.2.205:8097/graphql", new NewtonsoftJsonSerializer());
+        var graphQLClient = new GraphQLHttpClient("http://192.168.1.10:8097/graphql", new NewtonsoftJsonSerializer());
 
         var matchResultRequest = new GraphQLRequest
         {
