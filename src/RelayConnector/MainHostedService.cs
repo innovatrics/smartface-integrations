@@ -130,7 +130,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
 
             this.logger.Debug("Notification details {@notification}", notification);
 
-            // await this.bridge.ProcessGrantedNotificationAsync(notification);
+            await this.bridge.ProcessGrantedNotificationAsync(notification);
         }
 
         private void startPingTimer()
