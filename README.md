@@ -3,9 +3,8 @@
 This repository contains integrations of Innovatrics SmartFace with various products or technologies.
 Repository is a combination of both the real world deployed code and the samples for demonstration purposes.
 
-## Fingera Adapter
-Listens to gRPC access notifications and in case of granted access call Fingera (3rd party serfice) for further action.
-Check <a href="src/FingeraAdapter" >the code</a>.
+## Relay Connector
+Listens to gRPC access notifications and in case of granted access calls relay to close the circuit and open the turnstile. Contains generic `IRelayConnector` in order to be extendable to wide range of relays, currently implemented working sample is Advantech WISE 4060. Check <a href="src/RelayConnector" >the code</a>.
 
 ## NX Witness Connector
 Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NX-witness-connector" >the code</a>.
@@ -15,6 +14,10 @@ Send configurable events from SmartFace (face detection, body detection, face id
 
 ## gRPC Camera Server
 Create sample gRPC Server that can be connected to SmartFace as special type of Camera. Check <a href="src/GrpcCamera" >README</a> for more info.
+
+## Fingera Adapter
+Listens to gRPC access notifications and in case of granted access call Fingera (3rd party serfice) for further action.
+Check <a href="src/FingeraAdapter" >the code</a>.
 
 ## Shared
 In `src/Shared` folder you may find several libraries that are pre-built for reusable purposes
