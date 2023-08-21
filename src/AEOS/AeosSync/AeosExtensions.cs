@@ -144,7 +144,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         {
             if (keepPhotoUpToDate)
             {
-                if (aeosMember.ImageData != null)
+                // update here && smartFaceMember.Note != null
+                if (aeosMember.ImageData != null && smartFaceMember.Note != null)
                 {
                     if (getImageHash(aeosMember.ImageData).SequenceEqual(smartFaceMember.Note))
                     {
