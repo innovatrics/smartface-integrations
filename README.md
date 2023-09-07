@@ -16,17 +16,17 @@ Please check <a href="/src/DataExportTool" >the code</a> for more information.
 Connects to SmartFace AccessController gRPC stream, process `GRANTED` notifications and send `Open` request to FaceGate Server. Please check <a href="/src/FaceGate" >the code</a> for more information.
 
 ## Fingera Adapter [C#]
-Listens to gRPC access notifications and in case of granted access call Fingera (3rd party serfice) for further action.
+Listens to gRPC access notifications and in case of granted access call Fingera (3rd party service) for further action.
 Check <a href="src/FingeraAdapter" >the code</a>.
 
 ## gRPC Camera Server [C#]
-Create sample gRPC Server that can be connected to SmartFace as special type of Camera. Check <a href="src/GrpcCamera" >README</a> for more info.
+Create sample gRPC Server that can be connected to SmartFace as a special type of Camera. Check <a href="src/GrpcCamera" >README</a> for more info.
 
 ## IdentificationFromFolder [C#]
 Takes all photos stored in a folder (it does a recursive search in all sub-folders) and Search for matches in SmartFace Watchlists. Please check <a href="/src/IFaceManualCall" >the code</a> for more information.
 
 ## IFaceManualCall [C#]
-Sample code for using the IFace features manualy. 
+Sample code for using the IFace features manually. 
 
 ## LivenessCheck [Python]
 
@@ -61,7 +61,7 @@ A sample Python script to check a Liveness score for each image in a provided zi
 A sample Python script to listen to the SmartFace GraphQL subscriptions.
 
 ## Shared [C#]
-In `src/Shared` folder you may find several libraries that are pre-built for reusable purposes
+In the `src/Shared` folder you may find several libraries that are pre-built for reusable purposes
 
 ### Shared/AccessController [C#]
 The gRPC connector to SmartFace AccessController module. Listen to gRPC access notifications. Used in <a href="src/FingeraAdapter" >Fingera Adapter</a>. Visit <a href="src/Shared/AccessController" >the code</a>.
