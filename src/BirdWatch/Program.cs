@@ -87,13 +87,9 @@ namespace BirdWatching
                 try
                 {
                     HttpResponseMessage response = await httpClient.PostAsync(webhookUrl, new StringContent(jsonData, Encoding.UTF8, "application/json"));
-
+                    
                     // Check if the response was successful
-                    if (response.IsSuccessStatusCode)
-                    {
-                        //Console.WriteLine("Message sent successfully."); // Optional
-                    }
-                    else
+                    if (!response.IsSuccessStatusCode)
                     {
                         Console.WriteLine($"Failed to send message. Status code: {response.StatusCode}");
                     }
