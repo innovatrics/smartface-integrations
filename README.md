@@ -16,11 +16,11 @@ Please check <a href="/src/DataExportTool" >the code</a> for more information.
 Connects to SmartFace AccessController gRPC stream, process `GRANTED` notifications and send `Open` request to FaceGate Server. Please check <a href="/src/FaceGate" >the code</a> for more information.
 
 ## Fingera Adapter [C#]
-Listens to gRPC access notifications and in case of granted access call Fingera (3rd party service) for further action.
+Listens to gRPC access notifications and in case of granted access calls Fingera (3rd party service) for further action.
 Check <a href="src/FingeraAdapter" >the code</a>.
 
 ## gRPC Camera Server [C#]
-Create sample gRPC Server that can be connected to SmartFace as a special type of Camera. Check <a href="src/GrpcCamera" >README</a> for more info.
+Create a sample gRPC Server that can be connected to SmartFace as a special type of Camera. Check <a href="src/GrpcCamera" >README</a> for more info.
 
 ## IdentificationFromFolder [C#]
 Takes all photos stored in a folder (it does a recursive search in all sub-folders) and Search for matches in SmartFace Watchlists. Please check <a href="/src/IFaceManualCall" >the code</a> for more information.
@@ -40,7 +40,7 @@ Send configurable events from SmartFace (face detection, body detection, face id
 Send information over a network as a result of the Access Controller's open message. Ideal as a model for future integrations with network controllers and network relays.    
 
 ## Scripts [Various]
-In `src/Scripts` folder you may find various smaller scripts with various purposes are available over here. 
+In `src/Scripts` folder you may find various smaller scripts with various purposes available over here. 
 
 ## Scripts/AddImagesFromFolderToSmartFace [PowerShell]
 A sample PowerShell script for registering a Watchlist Member for each image file in the provided folder.
