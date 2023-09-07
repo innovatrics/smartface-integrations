@@ -68,11 +68,15 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
                                         watchlistMemberFullName
                                     }
                                     tracklet {
-                                            id
-                                        }
+                                        id
+                                    }
+                                    frame {
+                                        id
+                                        imageDataId
                                     }
                                 }
-                            }",
+                            }
+                        }",
                     OperationName = "GetAllFacesWithMatches",
                     Variables = new
                     {

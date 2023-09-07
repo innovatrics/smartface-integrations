@@ -17,5 +17,7 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages.Models
 
         public MatchResult[] matchResults { get; init; }
         public Tracklet tracklet { get; init; }
+
+        public Frame Frame { get; init; }
     }
 }

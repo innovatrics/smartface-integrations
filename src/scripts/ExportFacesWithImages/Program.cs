@@ -23,7 +23,11 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
                         TRACKLET_ID = s.tracklet?.Id,
                         IDENTITY_ID = s.matchResults?.FirstOrDefault()?.watchlistMemberId,
                         IDENTITY_NAME = s.matchResults?.FirstOrDefault()?.watchlistMemberFullName,
-                        TIMESTAMP = s.CreatedAt?.ToString("o")
+                        TIMESTAMP = s.CreatedAt?.ToString("o"),
+
+                        CROP = s.ImageDataId,
+                        FRAME = s.Frame?.ImageDataId
+
                     })
                     .ToArray()
             );
