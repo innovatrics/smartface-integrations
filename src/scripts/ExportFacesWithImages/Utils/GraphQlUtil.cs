@@ -8,7 +8,7 @@ using Innovatrics.SmartFace.Integrations.ExportFacesWithImages.Models;
 
 namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
 {
-    public static class GraphQLUtil
+    public static class GraphQlUtil
     {
         public static async Task<Face[]> GetAllFacesWithMatches(string url, DateTime? from = null, DateTime? to = null)
         {
@@ -37,7 +37,7 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
         {
             Console.WriteLine($"{nameof(GetAllFacesWithMatches)} take: {take}, skip: {skip}");
 
-            url = SanitizeUrl(url);
+            url = ApiUtil.SanitizeUrl(url);
 
             using (var graphQLClient = new GraphQLHttpClient(url, new NewtonsoftJsonSerializer()))
             {
@@ -73,7 +73,15 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
                                     frame {
                                         id
                                         imageDataId
-                                    }
+                                    }                                    
+                                    cropLeftTopX
+                                    cropLeftTopY
+                                    cropRightTopX
+                                    cropRightTopY
+                                    cropLeftBottomX
+                                    cropLeftBottomY
+                                    cropRightBottomX
+                                    cropRightBottomY
                                 }
                             }
                         }",

@@ -19,5 +19,14 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages.Models
         public Tracklet tracklet { get; init; }
 
         public Frame Frame { get; init; }
+
+        public float? CropLeftTopX { get; init; }
+        public float? CropLeftTopY { get; init; }
+        public float? CropRightTopX { get; init; }
+        public float? CropRightTopY { get; init; }
+        public float? CropLeftBottomX { get; init; }
+        public float? CropLeftBottomY { get; init; }
+        public float? CropRightBottomX { get; init; }
+        public float? CropRightBottomY { get; init; }
     }
 }

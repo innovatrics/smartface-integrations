@@ -1,16 +1,15 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
-using CsvHelper;
 using System.Globalization;
-using CsvHelper.Configuration;
+using CsvHelper;
 
 namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
 {
-    public class ResultsCsvExporter
+    public class CsvUtil
     {
+        private static  CultureInfo CULTURE = CultureInfo.InvariantCulture;
+
         public static void ExportResultsToCsv<T>(
             string filePath,
             T[] results,
@@ -24,17 +23,11 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
             {
                 using (var writer = new StreamWriter(mem))
                 {
-                    using (var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                    using (var csvWriter = new CsvWriter(writer, CULTURE))
                     {
 
                         csvWriter.WriteHeader<T>();
                         csvWriter.NextRecord(); // adds new line after header
-
-                        // foreach (var result in results)
-                        // {
-                        //     csvWriter.WriteRecord(result);
-                        //     csvWriter.NextRecord();
-                        // }
 
                         csvWriter.WriteRecords(results);
 
@@ -50,6 +43,11 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
                     }
                 }
             }
+        }
+
+        internal static string ToString(float? value)
+        {
+            return value?.ToString(CULTURE);
         }
     }
 }
