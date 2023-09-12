@@ -9,10 +9,10 @@ Integration between the SmartFace and the AEOS Security Management system from N
 ## BirdWatch [C#]
 Sample application for showing the SmartFace object detection capabilities. The application provides you a guide how to listen to SmartFace notifications for objects and how to share the information with the world - in this case the information is sent into Google Spaces/Chat.
 
-## DataExportTool
+## DataExportTool [C#]
 Please check <a href="/src/DataExportTool" >the code</a> for more information.
 
-## FaceGate
+## FaceGate [C#]
 Connects to SmartFace AccessController gRPC stream, process `GRANTED` notifications and send `Open` request to FaceGate Server. Please check <a href="/src/FaceGate" >the code</a> for more information.
 
 ## Fingera Adapter [C#]
