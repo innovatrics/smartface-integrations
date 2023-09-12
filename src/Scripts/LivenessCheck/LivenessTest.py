@@ -10,7 +10,7 @@ import time
 import pathlib
 
 SETUP_RESULTS_PREFIX = "DEFAULT"
-SETUP_RESTAPIURL = "http://10.11.80.59:8098"
+SETUP_RESTAPIURL = "http://localhost:8098"
 SETUP_RESTAPI = SETUP_RESTAPIURL + "/api/v1/Watchlists/Search"
 SETUP_TESTWATCHLIST = "CheckLivenessTest"
 

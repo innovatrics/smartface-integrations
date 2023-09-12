@@ -14,10 +14,10 @@ Write outputs into a csv file
 '''
 
 # API endpoint URL
-rest_api_url = "http://10.11.64.18:8098"
+rest_api_url = "http://localhost:8098"
 
 # graphQL API URL
-graphql_url = "http://10.11.64.18:8097/graphql/"
+graphql_url = "http://localhost:8097/graphql/"
 
 # Image file path
 personToCompare = "lucia-fake-detail.png"
