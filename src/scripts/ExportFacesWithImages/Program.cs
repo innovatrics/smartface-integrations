@@ -7,12 +7,34 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
 {
     public class Program
     {
-        private const string SMARTFACE_API_URL = "http://srv-ba-6d:8098";
-        private const string SMARTFACE_GRAPHQL_URL = "http://srv-ba-6d:8097/graphql";
+        private const string SMARTFACE_API_URL = "http://10.11.64.18:8098";
+        private const string SMARTFACE_GRAPHQL_URL = "http://10.11.64.18:8097/graphql";
+
 
         static async Task<int> Main(string[] args)
         {
-            var faces = await GraphQlUtil.GetAllFacesWithMatches(SMARTFACE_GRAPHQL_URL);
+            var cameras = new string[] {
+                "1b6d42bd-431a-4bc3-a115-4008bd726dbb",
+                "19b10e5b-aebf-4c00-8ef1-24c2def86925",
+                "847f65b6-3211-41ae-8a33-72d595a48ce7",
+                "d5ff8f40-f900-4492-8ecc-6a2539648964",
+                "f9de3d6b-8f98-4bef-13bb-08db0aa598ba",
+                "6b7b8f5c-6c28-4ccb-1b9e-08db2952c2b7"
+            }
+                .Select(s => Guid.Parse(s))
+                .ToArray()
+            ;
+
+            var faces = await GraphQlUtil.GetAllFacesWithMatches(SMARTFACE_GRAPHQL_URL, cameras);
+
+            var facesGrouped = faces.Where(w => w.tracklet != null)
+                                    .GroupBy(g => g.tracklet.Id)
+                                    .Where(w => w.Count() > 1);
+
+            foreach(var group in facesGrouped)
+            {
+                Console.WriteLine($"Tracklet {group.Key} has {group.Count()} faces");
+            }
 
             var targetDirPath = Path.Combine("./Output/", $"{DateTime.Now.ToString("yyyy-MM-dd_HH-mm")}");
 
@@ -60,7 +82,7 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
             }
 
             foreach (var face in faces)
-            {                
+            {
                 Console.WriteLine($"Downloading crop {face.ImageDataId}");
 
                 var imageCrop = await ApiUtil.GetImageAsync(SMARTFACE_API_URL, face.ImageDataId);

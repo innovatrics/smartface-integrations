@@ -10,7 +10,12 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
 {
     public static class GraphQlUtil
     {
-        public static async Task<Face[]> GetAllFacesWithMatches(string url, DateTime? from = null, DateTime? to = null)
+        public static async Task<Face[]> GetAllFacesWithMatches(
+            string url,
+            Guid[] cameras,
+            DateTime? from = null,
+            DateTime? to = null
+        )
         {
             var results = new List<Face>();
 
@@ -20,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
 
             do
             {
-                var batchResult = await GetAllFacesWithMatches(url, take, skip, from, to);
+                var batchResult = await GetAllFacesWithMatches(url, take, skip, cameras, from, to);
 
                 allDownloaded = !(batchResult.Length > 0 && batchResult.Length == take);
 
@@ -33,7 +38,14 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
             return results.ToArray();
         }
 
-        private static async Task<Face[]> GetAllFacesWithMatches(string url, int take, int skip, DateTime? from, DateTime? to)
+        private static async Task<Face[]> GetAllFacesWithMatches(
+            string url,
+            int take,
+            int skip,
+            Guid[] cameras,
+            DateTime? from,
+            DateTime? to
+        )
         {
             Console.WriteLine($"{nameof(GetAllFacesWithMatches)} take: {take}, skip: {skip}");
 
@@ -47,6 +59,7 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
                     query GetAllFacesWithMatches(
                             $take: Int
                             $skip: Int
+                            $cameras: [UUID]
                             $from: DateTime!
                             $to: DateTime!
                         ) {
@@ -55,8 +68,10 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
                                 skip: $skip
                                 where: {
                                     and: [
-                                        { createdAt: { gte: $from } },
+                                        { streamId: { in: $cameras } }
+                                        { createdAt: { gte: $from } }
                                         { createdAt: { lte: $to } }
+                                        { matchResults: { any: true  } }
                                     ]
                             }) {
                                 items {
@@ -90,6 +105,7 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
                     {
                         take = take,
                         skip = skip,
+                        cameras = cameras,
                         from = from ?? DateTime.Today,
                         to = to ?? DateTime.Today.AddDays(1).AddSeconds(-1)
                     }
