@@ -3,9 +3,6 @@
 This repository contains integrations of Innovatrics SmartFace with various products or technologies.
 The repository is a combination of both real-world deployed code and samples for demonstration purposes.
 
-## AEOS [C#]
-Integration between the SmartFace and the AEOS Security Management system from NEDAP. Has 2 integration applications. One for synchronization of data between the SmartFace and the AEOS and the other as a connector between the SmartFace and AOES Aepu controller devices.
-
 ## BirdWatch [C#]
 Sample application for showing the SmartFace object detection capabilities. The application provides you a guide how to listen to SmartFace notifications for objects and how to share the information with the world - in this case the information is sent into Google Spaces/Chat.
 
@@ -27,8 +24,6 @@ Takes all photos stored in a folder (it does a recursive search in all sub-folde
 
 ## IFaceManualCall [C#]
 Sample code for using the IFace features manually. 
-
-## LivenessCheck [Python]
 
 ## Notifications Receiver [C#]
 Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NotificationsReceiver" >the code</a>.
