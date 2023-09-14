@@ -37,3 +37,4 @@ Output/*
 /NuGetFiles/*
 src/GrpcCamera/stream-out/*
 src/DataExportTool/Output/*
+src/scripts/ExportFacesWithImages/Output/*
