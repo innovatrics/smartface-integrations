@@ -4,7 +4,6 @@ import threading
 import time
 
 
-mode = "color" # color/image
 timeDelay = 3 # amount of seconds for the green signal
 port_80 = 8000
 
@@ -22,7 +21,7 @@ html_page = """
     <script>
         // Function to fetch and update data from the /status endpoint
         function fetchData() {
-            fetch('http://localhost:8000/status') // Replace with your actual endpoint URL
+            fetch('http://127.0.0.1:8000/status') // Replace with your actual endpoint URL
                 .then(response => response.text())
                 .then(data => {
                     // Update the content of the 'data' div with the fetched data
@@ -59,7 +58,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         global html_page
                
         if self.path == '/go':
-            print("go")
+            print("go GET")
             status = "green" 
             startTimer = time.time()
             
@@ -102,7 +101,27 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Headers', 'Content-Type')  # Allow Content-Type header
             self.end_headers()
             self.wfile.write(html_page.encode())
-        
+    
+    def do_POST(self):
+        global status
+        global startTimer
+        global timeDelay
+        global html_page
+               
+        if self.path == '/go':
+            print("go POST")
+            status = "green" 
+            startTimer = time.time()
+            
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.send_header('Access-Control-Allow-Origin', '*')  # Allow requests from any origin
+            self.send_header('Access-Control-Allow-Methods', 'GET')  # Allow GET requests
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type')  # Allow Content-Type header
+            self.end_headers()
+            messageToBeSent = "GO! signal for the next 3 seconds."
+            self.wfile.write(messageToBeSent.encode())
+            
 
 # Create server instance for defined port
 server_80 = socketserver.TCPServer(("127.0.0.1", port_80), MyHandler)
