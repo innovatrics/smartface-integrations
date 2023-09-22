@@ -2,10 +2,35 @@ import http.server
 import socketserver
 import threading
 import time
+import json
 
 
-timeDelay = 3 # amount of seconds for the green signal
-port_80 = 8000
+# Open the JSON file for reading
+try:
+    with open('config.json', 'r') as json_file:
+        # Load the JSON data from the file
+        data = json.load(json_file)
+
+except FileNotFoundError:
+    print("Warning: The 'data.json' file was not found. Exiting... (Press any key to exit)")
+    input()
+    exit()
+
+# Assign data from JSON to variables
+timeDelay = data['timeDelay']
+binding_ip = data['binding_ip']
+binding_port = data['binding_port']
+checkInterval = data['checkInterval']
+
+print("Traffic Light")
+print()
+print("Configuration:")
+print("Time Delay: " + str(timeDelay))
+print("Binding Ip: " + binding_ip)
+print("Binding Port: " + str(binding_port))
+print("Check Interval: " + str(checkInterval))
+
+
 
 html_page = """
 <!DOCTYPE html>
@@ -20,32 +45,32 @@ html_page = """
 
     <script>
         // Function to fetch and update data from the /status endpoint
-        function fetchData() {
-            fetch('http://127.0.0.1:8000/status') // Replace with your actual endpoint URL
+        function fetchData() {{
+            fetch('http://{}:{}' + '/status') // Replace with your actual endpoint URL
                 .then(response => response.text())
-                .then(data => {
+                .then(data => {{
                     // Update the content of the 'data' div with the fetched data
                     document.getElementById('content').textContent = data;
                     if(data == 'green')
-                    {
+                    {{
                         document.body.style.backgroundColor = 'green'
-                    }
+                    }}
                     else
-                    {
+                    {{
                         document.body.style.backgroundColor = 'red'
-                    }
-                })
+                    }}
+                }})
                 .catch(error => console.error('Error:', error));
-        }
+        }}
 
-        // Periodically fetch data (e.g., every 5 seconds)
-        setInterval(fetchData, 100); // Adjust the interval as needed (in milliseconds)
+        // Periodically fetch data
+        setInterval(fetchData, {}); // Adjust the interval as needed (in milliseconds)
         
         // Initial data fetch
         fetchData();
     </script>
 </html>
-"""
+""".format(binding_ip, binding_port, checkInterval)
 
 status = "red"
 startTimer : time
@@ -68,7 +93,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Methods', 'GET')  # Allow GET requests
             self.send_header('Access-Control-Allow-Headers', 'Content-Type')  # Allow Content-Type header
             self.end_headers()
-            messageToBeSent = "GO! signal for the next 3 seconds."
+            messageToBeSent = "GO! signal for the next {timeDelay} seconds."
             self.wfile.write(messageToBeSent.encode())
             
         elif self.path == '/status':
@@ -119,14 +144,14 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Methods', 'GET')  # Allow GET requests
             self.send_header('Access-Control-Allow-Headers', 'Content-Type')  # Allow Content-Type header
             self.end_headers()
-            messageToBeSent = "GO! signal for the next 3 seconds."
+            messageToBeSent = "GO! signal for the next {timeDelay} seconds."
             self.wfile.write(messageToBeSent.encode())
             
 
 # Create server instance for defined port
-server_80 = socketserver.TCPServer(("127.0.0.1", port_80), MyHandler)
+server_80 = socketserver.TCPServer((binding_ip, binding_port), MyHandler)
 
-print(f"Serving on 127.0.0.1:{port_80}")
+print(f"Serving on {binding_ip}:{binding_port}")
 
 # Start each server in a separate thread
 server_thread_80 = threading.Thread(target=server_80.serve_forever)
