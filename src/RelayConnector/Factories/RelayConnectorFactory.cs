@@ -45,6 +45,9 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Factories
 
                 case "ADVANTECH_WISE_4000":
                     return new AdvantechWISE400Connector(this.logger, this.configuration, this.httpClientFactory);
+                
+                case "TRAFFICLIGHT":
+                    return new TrafficLightConnector(this.logger, this.configuration, this.httpClientFactory);
             }
         }
     }
