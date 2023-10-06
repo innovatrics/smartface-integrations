@@ -7,26 +7,12 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
 {
     public class Program
     {
-        private const string SMARTFACE_API_URL = "http://10.11.64.18:8098";
-        private const string SMARTFACE_GRAPHQL_URL = "http://10.11.64.18:8097/graphql";
-
+        private const string SMARTFACE_API_URL = "http://localhost:8098";
+        private const string SMARTFACE_GRAPHQL_URL = "http://localhost:8097/graphql";
 
         static async Task<int> Main(string[] args)
         {
             var cameras = new string[] {
-
-                "1b6d42bd-431a-4bc3-a115-4008bd726dbb",     // CAM-6SL
-                "19b10e5b-aebf-4c00-8ef1-24c2def86925",     // CAM-6SS
-                
-                "847f65b6-3211-41ae-8a33-72d595a48ce7",	    // CAM-7SL
-                "d5ff8f40-f900-4492-8ecc-6a2539648964",	    // CAM-7SS
-
-                "f9de3d6b-8f98-4bef-13bb-08db0aa598ba",	    // CAM-LOCK6
-                "6b7b8f5c-6c28-4ccb-1b9e-08db2952c2b7",	    // CAM-LOCK7"
-
-                // "63bc0c0c-1f72-4cd5-1824-08dbb4ef8a22",	    // Corridor OFFICE
-                // "96cf2dce-0e1c-464b-1823-08dbb4ef8a22",	    // Corridor SF
-                // "c168e521-1f80-4b44-1b9f-08db2952c2b7"	    // Facialis Face
             }
                 .Select(s => Guid.Parse(s))
                 .ToArray()
