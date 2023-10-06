@@ -14,103 +14,110 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
         static async Task<int> Main(string[] args)
         {
             var cameras = new string[] {
-                "bd689253-3665-4597-1822-08dbb4ef8a22",
-                "1b6d42bd-431a-4bc3-a115-4008bd726dbb",
-                "19b10e5b-aebf-4c00-8ef1-24c2def86925",
-                "847f65b6-3211-41ae-8a33-72d595a48ce7",
-                "d5ff8f40-f900-4492-8ecc-6a2539648964",
-                "f9de3d6b-8f98-4bef-13bb-08db0aa598ba",
-                "6b7b8f5c-6c28-4ccb-1b9e-08db2952c2b7",
-                "63bc0c0c-1f72-4cd5-1824-08dbb4ef8a22",
-                "96cf2dce-0e1c-464b-1823-08dbb4ef8a22",
-                "c168e521-1f80-4b44-1b9f-08db2952c2b7"
+
+                "1b6d42bd-431a-4bc3-a115-4008bd726dbb",     // CAM-6SL
+                "19b10e5b-aebf-4c00-8ef1-24c2def86925",     // CAM-6SS
+                
+                "847f65b6-3211-41ae-8a33-72d595a48ce7",	    // CAM-7SL
+                "d5ff8f40-f900-4492-8ecc-6a2539648964",	    // CAM-7SS
+
+                "f9de3d6b-8f98-4bef-13bb-08db0aa598ba",	    // CAM-LOCK6
+                "6b7b8f5c-6c28-4ccb-1b9e-08db2952c2b7",	    // CAM-LOCK7"
+
+                // "63bc0c0c-1f72-4cd5-1824-08dbb4ef8a22",	    // Corridor OFFICE
+                // "96cf2dce-0e1c-464b-1823-08dbb4ef8a22",	    // Corridor SF
+                // "c168e521-1f80-4b44-1b9f-08db2952c2b7"	    // Facialis Face
             }
                 .Select(s => Guid.Parse(s))
                 .ToArray()
             ;
 
-            var from = new DateTime(2023, 09, 18);
-            var to = from.AddDays(1).AddSeconds(-1);
+            var from = new DateTime(2023, 09, 17);
 
-            var faces = await GraphQlUtil.GetAllFacesWithMatches(SMARTFACE_GRAPHQL_URL, cameras, from, to);
-
-            var facesGrouped = faces.Where(w => w.tracklet != null)
-                                    .GroupBy(g => g.tracklet.Id)
-                                    .Where(w => w.Count() > 1);
-
-            foreach (var group in facesGrouped)
+            while (from < new DateTime(2023, 10, 05))
             {
-                Console.WriteLine($"Tracklet {group.Key} has {group.Count()} faces");
-            }
+                from = from.AddDays(1);
+                var to = from.AddDays(1).AddSeconds(-1);
 
-            var targetDirPath = Path.Combine("./Output/", $"{DateTime.Now.ToString("yyyy-MM-dd_HH-mm")}");
+                var faces = await GraphQlUtil.GetAllFacesWithMatches(SMARTFACE_GRAPHQL_URL, cameras, from, to);
 
-            if (!Directory.Exists(targetDirPath))
-            {
-                Directory.CreateDirectory(targetDirPath);
-            }
+                var facesGrouped = faces.Where(w => w.tracklet != null)
+                                        .GroupBy(g => g.tracklet.Id)
+                                        .Where(w => w.Count() > 1);
 
-            var csvFilePath = Path.Combine(targetDirPath, $"faces.csv");
-
-            CsvUtil.ExportResultsToCsv(
-                csvFilePath,
-                faces
-                    .Select(s => new
-                    {
-                        ID = s.Id,
-                        TRACKLET_ID = s.tracklet?.Id,
-                        IDENTITY_ID = s.matchResults?.FirstOrDefault()?.watchlistMemberId,
-                        IDENTITY_NAME = s.matchResults?.FirstOrDefault()?.watchlistMemberFullName,
-                        TIMESTAMP = s.CreatedAt?.ToString("o"),
-
-                        CROP = s.ImageDataId,
-                        FULLFRAME = s.Frame?.ImageDataId,
-
-                        BOUNDING_BOX_COORINATES_LT = $"[{CsvUtil.ToString(s.CropLeftTopX)},{CsvUtil.ToString(s.CropLeftTopY)}]",
-                        BOUNDING_BOX_COORINATES_RT = $"[{CsvUtil.ToString(s.CropRightTopX)},{CsvUtil.ToString(s.CropRightTopY)}]",
-                        BOUNDING_BOX_COORINATES_LB = $"[{CsvUtil.ToString(s.CropLeftBottomX)},{CsvUtil.ToString(s.CropLeftBottomY)}]",
-                        BOUNDING_BOX_COORINATES_RB = $"[{CsvUtil.ToString(s.CropRightBottomX)},{CsvUtil.ToString(s.CropRightBottomY)}]",
-                    })
-                    .ToArray()
-            );
-
-            var targetCropsDirPath = Path.Combine(targetDirPath, "crops");
-
-            if (!Directory.Exists(targetCropsDirPath))
-            {
-                Directory.CreateDirectory(targetCropsDirPath);
-            }
-
-            var targetFramesDirPath = Path.Combine(targetDirPath, "full_frames");
-
-            if (!Directory.Exists(targetFramesDirPath))
-            {
-                Directory.CreateDirectory(targetFramesDirPath);
-            }
-
-            foreach (var face in faces)
-            {
-                Console.WriteLine($"Downloading crop {face.ImageDataId}");
-
-                var imageCrop = await ApiUtil.GetImageAsync(SMARTFACE_API_URL, face.ImageDataId);
-                await File.WriteAllBytesAsync(Path.Combine(targetCropsDirPath, $"{face.ImageDataId}.jpeg"), imageCrop);
-
-                if (face.Frame?.ImageDataId != null)
+                foreach (var group in facesGrouped)
                 {
-                    var targetFramePath = Path.Combine(targetFramesDirPath, $"{face.Frame?.ImageDataId}.jpeg");
+                    Console.WriteLine($"Tracklet {group.Key} has {group.Count()} faces");
+                }
 
-                    if (!File.Exists(targetFramePath))
+                var targetDirPath = Path.Combine("./Output/", $"{from.ToString("yyyy-MM-dd_HH-mm")}");
+
+                if (!Directory.Exists(targetDirPath))
+                {
+                    Directory.CreateDirectory(targetDirPath);
+                }
+
+                var csvFilePath = Path.Combine(targetDirPath, $"faces.csv");
+
+                CsvUtil.ExportResultsToCsv(
+                    csvFilePath,
+                    faces
+                        .Select(s => new
+                        {
+                            ID = s.Id,
+                            TRACKLET_ID = s.tracklet?.Id,
+                            IDENTITY_ID = s.matchResults?.FirstOrDefault()?.watchlistMemberId,
+                            IDENTITY_NAME = s.matchResults?.FirstOrDefault()?.watchlistMemberFullName,
+                            TIMESTAMP = s.CreatedAt?.ToString("o"),
+
+                            CROP = s.ImageDataId,
+                            FULLFRAME = s.Frame?.ImageDataId,
+
+                            BOUNDING_BOX_COORINATES_LT = $"[{CsvUtil.ToString(s.CropLeftTopX)},{CsvUtil.ToString(s.CropLeftTopY)}]",
+                            BOUNDING_BOX_COORINATES_RT = $"[{CsvUtil.ToString(s.CropRightTopX)},{CsvUtil.ToString(s.CropRightTopY)}]",
+                            BOUNDING_BOX_COORINATES_LB = $"[{CsvUtil.ToString(s.CropLeftBottomX)},{CsvUtil.ToString(s.CropLeftBottomY)}]",
+                            BOUNDING_BOX_COORINATES_RB = $"[{CsvUtil.ToString(s.CropRightBottomX)},{CsvUtil.ToString(s.CropRightBottomY)}]",
+                        })
+                        .ToArray()
+                );
+
+                var targetCropsDirPath = Path.Combine(targetDirPath, "crops");
+
+                if (!Directory.Exists(targetCropsDirPath))
+                {
+                    Directory.CreateDirectory(targetCropsDirPath);
+                }
+
+                var targetFramesDirPath = Path.Combine(targetDirPath, "full_frames");
+
+                if (!Directory.Exists(targetFramesDirPath))
+                {
+                    Directory.CreateDirectory(targetFramesDirPath);
+                }
+
+                foreach (var face in faces)
+                {
+                    Console.WriteLine($"Downloading crop {face.ImageDataId}");
+
+                    var imageCrop = await ApiUtil.GetImageAsync(SMARTFACE_API_URL, face.ImageDataId);
+                    await File.WriteAllBytesAsync(Path.Combine(targetCropsDirPath, $"{face.ImageDataId}.jpeg"), imageCrop);
+
+                    if (face.Frame?.ImageDataId != null)
                     {
-                        Console.WriteLine($"Downloading crop {face.Frame?.ImageDataId}");
+                        var targetFramePath = Path.Combine(targetFramesDirPath, $"{face.Frame?.ImageDataId}.jpeg");
 
-                        var imageFrame = await ApiUtil.GetImageAsync(SMARTFACE_API_URL, face.Frame.ImageDataId.Value);
-                        await File.WriteAllBytesAsync(targetFramePath, imageFrame);
+                        if (!File.Exists(targetFramePath))
+                        {
+                            Console.WriteLine($"Downloading crop {face.Frame?.ImageDataId}");
+
+                            var imageFrame = await ApiUtil.GetImageAsync(SMARTFACE_API_URL, face.Frame.ImageDataId.Value);
+                            await File.WriteAllBytesAsync(targetFramePath, imageFrame);
+                        }
                     }
                 }
             }
 
             Console.WriteLine($"Done, quit");
-
             return 0;
         }
     }
