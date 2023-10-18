@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Shared\AccessController\AccessController.csproj" />
+        <ProjectReference Include="..\..\Shared\AccessController\AccessController.csproj" />
     </ItemGroup>
 
     <ItemGroup>
