@@ -38,5 +38,6 @@ Output/*
 
 Output/
 [Oo]utput/
+[Pp]ublish/
 
 src/GrpcCamera/stream-out/*
