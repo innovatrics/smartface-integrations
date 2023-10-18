@@ -7,6 +7,7 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessController.Readers;
+using System.IO;
 
 namespace Innovatrics.SmartFace.Integrations.RelayConnector
 {
@@ -101,6 +102,8 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
                     FaceDetectedAt = notification.FaceDetectedAt,
                     StreamId = notification.StreamId
                 });
+
+                await this.saveBlockedAttemptAsync(notification);
             };
 
             grpcNotificationReader.OnGrpcPing += OnGrpcPing;
@@ -155,6 +158,25 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
             };
 
             accessControllerPingTimer.Start();
+        }
+
+        private async Task saveBlockedAttemptAsync(BlockedNotification notification)
+        {
+            var targetDirPath = Path.Combine("./Output/Blocked/", $"{notification.FaceDetectedAt:yyyy-MM-dd}");
+
+            if (!Directory.Exists(targetDirPath))
+            {
+                Directory.CreateDirectory(targetDirPath);
+            }
+
+            if (notification.CropImage?.Length > 0)
+            {
+                var cropFileName = $"{notification.FaceDetectedAt:HH-mm-ss}-{notification.WatchlistMemberId}-crop.jpeg";
+
+                await File.WriteAllBytesAsync(Path.Combine(targetDirPath, cropFileName), notification.CropImage);
+            }
+
+
         }
     }
 }
