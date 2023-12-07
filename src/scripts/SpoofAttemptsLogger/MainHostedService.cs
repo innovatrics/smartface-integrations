@@ -9,7 +9,7 @@ using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessController.Readers;
 using System.IO;
 
-namespace Innovatrics.SmartFace.Integrations.RelayConnector
+namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
 {
     public class MainHostedService : IHostedService
     {

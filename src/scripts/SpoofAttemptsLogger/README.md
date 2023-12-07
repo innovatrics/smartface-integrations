@@ -4,22 +4,22 @@ This application connects to SmartFace AccessController gRPC stream, process `GR
 ## Development
 To run application localy, follow these steps
  - open terminal
- - navigate to /src/RelayConnector
+ - navigate to /src/SpoofAttemptsLogger
  - run `dotnet run`
 
  ## Deployment
  To deploy application, follow these steps
  - open terminal
- - navigate to /src/RelayConnector
+ - navigate to /src/SpoofAttemptsLogger
  - run `dotnet publish -c Release -r win10-x64 --self-contained true -p:ReadyToRun=false -p:PublishSingleFile=true -p:PublishTrimmed=false -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true`
 
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/RelayConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.3 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.3 registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.3`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:latest`
+ - `docker build -f src/SpoofAttemptsLogger/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-spoofattemptslogger:1.3 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-spoofattemptslogger:1.3 registry.gitlab.com/innovatrics/smartface/integrations-spoofattemptslogger:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-spoofattemptslogger:1.3`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-spoofattemptslogger:latest`
 
 ## Usage
 Add following pattern to existing docker compose:
@@ -36,9 +36,9 @@ Add following pattern to existing docker compose:
       - 8000:8000
     env_file: .env.sfstation
 
-  relayconnector:
-    image: ${REGISTRY}integrations-relayconnector
-    container_name: SFRelayConnector
+  spoofattemptslogger:
+    image: ${REGISTRY}integrations-spoofattemptslogger
+    container_name: SFSpoofAttemptsLogger
     restart: unless-stopped
     environment:
       - AccessController__Host=SFAccessController

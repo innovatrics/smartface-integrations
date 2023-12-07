@@ -8,7 +8,7 @@ using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
 
-namespace Innovatrics.SmartFace.Integrations.RelayConnector
+namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
 {
     public class Program
     {
