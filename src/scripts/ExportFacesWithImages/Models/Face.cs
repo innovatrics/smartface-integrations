@@ -10,6 +10,7 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages.Models
         public int? Quality { get; init; }
 
         public DateTime? CreatedAt { get; init; }
+        public DateTime? ProcessedAt { get; init; }
 
         public Guid ImageDataId { get; init; }
         public Guid? StreamId { get; init; }

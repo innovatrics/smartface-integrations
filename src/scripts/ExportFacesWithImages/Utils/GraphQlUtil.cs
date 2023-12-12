@@ -69,8 +69,8 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
                                 where: {
                                     and: [
                                         { streamId: { in: $cameras } }
-                                        { createdAt: { gte: $from } }
-                                        { createdAt: { lte: $to } }
+                                        { processedAt: { gte: $from } }
+                                        { processedAt: { lte: $to } }
                                         { matchResults: { any: true  } }
                                     ]
                             }) {
