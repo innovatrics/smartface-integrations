@@ -7,8 +7,8 @@ namespace Innovatrics.SmartFace.Integrations.ExportFacesWithImages
 {
     public class Program
     {
-        private const string SMARTFACE_API_URL = "http://10.11.64.18:8098";
-        private const string SMARTFACE_GRAPHQL_URL = "http://10.11.64.18:8097/graphql";
+        private const string SMARTFACE_API_URL = "http://localhost:8098";
+        private const string SMARTFACE_GRAPHQL_URL = "http://localhost:8097/graphql";
 
         static async Task<int> Main(string[] args)
         {
