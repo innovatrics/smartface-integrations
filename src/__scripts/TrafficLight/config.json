@@ -1,0 +1,6 @@
+{
+    "timeDelay": 3,
+    "binding_ip": "127.0.0.1",
+    "binding_port":8000,
+    "checkInterval": 100
+}
