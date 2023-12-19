@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors
+namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors.InnerRange
 {
-    public class InnerRangeIntegrityConnector : IRelayConnector
+    public class IntegrityConnector : IRelayConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public InnerRangeIntegrityConnector(
+        public IntegrityConnector(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory
