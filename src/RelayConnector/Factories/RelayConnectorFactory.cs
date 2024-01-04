@@ -48,7 +48,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Factories
                     return new AdvantechWISE400Connector(this.logger, this.configuration, this.httpClientFactory);
                 
                 case "INNERRANGE_INTEGRITY_22":
-                    return new IntegrityConnector(this.logger, this.configuration, this.httpClientFactory);
+                    return new Integrity22Connector(this.logger, this.configuration, this.httpClientFactory);
 
                 case "TRAFFICLIGHT":
                     return new TrafficLightConnector(this.logger, this.configuration, this.httpClientFactory);

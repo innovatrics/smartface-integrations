@@ -8,13 +8,13 @@ using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors.InnerRange
 {
-    public class IntegrityConnector : IRelayConnector
+    public class Integrity22Connector : IRelayConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public IntegrityConnector(
+        public Integrity22Connector(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory
