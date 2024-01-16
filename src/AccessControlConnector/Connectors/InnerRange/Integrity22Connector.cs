@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors.InnerRange
+namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange
 {
-    public class Integrity22Connector : IRelayConnector
+    public class Integrity22Connector : IAccessControlConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
