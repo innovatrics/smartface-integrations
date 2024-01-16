@@ -7,14 +7,14 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
-using Innovatrics.SmartFace.Integrations.RelayConnector.Factories;
-using Innovatrics.SmartFace.Integrations.RelayConnector.Services;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Services;
 
-namespace Innovatrics.SmartFace.Integrations.RelayConnector
+namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 {
     public class Program
     {
-        public const string LOG_FILE_NAME = "SmartFace.Integrations.Relay.log";
+        public const string LOG_FILE_NAME = "SmartFace.Integrations.AccessControl.log";
         public const string JSON_CONFIG_FILE_NAME = "appsettings.json";
 
         private static void Main(string[] args)
@@ -48,7 +48,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
             // ReSharper disable once StringLiteralTypo
-            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2Relay"));
+            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AccessControl"));
             logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
@@ -77,7 +77,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
 
-            services.AddSingleton<IRelayConnectorFactory, RelayConnectorFactory>();
+            services.AddSingleton<IAccessControlConnectorFactory, AccessControlConnectorFactory>();
             services.AddSingleton<IBridgeService, BridgeService>();
 
             services.AddHostedService<MainHostedService>();
