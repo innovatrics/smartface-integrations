@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors
+namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 {
-    public class AdvantechWISE400Connector : IRelayConnector
+    public class TrafficLightConnector : IAccessControlConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public AdvantechWISE400Connector(
+        public TrafficLightConnector(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory
@@ -23,41 +23,19 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+
+            this.logger.Information("Traffic Light Connector Created!");
         }
 
         public async Task OpenAsync(string ipAddress, int port, int channel, string username = null, string password = null)
         {
-            this.logger.Information("Send Open to {ipAddress}:{port}/do_value/slot_0/ and channel: {channel}", ipAddress, port, channel);
+            this.logger.Information("Send Open to {ipAddress}:{port}/go", ipAddress, port);
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"http://{ipAddress}:{port}/do_value/slot_0/";
+            var requestUri = $"http://{ipAddress}:{port}/go";
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
-
-            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
-            {
-                var authenticationString = $"{username}:{password}";
-                var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
-
-                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
-            }
-
-            var payload = new
-            {
-                DOVal = new[] {
-                    new {
-                        Ch = channel,
-                        Val = 1
-                    },
-                    new {
-                        Ch = channel,
-                        Val = 0
-                    }
-                }
-            };
-
-            httpRequest.Content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
             var result = await httpClient.SendAsync(httpRequest);
             string resultContent = await result.Content.ReadAsStringAsync();
@@ -74,11 +52,11 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Connectors
 
         public async Task SendKeepAliveAsync(string ipAddress, int port, int? channel = null, string username = null, string password = null)
         {
-            this.logger.Information("Send KeepAlive to {ipAddress}:{port}/di_value/slot_0/ and channel: {channel}", ipAddress, port, channel);
+            this.logger.Information("Send KeepAlive to {ipAddress}:{port}/", ipAddress, port);
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"http://{ipAddress}:{port}/di_value/slot_0/";
+            var requestUri = $"http://{ipAddress}:{port}/";
 
             if (channel != null)
             {

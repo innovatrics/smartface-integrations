@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Innovatrics.SmartFace.Integrations.RelayConnector.Models
+namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
 {
-    public class RelayMapping
+    public class AccessControlMapping
     {
         public string Type                              { get; set; } = "Advantech WISE-4000";
         public Guid StreamId                            { get; set; }

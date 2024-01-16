@@ -4,17 +4,17 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-using Innovatrics.SmartFace.Integrations.RelayConnector.Connectors;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 
-namespace Innovatrics.SmartFace.Integrations.RelayConnector.Factories
+namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 {
-    public class RelayConnectorFactory : IRelayConnectorFactory
+    public class AccessControlConnectorFactory : IAccessControlConnectorFactory
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public RelayConnectorFactory(
+        public AccessControlConnectorFactory(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory
@@ -25,14 +25,14 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Factories
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public IRelayConnector Create(string type)
+        public IAccessControlConnector Create(string type)
         {
             if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
 
-            this.logger.Information("Creating IRelayConnector for type {type}", type);
+            this.logger.Information("Creating IAccessControlConnector for type {type}", type);
 
             type = type
                     .ReplaceAll(new string[] { "-", " ", "." }, new string[] { "_", "_", "_" })
@@ -41,7 +41,7 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Factories
             switch (type)
             {
                 default:
-                    throw new NotImplementedException($"Relay of type {type} not supported");
+                    throw new NotImplementedException($"AccessControl of type {type} not supported");
 
                 case "ADVANTECH_WISE_4000":
                     return new AdvantechWISE400Connector(this.logger, this.configuration, this.httpClientFactory);
