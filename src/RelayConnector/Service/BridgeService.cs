@@ -72,14 +72,16 @@ namespace Innovatrics.SmartFace.Integrations.RelayConnector.Services
                 return;
             }
 
-            var uniqueRelays = cameraToRelayMappings.GroupBy(g => new
-            {
-                g.Type,
-                g.IPAddress,
-                g.Port,
-                g.Username,
-                g.Password
-            }).ToArray();
+            var uniqueRelays = cameraToRelayMappings
+                                    .GroupBy(g => new
+                                    {
+                                        g.Type,
+                                        g.IPAddress,
+                                        g.Port,
+                                        g.Username,
+                                        g.Password
+                                    })
+                                    .ToArray();
 
             foreach (var cameraToRelayMapping in uniqueRelays)
             {
