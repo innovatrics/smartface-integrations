@@ -78,6 +78,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             services.AddSingleton<GrpcReaderFactory>();
 
             services.AddSingleton<IAccessControlConnectorFactory, AccessControlConnectorFactory>();
+            services.AddSingleton<IUserResolverFactory, UserResolverFactory>();
             services.AddSingleton<IBridgeService, BridgeService>();
 
             services.AddHostedService<MainHostedService>();

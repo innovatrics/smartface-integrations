@@ -54,18 +54,31 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 }
             }
 
+            string accessControlUser = null;
+
             var accessControlConnector = this.accessControlConnectorFactory.Create(cameraToAccessControlMapping.Type);
 
-            var userResolver = this.userResolverFactory.Create(cameraToAccessControlMapping.UserResolver)
+            if (cameraToAccessControlMapping.UserResolver != null)
+            {
+                var userResolver = this.userResolverFactory.Create(cameraToAccessControlMapping.UserResolver);
 
-            return;
+                accessControlUser = await userResolver.ResolveUserAsync(notification.WatchlistMemberId);
+
+                this.logger.Information("Resolved {wlMember} to {accessControlUser}", notification.WatchlistMemberFullName, accessControlUser);
+
+                if (accessControlUser == null)
+                {
+                    return;
+                }
+            }
 
             await accessControlConnector.OpenAsync(
                 host: cameraToAccessControlMapping.Host,
                 port: cameraToAccessControlMapping.Port,
                 channel: cameraToAccessControlMapping.Channel,
                 username: cameraToAccessControlMapping.Username,
-                password: cameraToAccessControlMapping.Password
+                password: cameraToAccessControlMapping.Password,
+                accessControlUserId: accessControlUser
             );
         }
 

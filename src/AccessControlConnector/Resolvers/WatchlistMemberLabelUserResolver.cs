@@ -11,21 +11,36 @@ using System.Linq;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 {
-    public class LabelAccessCardUserResolver : IUserResolver
+    public class WatchlistMemberLabelUserResolver : IUserResolver
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
+        private readonly string RESOLVER_KEY;
 
-        public LabelAccessCardUserResolver(
+        public WatchlistMemberLabelUserResolver(
             ILogger logger,
             IConfiguration configuration,
-            IHttpClientFactory httpClientFactory
+            IHttpClientFactory httpClientFactory,
+            string labelKey
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+
+            if (string.IsNullOrEmpty(labelKey))
+            {
+                throw new ArgumentNullException(nameof(labelKey));
+            }
+
+            var labelParts = labelKey
+                                .ToUpper()
+                                .Replace('-', '_')
+                                .Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries)
+                                .Skip(1);
+
+            this.RESOLVER_KEY = string.Join('_', labelParts);
         }
 
         public async Task<string> ResolveUserAsync(string watchlistMemberId)
@@ -37,9 +52,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 
             this.logger.Information("Resolving {watchlistMemberId}", watchlistMemberId);
 
-            var apiHost = this.configuration.GetValue<string>("AccessController:Host");
-            var apiPort = this.configuration.GetValue<int>("AccessController:Port");
-            var apiSchema = this.configuration.GetValue<int>("AccessController:Schema");
+            var apiSchema = this.configuration.GetValue<string>("API:Schema");
+            var apiHost = this.configuration.GetValue<string>("API:Host");
+            var apiPort = this.configuration.GetValue<int?>("API:Port");            
 
             this.logger.Information("API configured to {schema}://{host}:{port}", apiSchema, apiHost, apiPort);
 
@@ -58,7 +73,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             var watchlistMember = Newtonsoft.Json.JsonConvert.DeserializeObject<WatchlistMember>(httpRequestStringContent);
 
             var cardId = watchlistMember.Labels?
-                                            .Where(w => w.Key == "access_card_id")
+                                            .Where(w => w.Key.ToUpper() == this.RESOLVER_KEY)
                                             .Select(s => s.Value)
                                             .SingleOrDefault();
 

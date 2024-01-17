@@ -45,7 +45,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                     throw new NotImplementedException($"IUserResolver of type {type} not supported");
 
                 case "LABEL_ACCESS_CARD_ID":
-                    return new LabelAccessCardUserResolver(this.logger, this.configuration, this.httpClientFactory);
+                    return new WatchlistMemberLabelUserResolver(this.logger, this.configuration, this.httpClientFactory, type);
             }
         }
     }

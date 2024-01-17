@@ -27,7 +27,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             this.logger.Information("Traffic Light Connector Created!");
         }
 
-        public async Task OpenAsync(string host, int port, int channel, string username = null, string password = null)
+        public async Task OpenAsync(string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
         {
             this.logger.Information("Send Open to {host}:{port}/go", host, port);
 
@@ -50,7 +50,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             }
         }
 
-        public async Task SendKeepAliveAsync(string host, int port, int? channel = null, string username = null, string password = null)
+        public async Task SendKeepAliveAsync(string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
         {
             this.logger.Information("Send KeepAlive to {host}:{port}/", host, port);
 

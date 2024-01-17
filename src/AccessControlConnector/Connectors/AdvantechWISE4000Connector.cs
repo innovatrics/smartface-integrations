@@ -25,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(string host, int port, int channel, string username = null, string password = null)
+        public async Task OpenAsync(string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
         {
             this.logger.Information("Send Open to {host}:{port}/do_value/slot_0/ and channel: {channel}", host, port, channel);
 
@@ -72,7 +72,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             }
         }
 
-        public async Task SendKeepAliveAsync(string host, int port, int? channel = null, string username = null, string password = null)
+        public async Task SendKeepAliveAsync(string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
         {
             this.logger.Information("Send KeepAlive to {host}:{port}/di_value/slot_0/ and channel: {channel}", host, port, channel);
 
