@@ -27,13 +27,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             this.logger.Information("Traffic Light Connector Created!");
         }
 
-        public async Task OpenAsync(string ipAddress, int port, int channel, string username = null, string password = null)
+        public async Task OpenAsync(string host, int port, int channel, string username = null, string password = null)
         {
-            this.logger.Information("Send Open to {ipAddress}:{port}/go", ipAddress, port);
+            this.logger.Information("Send Open to {host}:{port}/go", host, port);
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"http://{ipAddress}:{port}/go";
+            var requestUri = $"http://{host}:{port}/go";
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
@@ -50,13 +50,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             }
         }
 
-        public async Task SendKeepAliveAsync(string ipAddress, int port, int? channel = null, string username = null, string password = null)
+        public async Task SendKeepAliveAsync(string host, int port, int? channel = null, string username = null, string password = null)
         {
-            this.logger.Information("Send KeepAlive to {ipAddress}:{port}/", ipAddress, port);
+            this.logger.Information("Send KeepAlive to {host}:{port}/", host, port);
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"http://{ipAddress}:{port}/";
+            var requestUri = $"http://{host}:{port}/";
 
             if (channel != null)
             {

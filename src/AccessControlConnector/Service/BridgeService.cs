@@ -14,17 +14,20 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly IAccessControlConnectorFactory relayConnectorFactory;
+        private readonly IAccessControlConnectorFactory accessControlConnectorFactory;
+        private readonly IUserResolverFactory userResolverFactory;
 
         public BridgeService(
             ILogger logger,
             IConfiguration configuration,
-            IAccessControlConnectorFactory relayConnectorFactory
+            IAccessControlConnectorFactory accessControlConnectorFactory,
+            IUserResolverFactory userResolverFactory
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.relayConnectorFactory = relayConnectorFactory ?? throw new ArgumentNullException(nameof(relayConnectorFactory));
+            this.accessControlConnectorFactory = accessControlConnectorFactory ?? throw new ArgumentNullException(nameof(accessControlConnectorFactory));
+            this.userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
         }
 
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
@@ -51,10 +54,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 }
             }
 
-            var relayConnector = this.relayConnectorFactory.Create(cameraToAccessControlMapping.Type);
+            var accessControlConnector = this.accessControlConnectorFactory.Create(cameraToAccessControlMapping.Type);
 
-            await relayConnector.OpenAsync(
-                ipAddress: cameraToAccessControlMapping.IPAddress,
+            var userResolver = this.userResolverFactory.Create(cameraToAccessControlMapping.UserResolver)
+
+            return;
+
+            await accessControlConnector.OpenAsync(
+                host: cameraToAccessControlMapping.Host,
                 port: cameraToAccessControlMapping.Port,
                 channel: cameraToAccessControlMapping.Channel,
                 username: cameraToAccessControlMapping.Username,
@@ -76,7 +83,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                                                 .GroupBy(g => new
                                                 {
                                                     g.Type,
-                                                    g.IPAddress,
+                                                    g.Host,
                                                     g.Port,
                                                     g.Username,
                                                     g.Password
@@ -85,10 +92,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             foreach (var uniqueMapping in uniqueAccessControls)
             {
-                var relayConnector = this.relayConnectorFactory.Create(uniqueMapping.Key.Type);
+                var accessControlConnector = this.accessControlConnectorFactory.Create(uniqueMapping.Key.Type);
 
-                await relayConnector.SendKeepAliveAsync(
-                    ipAddress: uniqueMapping.Key.IPAddress,
+                await accessControlConnector.SendKeepAliveAsync(
+                    host: uniqueMapping.Key.Host,
                     port: uniqueMapping.Key.Port,
                     channel: uniqueMapping.First().Channel,
                     username: uniqueMapping.Key.Username,
