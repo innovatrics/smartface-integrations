@@ -16,10 +16,10 @@ To run application localy, follow these steps
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.3 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.3 registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:1.3`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-relayconnector:latest`
+ - `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.1 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.1 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.1`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
 
 ## Usage
 Add following pattern to existing docker compose:
@@ -36,8 +36,8 @@ Add following pattern to existing docker compose:
       - 8000:8000
     env_file: .env.sfstation
 
-  relayconnector:
-    image: ${REGISTRY}integrations-relayconnector
+  access-control-connector:
+    image: ${REGISTRY}integrations-access-control-connector
     container_name: SFAccessControlConnector
     restart: unless-stopped
     environment:

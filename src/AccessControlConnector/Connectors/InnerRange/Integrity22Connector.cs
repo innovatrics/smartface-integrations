@@ -31,7 +31,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
 
         public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            this.logger.Information("Send Open to {host}:{port}/do_value/slot_0/ and channel: {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Channel);
+            this.logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
             var cardData = await this.getCardDataAsync(
                 accessControlMapping.Host, 
@@ -40,6 +40,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
                 accessControlMapping.Password, 
                 accessControlUserId
             );
+
+            if (cardData == null)
+            {
+                this.logger.Warning("No CardData found for {accessControlUserId}", accessControlUserId);
+                return;
+            }
 
             await this.sendOpenAsync(
                 accessControlMapping.Host, 
@@ -72,7 +78,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
 
             if (File.Exists(filePath))
             {
-                return await File.ReadAllTextAsync(filePath);
+                var cardData = await File.ReadAllTextAsync(filePath);
+                
+                this.logger.Information("Return {cardData} for {cardNumber} from cache", cardData, cardNumber);
+                
+                return cardData;
             }
 
             var httpClient = this.httpClientFactory.CreateClient();
@@ -89,10 +99,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
 
-            var result = await httpClient.SendAsync(httpRequest);
-            string resultContent = await result.Content.ReadAsStringAsync();
+            var httpResponse = await httpClient.SendAsync(httpRequest);
+            
+            httpResponse.EnsureSuccessStatusCode();
+            
+            string httpResponseStringContent = await httpResponse.Content.ReadAsStringAsync();
 
-            var cardResults = XmlHelper.DeserializeXml<CardResults>(resultContent);
+            var cardResults = XmlHelper.DeserializeXml<CardResults>(httpResponseStringContent);
 
             if (cardResults?.Count != 1)
             {
@@ -108,26 +121,28 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
 
         private async Task sendOpenAsync(string host, int? port, string username, string password, string cardData, string readerModuleID, int readerNumber)
         {
-            var cardDirectory = Path.Combine(AppContext.BaseDirectory, "data", "cards");
-
             var httpClient = this.httpClientFactory.CreateClient();
 
             // http://192.168.10.22:15108/CardBadge?CardData=250000000000000047D4A3D1&ReaderModuleID=77407156193722391&ReaderNumber=2 
             var requestUri = $"http://{host}:{port}/CardBadge?CardData={cardData}&ReaderModuleID={readerModuleID}&ReaderNumber={readerNumber}";
 
-            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            this.logger.Information("sendOpenAsync to {url}", requestUri);
+
+            var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
             if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
             {
                 var authenticationString = $"{username}:{password}";
                 var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
 
-                httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
 
-            var httpRequest = await httpClient.SendAsync(httpRequestMessage);
+            var httpResponse = await httpClient.SendAsync(httpRequest);
             
-            httpRequest.EnsureSuccessStatusCode();
+            httpResponse.EnsureSuccessStatusCode();
+
+            this.logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
         }
     }
 }
