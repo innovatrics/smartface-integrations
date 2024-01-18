@@ -1,21 +1,21 @@
 using System;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 {
-    public class AccessControlConnectorFactory : IAccessControlConnectorFactory
+    public class UserResolverFactory : IUserResolverFactory
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public AccessControlConnectorFactory(
+        public UserResolverFactory(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory
@@ -26,14 +26,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public IAccessControlConnector Create(string type)
+        public IUserResolver Create(string type)
         {
             if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));
             }
 
-            this.logger.Information("Creating IAccessControlConnector for type {type}", type);
+            this.logger.Information("Creating IUserResolver for type {type}", type);
 
             type = type
                     .ReplaceAll(new string[] { "-", " ", "." }, new string[] { "_", "_", "_" })
@@ -42,16 +42,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
             switch (type)
             {
                 default:
-                    throw new NotImplementedException($"AccessControl of type {type} not supported");
+                    throw new NotImplementedException($"IUserResolver of type {type} not supported");
 
-                case "ADVANTECH_WISE_4000":
-                    return new AdvantechWISE400Connector(this.logger, this.configuration, this.httpClientFactory);
-                
-                case "INNERRANGE_INTEGRITY_22":
-                    return new Integrity22Connector(this.logger, this.configuration, this.httpClientFactory);
-
-                case "TRAFFICLIGHT":
-                    return new TrafficLightConnector(this.logger, this.configuration, this.httpClientFactory);
+                case "LABEL_ACCESS_CARD_ID":
+                    return new WatchlistMemberLabelUserResolver(this.logger, this.configuration, this.httpClientFactory, type);
             }
         }
     }

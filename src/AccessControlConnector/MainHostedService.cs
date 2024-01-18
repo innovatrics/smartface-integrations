@@ -79,6 +79,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             grpcNotificationReader = this.CreateGrpcReader();
 
             grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
+
             grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
             {
                 this.logger.Information("Processing 'DENIED' notification {@notification}", new

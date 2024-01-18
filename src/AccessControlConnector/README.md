@@ -17,9 +17,9 @@ To run application localy, follow these steps
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.3 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.3 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.3`
+ - `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.7 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.7 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.7`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
 
 ## Usage
@@ -45,10 +45,10 @@ Add following pattern to existing docker compose:
       - AccessController__Host=SFAccessController
       - AccessController__Port=80
       - AccessControlMapping__0__StreamId=ec0437ae-7716-4141-99d9-a9b2a4dd2106
-      - AccessControlMapping__0__IpAddress=ip-of-the-relay
+      - AccessControlMapping__0__Host=ip-of-the-relay
       - AccessControlMapping__0__Channel=3
       - AccessControlMapping__1__StreamId=d5ff8f40-f900-4492-8ecc-6a2539648964
-      - AccessControlMapping__1__IpAddress=ip-of-the-relay
+      - AccessControlMapping__1__Host=ip-of-the-relay
       - AccessControlMapping__1__Channel=3
 
 networks:
