@@ -72,14 +72,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 }
             }
 
-            await accessControlConnector.OpenAsync(
-                host: cameraToAccessControlMapping.Host,
-                port: cameraToAccessControlMapping.Port,
-                channel: cameraToAccessControlMapping.Channel,
-                username: cameraToAccessControlMapping.Username,
-                password: cameraToAccessControlMapping.Password,
-                accessControlUserId: accessControlUser
-            );
+            await accessControlConnector.OpenAsync(cameraToAccessControlMapping, accessControlUser);
         }
 
         public async Task SendKeepAliveSignalAsync()

@@ -8,7 +8,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
         public Guid StreamId                            { get; set; }
         public string Host                              { get; set; }
         public int? Port                                { get; set; }
-        public int? Channel                             { get; set; }
 
         public string Username                          { get; set; }
         public string Password                          { get; set; }
@@ -16,5 +15,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
         public string[] WatchlistExternalIds            { get; set; }
         public string UserResolver                      { get; set; }
 
+        public int? Channel                             { get; set; }
+        public string Reader                            { get; set; }
     }
 }

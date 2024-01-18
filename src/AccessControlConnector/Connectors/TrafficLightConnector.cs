@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
@@ -27,13 +28,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             this.logger.Information("Traffic Light Connector Created!");
         }
 
-        public async Task OpenAsync(string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
+        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            this.logger.Information("Send Open to {host}:{port}/go", host, port);
+            this.logger.Information("Send Open to {host}:{port}/go", accessControlMapping.Host, accessControlMapping.Port);
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"http://{host}:{port}/go";
+            var requestUri = $"http://{accessControlMapping.Host}:{accessControlMapping.Port}/go";
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
