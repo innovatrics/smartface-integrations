@@ -33,13 +33,15 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
         {
             this.logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
-            var cardData = await this.getCardDataAsync(
-                accessControlMapping.Host, 
-                accessControlMapping.Port, 
-                accessControlMapping.Username, 
-                accessControlMapping.Password, 
-                accessControlUserId
-            );
+            // var cardData = await this.getCardDataAsync(
+            //     accessControlMapping.Host, 
+            //     accessControlMapping.Port, 
+            //     accessControlMapping.Username, 
+            //     accessControlMapping.Password, 
+            //     accessControlUserId
+            // );
+
+            var cardData = $"20000000000000000{accessControlUserId}";
 
             if (cardData == null)
             {
@@ -124,7 +126,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             var httpClient = this.httpClientFactory.CreateClient();
 
             // http://192.168.10.22:15108/CardBadge?CardData=250000000000000047D4A3D1&ReaderModuleID=77407156193722391&ReaderNumber=2 
-            var requestUri = $"http://{host}:{port}/CardBadge?CardData={cardData}&ReaderModuleID={readerModuleID}&ReaderNumber={readerNumber}";
+            var requestUri = $"http://{host}:{port}/CardBadge?CardData={cardData}&CardBitLength=32&ReaderModuleID={readerModuleID}&ReaderNumber={readerNumber}";
 
             this.logger.Information("sendOpenAsync to {url}", requestUri);
 
