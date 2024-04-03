@@ -78,6 +78,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace
 
             services.AddSingleton<IMyQConnectorFactory, MyQConnectorFactory>();
             services.AddSingleton<IBridgeService, BridgeService>();
+            services.AddSingleton<IConfigurationAdapter, ConfigurationAdapter>();
 
             services.AddHostedService<MainHostedService>();
 
