@@ -18,7 +18,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Services
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly IMyQConnectorFactory AEpuConnectorFactory;
+        private readonly IMyQConnectorFactory myQConnectorFactory;
 
         public BridgeService(
             ILogger logger,
@@ -90,7 +90,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Services
             return true;
         }
 
-        private AEpuMapping getCameraMapping(string streamId)
+        private MyQMapping getCameraMapping(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
             {

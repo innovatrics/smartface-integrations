@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
-using Innovatrics.SmartFace.Integrations.AEpuConnector.Connectors;
+using Innovatrics.SmartFace.Integrations.MyQConnector.Connectors;
 
-namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Factories
+namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
 {
-    public interface IAEpuConnectorFactory
+    public interface IMyQConnectorFactory
     {
-        IAEpuConnector Create(string type);
+        MyQConnector Create(string type);
     }
 }

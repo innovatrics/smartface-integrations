@@ -8,13 +8,13 @@ using Innovatrics.SmartFace.Integrations.MyQConnector.Connectors;
 
 namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
 {
-    public class MyQConnector : IMyQConnector
+    public class MyQConnectorFactory : IMyQConnectorFactory
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public AEpuConnectorFactory(
+        public MyQConnectorFactory(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory
@@ -25,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public IAEpuConnector Create(string type)
+        public MyQConnector Create(string type)
         {
             if (type == null)
             {
@@ -43,8 +43,8 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
                 default:
                     throw new NotImplementedException($"MyQConnector of type {type} not supported");
 
-                case "AEPU":
-                    return new Connectors.AEpuConnector(this.logger, this.configuration, this.httpClientFactory);
+                case "MyQ":
+                    return new Connectors.MyQConnector(this.logger, this.configuration, this.httpClientFactory);
             }
         }
     }

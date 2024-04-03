@@ -18,7 +18,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
 
         private Socket socket;
 
-        public AEpuConnector(
+        public MyQConnector(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory
