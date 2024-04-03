@@ -6,6 +6,6 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
 {
     public interface IMyQConnector
     {
-        Task OpenAsync(string aepuHostname, int aepuPort, byte[] clientId);
+        Task OpenAsync(string aepuHostname, int aepuPort);
     }
 }

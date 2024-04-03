@@ -49,7 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
             }
         }
 
-        public async Task OpenAsync(string aepuHostname, int aepuPort, byte[] clientId)
+        public async Task OpenAsync(string aepuHostname, int aepuPort)
         {
             this.logger.Information("Sending ipBadge to {AEpuHostname}:{AEpuPort}", aepuHostname, aepuPort);
 
@@ -60,11 +60,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
                     socket = await CreateOpenSocketAsync(aepuHostname, aepuPort);
                 }
 
-                if (clientId.Length > 28 || clientId.Length < 1)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(clientId), clientId, "ClientID must be in range of 1 to 28 bytes");
-                }
-
+                /*
                 var messageBytes = new byte[2 + clientId.Length + 2];
                 messageBytes[0] = 0x02;
                 messageBytes[1] = (byte)clientId.Length;
@@ -112,7 +108,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
                 {
                     this.logger.Error("Unexpected exception : {0}", e.ToString());
                 }
-
+                */
             }
 
             catch (Exception e)

@@ -38,57 +38,33 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            var cameraToAEpuMapping = this.getCameraMapping(notification.StreamId);
+            var cameraToMyQMapping = this.getCameraMapping(notification.StreamId);
 
-            if (cameraToAEpuMapping == null)
+            if (cameraToMyQMapping == null)
             {
                 this.logger.Information("Stream {streamId} has not any mapping to AEpu", notification.StreamId);
                 return;
             }
 
-            if (cameraToAEpuMapping.WatchlistExternalIds != null)
+            if (cameraToMyQMapping.WatchlistExternalIds != null)
             {
-                if (cameraToAEpuMapping.WatchlistExternalIds.Length > 0 && !cameraToAEpuMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
+                if (cameraToMyQMapping.WatchlistExternalIds.Length > 0 && !cameraToMyQMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
                 {
                     this.logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.", notification.WatchlistExternalId, notification.StreamId);
                     return;
                 }
             }
 
-            if (!this.tryParseClientId(notification.WatchlistMemberExternalId, out var encodedClientId))
-            {
-                this.logger.Information("WatchlistMember {WatchlistMemberExternalId} did not pass validation criteria", notification.WatchlistMemberExternalId);
-                return;
-            }
+            var MyQConnector = this.MyQConnectorFactory.Create(cameraToMyQMapping.Type);
 
-            var MyQConnector = this.MyQConnectorFactory.Create(cameraToAEpuMapping.Type);
-
-            this.logger.Information("Open {AEpuHostname} for user {WatchlistMemberFullName} ({WatchlistMemberID})", cameraToAEpuMapping.AEpuHostname, notification.WatchlistMemberFullName, notification.WatchlistMemberExternalId);
+            this.logger.Information("Open {AEpuHostname} for user {WatchlistMemberFullName} ({WatchlistMemberID})", cameraToMyQMapping.AEpuHostname, notification.WatchlistMemberFullName, notification.WatchlistMemberExternalId);
 
             await MyQConnector.OpenAsync(
-                aepuHostname: cameraToAEpuMapping.AEpuHostname,
-                aepuPort: cameraToAEpuMapping.AEpuPort,
-                clientId: encodedClientId
+                aepuHostname: cameraToMyQMapping.AEpuHostname,
+                aepuPort: cameraToMyQMapping.AEpuPort
             );
         }
 
-        private bool tryParseClientId(
-            string watchlistExternalId,
-            out byte[] clientId
-        )
-        {
-            clientId = null;
-            var watchlistIdAsBytes = Encoding.UTF8.GetBytes(watchlistExternalId);
-
-            if (watchlistIdAsBytes.Length > 28 || watchlistIdAsBytes.Length < 1)
-            {
-                this.logger.Debug($"{nameof(watchlistExternalId)} converted to byte[] must be in range of 1 to 28 bytes, current length: {watchlistIdAsBytes.Length}");
-                return false;
-            }
-
-            clientId = watchlistIdAsBytes;
-            return true;
-        }
 
         private MyQMapping getCameraMapping(string streamId)
         {
