@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using Innovatrics.SmartFace.Integrations.MyQConnector.Connectors;
+using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
+namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories
 {
     public interface IMyQConnectorFactory
     {

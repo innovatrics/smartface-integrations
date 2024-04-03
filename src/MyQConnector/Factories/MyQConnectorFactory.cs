@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-using Innovatrics.SmartFace.Integrations.MyQConnector.Connectors;
+using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
+namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories
 {
     public class MyQConnectorFactory : IMyQConnectorFactory
     {
@@ -26,7 +26,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
         }
 
         public MyQConnector Create(string type)
-        {
+        {https://msdn.microsoft.com/query/roslyn.query?appId%3Droslyn%26k%3Dk%28CS0118%29
             if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));

@@ -7,9 +7,9 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessController.Readers;
-using Innovatrics.SmartFace.Integrations.MyQConnector.Services;
+using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnector
+namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace
 {
     public class MainHostedService : IHostedService
     {

@@ -8,17 +8,17 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
-using Innovatrics.SmartFace.Integrations.MyQConnector.Models;
-using Innovatrics.SmartFace.Integrations.MyQConnector.Factories;
+using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Models;
+using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories;
 
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnector.Services
+namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services
 {
     public class BridgeService : IBridgeService
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly IMyQConnectorFactory myQConnectorFactory;
+        private readonly IMyQConnectorFactory MyQConnectorFactory;
 
         public BridgeService(
             ILogger logger,
@@ -61,11 +61,11 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Services
                 return;
             }
 
-            var AEpuConnector = this.AEpuConnectorFactory.Create(cameraToAEpuMapping.Type);
+            var MyQConnector = this.MyQConnectorFactory.Create(cameraToAEpuMapping.Type);
 
             this.logger.Information("Open {AEpuHostname} for user {WatchlistMemberFullName} ({WatchlistMemberID})", cameraToAEpuMapping.AEpuHostname, notification.WatchlistMemberFullName, notification.WatchlistMemberExternalId);
 
-            await AEpuConnector.OpenAsync(
+            await MyQConnector.OpenAsync(
                 aepuHostname: cameraToAEpuMapping.AEpuHostname,
                 aepuPort: cameraToAEpuMapping.AEpuPort,
                 clientId: encodedClientId

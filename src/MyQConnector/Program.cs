@@ -7,10 +7,10 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
-using Innovatrics.SmartFace.Integrations.MyQConnector.Factories;
-using Innovatrics.SmartFace.Integrations.MyQConnector.Services;
+using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories;
+using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnector
+namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace
 {
     public class Program
     {
@@ -76,7 +76,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
 
-            services.AddSingleton<IAEpuConnectorFactory, AEpuConnectorFactory>();
+            services.AddSingleton<IMyQConnectorFactory, MyQConnectorFactory>();
             services.AddSingleton<IBridgeService, BridgeService>();
 
             services.AddHostedService<MainHostedService>();

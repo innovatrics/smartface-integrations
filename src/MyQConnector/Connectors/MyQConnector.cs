@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
+namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
 {
     public class MyQConnector : IMyQConnector
     {

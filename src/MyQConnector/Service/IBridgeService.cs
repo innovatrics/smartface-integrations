@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnector.Services
+namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services
 {
     public interface IBridgeService
     {
