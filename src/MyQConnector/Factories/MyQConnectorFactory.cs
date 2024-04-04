@@ -26,7 +26,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories
         }
 
         public MyQConnector Create(string type)
-        {https://msdn.microsoft.com/query/roslyn.query?appId%3Droslyn%26k%3Dk%28CS0118%29
+        {
             if (type == null)
             {
                 throw new ArgumentNullException(nameof(type));

@@ -42,9 +42,16 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services
 
             if (cameraToMyQMapping == null)
             {
-                this.logger.Information("Stream {streamId} has not any mapping to AEpu", notification.StreamId);
+                this.logger.Information("Stream {streamId} has not any mapping to MyQ Print", notification.StreamId);
                 return;
             }
+
+            if (cameraToMyQMapping.PrinterSn == null)
+            {
+                this.logger.Information("Printer Serial Number needs to be mapped");
+                return;
+            }
+
 
             if (cameraToMyQMapping.WatchlistExternalIds != null)
             {
@@ -57,11 +64,11 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services
 
             var MyQConnector = this.MyQConnectorFactory.Create(cameraToMyQMapping.Type);
 
-            this.logger.Information("Open {AEpuHostname} for user {WatchlistMemberFullName} ({WatchlistMemberID})", cameraToMyQMapping.AEpuHostname, notification.WatchlistMemberFullName, notification.WatchlistMemberExternalId);
+            this.logger.Information("Open {MyQHostname} printer: {PrinterSn} for user {WatchlistMemberFullName} ({WatchlistMemberID})", cameraToMyQMapping.MyQHostname, cameraToMyQMapping.PrinterSn, notification.WatchlistMemberFullName, notification.WatchlistMemberExternalId);
 
             await MyQConnector.OpenAsync(
-                aepuHostname: cameraToMyQMapping.AEpuHostname,
-                aepuPort: cameraToMyQMapping.AEpuPort
+                myqHostname: cameraToMyQMapping.MyQHostname,
+                myqPort: cameraToMyQMapping.MyQPort
             );
         }
 

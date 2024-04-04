@@ -6,8 +6,9 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Models
     {
         public string Type                              { get; set; } = "MyQ";
         public Guid StreamId                            { get; set; }
-        public string AEpuHostname                      { get; set; }
-        public int AEpuPort                             { get; set; } = 80;
+        public string MyQHostname                      { get; set; }
+        public int MyQPort                             { get; set; } = 80;
+        public string PrinterSn                         { get; set; }
 
         public string[] WatchlistExternalIds            { get; set; }
     }

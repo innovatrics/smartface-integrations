@@ -17,6 +17,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
         private readonly IHttpClientFactory httpClientFactory;
 
         private Socket socket;
+        private string PrinterConnection;
 
         public MyQConnector(
             ILogger logger,
@@ -27,38 +28,50 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-
             this.socket = null;
+
         }
 
-        private async Task<Socket> CreateOpenSocketAsync(string aepuHostname, int aepuPort)
+        private async Task<Socket> CreateOpenSocketAsync(string myqHostname, int myqPort)
         {
             try
             {
                 var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                await socket.ConnectAsync(aepuHostname, aepuPort);
+                await socket.ConnectAsync(myqHostname, myqPort);
 
-                this.logger.Information($"Socket connected to {aepuHostname}:{aepuPort}");
+                this.logger.Information($"Socket connected to {myqHostname}:{myqPort}");
 
                 return socket;
             }
             catch (Exception ex)
             {
-                this.logger.Error(ex, $"Socket failed to connect to {aepuHostname}:{aepuPort}");
+                this.logger.Error(ex, $"Socket failed to connect to {myqHostname}:{myqPort}");
                 throw ex;
             }
         }
 
-        public async Task OpenAsync(string aepuHostname, int aepuPort)
+        public async Task OpenAsync(string myqHostname, int myqPort)
         {
-            this.logger.Information("Sending ipBadge to {AEpuHostname}:{AEpuPort}", aepuHostname, aepuPort);
+            this.logger.Information("Sending ipBadge to {myqHostname}:{myqPort}", myqHostname, myqPort);
 
             try
             {
                 if (socket == null)
                 {
-                    socket = await CreateOpenSocketAsync(aepuHostname, aepuPort);
+                    socket = await CreateOpenSocketAsync(myqHostname, myqPort);
                 }
+
+                // DO REST API CALLS
+
+                /*
+
+                - check if the printer is already unlocked
+                - if it is not unlocked proceed
+                - find out email address of the user, find users account code
+                - get authentication token
+                - unlock printer
+
+                */
 
                 /*
                 var messageBytes = new byte[2 + clientId.Length + 2];

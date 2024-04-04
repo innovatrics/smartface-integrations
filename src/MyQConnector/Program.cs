@@ -71,14 +71,11 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace
             services.AddHttpClient();
 
             services.AddSingleton<ILogger>(logger);
-
             services.AddSingleton<IGrpcStreamSubscriber, GrpcStreamSubscriber>();
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
-
             services.AddSingleton<IMyQConnectorFactory, MyQConnectorFactory>();
             services.AddSingleton<IBridgeService, BridgeService>();
-            services.AddSingleton<IConfigurationAdapter, ConfigurationAdapter>();
 
             services.AddHostedService<MainHostedService>();
 
