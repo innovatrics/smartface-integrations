@@ -64,11 +64,12 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services
 
             var MyQConnector = this.MyQConnectorFactory.Create(cameraToMyQMapping.Type);
 
-            this.logger.Information("Open {MyQHostname} printer: {PrinterSn} for user {WatchlistMemberFullName} ({WatchlistMemberID})", cameraToMyQMapping.MyQHostname, cameraToMyQMapping.PrinterSn, notification.WatchlistMemberFullName, notification.WatchlistMemberExternalId);
+            this.logger.Information("Opening printer: {PrinterSn} for user {WatchlistMemberFullName} ({WatchlistMemberID}) on streamID {StreamId}", cameraToMyQMapping.PrinterSn, notification.WatchlistMemberFullName, notification.WatchlistMemberExternalId, cameraToMyQMapping.StreamId);
 
             await MyQConnector.OpenAsync(
-                myqHostname: cameraToMyQMapping.MyQHostname,
-                myqPort: cameraToMyQMapping.MyQPort
+                myqPrinter: cameraToMyQMapping.PrinterSn,
+                myqStreamId: cameraToMyQMapping.StreamId,
+                watchlistMemberId: notification.WatchlistMemberId
             );
         }
 

@@ -7,6 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
+using System.Collections.Generic;
+using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace;
+using Newtonsoft.Json;
+using Innovatrics.SmartFace.Integrations.AeosSync.Nswag;
+using Innovatrics.SmartFace.Models.API;
+
 
 namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
 {
@@ -19,6 +25,14 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
         private Socket socket;
         private string PrinterConnection;
 
+        private string clientId;
+        private string clientSecret;
+        private string scope;
+        private int loginInfoType;
+        private string MyQHostname;
+        private int MyQPort;
+        private string SmartFaceURL;
+
         public MyQConnector(
             ILogger logger,
             IConfiguration configuration,
@@ -29,7 +43,14 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             this.socket = null;
-
+            
+            clientId = configuration.GetValue<string>("MyQConfiguration:clientId") ?? throw new InvalidOperationException("clientId is required");
+            clientSecret = configuration.GetValue<string>("MyQConfiguration:clientSecret") ?? throw new InvalidOperationException("clientSecret is required");
+            scope = configuration.GetValue<string>("MyQConfiguration:scope") ?? throw new InvalidOperationException("scope is required");
+            loginInfoType = configuration.GetValue<int>("MyQConfiguration:loginInfoType");
+            MyQHostname = configuration.GetValue<string>("MyQConfiguration:MyQHostname") ?? throw new InvalidOperationException("MyQHostname is required");
+            MyQPort = configuration.GetValue<int>("MyQConfiguration:MyQPort");
+            SmartFaceURL = configuration.GetValue<string>("MyQConfiguration:SmartFaceURL");
         }
 
         private async Task<Socket> CreateOpenSocketAsync(string myqHostname, int myqPort)
@@ -50,39 +71,135 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
             }
         }
 
-        public async Task OpenAsync(string myqHostname, int myqPort)
+        public async Task OpenAsync(string myqPrinter, Guid myqStreamId, string watchlistMemberId)
         {
-            this.logger.Information("Sending ipBadge to {myqHostname}:{myqPort}", myqHostname, myqPort);
+            this.logger.Information("MyQ Printer Unlocking");
 
-            try
-            {
-                if (socket == null)
-                {
-                    socket = await CreateOpenSocketAsync(myqHostname, myqPort);
-                }
+            /*  
+            this.logger.Information(this.clientId);
+            this.logger.Information(this.clientSecret);
+            this.logger.Information(this.scope);
+            this.logger.Information((this.loginInfoType).ToString());
+            this.logger.Information(this.MyQHostname);
+            this.logger.Information((this.MyQPort).ToString());
+            */
 
-                // DO REST API CALLS
+            // DO REST API CALLS
 
                 /*
 
                 - check if the printer is already unlocked
                 - if it is not unlocked proceed
-                - find out email address of the user, find users account code
-                - get authentication token
-                - unlock printer
+                - find out email address of the user from the SmartFace, use the email as a card token
+                - get authentication token DONE
+                - unlock printer DONE
 
                 */
 
-                
+                this.logger.Information($"WatchlistMemberID: {watchlistMemberId}");              
 
+                // Define OAuth2 parameters
+                string tokenEndpoint = $"https://{MyQHostname}:{MyQPort}/api/auth/token";
+                string loginInfoCard = "INNOVATRICS_164607";
 
-                
-            }
+                // Create an instance of HttpClientHandler with SSL certificate validation bypassed
+                var handler = new HttpClientHandler();
+                handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
 
-            catch (Exception e)
-            {
-                this.logger.Error(e.ToString());
-            }
+                // Create an instance of HttpClient with the custom handler
+                using (HttpClient client = new HttpClient(handler))
+                {
+                    try
+                    {
+                        var smartfaceGetWLMEndpointUrl = $"{SmartFaceURL}/api/v1/WatchlistMembers/{watchlistMemberId}";
+
+                        // get user email address from the SmartFace here:
+                         // Make a POST request with JSON payload to the subsequent API endpoint
+                        HttpResponseMessage getEmailResponse = await client.GetAsync(smartfaceGetWLMEndpointUrl);
+
+                        // Check if the response is successful (status code 200)
+                        if (getEmailResponse.IsSuccessStatusCode)
+                        {
+                            // Read the response content as a string
+                            string responseData = await getEmailResponse.Content.ReadAsStringAsync();
+                            this.logger.Information($"Returned Data: {responseData}" );
+                        }
+                        else
+                        {
+                            // If the response is not successful, display the status code
+                            this.logger.Error($"Error while returning WLM data: " + getEmailResponse.StatusCode + "; " + await getEmailResponse.Content.ReadAsStringAsync());
+                        }
+                    
+                        // now process the responseData and get the email from the labels
+                        // [22:23:10 Information] Returned Data: {"displayName":"Juraj","fullName":null,"note":"","labels":[{"key":"email","value":"juraj.beres@innovatrics.com"}],"id":"fe5a4b72-4233-40bd-b584-476c767e94b9","createdAt":"2024-04-03T12:41:42.859634Z","updatedAt":"2024-04-04T14:12:16.743079Z"} {} 
+                        // Error: Response status code does not indicate success: 400 (Bad Request).
+
+                        // Create JSON payload for the token request
+                        var jsonInput = JsonConvert.SerializeObject(new {
+                            grant_type = "login_info",
+                            client_id = clientId,
+                            client_secret = clientSecret,
+                            login_info = new {
+                                type = loginInfoType,
+                                card = loginInfoCard
+                            },
+                            scope
+                        });
+
+                        // Convert JSON payload to StringContent
+                        var tokenpayloadContent = new StringContent(jsonInput, Encoding.UTF8, "application/json");
+
+                        // Make a POST request to the token endpoint
+                        HttpResponseMessage tokenResponse = await client.PostAsync(tokenEndpoint, tokenpayloadContent);
+                        tokenResponse.EnsureSuccessStatusCode();
+
+                        string responseBody = await tokenResponse.Content.ReadAsStringAsync();
+
+                        var tokenJson = Newtonsoft.Json.Linq.JObject.Parse(responseBody);
+                        string accessToken = tokenJson.Value<string>("access_token");
+
+                        // Use the obtained access token for subsequent requests
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                        // Specify the URL of the REST API endpoint
+                        string apiUrl = $"https://{MyQHostname}:{MyQPort}/api/v3/printers/unlock";
+
+                        // Create JSON payload for the subsequent API call
+                        string jsonPayload = @"
+                        {
+                            ""sn"": """ + myqPrinter + @""",
+                            ""account"": """ + accessToken + @"""
+                        }";
+
+                        var jsonRequestInput = JsonConvert.SerializeObject(new{
+                            sn = myqPrinter,
+                            account = accessToken
+                        });
+                        
+                        var payloadContent = new StringContent(jsonRequestInput, Encoding.UTF8, "application/json");
+
+                         // Make a POST request with JSON payload to the subsequent API endpoint
+                        HttpResponseMessage response = await client.PostAsync(apiUrl, payloadContent);
+
+                        // Check if the response is successful (status code 200)
+                        if (response.IsSuccessStatusCode)
+                        {
+                            // Read the response content as a string
+                            string responseData = await response.Content.ReadAsStringAsync();
+                            this.logger.Information($"Printer {myqPrinter} unlocked on streamId {myqStreamId}");
+                        }
+                        else
+                        {
+                            // If the response is not successful, display the status code
+                            this.logger.Warning($"Unlocking failed for printer {myqPrinter}. " + response.StatusCode + "; " + await response.Content.ReadAsStringAsync());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Handle any exceptions that occur during the API call
+                        Console.WriteLine("Error: " + ex.Message);
+                    }
+                }
 
         }
 

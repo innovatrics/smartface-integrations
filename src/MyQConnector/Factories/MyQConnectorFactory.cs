@@ -43,7 +43,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories
                 default:
                     throw new NotImplementedException($"MyQConnector of type {type} not supported");
 
-                case "MyQ":
+                case "MYQ":
                     return new Connectors.MyQConnector(this.logger, this.configuration, this.httpClientFactory);
             }
         }
