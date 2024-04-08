@@ -77,27 +77,6 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
         {
             this.logger.Information("MyQ Printer Unlocking");
 
-            /*  
-            this.logger.Information(this.clientId);
-            this.logger.Information(this.clientSecret);
-            this.logger.Information(this.scope);
-            this.logger.Information((this.loginInfoType).ToString());
-            this.logger.Information(this.MyQHostname);
-            this.logger.Information((this.MyQPort).ToString());
-            */
-
-            // DO REST API CALLS
-
-                /*
-
-                - check if the printer is already unlocked
-                - if it is not unlocked proceed
-                - find out email address of the user from the SmartFace, use the email as a card token
-                - get authentication token DONE
-                - unlock printer DONE
-
-                */
-
                 this.logger.Information($"WatchlistMemberID: {watchlistMemberId}");              
 
                 // Define OAuth2 parameters
@@ -106,6 +85,8 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
 
                 // Create an instance of HttpClientHandler with SSL certificate validation bypassed
                 var handler = new HttpClientHandler();
+
+                // POC - enable usage of non-certificated MyQ/SmartFace https server
                 handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
 
                 // Create an instance of HttpClient with the custom handler
@@ -115,8 +96,8 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
                     {
                         var smartfaceGetWLMEndpointUrl = $"{SmartFaceURL}/api/v1/WatchlistMembers/{watchlistMemberId}";
 
-                        // get user email address from the SmartFace here:
-                         // Make a POST request with JSON payload to the subsequent API endpoint
+                        // get user email address from the SmartFace here
+                        // Make a POST request with JSON payload to the subsequent API endpoint
                         HttpResponseMessage getEmailResponse = await client.GetAsync(smartfaceGetWLMEndpointUrl);
 
                         // Check if the response is successful (status code 200)
@@ -124,7 +105,6 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
                         {
                             // Read the response content as a string
                             string responseData = await getEmailResponse.Content.ReadAsStringAsync();
-                            this.logger.Information($"Returned Data: {responseData}" );
 
                             // Parse the JSON response
                             var jsonObject = JObject.Parse(responseData);
