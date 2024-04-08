@@ -17,7 +17,7 @@ To run the application locally, follow these steps
 - navigate to the root of this repo
 - run the following commands
  - `docker build -f src/MyQConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1 registry.gitlab.com/innovatrics/smartface/integrations-amyqconnector:latest`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1 registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest`
 
