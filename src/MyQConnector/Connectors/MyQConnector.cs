@@ -111,70 +111,127 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
                         // Output the email value
                         this.logger.Information($"Email of {displayName}: {email}");
 
-                        loginInfoCard = email;
-
+                        // authorize to get info
+                        this.logger.Information("Authorizing for getting user info");
+                        
                         // Create JSON payload for the token request
-                        var jsonInput = JsonConvert.SerializeObject(new
+                        var jsonInputGetInfo = JsonConvert.SerializeObject(new
                         {
-                            grant_type = "login_info",
+                            grant_type = "client_credentials",
                             client_id = clientId,
                             client_secret = clientSecret,
-                            login_info = new
-                            {
-                                type = loginInfoType,
-                                card = loginInfoCard
-                            },
                             scope
                         });
 
                         // Convert JSON payload to StringContent
-                        var tokenpayloadContent = new StringContent(jsonInput, Encoding.UTF8, "application/json");
+                        var tokenpayloadContentGetInfo = new StringContent(jsonInputGetInfo, Encoding.UTF8, "application/json");
 
                         // Make a POST request to the token endpoint
-                        HttpResponseMessage tokenResponse = await client.PostAsync(tokenEndpoint, tokenpayloadContent);
-                        tokenResponse.EnsureSuccessStatusCode();
+                        HttpResponseMessage tokenResponseGetInfo = await client.PostAsync(tokenEndpoint, tokenpayloadContentGetInfo);
+                        tokenResponseGetInfo.EnsureSuccessStatusCode();
 
-                        string responseBody = await tokenResponse.Content.ReadAsStringAsync();
+                        string responseBodyGetInfo = await tokenResponseGetInfo.Content.ReadAsStringAsync();
 
-                        var tokenJson = Newtonsoft.Json.Linq.JObject.Parse(responseBody);
-                        string accessToken = tokenJson.Value<string>("access_token");
+                        var tokenJsonGetInfo = Newtonsoft.Json.Linq.JObject.Parse(responseBodyGetInfo);
+                        string accessTokenGetInfo = tokenJsonGetInfo.Value<string>("access_token");
+                        this.logger.Information("Got token for that");
 
                         // Use the obtained access token for subsequent requests
-                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessTokenGetInfo);
 
-                        // Specify the URL of the REST API endpoint
-                        string apiUrl = $"https://{MyQHostname}:{MyQPort}/api/v3/printers/unlock";
+                        this.logger.Information("Going to find an email");
+                        // Here we call request to find information about the user
+                        string findUserapiUrl = $"https://{MyQHostname}:{MyQPort}/api/v3/users/find?email={email}";
+                        HttpResponseMessage getUserResponse = await client.GetAsync(findUserapiUrl);
 
-                        // Create JSON payload for the subsequent API call
-                        string jsonPayload = @"
+                        getUserResponse.EnsureSuccessStatusCode();
+
+                        string responseBodyUser = await getUserResponse.Content.ReadAsStringAsync();
+
+                        this.logger.Information(responseBodyUser);
+                        this.logger.Information("Got Email");
+                        
+                        JObject jsonResponse = JObject.Parse(responseBodyUser);
+                    
+                        string user_username;
+                        JArray usersArray = (JArray)jsonResponse["users"];
+                        if (usersArray != null && usersArray.Count > 0)
+                        {
+                            user_username = (string)usersArray[0]["username"];
+                            this.logger.Information("Username: " + user_username);
+                            loginInfoCard = user_username;
+
+                            // Create JSON payload for the token request
+                            var jsonInput = JsonConvert.SerializeObject(new
                             {
-                                ""sn"": """ + myqPrinter + @""",
-                                ""account"": """ + accessToken + @"""
-                            }";
+                                grant_type = "login_info",
+                                client_id = clientId,
+                                client_secret = clientSecret,
+                                login_info = new
+                                {
+                                    type = loginInfoType,
+                                    card = loginInfoCard
+                                },
+                                scope
+                            });
 
-                        var jsonRequestInput = JsonConvert.SerializeObject(new
-                        {
-                            sn = myqPrinter,
-                            account = accessToken
-                        });
+                            // Convert JSON payload to StringContent
+                            var tokenpayloadContent = new StringContent(jsonInput, Encoding.UTF8, "application/json");
 
-                        var payloadContent = new StringContent(jsonRequestInput, Encoding.UTF8, "application/json");
+                            // Make a POST request to the token endpoint
+                            HttpResponseMessage tokenResponse = await client.PostAsync(tokenEndpoint, tokenpayloadContent);
+                            tokenResponse.EnsureSuccessStatusCode();
 
-                        // Make a POST request with JSON payload to the subsequent API endpoint
-                        HttpResponseMessage response = await client.PostAsync(apiUrl, payloadContent);
+                            string responseBody = await tokenResponse.Content.ReadAsStringAsync();
 
-                        // Check if the response is successful (status code 200)
-                        if (response.IsSuccessStatusCode)
-                        {
-                            // Read the response content as a string
-                            string responseDataUnlock = await response.Content.ReadAsStringAsync();
-                            this.logger.Information($"Printer {myqPrinter} unlocked on streamId {myqStreamId}");
+                            var tokenJson = Newtonsoft.Json.Linq.JObject.Parse(responseBody);
+                            string accessToken = tokenJson.Value<string>("access_token");
+
+                            // Use the obtained access token for subsequent requests
+                            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                            // Specify the URL of the REST API endpoint
+                            string apiUrl = $"https://{MyQHostname}:{MyQPort}/api/v3/printers/unlock";
+
+                            // Create JSON payload for the subsequent API call
+                            string jsonPayload = @"
+                                {
+                                    ""sn"": """ + myqPrinter + @""",
+                                    ""account"": """ + accessToken + @"""
+                                }";
+
+                            var jsonRequestInput = JsonConvert.SerializeObject(new
+                            {
+                                sn = myqPrinter,
+                                account = accessToken
+                            });
+
+                            var payloadContent = new StringContent(jsonRequestInput, Encoding.UTF8, "application/json");
+
+                            // Make a POST request with JSON payload to the subsequent API endpoint
+                            HttpResponseMessage response = await client.PostAsync(apiUrl, payloadContent);
+
+                            // Check if the response is successful (status code 200)
+                            if (response.IsSuccessStatusCode)
+                            {
+                                // Read the response content as a string
+                                string responseDataUnlock = await response.Content.ReadAsStringAsync();
+                                this.logger.Information($"Printer {myqPrinter} unlocked on streamId {myqStreamId}");
+                            }
+                            else
+                            {
+                                // If the response is not successful, display the status code
+                                this.logger.Warning($"Unlocking failed for printer {myqPrinter}. " + response.StatusCode + "; " + await response.Content.ReadAsStringAsync());
+                            }
                         }
                         else
                         {
-                            // If the response is not successful, display the status code
-                            this.logger.Warning($"Unlocking failed for printer {myqPrinter}. " + response.StatusCode + "; " + await response.Content.ReadAsStringAsync());
-                        }
+                            this.logger.Error("No users found in the response.");
+                        }                      
+
+                        //loginInfoCard = email;
+
+                        
                     }
                     else
                     {
@@ -186,7 +243,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
                 catch (Exception ex)
                 {
                     // Handle any exceptions that occur during the API call
-                    this.logger.Error("Error: " + ex.Message);
+                    this.logger.Error("Error: " + ex.Message);                    
                 }
             }
         }
