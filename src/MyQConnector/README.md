@@ -71,8 +71,14 @@ MyQMapping__0__StreamId=<smartface-camera-id>
 MyQMapping__0__PrinterSn=<printer-serial-number>
 ```
 
-**3. Apply changes**
+**3. Apply changes to docker**
 To apply changes above, use the command:
 ```
 docker-compose up -d
 ```
+
+**4. Ensure the SmartFace configuration**
+Ensure the Watchlistmembers have filled out a label called **Email**. For more information about how to set and use labels, please read the SmartFace documentation.
+
+**5. Ensure the MyQ configuration**
+Ensure the MyQ users have **sAMAccountName** set as the **Card** and **Personal number** for their MyQ profile. This can be done for example if you have LDAP user synchronization. For more information about the LDAP synchronization, please read the MyQ documentation.
