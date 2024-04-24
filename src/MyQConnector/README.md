@@ -30,6 +30,7 @@ To run the application locally, follow these steps
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest-arm`
 
 ## Usage
+**1. Update docker-compose.yml file**
 Add the following pattern to an existing docker compose:
 
 ```
@@ -47,4 +48,30 @@ networks:
     external:
       name: sf-network
 
+```
+
+**2. Create new environmental file**
+Create/add the file `.env.myq` into the same directory as where the `docker-compose.yml` file is located. Inside the file, switch the provided <values> for your values and credentials.
+
+To get the <clientID> and <clientSecret> values you need to log into your MyQ installation as an administrator. Go into Settings > REST API Apps. There you need to Add a new app. Choose a title, such as SmartFace Integration and add scopes: `users` and `printers`. The <clientID> and <clientSecret> will generated and available to you.
+
+```
+# General configuration
+MyQConfiguration__clientId=<clientID>
+MyQConfiguration__clientSecret=<clientSecret>
+MyQConfiguration__scope=users printers
+MyQConfiguration__loginInfoType=1
+MyQConfiguration__MyQHostname=<myq-server-hostname-or-ip>
+MyQConfiguration__MyQPort=8090
+MyQConfiguration__SmartFaceURL=<smartface-rest-api-url-and-port>
+
+# Camera to printer mapping
+MyQMapping__0__StreamId=<smartface-camera-id>
+MyQMapping__0__PrinterSn=<printer-serial-number>
+```
+
+**3. Apply changes**
+To apply changes above, use the command:
+```
+docker-compose up -d
 ```
