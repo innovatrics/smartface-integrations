@@ -25,6 +25,9 @@ Takes all photos stored in a folder (it does a recursive search in all sub-folde
 ## IFaceManualCall [C#]
 Sample code for using the IFace features manually. 
 
+## MyQ Connector [C#]
+The Connector between the SmartFace and the MyQ print queue system. Adding face biometry for accessing printers.
+
 ## Notifications Receiver [C#]
 Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NotificationsReceiver" >the code</a>.
 
