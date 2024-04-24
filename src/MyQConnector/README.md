@@ -64,6 +64,7 @@ MyQConfiguration__loginInfoType=1
 MyQConfiguration__MyQHostname=<myq-server-hostname-or-ip>
 MyQConfiguration__MyQPort=8090
 MyQConfiguration__SmartFaceURL=<smartface-rest-api-url-and-port>
+MyQConfiguration__BypassSslValidation=<true-false>
 
 # Camera to printer mapping
 MyQMapping__0__StreamId=<smartface-camera-id>
