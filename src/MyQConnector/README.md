@@ -21,6 +21,14 @@ To run the application locally, follow these steps
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest`
 
+ ### Deploy to Docker on Arm
+- navigate to the root of this repo
+- run the following commands
+ - `docker build -f src/MyQConnector/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1-arm .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1-arm registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest-arm`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1-arm`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest-arm`
+
 ## Usage
 Add the following pattern to an existing docker compose:
 
@@ -29,7 +37,7 @@ Add the following pattern to an existing docker compose:
   ...
 
   MyQConnector:
-    image: ${REGISTRY}integrations-myqconnector
+    image: ${REGISTRY}integrations-myqconnector:0.1 
     container_name: SFMyQConnector
     restart: unless-stopped
     env_file: .env.aepu
