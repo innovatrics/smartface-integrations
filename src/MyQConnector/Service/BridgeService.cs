@@ -8,17 +8,17 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
-using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Models;
-using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories;
+using Innovatrics.SmartFace.Integrations.MyQConnector.Models;
+using Innovatrics.SmartFace.Integrations.MyQConnector.Factories;
 
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services
+namespace Innovatrics.SmartFace.Integrations.MyQConnector.Services
 {
     public class BridgeService : IBridgeService
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly IMyQConnectorFactory MyQConnectorFactory;
+        private readonly IMyQConnectorFactory myQConnectorFactory;
 
         public BridgeService(
             ILogger logger,
@@ -28,7 +28,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.MyQConnectorFactory = MyQConnectorFactory ?? throw new ArgumentNullException(nameof(MyQConnectorFactory));
+            this.myQConnectorFactory = MyQConnectorFactory ?? throw new ArgumentNullException(nameof(MyQConnectorFactory));
         }
 
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
@@ -62,11 +62,11 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services
                 }
             }
 
-            var MyQConnector = this.MyQConnectorFactory.Create(cameraToMyQMapping.Type);
+            var myQConnector = this.myQConnectorFactory.Create(cameraToMyQMapping.Type);
 
             this.logger.Information("Opening printer: {PrinterSn} for user {WatchlistMemberFullName} ({WatchlistMemberID}) on streamID {StreamId}", cameraToMyQMapping.PrinterSn, notification.WatchlistMemberFullName, notification.WatchlistMemberExternalId, cameraToMyQMapping.StreamId);
 
-            await MyQConnector.OpenAsync(
+            await myQConnector.OpenAsync(
                 myqPrinter: cameraToMyQMapping.PrinterSn,
                 myqStreamId: cameraToMyQMapping.StreamId,
                 watchlistMemberId: notification.WatchlistMemberId
@@ -81,14 +81,14 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services
                 throw new InvalidOperationException($"{nameof(streamId)} is expected as GUID");
             }
 
-            var MyQMapping = this.configuration.GetSection("MyQMapping").Get<MyQMapping[]>();
+            var myQMapping = this.configuration.GetSection("MyQMapping").Get<MyQMapping[]>();
 
-            if (MyQMapping == null)
+            if (myQMapping == null)
             {
                 return null;
             }
 
-            return MyQMapping
+            return myQMapping
                         .Where(w => w.StreamId == streamGuid)
                         .FirstOrDefault();
         }

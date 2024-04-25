@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Models
+namespace Innovatrics.SmartFace.Integrations.MyQConnector.Models
 {
     public class MyQMapping
     {

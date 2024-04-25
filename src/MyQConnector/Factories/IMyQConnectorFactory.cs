@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
-using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors;
+using Innovatrics.SmartFace.Integrations.MyQConnector.Connectors;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories
+namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
 {
     public interface IMyQConnectorFactory
     {
-        MyQConnector Create(string type);
+        Connectors.MyQConnector Create(string type);
     }
 }

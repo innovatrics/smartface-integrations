@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors;
+using Innovatrics.SmartFace.Integrations.MyQConnector.Connectors;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories
+namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
 {
     public class MyQConnectorFactory : IMyQConnectorFactory
     {
@@ -25,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public MyQConnector Create(string type)
+        public Connectors.MyQConnector Create(string type)
         {
             if (type == null)
             {

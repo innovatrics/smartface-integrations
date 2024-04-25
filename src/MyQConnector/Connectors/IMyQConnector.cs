@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
+namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
 {
     public interface IMyQConnector
     {

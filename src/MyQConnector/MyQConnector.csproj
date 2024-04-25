@@ -23,9 +23,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Shared\AccessController\AccessController.csproj" />
   </ItemGroup>
-  <ItemGroup>  
-    <Compile Include="..\Shared\GeneratedApiClasses\SmartFaceApi.cs" Link="SmartFaceApi.cs" />
-  </ItemGroup>
   <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

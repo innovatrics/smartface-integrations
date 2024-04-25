@@ -7,10 +7,10 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
-using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Factories;
-using Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Services;
+using Innovatrics.SmartFace.Integrations.MyQConnector.Factories;
+using Innovatrics.SmartFace.Integrations.MyQConnector.Services;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace
+namespace Innovatrics.SmartFace.Integrations.MyQConnector
 {
     public class Program
     {

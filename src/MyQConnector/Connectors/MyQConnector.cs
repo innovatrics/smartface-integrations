@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
+namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
 {
     public class MyQConnector : IMyQConnector
     {
@@ -20,9 +20,9 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
         private string clientSecret;
         private string scope;
         private int loginInfoType;
-        private string MyQHostname;
-        private int MyQPort;
-        private string SmartFaceURL;
+        private string myQHostname;
+        private int myQPort;
+        private string smartFaceURL;
         private bool bypassSslValidation;
 
         public MyQConnector(ILogger logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
@@ -35,9 +35,9 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
             clientSecret = configuration.GetValue<string>("MyQConfiguration:clientSecret") ?? throw new InvalidOperationException("clientSecret is required");
             scope = configuration.GetValue<string>("MyQConfiguration:scope") ?? throw new InvalidOperationException("scope is required");
             loginInfoType = configuration.GetValue<int>("MyQConfiguration:loginInfoType");
-            MyQHostname = configuration.GetValue<string>("MyQConfiguration:MyQHostname") ?? throw new InvalidOperationException("MyQHostname is required");
-            MyQPort = configuration.GetValue<int>("MyQConfiguration:MyQPort");
-            SmartFaceURL = configuration.GetValue<string>("MyQConfiguration:SmartFaceURL");
+            myQHostname = configuration.GetValue<string>("MyQConfiguration:MyQHostname") ?? throw new InvalidOperationException("MyQHostname is required");
+            myQPort = configuration.GetValue<int>("MyQConfiguration:MyQPort");
+            smartFaceURL = configuration.GetValue<string>("MyQConfiguration:SmartFaceURL");
             bypassSslValidation = configuration.GetValue<bool>("MyQConfiguration:BypassSslValidation");
         }
 
@@ -57,6 +57,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
             catch (Exception ex)
             {
                 this.logger.Error(ex, "Error occurred in OpenAsync");
+                throw;
             }
         }
 
@@ -74,7 +75,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
         private async Task<string> GetEmailFromSmartFaceAPI(string watchlistMemberId)
         {
             var client = CreateHttpClient();
-            var url = $"{SmartFaceURL}/api/v1/WatchlistMembers/{watchlistMemberId}";
+            var url = $"{smartFaceURL}/api/v1/WatchlistMembers/{watchlistMemberId}";
             var response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
@@ -89,7 +90,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
         private async Task<string> AuthenticateWithMyQAPI()
         {
             var client = CreateHttpClient();
-            string tokenEndpoint = $"https://{MyQHostname}:{MyQPort}/api/auth/token";
+            string tokenEndpoint = $"https://{myQHostname}:{myQPort}/api/auth/token";
             var payload = new
             {
                 grant_type = "client_credentials",
@@ -124,7 +125,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
         private async Task<string> AuthenticateUserWithMyQAPI(string userInfo)
         {
             var client = CreateHttpClient();
-            string tokenEndpoint = $"https://{MyQHostname}:{MyQPort}/api/auth/token";
+            string tokenEndpoint = $"https://{myQHostname}:{myQPort}/api/auth/token";
             string username = ExtractUsernameFromJson(userInfo);
             if(username == null)
             {
@@ -167,7 +168,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
         {
             var client = CreateHttpClient();
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            string url = $"https://{MyQHostname}:{MyQPort}/api/v3/users/find?email={email}";
+            string url = $"https://{myQHostname}:{myQPort}/api/v3/users/find?email={email}";
 
             var response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
@@ -182,7 +183,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnectorNamespace.Connectors
             var client = CreateHttpClient();
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", userToken);
 
-            string apiUrl = $"https://{MyQHostname}:{MyQPort}/api/v3/printers/unlock";
+            string apiUrl = $"https://{myQHostname}:{myQPort}/api/v3/printers/unlock";
             var payload = new { sn = printer, account = userToken };
 
             var response = await client.PostAsync(apiUrl, new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
