@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
 {
-    public class MyQConnector : IMyQConnector
+    public class Connector : IConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
@@ -25,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
         private string smartFaceURL;
         private bool bypassSslValidation;
 
-        public MyQConnector(ILogger logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+        public Connector(ILogger logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));

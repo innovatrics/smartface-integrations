@@ -25,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public Connectors.MyQConnector Create(string type)
+        public Connectors.Connector Create(string type)
         {
             if (type == null)
             {
@@ -44,7 +44,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
                     throw new NotImplementedException($"MyQConnector of type {type} not supported");
 
                 case "MYQ":
-                    return new Connectors.MyQConnector(this.logger, this.configuration, this.httpClientFactory);
+                    return new Connectors.Connector(this.logger, this.configuration, this.httpClientFactory);
             }
         }
     }

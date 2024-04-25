@@ -6,6 +6,6 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Factories
 {
     public interface IMyQConnectorFactory
     {
-        Connectors.MyQConnector Create(string type);
+        Connectors.Connector Create(string type);
     }
 }
