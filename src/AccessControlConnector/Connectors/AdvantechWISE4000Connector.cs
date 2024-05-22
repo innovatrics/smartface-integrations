@@ -9,13 +9,13 @@ using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 {
-    public class AdvantechWISE400Connector : IAccessControlConnector
+    public class AdvantechWISE4000Connector : IAccessControlConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public AdvantechWISE400Connector(
+        public AdvantechWISE4000Connector(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory

@@ -6,6 +6,7 @@ using Serilog;
 
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 {
@@ -44,13 +45,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 default:
                     throw new NotImplementedException($"AccessControl of type {type} not supported");
 
-                case "ADVANTECH_WISE_4000":
-                    return new AdvantechWISE400Connector(this.logger, this.configuration, this.httpClientFactory);
+                case AccessControlConnectorTypes.ADVANTECH_WISE_4000:
+                    return new AdvantechWISE4000Connector(this.logger, this.configuration, this.httpClientFactory);
                 
-                case "INNERRANGE_INTEGRITY_22":
+                case AccessControlConnectorTypes.INNERRANGE_INTEGRITY_22:
                     return new Integrity22Connector(this.logger, this.configuration, this.httpClientFactory);
 
-                case "TRAFFICLIGHT":
+                case AccessControlConnectorTypes.TRAFFICLIGHT:
                     return new TrafficLightConnector(this.logger, this.configuration, this.httpClientFactory);
             }
         }
