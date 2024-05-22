@@ -54,7 +54,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 
             var apiSchema = this.configuration.GetValue<string>("API:Schema");
             var apiHost = this.configuration.GetValue<string>("API:Host");
-            var apiPort = this.configuration.GetValue<int?>("API:Port");            
+            var apiPort = this.configuration.GetValue<int?>("API:Port");
 
             this.logger.Information("API configured to {schema}://{host}:{port}", apiSchema, apiHost, apiPort);
 
