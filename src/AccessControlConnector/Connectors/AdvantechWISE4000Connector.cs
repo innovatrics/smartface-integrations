@@ -32,7 +32,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"http://{accessControlMapping.Host}:{accessControlMapping.Port}/do_value/slot_0/";
+            var port = accessControlMapping.Port ?? 80;
+
+            var requestUri = $"http://{accessControlMapping.Host}:{port}/do_value/slot_0/";
 
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
