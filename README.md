@@ -55,6 +55,9 @@ A sample Python script to get all faces from the Watchlist Member based on the D
 ## Scripts/LivenessCheck [Python]
 A sample Python script to check a Liveness score for each image in a provided zip file. Please check <a href="/src/Scripts/LivenessCheck" >the code</a> for more information.
 
+## Scripts/PedestrianHeatmap [C#]
+A script to generate a heatmap using a camera's pedestrian data. It will allow you to understand where pedestrians move in the view of a camera.
+
 ## Scripts/PythonGraphQLSubscription [Python]
 A sample Python script to listen to the SmartFace GraphQL subscriptions.
 
