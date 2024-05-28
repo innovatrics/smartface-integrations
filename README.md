@@ -61,6 +61,9 @@ A script to generate a heatmap using a camera's pedestrian data. It will allow y
 ## Scripts/PythonGraphQLSubscription [Python]
 A sample Python script to listen to the SmartFace GraphQL subscriptions.
 
+## Scripts/Remove1000WatchlistMembers [PowerShell]
+A script to remove 1000 WatchlistMembers from any watchlist, including users that are not linked to any watchlist. Use with caution.
+
 ## Shared [C#]
 In the `src/Shared` folder you may find several libraries that are pre-built for reusable purposes
 
