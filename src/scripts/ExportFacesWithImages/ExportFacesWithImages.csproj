@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CsvHelper" Version="15.0.5" />
+        <PackageReference Include="GraphQL.Client" Version="6.0.0" />
+        <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="Output/.keep">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+
+</Project>

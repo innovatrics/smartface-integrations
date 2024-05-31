@@ -35,5 +35,9 @@ Output/*
 /*/publish
 */.vscode/*
 /NuGetFiles/*
+
+Output/
+[Oo]utput/
+[Pp]ublish/
+
 src/GrpcCamera/stream-out/*
-src/DataExportTool/Output/*
