@@ -140,7 +140,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                     {
 
-                        var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
+                        var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients.FaceType.Regular)?.ImageDataId;
                         if (KeepPhotoUpToDate)
                         {
                             if (imageDataId != null)
@@ -200,7 +200,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         this.logger.Debug($"watchlistMembers.Data.WatchlistMembers.Items.Count: {watchlistMembers.Data.WatchlistMembers.Items.Count}");
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
-                            var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
+                            var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients.FaceType.Regular)?.ImageDataId;
                             if (KeepPhotoUpToDate)
                             {
                                 var imageDataBytes = await GetImageData(imageDataId.ToString());
