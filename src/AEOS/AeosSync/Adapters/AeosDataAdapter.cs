@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.Collections.Generic;
-using AeosSync;
+using Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients;
 using ServiceReference;
 using System.ServiceModel;
 using System.ServiceModel.Security;

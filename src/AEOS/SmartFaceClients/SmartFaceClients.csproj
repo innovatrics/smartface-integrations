@@ -4,21 +4,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="StrawberryShake.CodeGeneration.CSharp.Analyzers" Version="12.16.0" />
-        <PackageReference Include="StrawberryShake.Transport.Http" Version="12.16.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+        <PackageReference Include="StrawberryShake.Server" Version="13.9.11" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile Include=".\GeneratedApiClasses\SmartFaceApi.cs" Link="SmartFaceApi.cs" />
     </ItemGroup>
 
-    <ItemGroup>
-        <Content Include="appsettings.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-        </Content>
-    </ItemGroup>
     <ItemGroup>
         <PackageReference Include="System.ServiceModel.Duplex" Version="4.7.*" />
         <PackageReference Include="System.ServiceModel.Http" Version="4.7.*" />

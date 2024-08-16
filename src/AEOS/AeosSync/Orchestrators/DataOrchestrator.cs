@@ -10,7 +10,7 @@ using ServiceReference;
 using System.ServiceModel;
 using System.ServiceModel.Security;
 using System.Security.Cryptography.X509Certificates;
-using AeosSync;
+using Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients;
 using System.IO;
 
 namespace Innovatrics.SmartFace.Integrations.AeosSync
