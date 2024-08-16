@@ -4,13 +4,13 @@
   "extensions": {
     "strawberryShake": {
       "name": "SmartFaceGraphQLClient",
-      "url": "http://10.11.80.59:8097/graphql/",
+      "url": "http://10.11.64.63:8097/graphql/",
       "dependencyInjection": true,
       "strictSchemaValidation": true,
       "hashAlgorithm": "md5",
       "useSingleFile": true,
       "requestStrategy": "Default",
-      "outputDirectoryName": "../../Shared/GeneratedApiClasses/StrawberryShake",
+      "outputDirectoryName": "./GeneratedApiClasses/StrawberryShake",
       "noStore": false,
       "emitGeneratedCode": true,
       "razorComponents": false,

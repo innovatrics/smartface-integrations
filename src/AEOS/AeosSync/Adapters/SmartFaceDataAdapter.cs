@@ -22,7 +22,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private readonly SmartFaceGraphQLClient graphQlClient;
         private readonly IAeosDataAdapter aeosDataAdapter;
         private string SmartFaceURL;
-        private string SmartFaceGraphQL;
+        private string SmartFaceClients;
         private int SmartFaceSetPageSize;
         private int SmartFacePageSize;
         private int SmartFaceDefaultThreshold;
@@ -54,7 +54,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.logger.Debug("SmartFaceDataAdapter Initiated");
 
             SmartFaceURL = configuration.GetValue<string>("AeosSync:SmartFace:RestApi:ServerUrl") ?? throw new InvalidOperationException("The SmartFace URL is not read.");
-            SmartFaceGraphQL = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:ServerUrl") ?? throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
+            SmartFaceClients = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:ServerUrl") ?? throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
             SmartFaceSetPageSize = configuration.GetValue<int>("AeosSync:SmartFace:GraphQL:PageSize");
             AeosWatchlistName = configuration.GetValue<string>("AeosSync:SmartFace:Import:Watchlist") ?? throw new InvalidOperationException("The watchlist name for importing into SmartFace is necessary.");
             SmartFacePageSize = configuration.GetValue<int>("AeosSync:SmartFace:RestApi:PageSize");
