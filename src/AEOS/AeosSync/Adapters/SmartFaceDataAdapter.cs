@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients;
+using Innovatrics.SmartFace.Integrations.Shared.SmartFaceRestApiClient;
 using Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients;
 using System.Collections.Generic;
 using System.Linq;

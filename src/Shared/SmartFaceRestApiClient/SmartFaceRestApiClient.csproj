@@ -4,7 +4,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="StrawberryShake.Server" Version="13.9.11" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include=".\GeneratedApiClasses\SmartFaceApi.cs" Link="SmartFaceApi.cs" />
     </ItemGroup>
 
     <ItemGroup>
