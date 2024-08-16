@@ -8,7 +8,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include=".\GeneratedApiClasses\SmartFaceApi.cs" Link="SmartFaceApi.cs" />
+        <Compile Include=".\Generated\SmartFaceApi.cs" Link="SmartFaceApi.cs" />
     </ItemGroup>
 
     <ItemGroup>
