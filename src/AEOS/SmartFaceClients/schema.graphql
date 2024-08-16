@@ -1,33 +1,166 @@
-﻿schema {
-  query: Query
-  subscription: Subscription
-}
+"""
+The `@defer` directive may be provided for fragment spreads and inline fragments to inform the executor to delay the execution of the current fragment to indicate deprioritization of the current fragment. A query with `@defer` directive will cause the request to potentially return multiple responses, where non-deferred data is delivered in the initial response and data deferred is delivered in a subsequent response. `@include` and `@skip` take precedence over `@defer`.
+"""
+directive @defer(
+  """
+  If this argument label has a value other than null, it will be passed on to the result of this defer directive. This label is intended to give client applications a way to identify to which fragment a deferred result belongs to.
+  """
+  label: String
+
+  """
+  Deferred when true.
+  """
+  if: Boolean
+) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"""
+The `@stream` directive may be provided for a field of `List` type so that the backend can leverage technology such as asynchronous iterators to provide a partial list in the initial response, and additional list items in subsequent responses. `@include` and `@skip` take precedence over `@stream`.
+"""
+directive @stream(
+  """
+  If this argument label has a value other than null, it will be passed on to the result of this stream directive. This label is intended to give client applications a way to identify to which fragment a streamed result belongs to.
+  """
+  label: String
+
+  """
+  The initial elements that shall be send down to the consumer.
+  """
+  initialCount: Int! = 0
+
+  """
+  Streamed when true.
+  """
+  if: Boolean
+) on FIELD
 
 type Query {
-  cameras(skip: Int take: Int where: CameraFilterInput order: [CameraSortInput!]): CameraCollectionSegment
-  edgeStreams(skip: Int take: Int where: EdgeStreamFilterInput order: [EdgeStreamSortInput!]): EdgeStreamCollectionSegment
-  faces(skip: Int take: Int where: FaceFilterInput order: [FaceSortInput!]): FaceCollectionSegment
-  frames(skip: Int take: Int where: FrameFilterInput order: [FrameSortInput!]): FrameCollectionSegment
-  groupingMetadata(skip: Int take: Int where: GroupingMetadataFilterInput order: [GroupingMetadataSortInput!]): GroupingMetadataCollectionSegment
-  individuals(skip: Int take: Int where: IndividualFilterInput order: [IndividualSortInput!]): IndividualCollectionSegment
-  matchResults(skip: Int take: Int where: MatchResultFilterInput order: [MatchResultSortInput!]): MatchResultCollectionSegment
-  pedestrians(skip: Int take: Int where: PedestrianFilterInput order: [PedestrianSortInput!]): PedestrianCollectionSegment
-  scopes(skip: Int take: Int where: ScopeFilterInput order: [ScopeSortInput!]): ScopeCollectionSegment
-  services(skip: Int take: Int where: ServiceFilterInput order: [ServiceSortInput!]): ServiceCollectionSegment
-  streams(skip: Int take: Int where: StreamFilterInput order: [StreamSortInput!]): StreamCollectionSegment
-  tracklets(skip: Int take: Int where: TrackletFilterInput order: [TrackletSortInput!]): TrackletCollectionSegment
-  videoRecords(skip: Int take: Int where: VideoRecordFilterInput order: [VideoRecordSortInput!]): VideoRecordCollectionSegment
-  tags(skip: Int take: Int where: TagFilterInput order: [TagSortInput!]): TagCollectionSegment
-  watchlistMembers(skip: Int take: Int where: WatchlistMemberFilterInput order: [WatchlistMemberSortInput!]): WatchlistMemberCollectionSegment
-  watchlists(skip: Int take: Int where: WatchlistFilterInput order: [WatchlistSortInput!]): WatchlistCollectionSegment
-  searchSessions(skip: Int take: Int where: SearchSessionFilterInput order: [SearchSessionSortInput!]): SearchSessionCollectionSegment
+  cameras(
+    skip: Int
+    take: Int
+    where: CameraFilterInput
+    order: [CameraSortInput!]
+  ): CameraCollectionSegment
+  edgeStreams(
+    skip: Int
+    take: Int
+    where: EdgeStreamFilterInput
+    order: [EdgeStreamSortInput!]
+  ): EdgeStreamCollectionSegment
+  faces(
+    skip: Int
+    take: Int
+    where: FaceFilterInput
+    order: [FaceSortInput!]
+  ): FaceCollectionSegment
+  frames(
+    skip: Int
+    take: Int
+    where: FrameFilterInput
+    order: [FrameSortInput!]
+  ): FrameCollectionSegment
+  groupingMetadata(
+    skip: Int
+    take: Int
+    where: GroupingMetadataFilterInput
+    order: [GroupingMetadataSortInput!]
+  ): GroupingMetadataCollectionSegment
+  individuals(
+    skip: Int
+    take: Int
+    where: IndividualFilterInput
+    order: [IndividualSortInput!]
+  ): IndividualCollectionSegment
+  matchResults(
+    skip: Int
+    take: Int
+    where: MatchResultFilterInput
+    order: [MatchResultSortInput!]
+  ): MatchResultCollectionSegment
+  pedestrians(
+    skip: Int
+    take: Int
+    where: PedestrianFilterInput
+    order: [PedestrianSortInput!]
+  ): PedestrianCollectionSegment
+  genericObjects(
+    skip: Int
+    take: Int
+    where: GenericObjectFilterInput
+    order: [GenericObjectSortInput!]
+  ): GenericObjectCollectionSegment
+  scopes(
+    skip: Int
+    take: Int
+    where: ScopeFilterInput
+    order: [ScopeSortInput!]
+  ): ScopeCollectionSegment
+  services(
+    skip: Int
+    take: Int
+    where: ServiceFilterInput
+    order: [ServiceSortInput!]
+  ): ServiceCollectionSegment
+  streams(
+    skip: Int
+    take: Int
+    where: StreamFilterInput
+    order: [StreamSortInput!]
+  ): StreamCollectionSegment
+  tracklets(
+    skip: Int
+    take: Int
+    where: TrackletFilterInput
+    order: [TrackletSortInput!]
+  ): TrackletCollectionSegment
+  videoRecords(
+    skip: Int
+    take: Int
+    where: VideoRecordFilterInput
+    order: [VideoRecordSortInput!]
+  ): VideoRecordCollectionSegment
+  tags(
+    skip: Int
+    take: Int
+    where: TagFilterInput
+    order: [TagSortInput!]
+  ): TagCollectionSegment
+  objectAttributes(
+    skip: Int
+    take: Int
+    where: ObjectAttributeFilterInput
+    order: [ObjectAttributeSortInput!]
+  ): ObjectAttributeCollectionSegment
+  watchlistMembers(
+    skip: Int
+    take: Int
+    where: WatchlistMemberFilterInput
+    order: [WatchlistMemberSortInput!]
+  ): WatchlistMemberCollectionSegment
+  watchlists(
+    skip: Int
+    take: Int
+    where: WatchlistFilterInput
+    order: [WatchlistSortInput!]
+  ): WatchlistCollectionSegment
+  searchSessions(
+    skip: Int
+    take: Int
+    where: SearchSessionFilterInput
+    order: [SearchSessionSortInput!]
+  ): SearchSessionCollectionSegment
 }
 
 type Camera {
-  serviceVideoSlots(where: ServiceVideoSlotFilterInput order: [ServiceVideoSlotSortInput!]): [ServiceVideoSlot]
-  stream(where: StreamFilterInput order: [StreamSortInput!]): Stream
-  streamWorker(where: WorkerFilterInput order: [WorkerSortInput!]): Worker
-  videoPublishWorker(where: WorkerFilterInput order: [WorkerSortInput!]): Worker
+  serviceVideoSlots(
+    where: ServiceVideoSlotFilterInput
+    order: [ServiceVideoSlotSortInput!]
+  ): [ServiceVideoSlot]
+  stream(where: StreamFilterInput, order: [StreamSortInput!]): Stream
+  streamWorker(where: WorkerFilterInput, order: [WorkerSortInput!]): Worker
+  videoPublishWorker(
+    where: WorkerFilterInput
+    order: [WorkerSortInput!]
+  ): Worker
   id: UUID!
   streamId: UUID!
   streamWorkerId: Long!
@@ -40,10 +173,14 @@ type Camera {
   trackMaxFaceSize: Int!
   maxTrackingFaces: Int!
   faceDetectionConfidenceThreshold: Int!
-  maxTrackingPedestrians: Int!
   trackMinPedestrianSize: Float!
   trackMaxPedestrianSize: Float!
+  maxTrackingPedestrians: Int!
   pedestrianDetectionConfidenceThreshold: Int!
+  trackMinObjectSize: Float!
+  trackMaxObjectSize: Float!
+  maxTrackingObjects: Int!
+  objectDetectionConfidenceThreshold: Int!
   spoofDetectorExternalScoreThreshold: Float!
   spoofDetectorDistantLivenessScoreThreshold: Float!
   spoofDetectorNearbyLivenessScoreThreshold: Float!
@@ -52,11 +189,15 @@ type Camera {
   faceDetectorResourceId: String
   templateGeneratorResourceId: String
   pedestrianDetectorResourceId: String
+  objectDetectorResourceId: String
+  pedestrianExtractorResourceId: String
   redetectionTime: Int!
   templateGenerationTime: Int!
   trackMotionOptimization: String
   trackSpeedAccuracyMode: String
-  faceSaveStrategy: SaveBehavior!
+  faceSaveStrategy: FaceSaveStrategy!
+  pedestrianSaveStrategy: PedestrianSaveStrategy!
+  objectSaveStrategy: ObjectSaveStrategy!
   maskImagePath: String
   saveFrameImageData: Boolean!
   imageQuality: Int!
@@ -79,14 +220,44 @@ type Camera {
   renderTemplateQuality: Boolean!
   renderFaceMaskStatus: Boolean!
   renderFaceMaskConfidence: Boolean!
+  renderSharpness: Boolean!
+  renderBrightness: Boolean!
+  renderTintedGlasses: Boolean!
+  renderHeavyFrame: Boolean!
+  renderGlassStatus: Boolean!
   textFontSize: Int!
+  detectCar: Boolean!
+  detectBus: Boolean!
+  detectTruck: Boolean!
+  detectMotorcycle: Boolean!
+  detectBicycle: Boolean!
+  detectBoat: Boolean!
+  detectAirplane: Boolean!
+  detectTrain: Boolean!
+  detectBird: Boolean!
+  detectCat: Boolean!
+  detectDog: Boolean!
+  detectHorse: Boolean!
+  detectSheep: Boolean!
+  detectCow: Boolean!
+  detectBear: Boolean!
+  detectElephant: Boolean!
+  detectGiraffe: Boolean!
+  detectZebra: Boolean!
+  detectSuitcase: Boolean!
+  detectBackpack: Boolean!
+  detectHandbag: Boolean!
+  detectUmbrella: Boolean!
+  detectKnife: Boolean!
 }
 
 type EdgeStream {
-  stream(where: StreamFilterInput order: [StreamSortInput!]): Stream
+  stream(where: StreamFilterInput, order: [StreamSortInput!]): Stream
+  settings: EdgeStreamSettings
   id: UUID!
   clientId: String
   enabled: Boolean!
+  saveFrameImageData: Boolean!
   templateGeneratorResourceId: String
   faceSaveStrategy: FaceSaveStrategy!
   createdAt: DateTime!
@@ -97,29 +268,43 @@ type EdgeStream {
   spoofDetectorNearbyLivenessScoreThreshold: Float!
   spoofDetectorDistantLivenessConditions: String
   spoofDetectorNearbyLivenessConditions: String
+  watchlistSyncOption: WatchlistSyncOption!
   edgeStreamSpoofDetectorResources: [StreamSpoofDetectorResource]
+  watchlists: [Watchlist]
 }
 
 type Face {
-  searchSessionObjects(where: SearchSessionObjectFilterInput order: [SearchSessionObjectSortInput!]): [SearchSessionObject]
-  matchResults(where: MatchResultFilterInput order: [MatchResultSortInput!]): [MatchResult]
-  stream(where: StreamFilterInput order: [StreamSortInput!]): Stream
+  searchSessionObjects(
+    where: SearchSessionObjectFilterInput
+    order: [SearchSessionObjectSortInput!]
+  ): [SearchSessionObject]
+  matchResults(
+    where: MatchResultFilterInput
+    order: [MatchResultSortInput!]
+  ): [MatchResult]
+  stream(where: StreamFilterInput, order: [StreamSortInput!]): Stream
+  spoofCheckResult(
+    where: SpoofCheckResultFilterInput
+    order: [SpoofCheckResultSortInput!]
+  ): SpoofCheckResult
   objectType: Int!
   faceState: FaceState!
-  template: [Byte!]
-  templateVersion: String
   templateQuality: Int
   leftEyeX: Float
   leftEyeY: Float
   rightEyeX: Float
   rightEyeY: Float
-  serializedId: UUID
   faceType: FaceType!
   autolearnClusterType: AutolearnClusterType
   age: Float
   gender: Float
   faceMaskConfidence: Float
   noseTipConfidence: Float
+  sharpness: Float
+  brightness: Float
+  heavyFrame: Float
+  glassStatus: Float
+  tintedGlasses: Float
   faceMaskStatus: FaceMaskStatus!
   faceAreaChange: Float!
   faceArea: Float
@@ -130,6 +315,8 @@ type Face {
   yawAngle: Float
   pitchAngle: Float
   rollAngle: Float
+  pedestrianId: UUID
+  pedestrian: Pedestrian
   genderFormatted: GenderType
   id: UUID!
   imageDataId: UUID
@@ -154,13 +341,41 @@ type Face {
   processedAt: DateTime
   tracklet: Tracklet
   frame: Frame
+  objectAttributes: [ObjectAttribute]
+}
+
+type SpoofCheckResult {
+  livenessNearbyFailedConditionsInfo: String
+    @deprecated(reason: "No longer supported.")
+  nearbyFailReasons: [FailedConditionInfo]
+  livenessDistantFailedConditionsInfo: String
+    @deprecated(reason: "No longer supported.")
+  distantFailReasons: [FailedConditionInfo]
+  id: UUID!
+  livenessNearbyPerformed: Boolean!
+  livenessNearbyScore: Float!
+  livenessNearbyPassed: Boolean!
+  livenessDistantPerformed: Boolean!
+  livenessDistantScore: Float!
+  livenessDistantPassed: Boolean!
+  performed: Boolean!
+  passed: Boolean!
+  faceId: UUID!
+  face: Face
 }
 
 type Frame {
-  faces(where: FaceFilterInput order: [FaceSortInput!]): [Face]
-  pedestrians(where: PedestrianFilterInput order: [PedestrianSortInput!]): [Pedestrian]
-  stream(where: StreamFilterInput order: [StreamSortInput!]): Stream
-  scope(where: ScopeFilterInput order: [ScopeSortInput!]): Scope
+  faces(where: FaceFilterInput, order: [FaceSortInput!]): [Face]
+  pedestrians(
+    where: PedestrianFilterInput
+    order: [PedestrianSortInput!]
+  ): [Pedestrian]
+  genericObjects(
+    where: GenericObjectFilterInput
+    order: [GenericObjectSortInput!]
+  ): [GenericObject]
+  stream(where: StreamFilterInput, order: [StreamSortInput!]): Stream
+  scope(where: ScopeFilterInput, order: [ScopeSortInput!]): Scope
   state: FrameState!
   scopeId: UUID!
   streamId: UUID
@@ -173,8 +388,11 @@ type Frame {
 }
 
 type GroupingMetadata {
-  individuals(where: IndividualFilterInput order: [IndividualSortInput!]): [Individual]
-  scope(where: ScopeFilterInput order: [ScopeSortInput!]): Scope
+  individuals(
+    where: IndividualFilterInput
+    order: [IndividualSortInput!]
+  ): [Individual]
+  scope(where: ScopeFilterInput, order: [ScopeSortInput!]): Scope
   id: Long!
   scopeId: UUID!
   createdAt: DateTime!
@@ -183,10 +401,15 @@ type GroupingMetadata {
   state: GroupingState!
   isDefault: Boolean!
   nextIterationTimeStamp: DateTime
+  enabled: Boolean!
+  groupingStep: Int!
+  slidingWindow: Int!
+  groupingStrategy: String
+  groupingThreshold: Int!
 }
 
 type Individual {
-  tracklets(where: TrackletFilterInput order: [TrackletSortInput!]): [Tracklet]
+  tracklets(where: TrackletFilterInput, order: [TrackletSortInput!]): [Tracklet]
   id: UUID!
   groupingMetadataId: Long!
   createdAt: DateTime!
@@ -199,12 +422,18 @@ type Individual {
 }
 
 type MatchResult {
-  watchlistMember(where: WatchlistMemberFilterInput order: [WatchlistMemberSortInput!]): WatchlistMember
-  watchlist(where: WatchlistFilterInput order: [WatchlistSortInput!]): Watchlist
-  frame(where: FrameFilterInput order: [FrameSortInput!]): Frame
-  tracklet(where: TrackletFilterInput order: [TrackletSortInput!]): Tracklet
-  stream(where: StreamFilterInput order: [StreamSortInput!]): Stream
-  face(where: FaceFilterInput order: [FaceSortInput!]): Face
+  watchlistMember(
+    where: WatchlistMemberFilterInput
+    order: [WatchlistMemberSortInput!]
+  ): WatchlistMember
+  watchlist(
+    where: WatchlistFilterInput
+    order: [WatchlistSortInput!]
+  ): Watchlist
+  frame(where: FrameFilterInput, order: [FrameSortInput!]): Frame
+  tracklet(where: TrackletFilterInput, order: [TrackletSortInput!]): Tracklet
+  stream(where: StreamFilterInput, order: [StreamSortInput!]): Stream
+  face(where: FaceFilterInput, order: [FaceSortInput!]): Face
   id: UUID!
   type: MatchResultType!
   watchlistMemberId: String
@@ -237,12 +466,17 @@ type MatchResult {
   age: Float
   gender: Float
   faceQuality: Int
+  sharpness: Float
+  brightness: Float
+  heavyFrame: Float
+  glassStatus: Float
+  tintedGlasses: Float
 }
 
 type Pedestrian {
-  tracklet(where: TrackletFilterInput order: [TrackletSortInput!]): Tracklet
-  frame(where: FrameFilterInput order: [FrameSortInput!]): Frame
-  stream(where: StreamFilterInput order: [StreamSortInput!]): Stream
+  tracklet(where: TrackletFilterInput, order: [TrackletSortInput!]): Tracklet
+  frame(where: FrameFilterInput, order: [FrameSortInput!]): Frame
+  stream(where: StreamFilterInput, order: [StreamSortInput!]): Stream
   objectType: Int!
   pose: HumanPose!
   earLeftX: Float
@@ -281,6 +515,8 @@ type Pedestrian {
   ankleLeftY: Float
   ankleRightX: Float
   ankleRightY: Float
+  faceId: UUID
+  face: Face
   poses: [String]
   id: UUID!
   imageDataId: UUID
@@ -303,13 +539,47 @@ type Pedestrian {
   updatedAt: DateTime
   createdAt: DateTime!
   processedAt: DateTime
+  objectAttributes: [ObjectAttribute]
+}
+
+type GenericObject {
+  tracklet(where: TrackletFilterInput, order: [TrackletSortInput!]): Tracklet
+  frame(where: FrameFilterInput, order: [FrameSortInput!]): Frame
+  stream(where: StreamFilterInput, order: [StreamSortInput!]): Stream
+  genericObjectType: Int!
+  objectType: Int!
+  id: UUID!
+  imageDataId: UUID
+  quality: Int!
+  cropLeftTopX: Float!
+  cropLeftTopY: Float!
+  cropRightTopX: Float!
+  cropRightTopY: Float!
+  cropLeftBottomX: Float!
+  cropLeftBottomY: Float!
+  cropRightBottomX: Float!
+  cropRightBottomY: Float!
+  areaOnFrame: Float
+  size: Float!
+  objectOrderOnFrameForType: Int
+  objectsOnFrameCountForType: Int
+  trackletId: UUID!
+  frameId: UUID!
+  streamId: UUID
+  updatedAt: DateTime
+  createdAt: DateTime!
+  processedAt: DateTime
+  objectAttributes: [ObjectAttribute]
 }
 
 type Scope {
-  groupingMetadata(where: GroupingMetadataFilterInput order: [GroupingMetadataSortInput!]): [GroupingMetadata]
-  tracklets(where: TrackletFilterInput order: [TrackletSortInput!]): [Tracklet]
-  frames(where: FrameFilterInput order: [FrameSortInput!]): [Frame]
-  streams(where: StreamFilterInput order: [StreamSortInput!]): [Stream]
+  groupingMetadata(
+    where: GroupingMetadataFilterInput
+    order: [GroupingMetadataSortInput!]
+  ): [GroupingMetadata]
+  tracklets(where: TrackletFilterInput, order: [TrackletSortInput!]): [Tracklet]
+  frames(where: FrameFilterInput, order: [FrameSortInput!]): [Frame]
+  streams(where: StreamFilterInput, order: [StreamSortInput!]): [Stream]
   id: UUID!
   description: String
   type: ScopeType!
@@ -318,8 +588,11 @@ type Scope {
 }
 
 type Service {
-  workers(where: WorkerFilterInput order: [WorkerSortInput!]): [Worker]
-  serviceVideoSlots(where: ServiceVideoSlotFilterInput order: [ServiceVideoSlotSortInput!]): [ServiceVideoSlot]
+  workers(where: WorkerFilterInput, order: [WorkerSortInput!]): [Worker]
+  serviceVideoSlots(
+    where: ServiceVideoSlotFilterInput
+    order: [ServiceVideoSlotSortInput!]
+  ): [ServiceVideoSlot]
   id: Long!
   serviceName: String
   nodeName: String
@@ -328,11 +601,14 @@ type Service {
 }
 
 type Stream {
-  cameras(where: CameraFilterInput order: [CameraSortInput!]): [Camera]
-  faces(where: FaceFilterInput order: [FaceSortInput!]): [Face]
-  videoRecords(where: VideoRecordFilterInput order: [VideoRecordSortInput!]): [VideoRecord]
-  tracklets(where: TrackletFilterInput order: [TrackletSortInput!]): [Tracklet]
-  frames(where: FrameFilterInput order: [FrameSortInput!]): [Frame]
+  cameras(where: CameraFilterInput, order: [CameraSortInput!]): [Camera]
+  faces(where: FaceFilterInput, order: [FaceSortInput!]): [Face]
+  videoRecords(
+    where: VideoRecordFilterInput
+    order: [VideoRecordSortInput!]
+  ): [VideoRecord]
+  tracklets(where: TrackletFilterInput, order: [TrackletSortInput!]): [Tracklet]
+  frames(where: FrameFilterInput, order: [FrameSortInput!]): [Frame]
   id: UUID!
   scopeId: UUID!
   createdAt: DateTime!
@@ -342,15 +618,32 @@ type Stream {
   sequenceNumber: Long!
   edgeStreams: [EdgeStream]
   pedestrians: [Pedestrian]
+  genericObjects: [GenericObject]
   scope: Scope
 }
 
 type Tracklet {
-  matchResults(where: MatchResultFilterInput order: [MatchResultSortInput!]): [MatchResult]
-  faces(where: FaceFilterInput order: [FaceSortInput!]): [Face]
-  pedestrians(where: PedestrianFilterInput order: [PedestrianSortInput!]): [Pedestrian]
-  watchlistMembers(where: WatchlistMemberFilterInput order: [WatchlistMemberSortInput!]): [WatchlistMember]
-  individuals(where: IndividualFilterInput order: [IndividualSortInput!]): [Individual]
+  matchResults(
+    where: MatchResultFilterInput
+    order: [MatchResultSortInput!]
+  ): [MatchResult]
+  faces(where: FaceFilterInput, order: [FaceSortInput!]): [Face]
+  pedestrians(
+    where: PedestrianFilterInput
+    order: [PedestrianSortInput!]
+  ): [Pedestrian]
+  genericObjects(
+    where: GenericObjectFilterInput
+    order: [GenericObjectSortInput!]
+  ): [GenericObject]
+  watchlistMembers(
+    where: WatchlistMemberFilterInput
+    order: [WatchlistMemberSortInput!]
+  ): [WatchlistMember]
+  individuals(
+    where: IndividualFilterInput
+    order: [IndividualSortInput!]
+  ): [Individual]
   scopeId: UUID!
   createdAt: DateTime!
   updatedAt: DateTime
@@ -362,12 +655,11 @@ type Tracklet {
   streamId: UUID
   scope: Scope
   stream: Stream
-  hasAnyVisualObjects: Boolean!
 }
 
 type VideoRecord {
-  stream(where: StreamFilterInput order: [StreamSortInput!]): Stream
-  tags(where: TagFilterInput order: [TagSortInput!]): [Tag]
+  stream(where: StreamFilterInput, order: [StreamSortInput!]): Stream
+  tags(where: TagFilterInput, order: [TagSortInput!]): [Tag]
   id: UUID!
   streamId: UUID!
   state: VideoState!
@@ -379,7 +671,7 @@ type VideoRecord {
   confidenceThreshold: Int!
   redetectionTime: Int!
   templateGenerationTime: Int!
-  faceSaveStrategy: SaveBehavior!
+  faceSaveStrategy: FaceSaveStrategy!
   maskImagePath: String
   saveFrameImageData: Boolean!
   imageQuality: Int!
@@ -395,15 +687,37 @@ type VideoRecord {
 }
 
 type Tag {
-  videoRecords(where: VideoRecordFilterInput order: [VideoRecordSortInput!]): [VideoRecord]
+  videoRecords(
+    where: VideoRecordFilterInput
+    order: [VideoRecordSortInput!]
+  ): [VideoRecord]
   createdAt: DateTime!
   updatedAt: DateTime
   name: String
 }
 
+type ObjectAttribute {
+  type: AttributeType!
+  floatValue: Float
+  boolValue: Boolean
+  visualObjectId: UUID!
+}
+
+type ObjectAttributeNotification {
+  type: AttributeType!
+  floatValue: Float
+  boolValue: Boolean
+}
+
 type Watchlist {
-  watchlistMembers(order: [WatchlistMemberSortInput!] where: WatchlistMemberFilterInput): [WatchlistMember]
-  matchResults(where: MatchResultFilterInput order: [MatchResultSortInput!]): [MatchResult]
+  watchlistMembers(
+    order: [WatchlistMemberSortInput!]
+    where: WatchlistMemberFilterInput
+  ): [WatchlistMember]
+  matchResults(
+    where: MatchResultFilterInput
+    order: [MatchResultSortInput!]
+  ): [MatchResult]
   id: String
   displayName: String
   fullName: String
@@ -411,6 +725,7 @@ type Watchlist {
   updatedAt: DateTime
   threshold: Int!
   previewColor: String
+  edgeStreams: [EdgeStream]
 }
 
 input WatchlistFilterInput {
@@ -425,6 +740,7 @@ input WatchlistFilterInput {
   previewColor: StringOperationFilterInput
   watchlistMembers: ListFilterInputTypeOfWatchlistMemberFilterInput
   matchResults: ListFilterInputTypeOfMatchResultFilterInput
+  edgeStreams: ListFilterInputTypeOfEdgeStreamFilterInput
   tenantId: StringOperationFilterInput
 }
 
@@ -440,19 +756,26 @@ input WatchlistSortInput {
 }
 
 type WatchlistMember {
-  watchlists(where: WatchlistFilterInput order: [WatchlistSortInput!]): [Watchlist]
-  tracklet(where: TrackletFilterInput order: [TrackletSortInput!]): Tracklet
-  matchResults(where: MatchResultFilterInput order: [MatchResultSortInput!]): [MatchResult]
+  watchlists(
+    where: WatchlistFilterInput
+    order: [WatchlistSortInput!]
+  ): [Watchlist]
+  tracklet(where: TrackletFilterInput, order: [TrackletSortInput!]): Tracklet
+  matchResults(
+    where: MatchResultFilterInput
+    order: [MatchResultSortInput!]
+  ): [MatchResult]
   id: String
-  labels(where: WatchlistMemberLabelFilterInput order: [WatchlistMemberLabelSortInput!]): [WatchlistMemberLabel]
+  labels(
+    where: WatchlistMemberLabelFilterInput
+    order: [WatchlistMemberLabelSortInput!]
+  ): [WatchlistMemberLabel]
   displayName: String
   fullName: String
   note: String
   createdAt: DateTime!
   updatedAt: DateTime
   trackletId: UUID!
-  maskedAveragedWildTemplate: [Byte!]
-  notMaskedAveragedWildTemplate: [Byte!]
 }
 
 input WatchlistMemberFilterInput {
@@ -492,7 +815,10 @@ type WatchlistMemberLabel {
 }
 
 type SearchSession {
-  searchSessionObjects(where: SearchSessionObjectFilterInput order: [SearchSessionObjectSortInput!]): [SearchSessionObject]
+  searchSessionObjects(
+    where: SearchSessionObjectFilterInput
+    order: [SearchSessionObjectSortInput!]
+  ): [SearchSessionObject]
   id: UUID!
   threshold: Int!
   createdAt: DateTime!
@@ -500,15 +826,44 @@ type SearchSession {
 }
 
 type Subscription {
-  faceCreated(where: FaceCreatedNotificationDTOFilterInput): FaceCreatedNotificationDTO
-  faceExtracted(where: FaceExtractedNotificationDTOFilterInput): FaceExtractedNotificationDTO
-  matchResult(where: MatchResultNotificationDTOFilterInput): MatchResultNotificationDTO
-  noMatchResult(where: NoMatchResultNotificationDTOFilterInput): NoMatchResultNotificationDTO
-  matchResultInsert(where: MatchResultInsertDTOFilterInput): MatchResultInsertDTO
+  faceCreated(
+    where: FaceCreatedNotificationDTOFilterInput
+  ): FaceCreatedNotificationDTO
+  faceExtracted(
+    where: FaceExtractedNotificationDTOFilterInput
+  ): FaceExtractedNotificationDTO
+  matchResult(
+    where: MatchResultNotificationDTOFilterInput
+  ): MatchResultNotificationDTO
+  noMatchResult(
+    where: NoMatchResultNotificationDTOFilterInput
+  ): NoMatchResultNotificationDTO
+  matchResultInsert(
+    where: MatchResultInsertDTOFilterInput
+  ): MatchResultInsertDTO
   progressMessage(where: ProgressMessageDTOFilterInput): ProgressMessageDTO
-  videoRecordNotificationStateChanged(where: VideoRecordNotificationStateChangedDTOFilterInput): VideoRecordNotificationStateChangedDTO
-  trackletCompleted(where: TrackletCompletedNotificationDTOFilterInput): TrackletCompletedNotificationDTO
-  pedestrianInserted(where: PedestrianInsertedNotificationDTOFilterInput): PedestrianInsertedNotificationDTO
+  videoRecordNotificationStateChanged(
+    where: VideoRecordNotificationStateChangedDTOFilterInput
+  ): VideoRecordNotificationStateChangedDTO
+  trackletCompleted(
+    where: TrackletCompletedNotificationDTOFilterInput
+  ): TrackletCompletedNotificationDTO
+  pedestrianInserted(
+    where: PedestrianInsertedNotificationDTOFilterInput
+  ): PedestrianInsertedNotificationDTO
+  faceProcessed(
+    where: FaceProcessedNotificationDTOFilterInput
+  ): FaceProcessedNotificationDTO
+  pedestrianProcessed(
+    where: PedestrianProcessedNotificationDTOFilterInput
+  ): PedestrianProcessedNotificationDTO
+  objectProcessed(
+    where: ObjectProcessedNotificationDTOFilterInput
+  ): ObjectProcessedNotificationDTO
+  objectInserted(
+    where: ObjectInsertNotificationDTOFilterInput
+  ): ObjectInsertNotificationDTO
+  embeddedStreamProcessorHealth(clientId: String!): HealthReport
 }
 
 input CameraFilterInput {
@@ -534,10 +889,14 @@ input CameraFilterInput {
   trackMaxFaceSize: ComparableInt32OperationFilterInput
   maxTrackingFaces: ComparableInt32OperationFilterInput
   faceDetectionConfidenceThreshold: ComparableInt32OperationFilterInput
-  maxTrackingPedestrians: ComparableInt32OperationFilterInput
   trackMinPedestrianSize: ComparableDoubleOperationFilterInput
   trackMaxPedestrianSize: ComparableDoubleOperationFilterInput
+  maxTrackingPedestrians: ComparableInt32OperationFilterInput
   pedestrianDetectionConfidenceThreshold: ComparableInt32OperationFilterInput
+  trackMinObjectSize: ComparableDoubleOperationFilterInput
+  trackMaxObjectSize: ComparableDoubleOperationFilterInput
+  maxTrackingObjects: ComparableInt32OperationFilterInput
+  objectDetectionConfidenceThreshold: ComparableInt32OperationFilterInput
   spoofDetectorExternalScoreThreshold: ComparableDoubleOperationFilterInput
   spoofDetectorDistantLivenessScoreThreshold: ComparableDoubleOperationFilterInput
   spoofDetectorNearbyLivenessScoreThreshold: ComparableDoubleOperationFilterInput
@@ -546,11 +905,15 @@ input CameraFilterInput {
   faceDetectorResourceId: StringOperationFilterInput
   templateGeneratorResourceId: StringOperationFilterInput
   pedestrianDetectorResourceId: StringOperationFilterInput
+  objectDetectorResourceId: StringOperationFilterInput
+  pedestrianExtractorResourceId: StringOperationFilterInput
   redetectionTime: ComparableInt32OperationFilterInput
   templateGenerationTime: ComparableInt32OperationFilterInput
   trackMotionOptimization: StringOperationFilterInput
   trackSpeedAccuracyMode: StringOperationFilterInput
-  faceSaveStrategy: SaveBehaviorOperationFilterInput
+  faceSaveStrategy: FaceSaveStrategyOperationFilterInput
+  pedestrianSaveStrategy: PedestrianSaveStrategyOperationFilterInput
+  objectSaveStrategy: ObjectSaveStrategyOperationFilterInput
   maskImagePath: StringOperationFilterInput
   saveFrameImageData: BooleanOperationFilterInput
   imageQuality: ComparableInt32OperationFilterInput
@@ -573,7 +936,35 @@ input CameraFilterInput {
   renderTemplateQuality: BooleanOperationFilterInput
   renderFaceMaskStatus: BooleanOperationFilterInput
   renderFaceMaskConfidence: BooleanOperationFilterInput
+  renderSharpness: BooleanOperationFilterInput
+  renderBrightness: BooleanOperationFilterInput
+  renderTintedGlasses: BooleanOperationFilterInput
+  renderHeavyFrame: BooleanOperationFilterInput
+  renderGlassStatus: BooleanOperationFilterInput
   textFontSize: ComparableInt32OperationFilterInput
+  detectCar: BooleanOperationFilterInput
+  detectBus: BooleanOperationFilterInput
+  detectTruck: BooleanOperationFilterInput
+  detectMotorcycle: BooleanOperationFilterInput
+  detectBicycle: BooleanOperationFilterInput
+  detectBoat: BooleanOperationFilterInput
+  detectAirplane: BooleanOperationFilterInput
+  detectTrain: BooleanOperationFilterInput
+  detectBird: BooleanOperationFilterInput
+  detectCat: BooleanOperationFilterInput
+  detectDog: BooleanOperationFilterInput
+  detectHorse: BooleanOperationFilterInput
+  detectSheep: BooleanOperationFilterInput
+  detectCow: BooleanOperationFilterInput
+  detectBear: BooleanOperationFilterInput
+  detectElephant: BooleanOperationFilterInput
+  detectGiraffe: BooleanOperationFilterInput
+  detectZebra: BooleanOperationFilterInput
+  detectSuitcase: BooleanOperationFilterInput
+  detectBackpack: BooleanOperationFilterInput
+  detectHandbag: BooleanOperationFilterInput
+  detectUmbrella: BooleanOperationFilterInput
+  detectKnife: BooleanOperationFilterInput
 }
 
 input CameraSortInput {
@@ -595,10 +986,14 @@ input CameraSortInput {
   trackMaxFaceSize: SortEnumType
   maxTrackingFaces: SortEnumType
   faceDetectionConfidenceThreshold: SortEnumType
-  maxTrackingPedestrians: SortEnumType
   trackMinPedestrianSize: SortEnumType
   trackMaxPedestrianSize: SortEnumType
+  maxTrackingPedestrians: SortEnumType
   pedestrianDetectionConfidenceThreshold: SortEnumType
+  trackMinObjectSize: SortEnumType
+  trackMaxObjectSize: SortEnumType
+  maxTrackingObjects: SortEnumType
+  objectDetectionConfidenceThreshold: SortEnumType
   spoofDetectorExternalScoreThreshold: SortEnumType
   spoofDetectorDistantLivenessScoreThreshold: SortEnumType
   spoofDetectorNearbyLivenessScoreThreshold: SortEnumType
@@ -607,11 +1002,15 @@ input CameraSortInput {
   faceDetectorResourceId: SortEnumType
   templateGeneratorResourceId: SortEnumType
   pedestrianDetectorResourceId: SortEnumType
+  objectDetectorResourceId: SortEnumType
+  pedestrianExtractorResourceId: SortEnumType
   redetectionTime: SortEnumType
   templateGenerationTime: SortEnumType
   trackMotionOptimization: SortEnumType
   trackSpeedAccuracyMode: SortEnumType
   faceSaveStrategy: SortEnumType
+  pedestrianSaveStrategy: SortEnumType
+  objectSaveStrategy: SortEnumType
   maskImagePath: SortEnumType
   saveFrameImageData: SortEnumType
   imageQuality: SortEnumType
@@ -634,7 +1033,35 @@ input CameraSortInput {
   renderTemplateQuality: SortEnumType
   renderFaceMaskStatus: SortEnumType
   renderFaceMaskConfidence: SortEnumType
+  renderSharpness: SortEnumType
+  renderBrightness: SortEnumType
+  renderTintedGlasses: SortEnumType
+  renderHeavyFrame: SortEnumType
+  renderGlassStatus: SortEnumType
   textFontSize: SortEnumType
+  detectCar: SortEnumType
+  detectBus: SortEnumType
+  detectTruck: SortEnumType
+  detectMotorcycle: SortEnumType
+  detectBicycle: SortEnumType
+  detectBoat: SortEnumType
+  detectAirplane: SortEnumType
+  detectTrain: SortEnumType
+  detectBird: SortEnumType
+  detectCat: SortEnumType
+  detectDog: SortEnumType
+  detectHorse: SortEnumType
+  detectSheep: SortEnumType
+  detectCow: SortEnumType
+  detectBear: SortEnumType
+  detectElephant: SortEnumType
+  detectGiraffe: SortEnumType
+  detectZebra: SortEnumType
+  detectSuitcase: SortEnumType
+  detectBackpack: SortEnumType
+  detectHandbag: SortEnumType
+  detectUmbrella: SortEnumType
+  detectKnife: SortEnumType
 }
 
 input EdgeStreamFilterInput {
@@ -643,6 +1070,7 @@ input EdgeStreamFilterInput {
   id: ComparableGuidOperationFilterInput
   clientId: StringOperationFilterInput
   enabled: BooleanOperationFilterInput
+  saveFrameImageData: BooleanOperationFilterInput
   templateGeneratorResourceId: StringOperationFilterInput
   faceSaveStrategy: FaceSaveStrategyOperationFilterInput
   createdAt: ComparableDateTimeOperationFilterInput
@@ -653,14 +1081,20 @@ input EdgeStreamFilterInput {
   spoofDetectorNearbyLivenessScoreThreshold: ComparableDoubleOperationFilterInput
   spoofDetectorDistantLivenessConditions: StringOperationFilterInput
   spoofDetectorNearbyLivenessConditions: StringOperationFilterInput
+  watchlistSyncOption: WatchlistSyncOptionOperationFilterInput
+  matchingDataStrategy: MatchingDataStrategyOperationFilterInput
+  livenessDataStrategy: LivenessDataStrategyOperationFilterInput
   stream: StreamFilterInput
   edgeStreamSpoofDetectorResources: ListFilterInputTypeOfStreamSpoofDetectorResourceFilterInput
+  watchlists: ListFilterInputTypeOfWatchlistFilterInput
+  settings: EdgeStreamSettingsFilterInput
 }
 
 input EdgeStreamSortInput {
   id: SortEnumType
   clientId: SortEnumType
   enabled: SortEnumType
+  saveFrameImageData: SortEnumType
   templateGeneratorResourceId: SortEnumType
   faceSaveStrategy: SortEnumType
   createdAt: SortEnumType
@@ -671,7 +1105,11 @@ input EdgeStreamSortInput {
   spoofDetectorNearbyLivenessScoreThreshold: SortEnumType
   spoofDetectorDistantLivenessConditions: SortEnumType
   spoofDetectorNearbyLivenessConditions: SortEnumType
+  watchlistSyncOption: SortEnumType
+  matchingDataStrategy: SortEnumType
+  livenessDataStrategy: SortEnumType
   stream: StreamSortInput
+  settings: EdgeStreamSettingsSortInput
 }
 
 input FaceFilterInput {
@@ -682,44 +1120,53 @@ input FaceFilterInput {
   template: ListComparableByteOperationFilterInput
   templateVersion: StringOperationFilterInput
   templateQuality: ComparableNullableOfInt32OperationFilterInput
-  leftEyeX: ComparableNullableOfDoubleOperationFilterInput
-  leftEyeY: ComparableNullableOfDoubleOperationFilterInput
-  rightEyeX: ComparableNullableOfDoubleOperationFilterInput
-  rightEyeY: ComparableNullableOfDoubleOperationFilterInput
+  leftEyeX: ComparableNullableOfSingleOperationFilterInput
+  leftEyeY: ComparableNullableOfSingleOperationFilterInput
+  rightEyeX: ComparableNullableOfSingleOperationFilterInput
+  rightEyeY: ComparableNullableOfSingleOperationFilterInput
   serializedId: ComparableNullableOfGuidOperationFilterInput
   faceType: FaceTypeOperationFilterInput
   autolearnClusterType: NullableOfAutolearnClusterTypeOperationFilterInput
-  age: ComparableNullableOfDoubleOperationFilterInput
-  gender: ComparableNullableOfDoubleOperationFilterInput
-  faceMaskConfidence: ComparableNullableOfDoubleOperationFilterInput
-  noseTipConfidence: ComparableNullableOfDoubleOperationFilterInput
+  age: ComparableNullableOfSingleOperationFilterInput
+  gender: ComparableNullableOfSingleOperationFilterInput
+  faceMaskConfidence: ComparableNullableOfSingleOperationFilterInput
+  noseTipConfidence: ComparableNullableOfSingleOperationFilterInput
+  sharpness: ComparableNullableOfSingleOperationFilterInput
+  brightness: ComparableNullableOfSingleOperationFilterInput
+  heavyFrame: ComparableNullableOfSingleOperationFilterInput
+  glassStatus: ComparableNullableOfSingleOperationFilterInput
+  tintedGlasses: ComparableNullableOfSingleOperationFilterInput
   faceMaskStatus: FaceMaskStatusOperationFilterInput
-  faceAreaChange: ComparableDoubleOperationFilterInput
-  faceArea: ComparableNullableOfDoubleOperationFilterInput
+  faceAreaChange: ComparableSingleOperationFilterInput
+  faceArea: ComparableNullableOfSingleOperationFilterInput
   faceOrder: ComparableNullableOfInt32OperationFilterInput
   facesOnFrameCount: ComparableNullableOfInt32OperationFilterInput
   state: FaceStateOperationFilterInput
   type: FaceTypeOperationFilterInput
-  yawAngle: ComparableNullableOfDoubleOperationFilterInput
-  pitchAngle: ComparableNullableOfDoubleOperationFilterInput
-  rollAngle: ComparableNullableOfDoubleOperationFilterInput
+  yawAngle: ComparableNullableOfSingleOperationFilterInput
+  pitchAngle: ComparableNullableOfSingleOperationFilterInput
+  rollAngle: ComparableNullableOfSingleOperationFilterInput
   matchResults: ListFilterInputTypeOfMatchResultFilterInput
   searchSessionObjects: ListFilterInputTypeOfSearchSessionObjectFilterInput
+  pedestrianId: ComparableNullableOfGuidOperationFilterInput
+  pedestrian: PedestrianFilterInput
+  pedestriansNavigation: ListFilterInputTypeOfPedestrianFilterInput
+  spoofCheckResult: SpoofCheckResultFilterInput
   bestForIndividuals: ListFilterInputTypeOfIndividualFilterInput
   genderFormatted: NullableOfGenderTypeOperationFilterInput
   id: ComparableGuidOperationFilterInput
   imageDataId: ComparableNullableOfGuidOperationFilterInput
   quality: ComparableInt32OperationFilterInput
-  cropLeftTopX: ComparableDoubleOperationFilterInput
-  cropLeftTopY: ComparableDoubleOperationFilterInput
-  cropRightTopX: ComparableDoubleOperationFilterInput
-  cropRightTopY: ComparableDoubleOperationFilterInput
-  cropLeftBottomX: ComparableDoubleOperationFilterInput
-  cropLeftBottomY: ComparableDoubleOperationFilterInput
-  cropRightBottomX: ComparableDoubleOperationFilterInput
-  cropRightBottomY: ComparableDoubleOperationFilterInput
-  areaOnFrame: ComparableNullableOfDoubleOperationFilterInput
-  size: ComparableDoubleOperationFilterInput
+  cropLeftTopX: ComparableSingleOperationFilterInput
+  cropLeftTopY: ComparableSingleOperationFilterInput
+  cropRightTopX: ComparableSingleOperationFilterInput
+  cropRightTopY: ComparableSingleOperationFilterInput
+  cropLeftBottomX: ComparableSingleOperationFilterInput
+  cropLeftBottomY: ComparableSingleOperationFilterInput
+  cropRightBottomX: ComparableSingleOperationFilterInput
+  cropRightBottomY: ComparableSingleOperationFilterInput
+  areaOnFrame: ComparableNullableOfSingleOperationFilterInput
+  size: ComparableSingleOperationFilterInput
   objectOrderOnFrameForType: ComparableNullableOfInt32OperationFilterInput
   objectsOnFrameCountForType: ComparableNullableOfInt32OperationFilterInput
   trackletId: ComparableGuidOperationFilterInput
@@ -732,6 +1179,7 @@ input FaceFilterInput {
   frame: FrameFilterInput
   stream: StreamFilterInput
   tenantId: StringOperationFilterInput
+  objectAttributes: ListFilterInputTypeOfObjectAttributeFilterInput
 }
 
 input FaceSortInput {
@@ -750,6 +1198,11 @@ input FaceSortInput {
   gender: SortEnumType
   faceMaskConfidence: SortEnumType
   noseTipConfidence: SortEnumType
+  sharpness: SortEnumType
+  brightness: SortEnumType
+  heavyFrame: SortEnumType
+  glassStatus: SortEnumType
+  tintedGlasses: SortEnumType
   faceMaskStatus: SortEnumType
   faceAreaChange: SortEnumType
   faceArea: SortEnumType
@@ -760,6 +1213,9 @@ input FaceSortInput {
   yawAngle: SortEnumType
   pitchAngle: SortEnumType
   rollAngle: SortEnumType
+  pedestrianId: SortEnumType
+  pedestrian: PedestrianSortInput
+  spoofCheckResult: SpoofCheckResultSortInput
   genderFormatted: SortEnumType
   id: SortEnumType
   imageDataId: SortEnumType
@@ -804,6 +1260,7 @@ input FrameFilterInput {
   scope: ScopeFilterInput
   faces: ListFilterInputTypeOfFaceFilterInput
   pedestrians: ListFilterInputTypeOfPedestrianFilterInput
+  genericObjects: ListFilterInputTypeOfGenericObjectFilterInput
   stream: StreamFilterInput
   tenantId: StringOperationFilterInput
 }
@@ -835,6 +1292,11 @@ input GroupingMetadataFilterInput {
   state: GroupingStateOperationFilterInput
   isDefault: BooleanOperationFilterInput
   nextIterationTimeStamp: ComparableNullableOfDateTimeOperationFilterInput
+  enabled: BooleanOperationFilterInput
+  groupingStep: ComparableInt32OperationFilterInput
+  slidingWindow: ComparableInt32OperationFilterInput
+  groupingStrategy: StringOperationFilterInput
+  groupingThreshold: ComparableInt32OperationFilterInput
   scope: ScopeFilterInput
   individuals: ListFilterInputTypeOfIndividualFilterInput
 }
@@ -848,6 +1310,11 @@ input GroupingMetadataSortInput {
   state: SortEnumType
   isDefault: SortEnumType
   nextIterationTimeStamp: SortEnumType
+  enabled: SortEnumType
+  groupingStep: SortEnumType
+  slidingWindow: SortEnumType
+  groupingStrategy: SortEnumType
+  groupingThreshold: SortEnumType
   scope: ScopeSortInput
 }
 
@@ -916,6 +1383,11 @@ input MatchResultFilterInput {
   age: ComparableNullableOfDoubleOperationFilterInput
   gender: ComparableNullableOfDoubleOperationFilterInput
   faceQuality: ComparableNullableOfInt32OperationFilterInput
+  sharpness: ComparableNullableOfDoubleOperationFilterInput
+  brightness: ComparableNullableOfDoubleOperationFilterInput
+  heavyFrame: ComparableNullableOfDoubleOperationFilterInput
+  glassStatus: ComparableNullableOfDoubleOperationFilterInput
+  tintedGlasses: ComparableNullableOfDoubleOperationFilterInput
   watchlistMember: WatchlistMemberFilterInput
   watchlist: WatchlistFilterInput
   frame: FrameFilterInput
@@ -957,6 +1429,11 @@ input MatchResultSortInput {
   age: SortEnumType
   gender: SortEnumType
   faceQuality: SortEnumType
+  sharpness: SortEnumType
+  brightness: SortEnumType
+  heavyFrame: SortEnumType
+  glassStatus: SortEnumType
+  tintedGlasses: SortEnumType
   watchlistMember: WatchlistMemberSortInput
   watchlist: WatchlistSortInput
   frame: FrameSortInput
@@ -974,56 +1451,59 @@ input PedestrianFilterInput {
   tenantId: StringOperationFilterInput
   objectType: ComparableInt32OperationFilterInput
   pose: HumanPoseOperationFilterInput
-  earLeftX: ComparableNullableOfDoubleOperationFilterInput
-  earLeftY: ComparableNullableOfDoubleOperationFilterInput
-  earRightX: ComparableNullableOfDoubleOperationFilterInput
-  earRightY: ComparableNullableOfDoubleOperationFilterInput
-  eyeLeftX: ComparableNullableOfDoubleOperationFilterInput
-  eyeLeftY: ComparableNullableOfDoubleOperationFilterInput
-  eyeRightX: ComparableNullableOfDoubleOperationFilterInput
-  eyeRightY: ComparableNullableOfDoubleOperationFilterInput
-  noseX: ComparableNullableOfDoubleOperationFilterInput
-  noseY: ComparableNullableOfDoubleOperationFilterInput
-  neckX: ComparableNullableOfDoubleOperationFilterInput
-  neckY: ComparableNullableOfDoubleOperationFilterInput
-  shoulderLeftX: ComparableNullableOfDoubleOperationFilterInput
-  shoulderLeftY: ComparableNullableOfDoubleOperationFilterInput
-  shoulderRightX: ComparableNullableOfDoubleOperationFilterInput
-  shoulderRightY: ComparableNullableOfDoubleOperationFilterInput
-  elbowLeftX: ComparableNullableOfDoubleOperationFilterInput
-  elbowLeftY: ComparableNullableOfDoubleOperationFilterInput
-  elbowRightX: ComparableNullableOfDoubleOperationFilterInput
-  elbowRightY: ComparableNullableOfDoubleOperationFilterInput
-  wristLeftX: ComparableNullableOfDoubleOperationFilterInput
-  wristLeftY: ComparableNullableOfDoubleOperationFilterInput
-  wristRightX: ComparableNullableOfDoubleOperationFilterInput
-  wristRightY: ComparableNullableOfDoubleOperationFilterInput
-  hipLeftX: ComparableNullableOfDoubleOperationFilterInput
-  hipLeftY: ComparableNullableOfDoubleOperationFilterInput
-  hipRightX: ComparableNullableOfDoubleOperationFilterInput
-  hipRightY: ComparableNullableOfDoubleOperationFilterInput
-  kneeLeftX: ComparableNullableOfDoubleOperationFilterInput
-  kneeLeftY: ComparableNullableOfDoubleOperationFilterInput
-  kneeRightX: ComparableNullableOfDoubleOperationFilterInput
-  kneeRightY: ComparableNullableOfDoubleOperationFilterInput
-  ankleLeftX: ComparableNullableOfDoubleOperationFilterInput
-  ankleLeftY: ComparableNullableOfDoubleOperationFilterInput
-  ankleRightX: ComparableNullableOfDoubleOperationFilterInput
-  ankleRightY: ComparableNullableOfDoubleOperationFilterInput
+  earLeftX: ComparableNullableOfSingleOperationFilterInput
+  earLeftY: ComparableNullableOfSingleOperationFilterInput
+  earRightX: ComparableNullableOfSingleOperationFilterInput
+  earRightY: ComparableNullableOfSingleOperationFilterInput
+  eyeLeftX: ComparableNullableOfSingleOperationFilterInput
+  eyeLeftY: ComparableNullableOfSingleOperationFilterInput
+  eyeRightX: ComparableNullableOfSingleOperationFilterInput
+  eyeRightY: ComparableNullableOfSingleOperationFilterInput
+  noseX: ComparableNullableOfSingleOperationFilterInput
+  noseY: ComparableNullableOfSingleOperationFilterInput
+  neckX: ComparableNullableOfSingleOperationFilterInput
+  neckY: ComparableNullableOfSingleOperationFilterInput
+  shoulderLeftX: ComparableNullableOfSingleOperationFilterInput
+  shoulderLeftY: ComparableNullableOfSingleOperationFilterInput
+  shoulderRightX: ComparableNullableOfSingleOperationFilterInput
+  shoulderRightY: ComparableNullableOfSingleOperationFilterInput
+  elbowLeftX: ComparableNullableOfSingleOperationFilterInput
+  elbowLeftY: ComparableNullableOfSingleOperationFilterInput
+  elbowRightX: ComparableNullableOfSingleOperationFilterInput
+  elbowRightY: ComparableNullableOfSingleOperationFilterInput
+  wristLeftX: ComparableNullableOfSingleOperationFilterInput
+  wristLeftY: ComparableNullableOfSingleOperationFilterInput
+  wristRightX: ComparableNullableOfSingleOperationFilterInput
+  wristRightY: ComparableNullableOfSingleOperationFilterInput
+  hipLeftX: ComparableNullableOfSingleOperationFilterInput
+  hipLeftY: ComparableNullableOfSingleOperationFilterInput
+  hipRightX: ComparableNullableOfSingleOperationFilterInput
+  hipRightY: ComparableNullableOfSingleOperationFilterInput
+  kneeLeftX: ComparableNullableOfSingleOperationFilterInput
+  kneeLeftY: ComparableNullableOfSingleOperationFilterInput
+  kneeRightX: ComparableNullableOfSingleOperationFilterInput
+  kneeRightY: ComparableNullableOfSingleOperationFilterInput
+  ankleLeftX: ComparableNullableOfSingleOperationFilterInput
+  ankleLeftY: ComparableNullableOfSingleOperationFilterInput
+  ankleRightX: ComparableNullableOfSingleOperationFilterInput
+  ankleRightY: ComparableNullableOfSingleOperationFilterInput
+  faceId: ComparableNullableOfGuidOperationFilterInput
+  face: FaceFilterInput
+  facesNavigation: ListFilterInputTypeOfFaceFilterInput
   poses: ListStringOperationFilterInput
   id: ComparableGuidOperationFilterInput
   imageDataId: ComparableNullableOfGuidOperationFilterInput
   quality: ComparableInt32OperationFilterInput
-  cropLeftTopX: ComparableDoubleOperationFilterInput
-  cropLeftTopY: ComparableDoubleOperationFilterInput
-  cropRightTopX: ComparableDoubleOperationFilterInput
-  cropRightTopY: ComparableDoubleOperationFilterInput
-  cropLeftBottomX: ComparableDoubleOperationFilterInput
-  cropLeftBottomY: ComparableDoubleOperationFilterInput
-  cropRightBottomX: ComparableDoubleOperationFilterInput
-  cropRightBottomY: ComparableDoubleOperationFilterInput
-  areaOnFrame: ComparableNullableOfDoubleOperationFilterInput
-  size: ComparableDoubleOperationFilterInput
+  cropLeftTopX: ComparableSingleOperationFilterInput
+  cropLeftTopY: ComparableSingleOperationFilterInput
+  cropRightTopX: ComparableSingleOperationFilterInput
+  cropRightTopY: ComparableSingleOperationFilterInput
+  cropLeftBottomX: ComparableSingleOperationFilterInput
+  cropLeftBottomY: ComparableSingleOperationFilterInput
+  cropRightBottomX: ComparableSingleOperationFilterInput
+  cropRightBottomY: ComparableSingleOperationFilterInput
+  areaOnFrame: ComparableNullableOfSingleOperationFilterInput
+  size: ComparableSingleOperationFilterInput
   objectOrderOnFrameForType: ComparableNullableOfInt32OperationFilterInput
   objectsOnFrameCountForType: ComparableNullableOfInt32OperationFilterInput
   trackletId: ComparableGuidOperationFilterInput
@@ -1032,6 +1512,7 @@ input PedestrianFilterInput {
   updatedAt: ComparableNullableOfDateTimeOperationFilterInput
   createdAt: ComparableDateTimeOperationFilterInput
   processedAt: ComparableNullableOfDateTimeOperationFilterInput
+  objectAttributes: ListFilterInputTypeOfObjectAttributeFilterInput
 }
 
 input PedestrianSortInput {
@@ -1077,6 +1558,71 @@ input PedestrianSortInput {
   ankleLeftY: SortEnumType
   ankleRightX: SortEnumType
   ankleRightY: SortEnumType
+  faceId: SortEnumType
+  face: FaceSortInput
+  id: SortEnumType
+  imageDataId: SortEnumType
+  quality: SortEnumType
+  cropLeftTopX: SortEnumType
+  cropLeftTopY: SortEnumType
+  cropRightTopX: SortEnumType
+  cropRightTopY: SortEnumType
+  cropLeftBottomX: SortEnumType
+  cropLeftBottomY: SortEnumType
+  cropRightBottomX: SortEnumType
+  cropRightBottomY: SortEnumType
+  areaOnFrame: SortEnumType
+  size: SortEnumType
+  objectOrderOnFrameForType: SortEnumType
+  objectsOnFrameCountForType: SortEnumType
+  trackletId: SortEnumType
+  frameId: SortEnumType
+  streamId: SortEnumType
+  updatedAt: SortEnumType
+  createdAt: SortEnumType
+  processedAt: SortEnumType
+}
+
+input GenericObjectFilterInput {
+  and: [GenericObjectFilterInput!]
+  or: [GenericObjectFilterInput!]
+  tracklet: TrackletFilterInput
+  frame: FrameFilterInput
+  stream: StreamFilterInput
+  tenantId: StringOperationFilterInput
+  genericObjectType: ComparableInt32OperationFilterInput
+  objectType: ComparableInt32OperationFilterInput
+  id: ComparableGuidOperationFilterInput
+  imageDataId: ComparableNullableOfGuidOperationFilterInput
+  quality: ComparableInt32OperationFilterInput
+  cropLeftTopX: ComparableSingleOperationFilterInput
+  cropLeftTopY: ComparableSingleOperationFilterInput
+  cropRightTopX: ComparableSingleOperationFilterInput
+  cropRightTopY: ComparableSingleOperationFilterInput
+  cropLeftBottomX: ComparableSingleOperationFilterInput
+  cropLeftBottomY: ComparableSingleOperationFilterInput
+  cropRightBottomX: ComparableSingleOperationFilterInput
+  cropRightBottomY: ComparableSingleOperationFilterInput
+  areaOnFrame: ComparableNullableOfSingleOperationFilterInput
+  size: ComparableSingleOperationFilterInput
+  objectOrderOnFrameForType: ComparableNullableOfInt32OperationFilterInput
+  objectsOnFrameCountForType: ComparableNullableOfInt32OperationFilterInput
+  trackletId: ComparableGuidOperationFilterInput
+  frameId: ComparableGuidOperationFilterInput
+  streamId: ComparableNullableOfGuidOperationFilterInput
+  updatedAt: ComparableNullableOfDateTimeOperationFilterInput
+  createdAt: ComparableDateTimeOperationFilterInput
+  processedAt: ComparableNullableOfDateTimeOperationFilterInput
+  objectAttributes: ListFilterInputTypeOfObjectAttributeFilterInput
+}
+
+input GenericObjectSortInput {
+  tracklet: TrackletSortInput
+  frame: FrameSortInput
+  stream: StreamSortInput
+  tenantId: SortEnumType
+  genericObjectType: SortEnumType
+  objectType: SortEnumType
   id: SortEnumType
   imageDataId: SortEnumType
   quality: SortEnumType
@@ -1156,6 +1702,7 @@ input StreamFilterInput {
   edgeStreams: ListFilterInputTypeOfEdgeStreamFilterInput
   faces: ListFilterInputTypeOfFaceFilterInput
   pedestrians: ListFilterInputTypeOfPedestrianFilterInput
+  genericObjects: ListFilterInputTypeOfGenericObjectFilterInput
   videoRecords: ListFilterInputTypeOfVideoRecordFilterInput
   tracklets: ListFilterInputTypeOfTrackletFilterInput
   frames: ListFilterInputTypeOfFrameFilterInput
@@ -1189,12 +1736,11 @@ input TrackletFilterInput {
   watchlistMembers: ListFilterInputTypeOfWatchlistMemberFilterInput
   faces: ListFilterInputTypeOfFaceFilterInput
   pedestrians: ListFilterInputTypeOfPedestrianFilterInput
+  genericObjects: ListFilterInputTypeOfGenericObjectFilterInput
   individuals: ListFilterInputTypeOfIndividualFilterInput
   stream: StreamFilterInput
   matchResults: ListFilterInputTypeOfMatchResultFilterInput
   tenantId: StringOperationFilterInput
-  hasAnyVisualObjects: BooleanOperationFilterInput
-  visualObjects: ListFilterInputTypeOfVisualObjectFilterInput
 }
 
 input TrackletSortInput {
@@ -1210,7 +1756,6 @@ input TrackletSortInput {
   scope: ScopeSortInput
   stream: StreamSortInput
   tenantId: SortEnumType
-  hasAnyVisualObjects: SortEnumType
 }
 
 input VideoRecordFilterInput {
@@ -1227,7 +1772,7 @@ input VideoRecordFilterInput {
   confidenceThreshold: ComparableInt32OperationFilterInput
   redetectionTime: ComparableInt32OperationFilterInput
   templateGenerationTime: ComparableInt32OperationFilterInput
-  faceSaveStrategy: SaveBehaviorOperationFilterInput
+  faceSaveStrategy: FaceSaveStrategyOperationFilterInput
   maskImagePath: StringOperationFilterInput
   saveFrameImageData: BooleanOperationFilterInput
   imageQuality: ComparableInt32OperationFilterInput
@@ -1291,6 +1836,24 @@ input TagSortInput {
   canBeRemoved: SortEnumType
 }
 
+input ObjectAttributeFilterInput {
+  and: [ObjectAttributeFilterInput!]
+  or: [ObjectAttributeFilterInput!]
+  type: AttributeTypeOperationFilterInput
+  floatValue: ComparableNullableOfDoubleOperationFilterInput
+  boolValue: BooleanOperationFilterInput
+  visualObjectId: ComparableGuidOperationFilterInput
+  visualObject: VisualObjectFilterInput
+}
+
+input ObjectAttributeSortInput {
+  type: SortEnumType
+  floatValue: SortEnumType
+  boolValue: SortEnumType
+  visualObjectId: SortEnumType
+  visualObject: VisualObjectSortInput
+}
+
 input SearchSessionFilterInput {
   and: [SearchSessionFilterInput!]
   or: [SearchSessionFilterInput!]
@@ -1310,119 +1873,190 @@ input SearchSessionSortInput {
 
 type CameraCollectionSegment {
   items: [Camera]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type EdgeStreamCollectionSegment {
   items: [EdgeStream]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type FaceCollectionSegment {
   items: [Face]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type FrameCollectionSegment {
   items: [Frame]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type GroupingMetadataCollectionSegment {
   items: [GroupingMetadata]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type IndividualCollectionSegment {
   items: [Individual]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type MatchResultCollectionSegment {
   items: [MatchResult]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type PedestrianCollectionSegment {
   items: [Pedestrian]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
+  pageInfo: CollectionSegmentInfo!
+  totalCount: Int!
+}
+
+type GenericObjectCollectionSegment {
+  items: [GenericObject]
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type ScopeCollectionSegment {
   items: [Scope]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type ServiceCollectionSegment {
   items: [Service]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type StreamCollectionSegment {
   items: [Stream]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type TrackletCollectionSegment {
   items: [Tracklet]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type VideoRecordCollectionSegment {
   items: [VideoRecord]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type TagCollectionSegment {
   items: [Tag]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
+  pageInfo: CollectionSegmentInfo!
+  totalCount: Int!
+}
+
+type ObjectAttributeCollectionSegment {
+  items: [ObjectAttribute]
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type WatchlistMemberCollectionSegment {
   items: [WatchlistMember]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type WatchlistCollectionSegment {
   items: [Watchlist]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
 
 type SearchSessionCollectionSegment {
   items: [SearchSession]
-  "Information to aid in pagination."
+
+  """
+  Information to aid in pagination.
+  """
   pageInfo: CollectionSegmentInfo!
   totalCount: Int!
 }
@@ -1473,6 +2107,15 @@ input WorkerSortInput {
   service: ServiceSortInput
 }
 
+type EdgeStreamSettings {
+  faceDetection: EdgeStreamFaceDetectionSettings
+  faceExtraction: EdgeStreamFaceExtractionSettings
+  faceLivenessPassive: EdgeStreamFaceLivenessPassiveSettings
+  faceIdentification: EdgeStreamFaceIdentificationSettings
+  messaging: EdgeStreamMessagingSettings
+  fullFrame: EdgeStreamFullFrameSettings
+}
+
 input SearchSessionObjectFilterInput {
   and: [SearchSessionObjectFilterInput!]
   or: [SearchSessionObjectFilterInput!]
@@ -1487,6 +2130,47 @@ input SearchSessionObjectSortInput {
   visualObjectId: SortEnumType
   score: SortEnumType
   face: FaceSortInput
+}
+
+input SpoofCheckResultFilterInput {
+  and: [SpoofCheckResultFilterInput!]
+  or: [SpoofCheckResultFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  livenessNearbyPerformed: BooleanOperationFilterInput
+  livenessNearbyScore: ComparableDoubleOperationFilterInput
+  livenessNearbyPassed: BooleanOperationFilterInput
+  livenessNearbyFailedConditionsInfo: StringOperationFilterInput
+  livenessDistantPerformed: BooleanOperationFilterInput
+  livenessDistantScore: ComparableDoubleOperationFilterInput
+  livenessDistantPassed: BooleanOperationFilterInput
+  livenessDistantFailedConditionsInfo: StringOperationFilterInput
+  performed: BooleanOperationFilterInput
+  passed: BooleanOperationFilterInput
+  faceId: ComparableGuidOperationFilterInput
+  face: FaceFilterInput
+}
+
+input SpoofCheckResultSortInput {
+  id: SortEnumType
+  livenessNearbyPerformed: SortEnumType
+  livenessNearbyScore: SortEnumType
+  livenessNearbyPassed: SortEnumType
+  livenessNearbyFailedConditionsInfo: SortEnumType
+  livenessDistantPerformed: SortEnumType
+  livenessDistantScore: SortEnumType
+  livenessDistantPassed: SortEnumType
+  livenessDistantFailedConditionsInfo: SortEnumType
+  performed: SortEnumType
+  passed: SortEnumType
+  faceId: SortEnumType
+  face: FaceSortInput
+}
+
+type FailedConditionInfo {
+  attributeName: String
+  attributeValue: Float!
+  rangeMin: Float!
+  rangeMax: Float!
 }
 
 input StringOperationFilterInput {
@@ -1563,6 +2247,13 @@ input ListFilterInputTypeOfMatchResultFilterInput {
   any: Boolean
 }
 
+input ListFilterInputTypeOfEdgeStreamFilterInput {
+  all: EdgeStreamFilterInput
+  none: EdgeStreamFilterInput
+  some: EdgeStreamFilterInput
+  any: Boolean
+}
+
 enum SortEnumType {
   ASC
   DESC
@@ -1621,29 +2312,14 @@ input ListFilterInputTypeOfWatchlistMemberLabelFilterInput {
 }
 
 type FaceCreatedNotificationDTO {
-  id: UUID!
   type: FaceType!
-  trackletId: UUID!
-  streamId: UUID
-  frameId: UUID!
   state: FaceState!
-  imageDataId: UUID
   createdAt: DateTime!
   updatedAt: DateTime
-  processedAt: DateTime
-  cropLeftTopX: Float!
-  cropLeftTopY: Float!
-  cropRightTopX: Float!
-  cropRightTopY: Float!
-  cropLeftBottomX: Float!
-  cropLeftBottomY: Float!
-  cropRightBottomX: Float!
-  cropRightBottomY: Float!
   leftEyeX: Float
   leftEyeY: Float
   rightEyeX: Float
   rightEyeY: Float
-  quality: Int!
   age: Float
   gender: Float
   faceMaskConfidence: Float
@@ -1652,39 +2328,47 @@ type FaceCreatedNotificationDTO {
   yawAngle: Float
   pitchAngle: Float
   rollAngle: Float
+  brightness: Float
+  sharpness: Float
+  tintedGlasses: Float
+  heavyFrame: Float
+  glassStatus: Float
   faceArea: Float
-  size: Float!
   faceOrder: Int
   facesOnFrameCount: Int
   faceAreaChange: Float!
+  id: UUID!
+  imageDataId: UUID
+  quality: Int!
+  cropLeftTopX: Float!
+  cropLeftTopY: Float!
+  cropRightTopX: Float!
+  cropRightTopY: Float!
+  cropLeftBottomX: Float!
+  cropLeftBottomY: Float!
+  cropRightBottomX: Float!
+  cropRightBottomY: Float!
+  size: Float!
+  areaOnFrame: Float
+  objectOrderOnFrameForType: Int
+  objectsOnFrameCountForType: Int
+  trackletId: UUID!
+  frameId: UUID!
+  streamId: UUID
+  processedAt: DateTime
 }
 
 input FaceCreatedNotificationDTOFilterInput {
   and: [FaceCreatedNotificationDTOFilterInput!]
   or: [FaceCreatedNotificationDTOFilterInput!]
-  id: ComparableGuidOperationFilterInput
   type: FaceTypeOperationFilterInput
-  trackletId: ComparableGuidOperationFilterInput
-  streamId: ComparableNullableOfGuidOperationFilterInput
-  frameId: ComparableGuidOperationFilterInput
   state: FaceStateOperationFilterInput
-  imageDataId: ComparableNullableOfGuidOperationFilterInput
   createdAt: ComparableDateTimeOperationFilterInput
   updatedAt: ComparableNullableOfDateTimeOperationFilterInput
-  processedAt: ComparableNullableOfDateTimeOperationFilterInput
-  cropLeftTopX: ComparableDoubleOperationFilterInput
-  cropLeftTopY: ComparableDoubleOperationFilterInput
-  cropRightTopX: ComparableDoubleOperationFilterInput
-  cropRightTopY: ComparableDoubleOperationFilterInput
-  cropLeftBottomX: ComparableDoubleOperationFilterInput
-  cropLeftBottomY: ComparableDoubleOperationFilterInput
-  cropRightBottomX: ComparableDoubleOperationFilterInput
-  cropRightBottomY: ComparableDoubleOperationFilterInput
   leftEyeX: ComparableNullableOfDoubleOperationFilterInput
   leftEyeY: ComparableNullableOfDoubleOperationFilterInput
   rightEyeX: ComparableNullableOfDoubleOperationFilterInput
   rightEyeY: ComparableNullableOfDoubleOperationFilterInput
-  quality: ComparableInt32OperationFilterInput
   age: ComparableNullableOfDoubleOperationFilterInput
   gender: ComparableNullableOfDoubleOperationFilterInput
   faceMaskConfidence: ComparableNullableOfDoubleOperationFilterInput
@@ -1693,11 +2377,34 @@ input FaceCreatedNotificationDTOFilterInput {
   yawAngle: ComparableNullableOfDoubleOperationFilterInput
   pitchAngle: ComparableNullableOfDoubleOperationFilterInput
   rollAngle: ComparableNullableOfDoubleOperationFilterInput
+  brightness: ComparableNullableOfDoubleOperationFilterInput
+  sharpness: ComparableNullableOfDoubleOperationFilterInput
+  tintedGlasses: ComparableNullableOfDoubleOperationFilterInput
+  heavyFrame: ComparableNullableOfDoubleOperationFilterInput
+  glassStatus: ComparableNullableOfDoubleOperationFilterInput
   faceArea: ComparableNullableOfDoubleOperationFilterInput
-  size: ComparableDoubleOperationFilterInput
   faceOrder: ComparableNullableOfInt32OperationFilterInput
   facesOnFrameCount: ComparableNullableOfInt32OperationFilterInput
   faceAreaChange: ComparableDoubleOperationFilterInput
+  id: ComparableGuidOperationFilterInput
+  imageDataId: ComparableNullableOfGuidOperationFilterInput
+  quality: ComparableInt32OperationFilterInput
+  cropLeftTopX: ComparableDoubleOperationFilterInput
+  cropLeftTopY: ComparableDoubleOperationFilterInput
+  cropRightTopX: ComparableDoubleOperationFilterInput
+  cropRightTopY: ComparableDoubleOperationFilterInput
+  cropLeftBottomX: ComparableDoubleOperationFilterInput
+  cropLeftBottomY: ComparableDoubleOperationFilterInput
+  cropRightBottomX: ComparableDoubleOperationFilterInput
+  cropRightBottomY: ComparableDoubleOperationFilterInput
+  size: ComparableDoubleOperationFilterInput
+  areaOnFrame: ComparableNullableOfDoubleOperationFilterInput
+  objectOrderOnFrameForType: ComparableNullableOfInt32OperationFilterInput
+  objectsOnFrameCountForType: ComparableNullableOfInt32OperationFilterInput
+  trackletId: ComparableGuidOperationFilterInput
+  frameId: ComparableGuidOperationFilterInput
+  streamId: ComparableNullableOfGuidOperationFilterInput
+  processedAt: ComparableNullableOfDateTimeOperationFilterInput
 }
 
 type FaceExtractedNotificationDTO {
@@ -1738,6 +2445,11 @@ type FaceExtractedNotificationDTO {
   faceOrder: Int
   facesOnFrameCount: Int
   faceAreaChange: Float!
+  brightness: Float
+  sharpness: Float
+  tintedGlasses: Float
+  heavyFrame: Float
+  glassStatus: Float
 }
 
 input FaceExtractedNotificationDTOFilterInput {
@@ -1780,10 +2492,15 @@ input FaceExtractedNotificationDTOFilterInput {
   faceOrder: ComparableNullableOfInt32OperationFilterInput
   facesOnFrameCount: ComparableNullableOfInt32OperationFilterInput
   faceAreaChange: ComparableDoubleOperationFilterInput
+  brightness: ComparableNullableOfDoubleOperationFilterInput
+  sharpness: ComparableNullableOfDoubleOperationFilterInput
+  tintedGlasses: ComparableNullableOfDoubleOperationFilterInput
+  heavyFrame: ComparableNullableOfDoubleOperationFilterInput
+  glassStatus: ComparableNullableOfDoubleOperationFilterInput
 }
 
 type MatchResultNotificationDTO {
-  cropImage: [Byte!]
+  cropImage: ByteArray
   spoofCheck: SpoofCheck
   traceOperationName: String
   frameTimestampMicroseconds: Long!
@@ -1804,6 +2521,7 @@ type MatchResultNotificationDTO {
   type: MatchResultType!
   streamId: UUID!
   frameId: UUID
+  clientId: String
   faceArea: Float!
   faceSize: Float!
   faceOrder: Int!
@@ -1821,6 +2539,11 @@ type MatchResultNotificationDTO {
   yawAngle: Float
   pitchAngle: Float
   rollAngle: Float
+  brightness: Float
+  sharpness: Float
+  tintedGlasses: Float
+  heavyFrame: Float
+  glassStatus: Float
   faceQuality: Int!
   age: Float
   gender: Float
@@ -1829,7 +2552,6 @@ type MatchResultNotificationDTO {
 input MatchResultNotificationDTOFilterInput {
   and: [MatchResultNotificationDTOFilterInput!]
   or: [MatchResultNotificationDTOFilterInput!]
-  cropImage: ListComparableByteOperationFilterInput
   spoofCheck: SpoofCheckFilterInput
   traceSpan: ISpanFilterInput
   traceOperationName: StringOperationFilterInput
@@ -1851,6 +2573,7 @@ input MatchResultNotificationDTOFilterInput {
   type: MatchResultTypeOperationFilterInput
   streamId: ComparableGuidOperationFilterInput
   frameId: ComparableNullableOfGuidOperationFilterInput
+  clientId: StringOperationFilterInput
   faceArea: ComparableDoubleOperationFilterInput
   faceSize: ComparableDoubleOperationFilterInput
   faceOrder: ComparableInt32OperationFilterInput
@@ -1868,14 +2591,19 @@ input MatchResultNotificationDTOFilterInput {
   yawAngle: ComparableNullableOfDoubleOperationFilterInput
   pitchAngle: ComparableNullableOfDoubleOperationFilterInput
   rollAngle: ComparableNullableOfDoubleOperationFilterInput
+  brightness: ComparableNullableOfDoubleOperationFilterInput
+  sharpness: ComparableNullableOfDoubleOperationFilterInput
+  tintedGlasses: ComparableNullableOfDoubleOperationFilterInput
+  heavyFrame: ComparableNullableOfDoubleOperationFilterInput
+  glassStatus: ComparableNullableOfDoubleOperationFilterInput
   faceQuality: ComparableInt32OperationFilterInput
   age: ComparableNullableOfDoubleOperationFilterInput
   gender: ComparableNullableOfDoubleOperationFilterInput
 }
 
 type NoMatchResultNotificationDTO {
+  cropImage: ByteArray
   traceOperationName: String
-  cropImage: [Byte!]
   frameTimestampMicroseconds: Long!
   leftEyeX: Float!
   leftEyeY: Float!
@@ -1885,6 +2613,7 @@ type NoMatchResultNotificationDTO {
   type: MatchResultType!
   streamId: UUID!
   frameId: UUID
+  clientId: String
   faceArea: Float!
   faceSize: Float!
   faceOrder: Int!
@@ -1902,6 +2631,11 @@ type NoMatchResultNotificationDTO {
   yawAngle: Float
   pitchAngle: Float
   rollAngle: Float
+  brightness: Float
+  sharpness: Float
+  tintedGlasses: Float
+  heavyFrame: Float
+  glassStatus: Float
   faceQuality: Int!
   age: Float
   gender: Float
@@ -1912,7 +2646,6 @@ input NoMatchResultNotificationDTOFilterInput {
   or: [NoMatchResultNotificationDTOFilterInput!]
   traceSpan: ISpanFilterInput
   traceOperationName: StringOperationFilterInput
-  cropImage: ListComparableByteOperationFilterInput
   frameTimestampMicroseconds: ComparableInt64OperationFilterInput
   leftEyeX: ComparableDoubleOperationFilterInput
   leftEyeY: ComparableDoubleOperationFilterInput
@@ -1922,6 +2655,7 @@ input NoMatchResultNotificationDTOFilterInput {
   type: MatchResultTypeOperationFilterInput
   streamId: ComparableGuidOperationFilterInput
   frameId: ComparableNullableOfGuidOperationFilterInput
+  clientId: StringOperationFilterInput
   faceArea: ComparableDoubleOperationFilterInput
   faceSize: ComparableDoubleOperationFilterInput
   faceOrder: ComparableInt32OperationFilterInput
@@ -1939,6 +2673,11 @@ input NoMatchResultNotificationDTOFilterInput {
   yawAngle: ComparableNullableOfDoubleOperationFilterInput
   pitchAngle: ComparableNullableOfDoubleOperationFilterInput
   rollAngle: ComparableNullableOfDoubleOperationFilterInput
+  brightness: ComparableNullableOfDoubleOperationFilterInput
+  sharpness: ComparableNullableOfDoubleOperationFilterInput
+  tintedGlasses: ComparableNullableOfDoubleOperationFilterInput
+  heavyFrame: ComparableNullableOfDoubleOperationFilterInput
+  glassStatus: ComparableNullableOfDoubleOperationFilterInput
   faceQuality: ComparableInt32OperationFilterInput
   age: ComparableNullableOfDoubleOperationFilterInput
   gender: ComparableNullableOfDoubleOperationFilterInput
@@ -1958,6 +2697,7 @@ type MatchResultInsertDTO {
   type: MatchResultType!
   streamId: UUID!
   frameId: UUID
+  clientId: String
   faceArea: Float!
   faceSize: Float!
   faceOrder: Int!
@@ -1975,6 +2715,11 @@ type MatchResultInsertDTO {
   yawAngle: Float
   pitchAngle: Float
   rollAngle: Float
+  brightness: Float
+  sharpness: Float
+  tintedGlasses: Float
+  heavyFrame: Float
+  glassStatus: Float
   faceQuality: Int!
   age: Float
   gender: Float
@@ -1996,6 +2741,7 @@ input MatchResultInsertDTOFilterInput {
   type: MatchResultTypeOperationFilterInput
   streamId: ComparableGuidOperationFilterInput
   frameId: ComparableNullableOfGuidOperationFilterInput
+  clientId: StringOperationFilterInput
   faceArea: ComparableDoubleOperationFilterInput
   faceSize: ComparableDoubleOperationFilterInput
   faceOrder: ComparableInt32OperationFilterInput
@@ -2013,6 +2759,11 @@ input MatchResultInsertDTOFilterInput {
   yawAngle: ComparableNullableOfDoubleOperationFilterInput
   pitchAngle: ComparableNullableOfDoubleOperationFilterInput
   rollAngle: ComparableNullableOfDoubleOperationFilterInput
+  brightness: ComparableNullableOfDoubleOperationFilterInput
+  sharpness: ComparableNullableOfDoubleOperationFilterInput
+  tintedGlasses: ComparableNullableOfDoubleOperationFilterInput
+  heavyFrame: ComparableNullableOfDoubleOperationFilterInput
+  glassStatus: ComparableNullableOfDoubleOperationFilterInput
   faceQuality: ComparableInt32OperationFilterInput
   age: ComparableNullableOfDoubleOperationFilterInput
   gender: ComparableNullableOfDoubleOperationFilterInput
@@ -2077,25 +2828,6 @@ input TrackletCompletedNotificationDTOFilterInput {
 }
 
 type PedestrianInsertedNotificationDTO {
-  id: UUID!
-  imageDataId: UUID
-  processedAt: DateTime
-  quality: Int!
-  cropLeftTopX: Float!
-  cropLeftTopY: Float!
-  cropRightTopX: Float!
-  cropRightTopY: Float!
-  cropLeftBottomX: Float!
-  cropLeftBottomY: Float!
-  cropRightBottomX: Float!
-  cropRightBottomY: Float!
-  size: Float!
-  areaOnFrame: Float
-  objectOrderOnFrameForType: Int
-  objectsOnFrameCountForType: Int
-  trackletId: UUID!
-  frameId: UUID!
-  streamId: UUID
   pose: HumanPose!
   earLeftX: Float
   earLeftY: Float
@@ -2133,30 +2865,32 @@ type PedestrianInsertedNotificationDTO {
   ankleLeftY: Float
   ankleRightX: Float
   ankleRightY: Float
+  objectAttributes: [ObjectAttributeNotification]
+  id: UUID!
+  imageDataId: UUID
+  quality: Int!
+  cropLeftTopX: Float!
+  cropLeftTopY: Float!
+  cropRightTopX: Float!
+  cropRightTopY: Float!
+  cropLeftBottomX: Float!
+  cropLeftBottomY: Float!
+  cropRightBottomX: Float!
+  cropRightBottomY: Float!
+  size: Float!
+  areaOnFrame: Float
+  objectOrderOnFrameForType: Int
+  objectsOnFrameCountForType: Int
+  trackletId: UUID!
+  frameId: UUID!
+  streamId: UUID
+  processedAt: DateTime
 }
 
 input PedestrianInsertedNotificationDTOFilterInput {
   and: [PedestrianInsertedNotificationDTOFilterInput!]
   or: [PedestrianInsertedNotificationDTOFilterInput!]
-  id: ComparableGuidOperationFilterInput
-  imageDataId: ComparableNullableOfGuidOperationFilterInput
-  processedAt: ComparableNullableOfDateTimeOperationFilterInput
-  quality: ComparableInt32OperationFilterInput
-  cropLeftTopX: ComparableDoubleOperationFilterInput
-  cropLeftTopY: ComparableDoubleOperationFilterInput
-  cropRightTopX: ComparableDoubleOperationFilterInput
-  cropRightTopY: ComparableDoubleOperationFilterInput
-  cropLeftBottomX: ComparableDoubleOperationFilterInput
-  cropLeftBottomY: ComparableDoubleOperationFilterInput
-  cropRightBottomX: ComparableDoubleOperationFilterInput
-  cropRightBottomY: ComparableDoubleOperationFilterInput
-  size: ComparableDoubleOperationFilterInput
-  areaOnFrame: ComparableNullableOfDoubleOperationFilterInput
-  objectOrderOnFrameForType: ComparableNullableOfInt32OperationFilterInput
-  objectsOnFrameCountForType: ComparableNullableOfInt32OperationFilterInput
-  trackletId: ComparableGuidOperationFilterInput
-  frameId: ComparableGuidOperationFilterInput
-  streamId: ComparableNullableOfGuidOperationFilterInput
+  objectAttributes: ObjectAttributeListFilterInputNotification
   pose: HumanPoseOperationFilterInput
   earLeftX: ComparableNullableOfDoubleOperationFilterInput
   earLeftY: ComparableNullableOfDoubleOperationFilterInput
@@ -2194,6 +2928,120 @@ input PedestrianInsertedNotificationDTOFilterInput {
   ankleLeftY: ComparableNullableOfDoubleOperationFilterInput
   ankleRightX: ComparableNullableOfDoubleOperationFilterInput
   ankleRightY: ComparableNullableOfDoubleOperationFilterInput
+  id: ComparableGuidOperationFilterInput
+  imageDataId: ComparableNullableOfGuidOperationFilterInput
+  quality: ComparableInt32OperationFilterInput
+  cropLeftTopX: ComparableDoubleOperationFilterInput
+  cropLeftTopY: ComparableDoubleOperationFilterInput
+  cropRightTopX: ComparableDoubleOperationFilterInput
+  cropRightTopY: ComparableDoubleOperationFilterInput
+  cropLeftBottomX: ComparableDoubleOperationFilterInput
+  cropLeftBottomY: ComparableDoubleOperationFilterInput
+  cropRightBottomX: ComparableDoubleOperationFilterInput
+  cropRightBottomY: ComparableDoubleOperationFilterInput
+  size: ComparableDoubleOperationFilterInput
+  areaOnFrame: ComparableNullableOfDoubleOperationFilterInput
+  objectOrderOnFrameForType: ComparableNullableOfInt32OperationFilterInput
+  objectsOnFrameCountForType: ComparableNullableOfInt32OperationFilterInput
+  trackletId: ComparableGuidOperationFilterInput
+  frameId: ComparableGuidOperationFilterInput
+  streamId: ComparableNullableOfGuidOperationFilterInput
+  processedAt: ComparableNullableOfDateTimeOperationFilterInput
+}
+
+type FaceProcessedNotificationDTO {
+  faceInformation: FaceInformation
+  spoofCheck: SpoofCheck
+  matchInformation: [MatchInformation!]!
+  frameInformation: FrameInformation!
+}
+
+input FaceProcessedNotificationDTOFilterInput {
+  and: [FaceProcessedNotificationDTOFilterInput!]
+  or: [FaceProcessedNotificationDTOFilterInput!]
+  faceInformation: FaceInformationFilterInput
+  matchInformation: ListFilterInputTypeOfMatchInformationFilterInput
+  frameInformation: FrameInformationFilterInput
+  spoofCheck: SpoofCheckFilterInput
+}
+
+type PedestrianProcessedNotificationDTO {
+  pedestrianInformation: PedestrianInformation
+  frameInformation: FrameInformation!
+}
+
+input PedestrianProcessedNotificationDTOFilterInput {
+  and: [PedestrianProcessedNotificationDTOFilterInput!]
+  or: [PedestrianProcessedNotificationDTOFilterInput!]
+  pedestrianInformation: PedestrianInformationFilterInput
+  frameInformation: FrameInformationFilterInput
+}
+
+type ObjectProcessedNotificationDTO {
+  objectInformation: ObjectInformation
+  frameInformation: FrameInformation!
+}
+
+input ObjectProcessedNotificationDTOFilterInput {
+  and: [ObjectProcessedNotificationDTOFilterInput!]
+  or: [ObjectProcessedNotificationDTOFilterInput!]
+  objectInformation: ObjectInformationFilterInput
+  frameInformation: FrameInformationFilterInput
+}
+
+type ObjectInsertNotificationDTO {
+  genericObjectType: Int!
+  id: UUID!
+  imageDataId: UUID
+  quality: Int!
+  cropLeftTopX: Float!
+  cropLeftTopY: Float!
+  cropRightTopX: Float!
+  cropRightTopY: Float!
+  cropLeftBottomX: Float!
+  cropLeftBottomY: Float!
+  cropRightBottomX: Float!
+  cropRightBottomY: Float!
+  size: Float!
+  areaOnFrame: Float
+  objectOrderOnFrameForType: Int
+  objectsOnFrameCountForType: Int
+  trackletId: UUID!
+  frameId: UUID!
+  streamId: UUID
+  processedAt: DateTime
+}
+
+input ObjectInsertNotificationDTOFilterInput {
+  and: [ObjectInsertNotificationDTOFilterInput!]
+  or: [ObjectInsertNotificationDTOFilterInput!]
+  genericObjectType: ComparableInt32OperationFilterInput
+  id: ComparableGuidOperationFilterInput
+  imageDataId: ComparableNullableOfGuidOperationFilterInput
+  quality: ComparableInt32OperationFilterInput
+  cropLeftTopX: ComparableDoubleOperationFilterInput
+  cropLeftTopY: ComparableDoubleOperationFilterInput
+  cropRightTopX: ComparableDoubleOperationFilterInput
+  cropRightTopY: ComparableDoubleOperationFilterInput
+  cropLeftBottomX: ComparableDoubleOperationFilterInput
+  cropLeftBottomY: ComparableDoubleOperationFilterInput
+  cropRightBottomX: ComparableDoubleOperationFilterInput
+  cropRightBottomY: ComparableDoubleOperationFilterInput
+  size: ComparableDoubleOperationFilterInput
+  areaOnFrame: ComparableNullableOfDoubleOperationFilterInput
+  objectOrderOnFrameForType: ComparableNullableOfInt32OperationFilterInput
+  objectsOnFrameCountForType: ComparableNullableOfInt32OperationFilterInput
+  trackletId: ComparableGuidOperationFilterInput
+  frameId: ComparableGuidOperationFilterInput
+  streamId: ComparableNullableOfGuidOperationFilterInput
+  processedAt: ComparableNullableOfDateTimeOperationFilterInput
+}
+
+type HealthReport {
+  version: String
+  status: HealthStatus!
+  licenseStatus: LicenseStatus!
+  hwid: String
 }
 
 input ComparableInt64OperationFilterInput {
@@ -2245,18 +3093,70 @@ input ComparableDoubleOperationFilterInput {
   nlte: Float
 }
 
-input SaveBehaviorOperationFilterInput {
-  eq: SaveBehavior
-  neq: SaveBehavior
-  in: [SaveBehavior!]
-  nin: [SaveBehavior!]
-}
-
 input FaceSaveStrategyOperationFilterInput {
   eq: FaceSaveStrategy
   neq: FaceSaveStrategy
   in: [FaceSaveStrategy!]
   nin: [FaceSaveStrategy!]
+}
+
+input PedestrianSaveStrategyOperationFilterInput {
+  eq: PedestrianSaveStrategy
+  neq: PedestrianSaveStrategy
+  in: [PedestrianSaveStrategy!]
+  nin: [PedestrianSaveStrategy!]
+}
+
+input ObjectSaveStrategyOperationFilterInput {
+  eq: ObjectSaveStrategy
+  neq: ObjectSaveStrategy
+  in: [ObjectSaveStrategy!]
+  nin: [ObjectSaveStrategy!]
+}
+
+input WatchlistSyncOptionOperationFilterInput {
+  eq: WatchlistSyncOption
+  neq: WatchlistSyncOption
+  in: [WatchlistSyncOption!]
+  nin: [WatchlistSyncOption!]
+}
+
+input MatchingDataStrategyOperationFilterInput {
+  eq: MatchingDataStrategy
+  neq: MatchingDataStrategy
+  in: [MatchingDataStrategy!]
+  nin: [MatchingDataStrategy!]
+}
+
+input LivenessDataStrategyOperationFilterInput {
+  eq: LivenessDataStrategy
+  neq: LivenessDataStrategy
+  in: [LivenessDataStrategy!]
+  nin: [LivenessDataStrategy!]
+}
+
+input EdgeStreamSettingsFilterInput {
+  and: [EdgeStreamSettingsFilterInput!]
+  or: [EdgeStreamSettingsFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  faceDetection: EdgeStreamFaceDetectionSettingsFilterInput
+  faceExtraction: EdgeStreamFaceExtractionSettingsFilterInput
+  faceLivenessPassive: EdgeStreamFaceLivenessPassiveSettingsFilterInput
+  faceIdentification: EdgeStreamFaceIdentificationSettingsFilterInput
+  messaging: EdgeStreamMessagingSettingsFilterInput
+  fullFrame: EdgeStreamFullFrameSettingsFilterInput
+  license: EdgeStreamLicenseSettingsFilterInput
+}
+
+input EdgeStreamSettingsSortInput {
+  id: SortEnumType
+  faceDetection: EdgeStreamFaceDetectionSettingsSortInput
+  faceExtraction: EdgeStreamFaceExtractionSettingsSortInput
+  faceLivenessPassive: EdgeStreamFaceLivenessPassiveSettingsSortInput
+  faceIdentification: EdgeStreamFaceIdentificationSettingsSortInput
+  messaging: EdgeStreamMessagingSettingsSortInput
+  fullFrame: EdgeStreamFullFrameSettingsSortInput
+  license: EdgeStreamLicenseSettingsSortInput
 }
 
 input FaceStateOperationFilterInput {
@@ -2281,7 +3181,7 @@ input ComparableNullableOfInt32OperationFilterInput {
   nlte: Int
 }
 
-input ComparableNullableOfDoubleOperationFilterInput {
+input ComparableNullableOfSingleOperationFilterInput {
   eq: Float
   neq: Float
   in: [Float]
@@ -2332,10 +3232,32 @@ input FaceMaskStatusOperationFilterInput {
   nin: [FaceMaskStatus!]
 }
 
+input ComparableSingleOperationFilterInput {
+  eq: Float
+  neq: Float
+  in: [Float!]
+  nin: [Float!]
+  gt: Float
+  ngt: Float
+  gte: Float
+  ngte: Float
+  lt: Float
+  nlt: Float
+  lte: Float
+  nlte: Float
+}
+
 input ListFilterInputTypeOfSearchSessionObjectFilterInput {
   all: SearchSessionObjectFilterInput
   none: SearchSessionObjectFilterInput
   some: SearchSessionObjectFilterInput
+  any: Boolean
+}
+
+input ListFilterInputTypeOfPedestrianFilterInput {
+  all: PedestrianFilterInput
+  none: PedestrianFilterInput
+  some: PedestrianFilterInput
   any: Boolean
 }
 
@@ -2353,6 +3275,13 @@ input NullableOfGenderTypeOperationFilterInput {
   nin: [GenderType]
 }
 
+input ListFilterInputTypeOfObjectAttributeFilterInput {
+  all: ObjectAttributeFilterInput
+  none: ObjectAttributeFilterInput
+  some: ObjectAttributeFilterInput
+  any: Boolean
+}
+
 input FrameStateOperationFilterInput {
   eq: FrameState
   neq: FrameState
@@ -2367,10 +3296,10 @@ input ListFilterInputTypeOfFaceFilterInput {
   any: Boolean
 }
 
-input ListFilterInputTypeOfPedestrianFilterInput {
-  all: PedestrianFilterInput
-  none: PedestrianFilterInput
-  some: PedestrianFilterInput
+input ListFilterInputTypeOfGenericObjectFilterInput {
+  all: GenericObjectFilterInput
+  none: GenericObjectFilterInput
+  some: GenericObjectFilterInput
   any: Boolean
 }
 
@@ -2393,6 +3322,21 @@ input MatchResultTypeOperationFilterInput {
   neq: MatchResultType
   in: [MatchResultType!]
   nin: [MatchResultType!]
+}
+
+input ComparableNullableOfDoubleOperationFilterInput {
+  eq: Float
+  neq: Float
+  in: [Float]
+  nin: [Float]
+  gt: Float
+  ngt: Float
+  gte: Float
+  ngte: Float
+  lt: Float
+  nlt: Float
+  lte: Float
+  nlte: Float
 }
 
 input HumanPoseOperationFilterInput {
@@ -2451,24 +3395,10 @@ input ListFilterInputTypeOfCameraFilterInput {
   any: Boolean
 }
 
-input ListFilterInputTypeOfEdgeStreamFilterInput {
-  all: EdgeStreamFilterInput
-  none: EdgeStreamFilterInput
-  some: EdgeStreamFilterInput
-  any: Boolean
-}
-
 input ListFilterInputTypeOfVideoRecordFilterInput {
   all: VideoRecordFilterInput
   none: VideoRecordFilterInput
   some: VideoRecordFilterInput
-  any: Boolean
-}
-
-input ListFilterInputTypeOfVisualObjectFilterInput {
-  all: VisualObjectFilterInput
-  none: VisualObjectFilterInput
-  some: VisualObjectFilterInput
   any: Boolean
 }
 
@@ -2501,11 +3431,86 @@ input ListFilterInputTypeOfTagFilterInput {
   any: Boolean
 }
 
-"Information about the offset pagination."
+input AttributeTypeOperationFilterInput {
+  eq: AttributeType
+  neq: AttributeType
+  in: [AttributeType!]
+  nin: [AttributeType!]
+}
+
+input VisualObjectFilterInput {
+  and: [VisualObjectFilterInput!]
+  or: [VisualObjectFilterInput!]
+  objectType: ComparableInt32OperationFilterInput
+  id: ComparableGuidOperationFilterInput
+  imageDataId: ComparableNullableOfGuidOperationFilterInput
+  quality: ComparableInt32OperationFilterInput
+  cropLeftTopX: ComparableSingleOperationFilterInput
+  cropLeftTopY: ComparableSingleOperationFilterInput
+  cropRightTopX: ComparableSingleOperationFilterInput
+  cropRightTopY: ComparableSingleOperationFilterInput
+  cropLeftBottomX: ComparableSingleOperationFilterInput
+  cropLeftBottomY: ComparableSingleOperationFilterInput
+  cropRightBottomX: ComparableSingleOperationFilterInput
+  cropRightBottomY: ComparableSingleOperationFilterInput
+  areaOnFrame: ComparableNullableOfSingleOperationFilterInput
+  size: ComparableSingleOperationFilterInput
+  objectOrderOnFrameForType: ComparableNullableOfInt32OperationFilterInput
+  objectsOnFrameCountForType: ComparableNullableOfInt32OperationFilterInput
+  trackletId: ComparableGuidOperationFilterInput
+  frameId: ComparableGuidOperationFilterInput
+  streamId: ComparableNullableOfGuidOperationFilterInput
+  updatedAt: ComparableNullableOfDateTimeOperationFilterInput
+  createdAt: ComparableDateTimeOperationFilterInput
+  processedAt: ComparableNullableOfDateTimeOperationFilterInput
+  tracklet: TrackletFilterInput
+  frame: FrameFilterInput
+  stream: StreamFilterInput
+  tenantId: StringOperationFilterInput
+  objectAttributes: ListFilterInputTypeOfObjectAttributeFilterInput
+}
+
+input VisualObjectSortInput {
+  objectType: SortEnumType
+  id: SortEnumType
+  imageDataId: SortEnumType
+  quality: SortEnumType
+  cropLeftTopX: SortEnumType
+  cropLeftTopY: SortEnumType
+  cropRightTopX: SortEnumType
+  cropRightTopY: SortEnumType
+  cropLeftBottomX: SortEnumType
+  cropLeftBottomY: SortEnumType
+  cropRightBottomX: SortEnumType
+  cropRightBottomY: SortEnumType
+  areaOnFrame: SortEnumType
+  size: SortEnumType
+  objectOrderOnFrameForType: SortEnumType
+  objectsOnFrameCountForType: SortEnumType
+  trackletId: SortEnumType
+  frameId: SortEnumType
+  streamId: SortEnumType
+  updatedAt: SortEnumType
+  createdAt: SortEnumType
+  processedAt: SortEnumType
+  tracklet: TrackletSortInput
+  frame: FrameSortInput
+  stream: StreamSortInput
+  tenantId: SortEnumType
+}
+
+"""
+Information about the offset pagination.
+"""
 type CollectionSegmentInfo {
-  "Indicates whether more items exist following the set defined by the clients arguments."
+  """
+  Indicates whether more items exist following the set defined by the clients arguments.
+  """
   hasNextPage: Boolean!
-  "Indicates whether more items exist prior the set defined by the clients arguments."
+
+  """
+  Indicates whether more items exist prior the set defined by the clients arguments.
+  """
   hasPreviousPage: Boolean!
 }
 
@@ -2514,6 +3519,45 @@ input WorkerTypeOperationFilterInput {
   neq: WorkerType
   in: [WorkerType!]
   nin: [WorkerType!]
+}
+
+type EdgeStreamFaceDetectionSettings {
+  tracking: EdgeStreamFaceDetectionTrackingSettings
+  crop: EdgeStreamFaceDetectionCropSettings
+  enable: Boolean!
+  maxDetections: Int!
+  minFaceSize: Float!
+  maxFaceSize: Float!
+  orderBy: EdgeStreamFaceDetectionOrderBy!
+}
+
+type EdgeStreamFaceExtractionSettings {
+  enable: Boolean!
+}
+
+type EdgeStreamFaceLivenessPassiveSettings {
+  enable: Boolean!
+  strategy: EdgeStreamLivenessStrategy!
+  conditions: [EdgeStreamFaceLivenessPassiveCondition!]!
+}
+
+type EdgeStreamFaceIdentificationSettings {
+  enable: Boolean!
+  threshold: Float!
+}
+
+type EdgeStreamMessagingSettings {
+  enable: Boolean!
+  strategy: EdgeStreamMessagingStrategy!
+  interval: Int!
+  allowEmptyMessages: Boolean!
+}
+
+type EdgeStreamFullFrameSettings {
+  imageWidth: Int
+  imageHeight: Int
+  imageFormat: EdgeStreamImageFormat!
+  imageQuality: Float!
 }
 
 input ComparableByteOperationFilterInput {
@@ -2530,6 +3574,8 @@ input ComparableByteOperationFilterInput {
   lte: Byte
   nlte: Byte
 }
+
+scalar ByteArray
 
 input SpoofCheckFilterInput {
   and: [SpoofCheckFilterInput!]
@@ -2562,6 +3608,145 @@ input ProgressStatusOperationFilterInput {
   nin: [ProgressStatus!]
 }
 
+input ObjectAttributeListFilterInputNotification {
+  and: [ObjectAttributeListFilterInputNotification!]
+  or: [ObjectAttributeListFilterInputNotification!]
+}
+
+type FaceInformation {
+  cropImage: ByteArray
+  id: UUID!
+  faceArea: Float!
+  faceSize: Float!
+  faceOrder: Int!
+  facesOnFrameCount: Int!
+  faceAreaChange: Float!
+  faceMaskConfidence: Float
+  noseTipConfidence: Float
+  faceMaskStatus: FaceMaskStatus!
+  trackletId: UUID!
+  faceQuality: Int!
+  templateQuality: Int!
+  yawAngle: Float
+  pitchAngle: Float
+  rollAngle: Float
+  brightness: Float
+  sharpness: Float
+  tintedGlasses: Float
+  heavyFrame: Float
+  glassStatus: Float
+  age: Float
+  gender: Float
+  leftEyeX: Float!
+  leftEyeY: Float!
+  rightEyeX: Float!
+  rightEyeY: Float!
+  cropCoordinates: CropCoordinates!
+}
+
+input FaceInformationFilterInput {
+  and: [FaceInformationFilterInput!]
+  or: [FaceInformationFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  faceArea: ComparableDoubleOperationFilterInput
+  faceSize: ComparableDoubleOperationFilterInput
+  faceOrder: ComparableInt32OperationFilterInput
+  facesOnFrameCount: ComparableInt32OperationFilterInput
+  faceAreaChange: ComparableDoubleOperationFilterInput
+  faceMaskConfidence: ComparableNullableOfDoubleOperationFilterInput
+  noseTipConfidence: ComparableNullableOfDoubleOperationFilterInput
+  faceMaskStatus: FaceMaskStatusOperationFilterInput
+  trackletId: ComparableGuidOperationFilterInput
+  faceQuality: ComparableInt32OperationFilterInput
+  templateQuality: ComparableInt32OperationFilterInput
+  yawAngle: ComparableNullableOfDoubleOperationFilterInput
+  pitchAngle: ComparableNullableOfDoubleOperationFilterInput
+  rollAngle: ComparableNullableOfDoubleOperationFilterInput
+  brightness: ComparableNullableOfDoubleOperationFilterInput
+  sharpness: ComparableNullableOfDoubleOperationFilterInput
+  tintedGlasses: ComparableNullableOfDoubleOperationFilterInput
+  heavyFrame: ComparableNullableOfDoubleOperationFilterInput
+  glassStatus: ComparableNullableOfDoubleOperationFilterInput
+  age: ComparableNullableOfDoubleOperationFilterInput
+  gender: ComparableNullableOfDoubleOperationFilterInput
+  leftEyeX: ComparableDoubleOperationFilterInput
+  leftEyeY: ComparableDoubleOperationFilterInput
+  rightEyeX: ComparableDoubleOperationFilterInput
+  rightEyeY: ComparableDoubleOperationFilterInput
+  cropCoordinates: CropCoordinatesFilterInput
+}
+
+input ListFilterInputTypeOfMatchInformationFilterInput {
+  all: MatchInformationFilterInput
+  none: MatchInformationFilterInput
+  some: MatchInformationFilterInput
+  any: Boolean
+}
+
+input FrameInformationFilterInput {
+  and: [FrameInformationFilterInput!]
+  or: [FrameInformationFilterInput!]
+  streamId: ComparableGuidOperationFilterInput
+  frameId: ComparableNullableOfGuidOperationFilterInput
+  processedAt: ComparableDateTimeOperationFilterInput
+  clientId: StringOperationFilterInput
+  frameTimestampMicroseconds: ComparableInt64OperationFilterInput
+}
+
+type PedestrianInformation {
+  cropImage: ByteArray
+  id: UUID!
+  trackletId: UUID!
+  quality: Int!
+  pedestrianOrder: Int!
+  pedestriansOnFrameCount: Int!
+  size: Float!
+  areaOnFrame: Float!
+  attributes: [ObjectAttributeNotification!]!
+  cropCoordinates: CropCoordinates!
+}
+
+input PedestrianInformationFilterInput {
+  and: [PedestrianInformationFilterInput!]
+  or: [PedestrianInformationFilterInput!]
+  attributes: ObjectAttributeListFilterInputNotification
+  id: ComparableGuidOperationFilterInput
+  trackletId: ComparableGuidOperationFilterInput
+  quality: ComparableInt32OperationFilterInput
+  pedestrianOrder: ComparableInt32OperationFilterInput
+  pedestriansOnFrameCount: ComparableInt32OperationFilterInput
+  size: ComparableDoubleOperationFilterInput
+  areaOnFrame: ComparableDoubleOperationFilterInput
+  cropCoordinates: CropCoordinatesFilterInput
+}
+
+type ObjectInformation {
+  cropImage: ByteArray
+  id: UUID!
+  type: Int!
+  trackletId: UUID!
+  quality: Int!
+  objectOrderOnFrameForType: Int!
+  objectsOnFrameCountForType: Int!
+  size: Float!
+  areaOnFrame: Float!
+  cropCoordinates: CropCoordinates!
+}
+
+input ObjectInformationFilterInput {
+  and: [ObjectInformationFilterInput!]
+  or: [ObjectInformationFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  type: ComparableInt32OperationFilterInput
+  trackletId: ComparableGuidOperationFilterInput
+  quality: ComparableInt32OperationFilterInput
+  objectOrderOnFrameForType: ComparableInt32OperationFilterInput
+  objectsOnFrameCountForType: ComparableInt32OperationFilterInput
+  size: ComparableDoubleOperationFilterInput
+  areaOnFrame: ComparableDoubleOperationFilterInput
+  cropCoordinates: CropCoordinatesFilterInput
+}
+
 input StreamSpoofDetectorResourceFilterInput {
   and: [StreamSpoofDetectorResourceFilterInput!]
   or: [StreamSpoofDetectorResourceFilterInput!]
@@ -2569,35 +3754,130 @@ input StreamSpoofDetectorResourceFilterInput {
   streamId: ComparableGuidOperationFilterInput
 }
 
-input VisualObjectFilterInput {
-  and: [VisualObjectFilterInput!]
-  or: [VisualObjectFilterInput!]
-  objectType: ComparableInt32OperationFilterInput
+input EdgeStreamFaceDetectionSettingsFilterInput {
+  and: [EdgeStreamFaceDetectionSettingsFilterInput!]
+  or: [EdgeStreamFaceDetectionSettingsFilterInput!]
   id: ComparableGuidOperationFilterInput
-  imageDataId: ComparableNullableOfGuidOperationFilterInput
-  quality: ComparableInt32OperationFilterInput
-  cropLeftTopX: ComparableDoubleOperationFilterInput
-  cropLeftTopY: ComparableDoubleOperationFilterInput
-  cropRightTopX: ComparableDoubleOperationFilterInput
-  cropRightTopY: ComparableDoubleOperationFilterInput
-  cropLeftBottomX: ComparableDoubleOperationFilterInput
-  cropLeftBottomY: ComparableDoubleOperationFilterInput
-  cropRightBottomX: ComparableDoubleOperationFilterInput
-  cropRightBottomY: ComparableDoubleOperationFilterInput
-  areaOnFrame: ComparableNullableOfDoubleOperationFilterInput
-  size: ComparableDoubleOperationFilterInput
-  objectOrderOnFrameForType: ComparableNullableOfInt32OperationFilterInput
-  objectsOnFrameCountForType: ComparableNullableOfInt32OperationFilterInput
-  trackletId: ComparableGuidOperationFilterInput
-  frameId: ComparableGuidOperationFilterInput
-  streamId: ComparableNullableOfGuidOperationFilterInput
-  updatedAt: ComparableNullableOfDateTimeOperationFilterInput
-  createdAt: ComparableDateTimeOperationFilterInput
-  processedAt: ComparableNullableOfDateTimeOperationFilterInput
-  tracklet: TrackletFilterInput
-  frame: FrameFilterInput
-  stream: StreamFilterInput
-  tenantId: StringOperationFilterInput
+  enable: BooleanOperationFilterInput
+  maxDetections: ComparableInt32OperationFilterInput
+  minFaceSize: ComparableSingleOperationFilterInput
+  maxFaceSize: ComparableSingleOperationFilterInput
+  orderBy: EdgeStreamFaceDetectionOrderByOperationFilterInput
+  tracking: EdgeStreamFaceDetectionTrackingSettingsFilterInput
+  crop: EdgeStreamFaceDetectionCropSettingsFilterInput
+}
+
+input EdgeStreamFaceExtractionSettingsFilterInput {
+  and: [EdgeStreamFaceExtractionSettingsFilterInput!]
+  or: [EdgeStreamFaceExtractionSettingsFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  enable: BooleanOperationFilterInput
+}
+
+input EdgeStreamFaceLivenessPassiveSettingsFilterInput {
+  and: [EdgeStreamFaceLivenessPassiveSettingsFilterInput!]
+  or: [EdgeStreamFaceLivenessPassiveSettingsFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  enable: BooleanOperationFilterInput
+  strategy: EdgeStreamLivenessStrategyOperationFilterInput
+  conditions: ListFilterInputTypeOfEdgeStreamFaceLivenessPassiveConditionFilterInput
+}
+
+input EdgeStreamFaceIdentificationSettingsFilterInput {
+  and: [EdgeStreamFaceIdentificationSettingsFilterInput!]
+  or: [EdgeStreamFaceIdentificationSettingsFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  enable: BooleanOperationFilterInput
+  threshold: ComparableSingleOperationFilterInput
+}
+
+input EdgeStreamMessagingSettingsFilterInput {
+  and: [EdgeStreamMessagingSettingsFilterInput!]
+  or: [EdgeStreamMessagingSettingsFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  enable: BooleanOperationFilterInput
+  strategy: EdgeStreamMessagingStrategyOperationFilterInput
+  interval: ComparableInt32OperationFilterInput
+  allowEmptyMessages: BooleanOperationFilterInput
+}
+
+input EdgeStreamFullFrameSettingsFilterInput {
+  and: [EdgeStreamFullFrameSettingsFilterInput!]
+  or: [EdgeStreamFullFrameSettingsFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  imageWidth: ComparableNullableOfInt32OperationFilterInput
+  imageHeight: ComparableNullableOfInt32OperationFilterInput
+  imageFormat: EdgeStreamImageFormatOperationFilterInput
+  imageQuality: ComparableSingleOperationFilterInput
+}
+
+input EdgeStreamLicenseSettingsFilterInput {
+  and: [EdgeStreamLicenseSettingsFilterInput!]
+  or: [EdgeStreamLicenseSettingsFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  data: ListComparableByteOperationFilterInput
+}
+
+input EdgeStreamFaceDetectionSettingsSortInput {
+  id: SortEnumType
+  enable: SortEnumType
+  maxDetections: SortEnumType
+  minFaceSize: SortEnumType
+  maxFaceSize: SortEnumType
+  orderBy: SortEnumType
+  tracking: EdgeStreamFaceDetectionTrackingSettingsSortInput
+  crop: EdgeStreamFaceDetectionCropSettingsSortInput
+}
+
+input EdgeStreamFaceExtractionSettingsSortInput {
+  id: SortEnumType
+  enable: SortEnumType
+}
+
+input EdgeStreamFaceLivenessPassiveSettingsSortInput {
+  id: SortEnumType
+  enable: SortEnumType
+  strategy: SortEnumType
+}
+
+input EdgeStreamFaceIdentificationSettingsSortInput {
+  id: SortEnumType
+  enable: SortEnumType
+  threshold: SortEnumType
+}
+
+input EdgeStreamMessagingSettingsSortInput {
+  id: SortEnumType
+  enable: SortEnumType
+  strategy: SortEnumType
+  interval: SortEnumType
+  allowEmptyMessages: SortEnumType
+}
+
+input EdgeStreamFullFrameSettingsSortInput {
+  id: SortEnumType
+  imageWidth: SortEnumType
+  imageHeight: SortEnumType
+  imageFormat: SortEnumType
+  imageQuality: SortEnumType
+}
+
+input EdgeStreamLicenseSettingsSortInput {
+  id: SortEnumType
+}
+
+type EdgeStreamFaceDetectionTrackingSettings {
+  outputThreshold: Float!
+  inputThreshold: Float!
+  stability: Float!
+  maxFramesLost: Int!
+}
+
+type EdgeStreamFaceDetectionCropSettings {
+  enable: Boolean!
+  maxSize: Float!
+  imageFormat: EdgeStreamImageFormat!
+  imageQuality: Float!
 }
 
 input BodyPartsSpoofCheckFilterInput {
@@ -2614,6 +3894,7 @@ input LivenessSpoofCheckFilterInput {
   performed: BooleanOperationFilterInput
   passed: BooleanOperationFilterInput
   score: ComparableDoubleOperationFilterInput
+  failedConditions: ListFilterInputTypeOfFailedConditionInfoFilterInput
 }
 
 input ExternalSpoofCheckFilterInput {
@@ -2639,6 +3920,137 @@ input MemberLabelFilterInput {
   value: StringOperationFilterInput
 }
 
+input CropCoordinatesFilterInput {
+  and: [CropCoordinatesFilterInput!]
+  or: [CropCoordinatesFilterInput!]
+  cropLeftTopX: ComparableDoubleOperationFilterInput
+  cropLeftTopY: ComparableDoubleOperationFilterInput
+  cropRightTopX: ComparableDoubleOperationFilterInput
+  cropRightTopY: ComparableDoubleOperationFilterInput
+  cropLeftBottomX: ComparableDoubleOperationFilterInput
+  cropLeftBottomY: ComparableDoubleOperationFilterInput
+  cropRightBottomX: ComparableDoubleOperationFilterInput
+  cropRightBottomY: ComparableDoubleOperationFilterInput
+}
+
+input MatchInformationFilterInput {
+  and: [MatchInformationFilterInput!]
+  or: [MatchInformationFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  score: ComparableInt32OperationFilterInput
+  watchlistMemberId: StringOperationFilterInput
+  displayName: StringOperationFilterInput
+  fullName: StringOperationFilterInput
+  watchlistDisplayName: StringOperationFilterInput
+  watchlistFullName: StringOperationFilterInput
+  watchlistId: StringOperationFilterInput
+  labels: ListFilterInputTypeOfMemberLabelFilterInput
+  watchlistPreviewColor: StringOperationFilterInput
+}
+
+input EdgeStreamFaceDetectionOrderByOperationFilterInput {
+  eq: EdgeStreamFaceDetectionOrderBy
+  neq: EdgeStreamFaceDetectionOrderBy
+  in: [EdgeStreamFaceDetectionOrderBy!]
+  nin: [EdgeStreamFaceDetectionOrderBy!]
+}
+
+input EdgeStreamFaceDetectionTrackingSettingsFilterInput {
+  and: [EdgeStreamFaceDetectionTrackingSettingsFilterInput!]
+  or: [EdgeStreamFaceDetectionTrackingSettingsFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  outputThreshold: ComparableSingleOperationFilterInput
+  inputThreshold: ComparableSingleOperationFilterInput
+  stability: ComparableSingleOperationFilterInput
+  maxFramesLost: ComparableInt32OperationFilterInput
+}
+
+input EdgeStreamFaceDetectionCropSettingsFilterInput {
+  and: [EdgeStreamFaceDetectionCropSettingsFilterInput!]
+  or: [EdgeStreamFaceDetectionCropSettingsFilterInput!]
+  id: ComparableGuidOperationFilterInput
+  enable: BooleanOperationFilterInput
+  maxSize: ComparableSingleOperationFilterInput
+  imageFormat: EdgeStreamImageFormatOperationFilterInput
+  imageQuality: ComparableSingleOperationFilterInput
+}
+
+input EdgeStreamLivenessStrategyOperationFilterInput {
+  eq: EdgeStreamLivenessStrategy
+  neq: EdgeStreamLivenessStrategy
+  in: [EdgeStreamLivenessStrategy!]
+  nin: [EdgeStreamLivenessStrategy!]
+}
+
+input ListFilterInputTypeOfEdgeStreamFaceLivenessPassiveConditionFilterInput {
+  all: EdgeStreamFaceLivenessPassiveConditionFilterInput
+  none: EdgeStreamFaceLivenessPassiveConditionFilterInput
+  some: EdgeStreamFaceLivenessPassiveConditionFilterInput
+  any: Boolean
+}
+
+input EdgeStreamMessagingStrategyOperationFilterInput {
+  eq: EdgeStreamMessagingStrategy
+  neq: EdgeStreamMessagingStrategy
+  in: [EdgeStreamMessagingStrategy!]
+  nin: [EdgeStreamMessagingStrategy!]
+}
+
+input EdgeStreamImageFormatOperationFilterInput {
+  eq: EdgeStreamImageFormat
+  neq: EdgeStreamImageFormat
+  in: [EdgeStreamImageFormat!]
+  nin: [EdgeStreamImageFormat!]
+}
+
+input EdgeStreamFaceDetectionTrackingSettingsSortInput {
+  id: SortEnumType
+  outputThreshold: SortEnumType
+  inputThreshold: SortEnumType
+  stability: SortEnumType
+  maxFramesLost: SortEnumType
+}
+
+input EdgeStreamFaceDetectionCropSettingsSortInput {
+  id: SortEnumType
+  enable: SortEnumType
+  maxSize: SortEnumType
+  imageFormat: SortEnumType
+  imageQuality: SortEnumType
+}
+
+input ListFilterInputTypeOfFailedConditionInfoFilterInput {
+  all: FailedConditionInfoFilterInput
+  none: FailedConditionInfoFilterInput
+  some: FailedConditionInfoFilterInput
+  any: Boolean
+}
+
+input EdgeStreamFaceLivenessPassiveConditionFilterInput {
+  and: [EdgeStreamFaceLivenessPassiveConditionFilterInput!]
+  or: [EdgeStreamFaceLivenessPassiveConditionFilterInput!]
+  edgeStreamId: ComparableGuidOperationFilterInput
+  parameter: EdgeStreamFaceLivenessConditionParameterOperationFilterInput
+  lowerThreshold: ComparableNullableOfSingleOperationFilterInput
+  upperThreshold: ComparableNullableOfSingleOperationFilterInput
+}
+
+input FailedConditionInfoFilterInput {
+  and: [FailedConditionInfoFilterInput!]
+  or: [FailedConditionInfoFilterInput!]
+  attributeName: StringOperationFilterInput
+  attributeValue: ComparableSingleOperationFilterInput
+  rangeMin: ComparableSingleOperationFilterInput
+  rangeMax: ComparableSingleOperationFilterInput
+}
+
+input EdgeStreamFaceLivenessConditionParameterOperationFilterInput {
+  eq: EdgeStreamFaceLivenessConditionParameter
+  neq: EdgeStreamFaceLivenessConditionParameter
+  in: [EdgeStreamFaceLivenessConditionParameter!]
+  nin: [EdgeStreamFaceLivenessConditionParameter!]
+}
+
 type ServiceVideoSlot {
   id: Long!
   cameraId: UUID
@@ -2662,22 +4074,19 @@ type Worker {
 
 scalar UUID
 
-"The `Long` scalar type represents non-fractional signed whole 64-bit numeric values. Long can represent values between -(2^63) and 2^63 - 1."
+"""
+The `Long` scalar type represents non-fractional signed whole 64-bit numeric values. Long can represent values between -(2^63) and 2^63 - 1.
+"""
 scalar Long
 
-"The `DateTime` scalar represents an ISO-8601 compliant date time type."
+"""
+The `DateTime` scalar represents an ISO-8601 compliant date time type.
+"""
 scalar DateTime
 
 type StreamSpoofDetectorResource {
   resourceId: String
   streamId: UUID!
-}
-
-enum SaveBehavior {
-  ALL
-  FIRST_FACE
-  BEST_FACE
-  MATCHED_ONLY
 }
 
 enum FaceSaveStrategy {
@@ -2686,6 +4095,25 @@ enum FaceSaveStrategy {
   BEST_FACE
   FIRST_FACE_BEST_FACE
   MATCHED_ONLY
+  BALANCED
+}
+
+enum PedestrianSaveStrategy {
+  ALL
+  BEST
+  BALANCED
+}
+
+enum ObjectSaveStrategy {
+  ALL
+  BEST
+  BALANCED
+}
+
+enum WatchlistSyncOption {
+  NONE
+  ALL
+  SELECTED
 }
 
 type SearchSessionObject {
@@ -2701,9 +4129,6 @@ enum FaceState {
   EXTRACTED
   ERROR
 }
-
-"The `Byte` scalar type represents non-fractional whole numeric values. Byte can represent values between 0 and 255."
-scalar Byte
 
 enum FaceType {
   REGULAR
@@ -2764,6 +4189,62 @@ enum VideoState {
   ERROR
 }
 
+enum AttributeType {
+  HAT
+  GLASSES
+  SHORT_SLEEVE
+  LONG_SLEEVE
+  UPPER_STRIPE
+  UPPER_LOGO
+  UPPER_PLAID
+  UPPER_SPLICE
+  LOWER_STRIPE
+  LOWER_PATTERN
+  LONG_COAT
+  TROUSERS
+  SHORTS
+  SKIRT_OR_DRESS
+  BOOTS
+  HAND_BAG
+  SHOULDER_BAG
+  BACKPACK
+  HOLD_OBJECTS_IN_FRONT
+  IS_SENIOR
+  IS_ADULT
+  IS_CHILD
+  IS_MALE
+  IS_FEMALE
+  FRONT
+  SIDE
+  BACK
+  HAT_CONFIDENCE
+  GLASSES_CONFIDENCE
+  SHORT_SLEEVE_CONFIDENCE
+  LONG_SLEEVE_CONFIDENCE
+  UPPER_STRIPE_CONFIDENCE
+  UPPER_LOGO_CONFIDENCE
+  UPPER_PLAID_CONFIDENCE
+  UPPER_SPLICE_CONFIDENCE
+  LOWER_STRIPE_CONFIDENCE
+  LOWER_PATTERN_CONFIDENCE
+  LONG_COAT_CONFIDENCE
+  TROUSERS_CONFIDENCE
+  SHORTS_CONFIDENCE
+  SKIRT_OR_DRESS_CONFIDENCE
+  BOOTS_CONFIDENCE
+  HAND_BAG_CONFIDENCE
+  SHOULDER_BAG_CONFIDENCE
+  BACKPACK_CONFIDENCE
+  HOLD_OBJECTS_IN_FRONT_CONFIDENCE
+  IS_SENIOR_CONFIDENCE
+  IS_ADULT_CONFIDENCE
+  IS_CHILD_CONFIDENCE
+  FEMALE_CONFIDENCE
+  FRONT_CONFIDENCE
+  SIDE_CONFIDENCE
+  BACK_CONFIDENCE
+}
+
 type SpoofCheck {
   performed: Boolean!
   passed: Boolean!
@@ -2783,10 +4264,57 @@ enum ProgressStatus {
   READY
 }
 
+type MatchInformation {
+  id: UUID!
+  score: Int!
+  watchlistMemberId: String!
+  displayName: String
+  fullName: String
+  watchlistDisplayName: String!
+  watchlistFullName: String!
+  watchlistId: String!
+  labels: [MemberLabel!]!
+  watchlistPreviewColor: String
+}
+
+type FrameInformation {
+  streamId: UUID!
+  frameId: UUID
+  processedAt: DateTime!
+  clientId: String
+  frameTimestampMicroseconds: Long!
+}
+
+enum HealthStatus {
+  ONLINE
+  OFFLINE
+  OFFLINE_DISCONNECTED
+}
+
+enum LicenseStatus {
+  NOT_PROVIDED
+  VALID
+  NOT_VALID
+  EXPIRED
+}
+
+enum MatchingDataStrategy {
+  EDGE_STREAM_ONLY
+  SERVER_ONLY
+}
+
+enum LivenessDataStrategy {
+  EDGE_STREAM_ONLY
+  SERVER_ONLY
+}
+
 enum WorkerType {
-  CONTINUOUS_GROUPING_WORKER
-  GROUPING_WORKER
-  DATA_DISTRIBUTION_WORKER @deprecated(reason: "Since we use S3 as blob storage, we don't need data distribution worker anymore.")
+  CONTINUOUS_GROUPING_WORKER @deprecated(reason: "No longer supported.")
+  GROUPING_WORKER @deprecated(reason: "No longer supported.")
+  DATA_DISTRIBUTION_WORKER
+    @deprecated(
+      reason: "Since we use S3 as blob storage, we don't need data distribution worker anymore."
+    )
   PROGRESS_INFO_WORKER
   DETECT_FACE_WORKER @deprecated(reason: "No longer supported.")
   EXTRACT_FACE_WORKER @deprecated(reason: "No longer supported.")
@@ -2794,9 +4322,65 @@ enum WorkerType {
   VIDEO_PUBLISH_WORKER
   DB_CLEANUP_WORKER
   STILL_PICTURE_DATABASE_WORKER
-  STREAM_DATA_DB_WORKER
+  STREAM_DATA_DB_WORKER @deprecated(reason: "No longer supported.")
   WATCHLIST_AUTO_LEARN_WORKER
   SEARCH_SESSIONS_CLEANUP_WORKER
+}
+
+enum EdgeStreamFaceDetectionOrderBy {
+  DETECTION_CONFIDENCE
+  FACE_SIZE
+}
+
+enum EdgeStreamLivenessStrategy {
+  ON_EACH_EXTRACTED_FACE
+  ON_EACH_IDENTIFIED_FACE
+}
+
+type EdgeStreamFaceLivenessPassiveCondition {
+  edgeStreamId: UUID!
+  parameter: EdgeStreamFaceLivenessConditionParameter!
+  lowerThreshold: Float
+  upperThreshold: Float
+}
+
+enum EdgeStreamMessagingStrategy {
+  ON_NEW_AND_INTERVAL
+  ON_NEW_AND_INTERVAL_BEST
+}
+
+enum EdgeStreamImageFormat {
+  RAW
+  JPEG
+  PNG
+}
+
+"""
+The `Byte` scalar type represents non-fractional whole numeric values. Byte can represent values between 0 and 255.
+"""
+scalar Byte
+
+type CropCoordinates {
+  cropLeftTopX: Float!
+  cropLeftTopY: Float!
+  cropRightTopX: Float!
+  cropRightTopY: Float!
+  cropLeftBottomX: Float!
+  cropLeftBottomY: Float!
+  cropRightBottomX: Float!
+  cropRightBottomY: Float!
+}
+
+enum EdgeStreamFaceLivenessConditionParameter {
+  FACE_SIZE
+  FACE_RELATIVE_AREA
+  FACE_RELATIVE_AREA_IN_IMAGE
+  YAW_ANGLE
+  PITCH_ANGLE
+  ROLL_ANGLE
+  SHARPNESS
+  BRIGHTNESS
+  CONTRAST
 }
 
 type ExternalSpoofCheck {
@@ -2810,6 +4394,7 @@ type LivenessSpoofCheck {
   performed: Boolean!
   passed: Boolean!
   score: Float!
+  failedConditions: [FailedConditionInfo]
 }
 
 type BodyPartsSpoofCheck {
