@@ -8,6 +8,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
     {
         Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null);
         
-        Task SendKeepAliveAsync(string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null);
+        Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null);
     }
 }   
