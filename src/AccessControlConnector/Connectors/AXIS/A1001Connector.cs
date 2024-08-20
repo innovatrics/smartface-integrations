@@ -55,8 +55,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
 
             var requestUri = $"{scheme ?? "http"}://{host}:{port}/vapix/doorcontrol";
 
-            this.logger.Information("sendOpenAsync to {url}", requestUri);
-
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
             var jsonContent = @"{
@@ -64,8 +62,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
                                     ""Token"": """ + token + @"""
                                 }
                             }";
-
-            // Add content to the request
+           
             httpRequest.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
             if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
@@ -75,6 +72,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
 
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
+
+            this.logger.Information("sendOpenAsync to {url} with {body}", requestUri, jsonContent);
 
             var httpResponse = await httpClient.SendAsync(httpRequest);
 
