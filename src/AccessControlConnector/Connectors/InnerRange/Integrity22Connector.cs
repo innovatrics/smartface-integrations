@@ -50,6 +50,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             }
 
             await this.sendOpenAsync(
+                accessControlMapping.Schema,
                 accessControlMapping.Host, 
                 accessControlMapping.Port, 
                 accessControlMapping.Username, 
@@ -62,12 +63,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             return;
         }
 
-        public Task SendKeepAliveAsync(string host, int? port, int? channel = null, string accessControlUserId = null, string username = null, string password = null)
+        public Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null, string username = null, string password = null)
         {
             return Task.CompletedTask;
         }
 
-        private async Task<string> getCardDataAsync(string host, int? port, string username, string password, string cardNumber)
+        private async Task<string> getCardDataAsync(string schema, string host, int? port, string username, string password, string cardNumber)
         {
             var cardDirectory = Path.Combine(AppContext.BaseDirectory, "data", "cards");
 
@@ -89,7 +90,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"http://{host}:{port}/DB/Card?CardNumber={cardNumber}";
+            var requestUri = $"{schema ?? "http"}://{host}:{port}/DB/Card?CardNumber={cardNumber}";
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
@@ -121,12 +122,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             return card.CardData;
         }
 
-        private async Task sendOpenAsync(string host, int? port, string username, string password, string cardData, string readerModuleID, int readerNumber)
+        private async Task sendOpenAsync(string schema, string host, int? port, string username, string password, string cardData, string readerModuleID, int readerNumber)
         {
             var httpClient = this.httpClientFactory.CreateClient();
 
-            // http://192.168.10.22:15108/CardBadge?CardData=250000000000000047D4A3D1&ReaderModuleID=77407156193722391&ReaderNumber=2 
-            var requestUri = $"http://{host}:{port}/CardBadge?CardData={cardData}&CardBitLength=32&ReaderModuleID={readerModuleID}&ReaderNumber={readerNumber}";
+            // {schema ?? "http"}://192.168.10.22:15108/CardBadge?CardData=250000000000000047D4A3D1&ReaderModuleID=77407156193722391&ReaderNumber=2 
+            var requestUri = $"{schema ?? "http"}://{host}:{port}/CardBadge?CardData={cardData}&CardBitLength=32&ReaderModuleID={readerModuleID}&ReaderNumber={readerNumber}";
 
             this.logger.Information("sendOpenAsync to {url}", requestUri);
 
