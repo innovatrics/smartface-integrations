@@ -6,6 +6,7 @@ using Serilog;
 
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.AXIS;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
@@ -53,6 +54,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AccessControlConnectorTypes.TRAFFICLIGHT:
                     return new TrafficLightConnector(this.logger, this.configuration, this.httpClientFactory);
+
+                case AccessControlConnectorTypes.AXIS_A1001:
+                    return new A1001Connector(this.logger, this.configuration, this.httpClientFactory);
             }
         }
     }

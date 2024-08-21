@@ -3,6 +3,9 @@
 This repository contains integrations of Innovatrics SmartFace with various products or technologies.
 The repository is a combination of both real-world deployed code and samples for demonstration purposes.
 
+## AccessControlConnector [C#]
+Integrates SmartFace AccessControl with 3rd party access control systems such as InnerRange Integrity, AXIS A1001 and other low-level controllers.
+
 ## BirdWatch [C#]
 Sample application for showing the SmartFace object detection capabilities. The application provides you a guide how to listen to SmartFace notifications for objects and how to share the information with the world - in this case the information is sent into Google Spaces/Chat.
 
@@ -33,9 +36,6 @@ Send configurable events from SmartFace (face detection, body detection, face id
 
 ## NX Witness Connector [C#]
 Send configurable events from SmartFace (face detection, body detection, face identification, action detection) to the VMS - NX Witness server. Check <a href="src/NX-witness-connector" >the code</a>.
-
-## RelayConnector [C#]
-Send information over a network as a result of the Access Controller's open message. Ideal as a model for future integrations with network controllers and network relays.    
 
 ## Scripts [Various]
 In `src/Scripts` folder you may find various smaller scripts with various purposes available over here. 
