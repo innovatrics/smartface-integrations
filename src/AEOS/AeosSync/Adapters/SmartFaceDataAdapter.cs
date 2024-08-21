@@ -244,6 +244,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 WatchlistMemberAdd.Id = member.Id;
                 WatchlistMemberAdd.FullName = member.FullName;
                 WatchlistMemberAdd.DisplayName = member.DisplayName;
+                WatchlistMemberAdd.Note = member.Note;
 
                 WatchlistMemberAdd.WatchlistIds.Add(watchlistId);
                 WatchlistMemberAdd.KeepAutoLearnPhotos = KeepAutoLearnPhotos;

@@ -146,6 +146,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 foreach (var employee in employees.EmployeeList)
                 {
+                    this.logger.Debug($"employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName");
+                    this.logger.Debug($"{employee.EmployeeInfo.FirstName}, {employee.EmployeeInfo.LastName}");
                     if (employee.FirstPhoto != null)
                     {
                         AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName, employee.FirstPhoto.Picture));
