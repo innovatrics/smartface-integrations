@@ -341,14 +341,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 {
                     var FaceIdData = await graphQlClient.GetFaceByImageDataId.ExecuteAsync(Guid.Parse(member.ImageDataId));
 
-                    string FaceId = "";
+                    Guid? FaceId = null;
 
                     foreach (var face in FaceIdData.Data.Faces.Items)
                     {
                         if (face.Id != null)
                         {
                             this.logger.Debug($"FaceId:{face.Id}");
-                            FaceId = face.Id.ToString();
+                            FaceId = face.Id;
                             break;
                         }
                     }
@@ -356,7 +356,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     if (FaceId != null)
                     {
                         var removeEmployeePhoto = new FaceWatchlistMemberRemoveRequest();
-                        removeEmployeePhoto.FaceId = FaceId;
+                        removeEmployeePhoto.FaceId = FaceId.Value;
                         this.logger.Debug($"removeEmployeePhoto.FaceId:{removeEmployeePhoto.FaceId}, watchlistmemberId:{watchlistmemberId}");
 
                         try
@@ -410,27 +410,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             return processingIssue;
         }
 
-        public async Task<bool> RemoveEmployee(SmartFaceMember member)
+        public async Task RemoveEmployee(SmartFaceMember member)
         {
-            this.logger.Information($"Removing Employee > {member.FullName} with ID: {member.Id}");
+            this.logger.Information($"{nameof(RemoveEmployee)}(id={member.Id},name={member.FullName})");
 
             var httpClient = new HttpClient();
             var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
 
-            var removeEmployee = new FaceWatchlistMemberRemoveRequest();
-            removeEmployee.FaceId = member.Id;
-            this.logger.Debug($"FaceId = {removeEmployee.FaceId}");
-
-            if (member.Id != null)
-            {
-                var restAPIresult = await restAPI.WatchlistMembersDELETEAsync(removeEmployee.FaceId);
-                return restAPIresult;
-            }
-            else
-            {
-                this.logger.Error($"FaceId of user {member.FullName} is NULL");
-                return false;
-            }
+            await restAPI.WatchlistMembersDELETEAsync(member.Id);
         }
 
         public async Task<string> InitializeWatchlist()
