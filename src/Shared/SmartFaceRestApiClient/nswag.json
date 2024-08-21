@@ -1,0 +1,44 @@
+{
+    "runtime": "Net60",
+    "defaultVariables": null,
+    "swaggerGenerator": {
+      "fromFile": {
+        "path": "swagger.json"
+      }
+    },
+    "codeGenerators": {
+      "openApiToCSharpClient": {
+        "clientBaseClass": "",
+        "configurationClass": "",
+        "generateClientClasses": true,
+        "generateClientInterfaces": false,
+        "generateContractsOutput": false,
+        "generateDtoTypes": true,
+        "generateOptionalParameters": false,
+        "injectHttpClient": true,
+        "disposeHttpClient": true,
+        "protectedMethods": [],
+        "generateExceptionClasses": true,
+        "exceptionClass": "SwaggerException",
+        "wrapDtoExceptions": false,
+        "useBaseUrl": true,
+        "generateBaseUrlProperty": true,
+        "generateSyncMethods": false,
+        "generatePrepareRequestAndProcessResponseAsAsyncMethods": false,
+        "exposeJsonSerializerSettings": false,
+        "clientClassAccessModifier": "public",
+        "typeAccessModifier": "public",
+        "generateResponseClasses": true,
+        "responseClass": "SwaggerResponse",
+        "generateResponseClassesWithInheritance": false,
+        "wrapResponses": true,
+        "generateDefaultValues": true,
+        "generateDataAnnotations": true,
+        "excludedTypeNames": [],
+        "handleReferences": false,
+        "generateDefaultInterfaces": true,
+        "output": "GeneratedClient.cs"
+      }
+    }
+  }
+  

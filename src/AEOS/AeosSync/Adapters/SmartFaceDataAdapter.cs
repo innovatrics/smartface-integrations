@@ -238,7 +238,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
 
                 var httpClient = new HttpClient();
-                var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+                var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
                 var WatchlistMemberAdd = new RegisterWatchlistMemberRequest();
 
                 WatchlistMemberAdd.Id = member.Id;
@@ -311,7 +311,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.logger.Information($"Updating Employee > {member.FullName};{member.Id}");
 
             var httpClient = new HttpClient();
-            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+            var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
 
             var updateEmployee = new WatchlistMemberUpsertRequest();
             updateEmployee.Id = member.Id;
@@ -415,7 +415,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.logger.Information($"Removing Employee > {member.FullName} with ID: {member.Id}");
 
             var httpClient = new HttpClient();
-            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+            var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
 
             var removeEmployee = new FaceWatchlistMemberRemoveRequest();
             removeEmployee.FaceId = member.Id;
@@ -436,7 +436,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         public async Task<string> InitializeWatchlist()
         {
             var httpClient = new HttpClient();
-            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+            var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
             var ListAllWatchlists = new List<SmartFaceWatchlist>();
             int SmartFacePageNumber = 1;
             bool allWatchlists = false;
@@ -487,7 +487,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         public async Task<byte[]> GetImageData(string imageDataId)
         {
             var httpClient = new HttpClient();
-            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+            var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
 
             var guidId = Guid.Parse(imageDataId);
 
