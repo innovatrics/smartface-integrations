@@ -34,7 +34,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"http://{accessControlMapping.Host}:{accessControlMapping.Port}/go";
+            var requestUri = $"{accessControlMapping.Schema ?? "http"}://{accessControlMapping.Host}:{accessControlMapping.Port}/go";
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
@@ -51,13 +51,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             }
         }
 
-        public async Task SendKeepAliveAsync(string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
+        public async Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
         {
             this.logger.Information("Send KeepAlive to {host}:{port}/", host, port);
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"http://{host}:{port}/";
+            var requestUri = $"{schema ?? "http"}://{host}:{port}/";
 
             if (channel != null)
             {

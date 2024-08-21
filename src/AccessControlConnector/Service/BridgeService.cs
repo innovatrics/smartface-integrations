@@ -88,6 +88,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             var uniqueAccessControls = cameraToAccessControlMapping
                                                 .GroupBy(g => new
                                                 {
+                                                    g.Schema,
                                                     g.Type,
                                                     g.Host,
                                                     g.Port,
@@ -101,6 +102,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 var accessControlConnector = this.accessControlConnectorFactory.Create(uniqueMapping.Key.Type);
 
                 await accessControlConnector.SendKeepAliveAsync(
+                    schema: uniqueMapping.Key.Schema,
                     host: uniqueMapping.Key.Host,
                     port: uniqueMapping.Key.Port,
                     channel: uniqueMapping.First().Channel,
