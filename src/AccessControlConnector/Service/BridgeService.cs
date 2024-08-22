@@ -37,42 +37,47 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            var cameraToAccessControlMapping = this.getCameraMapping(notification.StreamId);
+            var cameraToAccessControlMappings = this.getCameraMappings(notification.StreamId);
 
-            if (cameraToAccessControlMapping == null)
+            if (cameraToAccessControlMappings.Length == 0)
             {
                 this.logger.Warning("Stream {streamId} has not any mapping to AccessControl", notification.StreamId);
                 return;
             }
 
-            if (cameraToAccessControlMapping.WatchlistExternalIds != null)
+            foreach (var cameraToAccessControlMapping in cameraToAccessControlMappings)
             {
-                if (cameraToAccessControlMapping.WatchlistExternalIds.Length > 0 && !cameraToAccessControlMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
+                this.logger.Warning("Handling mapping {type}", cameraToAccessControlMapping.Type);
+
+                if (cameraToAccessControlMapping.WatchlistExternalIds != null)
                 {
-                    this.logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.", notification.WatchlistExternalId, notification.StreamId);
-                    return;
+                    if (cameraToAccessControlMapping.WatchlistExternalIds.Length > 0 && !cameraToAccessControlMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
+                    {
+                        this.logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.", notification.WatchlistExternalId, notification.StreamId);
+                        return;
+                    }
                 }
-            }
 
-            string accessControlUser = null;
+                string accessControlUser = null;
 
-            var accessControlConnector = this.accessControlConnectorFactory.Create(cameraToAccessControlMapping.Type);
+                var accessControlConnector = this.accessControlConnectorFactory.Create(cameraToAccessControlMapping.Type);
 
-            if (cameraToAccessControlMapping.UserResolver != null)
-            {
-                var userResolver = this.userResolverFactory.Create(cameraToAccessControlMapping.UserResolver);
-
-                accessControlUser = await userResolver.ResolveUserAsync(notification.WatchlistMemberId);
-
-                this.logger.Information("Resolved {wlMember} to {accessControlUser}", notification.WatchlistMemberFullName, accessControlUser);
-
-                if (accessControlUser == null)
+                if (cameraToAccessControlMapping.UserResolver != null)
                 {
-                    return;
-                }
-            }
+                    var userResolver = this.userResolverFactory.Create(cameraToAccessControlMapping.UserResolver);
 
-            await accessControlConnector.OpenAsync(cameraToAccessControlMapping, accessControlUser);
+                    accessControlUser = await userResolver.ResolveUserAsync(notification.WatchlistMemberId);
+
+                    this.logger.Information("Resolved {wlMember} to {accessControlUser}", notification.WatchlistMemberFullName, accessControlUser);
+
+                    if (accessControlUser == null)
+                    {
+                        return;
+                    }
+                }
+
+                await accessControlConnector.OpenAsync(cameraToAccessControlMapping, accessControlUser);
+            }
         }
 
         public async Task SendKeepAliveSignalAsync()
@@ -112,7 +117,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
-        private AccessControlMapping getCameraMapping(string streamId)
+        private AccessControlMapping[] getCameraMappings(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
             {
@@ -123,12 +128,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             if (accessControlMapping == null)
             {
-                return null;
+                return new AccessControlMapping[] { };
             }
 
             return accessControlMapping
                         .Where(w => w.StreamId == streamGuid)
-                        .FirstOrDefault();
+                        .ToArray();
         }
 
         private AccessControlMapping[] getAllCameraMappings()
