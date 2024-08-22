@@ -48,7 +48,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AccessControlConnectorTypes.ADVANTECH_WISE_4000:
                     return new AdvantechWISE4000Connector(this.logger, this.configuration, this.httpClientFactory);
-                
+
                 case AccessControlConnectorTypes.INNERRANGE_INTEGRITY_22:
                     return new Integrity22Connector(this.logger, this.configuration, this.httpClientFactory);
 
@@ -57,6 +57,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AccessControlConnectorTypes.AXIS_A1001:
                     return new A1001Connector(this.logger, this.configuration, this.httpClientFactory);
+
+                case AccessControlConnectorTypes.AXIS_D4100:
+                    return new D4100Connector(this.logger, this.configuration, this.httpClientFactory);
             }
         }
     }
