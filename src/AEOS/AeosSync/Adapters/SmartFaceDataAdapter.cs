@@ -300,7 +300,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         this.logger.Warning($"User {member.FullName} was not registered.");
 
                         SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
-                        var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Not Enabled - registration issue", SupportData);
+                        var BiometricStatusUpdated = await aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Not Enabled - registration issue", SupportData);
 
                         return false;
                     }
@@ -312,7 +312,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     this.logger.Debug($"Status Code: {e.StatusCode}, {root["detail"]}");
 
                     SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
-                    var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {root["detail"]}", SupportData);
+                    var BiometricStatusUpdated = await aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {root["detail"]}", SupportData);
 
                     restAPIexception = true;
                     return false;
@@ -329,7 +329,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 this.logger.Warning("We will not register an user without a registration image.");
 
                 SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
-                var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - incorrect image", SupportData);
+                var BiometricStatusUpdated = await aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - incorrect image", SupportData);
             }
 
             return true;

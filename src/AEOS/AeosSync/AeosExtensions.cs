@@ -181,5 +181,26 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
         }
 
+        public static string idRemovePrefix(string id, string prefix)
+        {
+
+            int index = id.IndexOf('_');
+
+            if (index != -1)
+            {
+                return id.Substring(index + 1);   
+            }
+            else
+            {
+                return id;
+            }
+            
+        }
+
+        public static string idAddPrefix(string id, string prefix)
+        {
+            return prefix + id;
+        }
+
     }
 }

@@ -139,8 +139,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                                 if (!AeosExtensions.CompareUserPhoto(FoundAeosMember, SFMember, FirstNameOrder, KeepPhotoUpToDate))
                                 {
-                                    // TODO
-                                    // if there is no photo in AEOS, therefore nothing to compare, do not apply update for user
+
                                     if(FoundAeosMember.ImageData != null)
                                     {
                                         this.logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated as the image does not match");
@@ -214,12 +213,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             if ((Member.SmartFaceId == null || Member.SmartFaceId == "@NotEnabled") && Member.ImageData != null)
                             {
                                 this.logger.Debug($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} is being checked for enabling biometry.");
+                                this.logger.Debug($"SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId} SupportData.SmartFaceBadgeIdentifierType {SupportData.SmartFaceBadgeIdentifierType}.");
 
                                 var returnValue = await this.aeosDataAdapter.EnableBiometryOnEmployee(Member.Id, SupportData.FreefieldDefinitionId, SupportData.SmartFaceBadgeIdentifierType);
 
                                 if (returnValue)
                                 {
-                                    this.logger.Information($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id}> biometry was enabled.");
+                                    this.logger.Debug($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id}> biometry was enabled.");
                                     var employeeResponse = await this.aeosDataAdapter.GetEmployeeByAeosId(Member.Id);
                                     if (employeeResponse != null)
                                     {
@@ -260,7 +260,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             if (Member.ImageData == null)
                             {
                                 this.logger.Warning($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} and SmartFaceId {Member.SmartFaceId} does not have an image in the AOES. User will be removed from SmartFace");
-                                this.logger.Warning($"EmployeesToBeUpdatedSmartFace.Count {EmployeesToBeUpdatedSmartFace.Count}");
+                                this.logger.Debug($"EmployeesToBeUpdatedSmartFace.Count {EmployeesToBeUpdatedSmartFace.Count}");
                                 
                                 EmployeesToBeRemovedSmartFace.Add(new SmartFaceMember(Member.SmartFaceId, AeosExtensions.JoinNames(Member.FirstName, Member.LastName, FirstNameOrder), AeosExtensions.JoinNames(Member.FirstName, Member.LastName, FirstNameOrder), null, null, null));
                             }
@@ -406,7 +406,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                             EmployeesToBeAddedSuccessCountSmartFace += 1;
 
-                            var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Enabled", SupportData);
+                            var BiometricStatusUpdated = await aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Enabled", SupportData);
+                            if(!BiometricStatusUpdated)
+                            {
+                                this.logger.Warning("It was not possible to update biometric status.");
+                            }
                         }
                         else
                         {
@@ -465,6 +469,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                                 EmployeesToBeRemovedFailCountSmartFace += 1;
                             }
+
+                            try
+                            {
+                                var BiometricStatusUpdated = await aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Disabled", SupportData);
+                            }
+                            catch(Exception e)
+                            {
+                                this.logger.Error(e,"It was not possible to update biometric status.");
+                            }
+
                         }
                         else
                         {

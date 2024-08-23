@@ -21,6 +21,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
+        private readonly string DataSource;
         private string AeosEndpoint;
         private int AeosServerPageSize;
         private string AeosUsername;
@@ -48,6 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             this.logger.Debug("AeosDataAdapter Initiated");
 
+            DataSource = configuration.GetValue<string>("AeosSync:DataSource");
             AeosEndpoint = configuration.GetValue<string>("aeossync:Aeos:Server:Wdsl") ?? throw new InvalidOperationException("The AEOS SOAP API URL is not read.");
             AeosUsername = configuration.GetValue<string>("aeossync:Aeos:Server:User") ?? throw new InvalidOperationException("The AEOS username is not read.");
             AeosPassword = configuration.GetValue<string>("aeossync:Aeos:Server:Pass") ?? throw new InvalidOperationException("The AEOS password is not read.");
@@ -60,6 +62,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             AutoBiometryEnablement = configuration.GetValue<bool>("aeossync:Aeos:AutoBiometryEnablement");
             AutoBiometryPrefix = configuration.GetValue<string>("aeossync:Aeos:AutoBiometryPrefix");
             BiometricEnrollmentStatus = configuration.GetValue<string>("aeossync:Aeos:Integration:BiometricEnrollmentStatus");
+
+            if (DataSource == null)
+            {
+                throw new InvalidOperationException("The DataSource is not read.");
+            }
 
             if (BiometricEnrollmentStatus == null)
             {
@@ -292,7 +299,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 if (addIdentifierResponse.IdentifierResult.Id != 0)
                 {
-                    this.logger.Information($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - SUCCESS");
+                    this.logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - SUCCESS");
                     return true;
                 }
                 else
@@ -388,7 +395,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
                         if (addIdentifierResponse.IdentifierResult.Id != 0)
                         {
-                            this.logger.Information($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - SUCCESS");
+                            this.logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - SUCCESS");
                             return true;
                         }
                         else
@@ -412,7 +419,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         }
 
-
         public async Task<AeosMember> GetEmployeeByAeosId(long employeeId)
         {
 
@@ -432,7 +438,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 var memberSmartFaceId = employee.EmployeeList[0].EmployeeInfo.Id.ToString();
                 var memberFirstName = employee.EmployeeList[0].EmployeeInfo.FirstName;
                 var memberLastName = employee.EmployeeList[0].EmployeeInfo.LastName;
-                var memberPicture = employee.EmployeeList[0].FirstPhoto.Picture;
+                var memberPicture = employee.EmployeeList[0].FirstPhoto?.Picture;
 
                 if (memberPicture != null)
                 {
@@ -681,7 +687,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
             else
             {
-                this.logger.Information($"BiometricStatusFreefield was not found, current value: {biometricStatusFreefield}");
+                this.logger.Debug($"BiometricStatusFreefield was not found, current value: {biometricStatusFreefield}");
                 return false;
             }
             this.logger.Debug($"biometricStatusFreefield: {biometricStatusFreefield}, userId: {userId}, BiometricEnrollmentStatus: {BiometricEnrollmentStatus}");
@@ -716,7 +722,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
             else
             {
-                this.logger.Debug($"GetEmployeeByAeosId response was NOT null");
+                this.logger.Debug($"GetEmployeeByAeosId response was null");
                 return false;
             }
 
@@ -725,21 +731,31 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         public async Task<bool> UpdateBiometricStatusWithSFMember(SmartFaceMember member, string biometricStatus, SupportingData supportData)
         {
 
-            var EmployeeByIdResponse = GetEmployeeId(member.Id, supportData.FreefieldDefinitionId);
-
-            if (EmployeeByIdResponse?.Result?.EmployeeInfo?.Id != null)
+            if(DataSource == "AEOS")
             {
-                var EmployeeById = EmployeeByIdResponse.Result.EmployeeInfo.Id;
-
-                this.logger.Debug($"EmployeeByIdResponse: {EmployeeById}");
-                var updatedBiometricStatus = await UpdateBiometricStatus(EmployeeById, biometricStatus);
-
+                this.logger.Debug($"AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix) {AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix)}");
+                var updatedBiometricStatus = await UpdateBiometricStatus(long.Parse(AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix)), biometricStatus);
                 return updatedBiometricStatus;
             }
             else
             {
-                return false;
+                var EmployeeByIdResponse = GetEmployeeId(member.Id, supportData.FreefieldDefinitionId);
+
+                if (EmployeeByIdResponse?.Result?.EmployeeInfo?.Id != null)
+                {
+                    var EmployeeById = EmployeeByIdResponse.Result.EmployeeInfo.Id;
+
+                    this.logger.Debug($"EmployeeByIdResponse: {EmployeeById}");
+                    var updatedBiometricStatus = await UpdateBiometricStatus(EmployeeById, biometricStatus);
+
+                    return updatedBiometricStatus;
+                }
+                else
+                {
+                    return false;
+                }
             }
+            
         }
 
     }
