@@ -230,7 +230,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             return result;
         }
 
-        public async Task<bool> CreateEmployee(SmartFaceMember member, string watchlistId)
+        public async Task<bool> CreateEmployee(SmartFaceMember member, string watchlistId, string autoBiometryPrefix = null)
         {
             this.logger.Debug($"Adding Employee > {member.ToString()} into WatchlistId->{watchlistId}");
 
@@ -241,7 +241,36 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
                 var WatchlistMemberAdd = new RegisterWatchlistMemberRequest();
 
-                WatchlistMemberAdd.Id = member.Id;
+                if(autoBiometryPrefix != null)
+                {
+
+                    if(member.Id.StartsWith(autoBiometryPrefix))
+                    {
+                        WatchlistMemberAdd.Id = member.Id;
+                    }
+                    else
+                    {
+
+                        // Check if the string contains "_"
+                        // Remove everything before and including "_"
+                        var index = member.Id.IndexOf('_');
+                        if (index != -1) // -1 means the symbol was not found
+                        {
+                            WatchlistMemberAdd.Id = autoBiometryPrefix+member.Id;
+                        }
+                        else
+                        {
+                            WatchlistMemberAdd.Id = autoBiometryPrefix+member.Id.Substring(index + 1);
+                        }
+
+                    }
+
+                }
+                else
+                {
+                    WatchlistMemberAdd.Id = member.Id;
+                }
+                
                 WatchlistMemberAdd.FullName = member.FullName;
                 WatchlistMemberAdd.DisplayName = member.DisplayName;
                 WatchlistMemberAdd.Note = member.Note;

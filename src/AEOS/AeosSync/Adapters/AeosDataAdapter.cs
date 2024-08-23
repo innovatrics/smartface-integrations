@@ -388,7 +388,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
                         if (addIdentifierResponse.IdentifierResult.Id != 0)
                         {
-                            this.logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - SUCCESS");
+                            this.logger.Information($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - SUCCESS");
                             return true;
                         }
                         else

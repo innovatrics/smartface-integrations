@@ -34,8 +34,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 throw new InvalidOperationException("The SyncPeriodMs needs to be greater than 0.");
             }
-
             lastSync = DateTime.UtcNow;
+
         }
          
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -47,7 +47,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 try
                 {
                     await this.bridge.Synchronize();
-                    this.logger.Information("Waiting for {SyncPeriodMs}ms for another sync.", SyncPeriodMs);    
+                    this.logger.Debug("Waiting for {SyncPeriodMs}ms for another sync.", SyncPeriodMs);    
                     await Task.Delay(SyncPeriodMs,cancellationToken);
                 }
 
