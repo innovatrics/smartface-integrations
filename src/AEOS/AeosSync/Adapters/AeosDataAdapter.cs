@@ -49,19 +49,20 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             this.logger.Debug("AeosDataAdapter Initiated");
 
+            //var s = ((IConfigurationRoot)configuration).GetDebugView();
             DataSource = configuration.GetValue<string>("AeosSync:DataSource");
-            AeosEndpoint = configuration.GetValue<string>("aeossync:Aeos:Server:Wdsl") ?? throw new InvalidOperationException("The AEOS SOAP API URL is not read.");
-            AeosUsername = configuration.GetValue<string>("aeossync:Aeos:Server:User") ?? throw new InvalidOperationException("The AEOS username is not read.");
-            AeosPassword = configuration.GetValue<string>("aeossync:Aeos:Server:Pass") ?? throw new InvalidOperationException("The AEOS password is not read.");
-            SmartFaceIdFreefield = configuration.GetValue<string>("aeossync:Aeos:Integration:Freefield") ?? throw new InvalidOperationException("The AEOS SmartFaceIdFreefield is not read.");
-            SmartFaceIdentifier = configuration.GetValue<string>("aeossync:Aeos:Integration:Identifier") ?? throw new InvalidOperationException("The AEOS SmartFaceIdentifier is not read.");
-            AeosServerPageSize = configuration.GetValue<int>("aeossync:Aeos:Server:PageSize");
-            KeepUserField = configuration.GetValue<string>("aeossync:Aeos:Integration:SmartFaceKeepUser") ?? throw new InvalidOperationException("The AEOS SmartFaceKeepUser is not read.");
-            configuration.Bind("aeossync:Aeos:Integration:DefaultTemplates", DefaultTemplates);
+            AeosEndpoint = configuration.GetValue<string>("AeosSync:Aeos:Server:Wsdl") ?? throw new InvalidOperationException("The AEOS SOAP API URL is not read.");
+            AeosUsername = configuration.GetValue<string>("AeosSync:Aeos:Server:User") ?? throw new InvalidOperationException("The AEOS username is not read.");
+            AeosPassword = configuration.GetValue<string>("Aeossync:Aeos:Server:Pass") ?? throw new InvalidOperationException("The AEOS password is not read.");
+            SmartFaceIdFreefield = configuration.GetValue<string>("AeosSync:Aeos:Integration:Freefield") ?? throw new InvalidOperationException("The AEOS SmartFaceIdFreefield is not read.");
+            SmartFaceIdentifier = configuration.GetValue<string>("AeosSync:Aeos:Integration:Identifier") ?? throw new InvalidOperationException("The AEOS SmartFaceIdentifier is not read.");
+            AeosServerPageSize = configuration.GetValue<int>("AeosSync:Aeos:Server:PageSize");
+            KeepUserField = configuration.GetValue<string>("AeosSync:Aeos:Integration:SmartFaceKeepUser") ?? throw new InvalidOperationException("The AEOS SmartFaceKeepUser is not read.");
+            configuration.Bind("AeosSync:Aeos:Integration:DefaultTemplates", DefaultTemplates);
             FirstNameOrder = configuration.GetValue<string>("AeosSync:SmartFace:FirstNameOrder");
-            AutoBiometryEnablement = configuration.GetValue<bool>("aeossync:Aeos:AutoBiometryEnablement");
-            AutoBiometryPrefix = configuration.GetValue<string>("aeossync:Aeos:AutoBiometryPrefix");
-            BiometricEnrollmentStatus = configuration.GetValue<string>("aeossync:Aeos:Integration:BiometricEnrollmentStatus");
+            AutoBiometryEnablement = configuration.GetValue<bool>("AeosSync:Aeos:AutoBiometryEnablement");
+            AutoBiometryPrefix = configuration.GetValue<string>("AeosSync:Aeos:AutoBiometryPrefix");
+            BiometricEnrollmentStatus = configuration.GetValue<string>("AeosSync:Aeos:Integration:BiometricEnrollmentStatus");
 
             if (DataSource == null)
             {
@@ -151,7 +152,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 var employees = await client.findEmployeeAsync(employeeSearch);
 
-                foreach (var employee in employees.EmployeeList)
+                foreach (var employee in employees.EmployeeList.Employee)
                 {
                     this.logger.Debug($"employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName");
                     this.logger.Debug($"{employee.EmployeeInfo.FirstName}, {employee.EmployeeInfo.LastName}");
@@ -165,14 +166,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     }
                 }
 
-                if (employees.EmployeeList.Length == EmployeesPageSize)
+                if (employees.EmployeeList.Employee.Length == EmployeesPageSize)
                 {
-                    this.logger.Debug($"End of page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Length}. Number of results match the pagination limit. Another page will be checked.");
+                    this.logger.Debug($"End of page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Employee.Length}. Number of results match the pagination limit. Another page will be checked.");
                 }
                 else
                 {
                     allEmployees = true;
-                    this.logger.Debug($"End of last page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Length}.");
+                    this.logger.Debug($"End of last page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Employee.Length}.");
                     break;
                 }
             }
@@ -236,12 +237,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             var findTemplate = new findTemplate();
             findTemplate.TemplateSearchInfo = new TemplateSearchInfo();
             findTemplate.TemplateSearchInfo.TemplateInfo = new TemplateInfo();
-            findTemplate.TemplateSearchInfo.TemplateInfo.UnitOfAuthType = UnitOfAuthType.Locker;
+            findTemplate.TemplateSearchInfo.TemplateInfo.UnitOfAuthType = "Locker";
 
             var findLockerTemplate = await client.findTemplateAsync(findTemplate.TemplateSearchInfo);
-            if (findLockerTemplate.TemplateList.Length > 0)
+            if (findLockerTemplate.TemplateList.Template.Length > 0)
             {
-                foreach (var item in findLockerTemplate.TemplateList)
+                foreach (var item in findLockerTemplate.TemplateList.Template)
                 {
                     this.logger.Debug($"Template IDs found: {item.Name} {item.Id}");
                     if (RegisteringTemplates.Contains(item.Name))
@@ -428,17 +429,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             employeeSearch.EmployeeInfo.IdSpecified = true;
 
             var employee = await client.findEmployeeAsync(employeeSearch);
-            if (employee.EmployeeList.Count() == 0)
+            if (employee.EmployeeList.Employee.Count() == 0)
             {
                 return null;
             }
             else
             {
-                var memberID = employee.EmployeeList[0].EmployeeInfo.Id;
-                var memberSmartFaceId = employee.EmployeeList[0].EmployeeInfo.Id.ToString();
-                var memberFirstName = employee.EmployeeList[0].EmployeeInfo.FirstName;
-                var memberLastName = employee.EmployeeList[0].EmployeeInfo.LastName;
-                var memberPicture = employee.EmployeeList[0].FirstPhoto?.Picture;
+                var memberID = employee.EmployeeList.Employee[0].EmployeeInfo.Id;
+                var memberSmartFaceId = employee.EmployeeList.Employee[0].EmployeeInfo.Id.ToString();
+                var memberFirstName = employee.EmployeeList.Employee[0].EmployeeInfo.FirstName;
+                var memberLastName = employee.EmployeeList.Employee[0].EmployeeInfo.LastName;
+                var memberPicture = employee.EmployeeList.Employee[0].FirstPhoto?.Picture;
 
                 if (memberPicture != null)
                 {
@@ -568,7 +569,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             var employeesResponse = await client.findEmployeeAsync(employeeSearch);
 
-            var foundEmployee = employeesResponse.EmployeeList
+            var foundEmployee = employeesResponse.EmployeeList.Employee
                     .FirstOrDefault(e => e.EmployeeInfo.Freefield.Any(ff => ff.Name == SmartFaceIdFreefield && ff.value == localSmartFaceId));
 
             return foundEmployee;
@@ -584,7 +585,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             var getKeepUserStatusResponse = await client.findEmployeeAsync(employeeSearch);
 
-            foreach (var item in getKeepUserStatusResponse.EmployeeList[0].EmployeeInfo.Freefield)
+            foreach (var item in getKeepUserStatusResponse.EmployeeList.Employee[0].EmployeeInfo.Freefield)
             {
                 if (item.Name == KeepUserField && item.value == "true")
                 {
@@ -623,10 +624,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                     var findLockerByIdReponse = await client.findLockerAsync(findLockerById.LockerSearchInfo);
 
-                    if (findLockerByIdReponse.LockerList.Count() > 0)
+                    if (findLockerByIdReponse.LockerList.Locker.Count() > 0)
                     {
 
-                        foreach (var locker in findLockerByIdReponse.LockerList)
+                        foreach (var locker in findLockerByIdReponse.LockerList.Locker)
                         {
                             this.logger.Information($"Removing a locker-> Id: {locker.Id}, Name: {locker.Name}, Location: {locker.Location}, HostName: {locker.HostName}");
 
