@@ -5,8 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using AeosSync;
-using Innovatrics.SmartFace.Integrations.AeosSync.Nswag;
+using Innovatrics.SmartFace.Integrations.Shared.SmartFaceRestApiClient;
+using Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -22,7 +22,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private readonly SmartFaceGraphQLClient graphQlClient;
         private readonly IAeosDataAdapter aeosDataAdapter;
         private string SmartFaceURL;
-        private string SmartFaceGraphQL;
+        private string SmartFaceClients;
         private int SmartFaceSetPageSize;
         private int SmartFacePageSize;
         private int SmartFaceDefaultThreshold;
@@ -54,7 +54,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.logger.Debug("SmartFaceDataAdapter Initiated");
 
             SmartFaceURL = configuration.GetValue<string>("AeosSync:SmartFace:RestApi:ServerUrl") ?? throw new InvalidOperationException("The SmartFace URL is not read.");
-            SmartFaceGraphQL = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:ServerUrl") ?? throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
+            SmartFaceClients = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:ServerUrl") ?? throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
             SmartFaceSetPageSize = configuration.GetValue<int>("AeosSync:SmartFace:GraphQL:PageSize");
             AeosWatchlistName = configuration.GetValue<string>("AeosSync:SmartFace:Import:Watchlist") ?? throw new InvalidOperationException("The watchlist name for importing into SmartFace is necessary.");
             SmartFacePageSize = configuration.GetValue<int>("AeosSync:SmartFace:RestApi:PageSize");
@@ -140,7 +140,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                     {
 
-                        var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
+                        var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients.FaceType.Regular)?.ImageDataId;
                         if (KeepPhotoUpToDate)
                         {
                             if (imageDataId != null)
@@ -200,7 +200,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         this.logger.Debug($"watchlistMembers.Data.WatchlistMembers.Items.Count: {watchlistMembers.Data.WatchlistMembers.Items.Count}");
                         foreach (var wm in watchlistMembers.Data.WatchlistMembers.Items)
                         {
-                            var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::AeosSync.FaceType.Regular)?.ImageDataId;
+                            var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == global::Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients.FaceType.Regular)?.ImageDataId;
                             if (KeepPhotoUpToDate)
                             {
                                 var imageDataBytes = await GetImageData(imageDataId.ToString());
@@ -230,7 +230,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             return result;
         }
 
-        public async Task<bool> CreateEmployee(SmartFaceMember member, string watchlistId)
+        public async Task<bool> CreateEmployee(SmartFaceMember member, string watchlistId, string autoBiometryPrefix = null)
         {
             this.logger.Debug($"Adding Employee > {member.ToString()} into WatchlistId->{watchlistId}");
 
@@ -238,12 +238,42 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
 
                 var httpClient = new HttpClient();
-                var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+                var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
                 var WatchlistMemberAdd = new RegisterWatchlistMemberRequest();
 
-                WatchlistMemberAdd.Id = member.Id;
+                if(autoBiometryPrefix != null)
+                {
+
+                    if(member.Id.StartsWith(autoBiometryPrefix))
+                    {
+                        WatchlistMemberAdd.Id = member.Id;
+                    }
+                    else
+                    {
+
+                        // Check if the string contains "_"
+                        // Remove everything before and including "_"
+                        var index = member.Id.IndexOf('_');
+                        if (index != -1) // -1 means the symbol was not found
+                        {
+                            WatchlistMemberAdd.Id = autoBiometryPrefix+member.Id;
+                        }
+                        else
+                        {
+                            WatchlistMemberAdd.Id = autoBiometryPrefix+member.Id.Substring(index + 1);
+                        }
+
+                    }
+
+                }
+                else
+                {
+                    WatchlistMemberAdd.Id = member.Id;
+                }
+                
                 WatchlistMemberAdd.FullName = member.FullName;
                 WatchlistMemberAdd.DisplayName = member.DisplayName;
+                WatchlistMemberAdd.Note = member.Note;
 
                 WatchlistMemberAdd.WatchlistIds.Add(watchlistId);
                 WatchlistMemberAdd.KeepAutoLearnPhotos = KeepAutoLearnPhotos;
@@ -270,7 +300,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         this.logger.Warning($"User {member.FullName} was not registered.");
 
                         SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
-                        var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Not Enabled - registration issue", SupportData);
+                        var BiometricStatusUpdated = await aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Not Enabled - registration issue", SupportData);
 
                         return false;
                     }
@@ -282,7 +312,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     this.logger.Debug($"Status Code: {e.StatusCode}, {root["detail"]}");
 
                     SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
-                    var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {root["detail"]}", SupportData);
+                    var BiometricStatusUpdated = await aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {root["detail"]}", SupportData);
 
                     restAPIexception = true;
                     return false;
@@ -299,7 +329,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 this.logger.Warning("We will not register an user without a registration image.");
 
                 SupportingData SupportData = new SupportingData(await aeosDataAdapter.GetFreefieldDefinitionId(), await aeosDataAdapter.GetBadgeIdentifierType());
-                var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - incorrect image", SupportData);
+                var BiometricStatusUpdated = await aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - incorrect image", SupportData);
             }
 
             return true;
@@ -310,7 +340,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.logger.Information($"Updating Employee > {member.FullName};{member.Id}");
 
             var httpClient = new HttpClient();
-            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+            var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
 
             var updateEmployee = new WatchlistMemberUpsertRequest();
             updateEmployee.Id = member.Id;
@@ -340,14 +370,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 {
                     var FaceIdData = await graphQlClient.GetFaceByImageDataId.ExecuteAsync(Guid.Parse(member.ImageDataId));
 
-                    string FaceId = "";
+                    Guid? FaceId = null;
 
                     foreach (var face in FaceIdData.Data.Faces.Items)
                     {
                         if (face.Id != null)
                         {
                             this.logger.Debug($"FaceId:{face.Id}");
-                            FaceId = face.Id.ToString();
+                            FaceId = face.Id;
                             break;
                         }
                     }
@@ -355,7 +385,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     if (FaceId != null)
                     {
                         var removeEmployeePhoto = new FaceWatchlistMemberRemoveRequest();
-                        removeEmployeePhoto.FaceId = FaceId;
+                        removeEmployeePhoto.FaceId = FaceId.Value;
                         this.logger.Debug($"removeEmployeePhoto.FaceId:{removeEmployeePhoto.FaceId}, watchlistmemberId:{watchlistmemberId}");
 
                         try
@@ -409,33 +439,20 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             return processingIssue;
         }
 
-        public async Task<bool> RemoveEmployee(SmartFaceMember member)
+        public async Task RemoveEmployee(SmartFaceMember member)
         {
-            this.logger.Information($"Removing Employee > {member.FullName} with ID: {member.Id}");
+            this.logger.Information($"{nameof(RemoveEmployee)}(id={member.Id},name={member.FullName})");
 
             var httpClient = new HttpClient();
-            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+            var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
 
-            var removeEmployee = new FaceWatchlistMemberRemoveRequest();
-            removeEmployee.FaceId = member.Id;
-            this.logger.Debug($"FaceId = {removeEmployee.FaceId}");
-
-            if (member.Id != null)
-            {
-                var restAPIresult = await restAPI.WatchlistMembersDELETEAsync(removeEmployee.FaceId);
-                return restAPIresult;
-            }
-            else
-            {
-                this.logger.Error($"FaceId of user {member.FullName} is NULL");
-                return false;
-            }
+            await restAPI.WatchlistMembersDELETEAsync(member.Id);
         }
 
         public async Task<string> InitializeWatchlist()
         {
             var httpClient = new HttpClient();
-            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+            var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
             var ListAllWatchlists = new List<SmartFaceWatchlist>();
             int SmartFacePageNumber = 1;
             bool allWatchlists = false;
@@ -486,7 +503,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         public async Task<byte[]> GetImageData(string imageDataId)
         {
             var httpClient = new HttpClient();
-            var restAPI = new NSwagClient(SmartFaceURL, httpClient);
+            var restAPI = new SmartFaceRestApiClient(SmartFaceURL, httpClient);
 
             var guidId = Guid.Parse(imageDataId);
 
