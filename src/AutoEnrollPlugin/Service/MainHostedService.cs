@@ -42,6 +42,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             this.notificationSource.OnNotification += OnNotification;
 
             await this.notificationSource.StartAsync();
+            this.autoEnrollmentService.Start();
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -49,13 +50,16 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             this.logger.Information($"{nameof(MainHostedService)} is stopping");
 
             await this.notificationSource.StopAsync();
+            await this.autoEnrollmentService.StopAsync();
         }
 
-        private async Task OnNotification(Notification notification)
+        private Task OnNotification(Notification notification)
         {
             this.logger.Information("Processing OnNotification {notification}", new { notification.StreamId, notification.ReceivedAt });
 
-            await this.autoEnrollmentService.ProcessNotificationAsync(notification);
+            this.autoEnrollmentService.ProcessNotification(notification);
+
+            return Task.CompletedTask;
         }
     }
 }

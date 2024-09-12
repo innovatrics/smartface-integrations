@@ -2,22 +2,29 @@ using System;
 using System.Net.Http;
 using System.IO;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
+
 using Microsoft.Extensions.Configuration;
+
 using Serilog;
+
 using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
 using Innovatrics.SmartFace.Integrations.Shared.SmartFaceRestApiClient;
-
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
     public class AutoEnrollmentService : IAutoEnrollmentService
     {
+        public readonly int MAX_PARALLEL_BLOCKS;
+
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
         private readonly IValidationService validationService;
         private readonly IStreamMappingService streamMappingService;
         private readonly string debugOutputFolder;
+
+        private ActionBlock<Notification> actionBlock;
 
         public AutoEnrollmentService(
             ILogger logger,
@@ -34,28 +41,48 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             this.streamMappingService = streamMappingService ?? throw new ArgumentNullException(nameof(streamMappingService));
 
             this.debugOutputFolder = this.configuration.GetValue<string>("Config:DebugOutputFolder");
+
+            this.MAX_PARALLEL_BLOCKS = this.configuration.GetValue<int>("Config:MaxParallelActionBlocks", 4);
         }
 
-        public async Task ProcessNotificationAsync(Notification notification)
+        public void Start()
+        {
+            this.actionBlock = new ActionBlock<Notification>(async notification =>
+            {
+                var mappings = this.streamMappingService.CreateMappings(notification.StreamId);
+
+                this.logger.Debug("Found {mappings} mappings for stream {stream}", mappings?.Count, notification.StreamId);
+
+                foreach (var mapping in mappings)
+                {
+                    var isValidationPassed = this.validationService.Validate(notification, mapping);
+
+                    if (isValidationPassed)
+                    {
+                        await this.enrollAsync(notification, mapping);
+                    }
+                }                
+            },
+            new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = this.MAX_PARALLEL_BLOCKS
+            });
+        }
+
+        public async Task StopAsync()
+        {
+            actionBlock.Complete();
+            await actionBlock.Completion;
+        }
+
+        public void ProcessNotification(Notification notification)
         {
             if (notification == null)
             {
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            var mappings = this.streamMappingService.CreateMappings(notification.StreamId);
-
-            this.logger.Debug("Found {mappings} mappings for stream {stream}", mappings?.Count, notification.StreamId);
-
-            foreach (var mapping in mappings)
-            {
-                var isValidationPassed = this.validationService.Validate(notification, mapping);
-
-                if (isValidationPassed)
-                {
-                    await this.enrollAsync(notification, mapping);
-                }
-            }
+            this.actionBlock.Post(notification);
         }
 
         private async Task enrollAsync(Notification notification, StreamMapping mapping)
@@ -88,39 +115,10 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             var registerRequest = new RegisterWatchlistMemberRequest();
 
-            // if(autoBiometryPrefix != null)
-            // {
-            //     if(member.Id.StartsWith(autoBiometryPrefix))
-            //     {
-            //         registerRequest.Id = member.Id;
-            //     }
-            //     else
-            //     {
-
-            //         // Check if the string contains "_"
-            //         // Remove everything before and including "_"
-            //         var index = member.Id.IndexOf('_');
-            //         if (index != -1) // -1 means the symbol was not found
-            //         {
-            //             registerRequest.Id = autoBiometryPrefix+member.Id;
-            //         }
-            //         else
-            //         {
-            //             registerRequest.Id = autoBiometryPrefix+member.Id.Substring(index + 1);
-            //         }
-
-            //     }
-
-            // }
-            // else
-            // {
-            //     registerRequest.Id = member.Id;
-            // }
-
             var id = Guid.NewGuid();
 
             registerRequest.Id = $"{id}";
-            
+
             registerRequest.FullName = $"{id}";
             registerRequest.DisplayName = $"{id}";
 
@@ -133,7 +131,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             registerRequest.FaceDetectorConfig = new FaceDetectorConfig();
             registerRequest.FaceDetectorConfig.MaxFaces = 3;
-            
+
             registerRequest.FaceDetectorConfig.MinFaceSize = 10;
             registerRequest.FaceDetectorConfig.MaxFaceSize = 600;
 

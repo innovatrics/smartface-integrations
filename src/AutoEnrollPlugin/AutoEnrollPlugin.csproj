@@ -20,6 +20,7 @@
         <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
         <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
         <PackageReference Include="Serilog.Sinks.Literate" Version="3.0.0" />
+        <PackageReference Include="System.Threading.Tasks.Dataflow" Version="8.0.1" />
     </ItemGroup>
 
     <ItemGroup>
