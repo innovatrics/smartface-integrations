@@ -5,12 +5,12 @@ ARG VERSION
 WORKDIR /source
 
 COPY . .
-RUN dotnet restore src/Plugins/AutoEnrollPlugin/AutoEnrollPlugin.csproj
-RUN dotnet build -c Release --no-restore -p:Version=$VERSION src/Plugins/AutoEnrollPlugin/AutoEnrollPlugin.csproj
+RUN dotnet restore src/AutoEnrollPlugin/AutoEnrollPlugin.csproj
+RUN dotnet build -c Release --no-restore -p:Version=$VERSION src/AutoEnrollPlugin/AutoEnrollPlugin.csproj
 
 FROM build AS publish
 ARG VERSION
-RUN dotnet publish -c Release --no-build -o /build_output -p:Version=$VERSION src/Plugins/AutoEnrollPlugin/AutoEnrollPlugin.csproj
+RUN dotnet publish -c Release --no-build -o /build_output -p:Version=$VERSION src/AutoEnrollPlugin/AutoEnrollPlugin.csproj
 
 FROM mcr.microsoft.com/dotnet/runtime:6.0 AS tool
 WORKDIR /build_output
