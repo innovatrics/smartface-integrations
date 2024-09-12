@@ -10,7 +10,7 @@ using ServiceReference;
 using System.ServiceModel;
 using System.ServiceModel.Security;
 using System.Security.Cryptography.X509Certificates;
-using AeosSync;
+using Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients;
 using System.IO;
 
 namespace Innovatrics.SmartFace.Integrations.AeosSync
@@ -28,6 +28,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private string FirstNameOrder;
         private bool NoImageWarningNotification;
         private bool KeepPhotoUpToDate;
+        private string AutoBiometryPrefix;
 
         public DataOrchestrator(
             ILogger logger,
@@ -47,6 +48,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             FirstNameOrder = configuration.GetValue<string>("AeosSync:SmartFace:FirstNameOrder");
             NoImageWarningNotification = configuration.GetValue<bool>("AeosSync:Aeos:NoImageWarningNotification");
             KeepPhotoUpToDate = configuration.GetValue<bool>("AeosSync:Aeos:KeepPhotoUpToDate");
+            AutoBiometryPrefix = configuration.GetValue<string>("AeosSync:Aeos:AutoBiometryPrefix");
 
             if (DataSource == null)
             {
@@ -61,6 +63,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 throw new InvalidOperationException($"The FirstNameOrder has an illegal value: {FirstNameOrder}. Legal values are first and last.");
             }
             this.logger.Debug($"INITIATE: KeepPhotoUpToDate:{KeepPhotoUpToDate}");
+            
+            if(DataSource != "AEOS")
+            {
+                this.logger.Information("Sync started SmartFace -> Aeos");
+            }
+            else
+            {
+                this.logger.Information("Sync started Aeos -> SmartFace");
+            }
+            
 
         }
 
@@ -81,6 +93,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
             this.logger.Debug($"The amount of SmartFace users is {SmartFaceAllMembers.Count}");
 
+            
             var AeosAllMembers = await this.aeosDataAdapter.GetEmployees();
 
             this.logger.Debug("Employees defined in Aeos");
@@ -89,6 +102,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 this.logger.Debug(eachMember.ToString());
             }
             this.logger.Debug($"The amount of AEOS users is {AeosAllMembers.Count}");
+            
 
             List<AeosMember> EmployeesToBeAddedAeos = new List<AeosMember>();
             List<AeosMember> EmployeesToBeRemovedAeos = new List<AeosMember>();
@@ -121,31 +135,50 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         else if (DataSource == "AEOS")
                         {
                             var joinedNames = AeosExtensions.JoinNames(FoundAeosMember.FirstName, FoundAeosMember.LastName, FirstNameOrder);
+                            this.logger.Debug($"FoundAeosMember.FirstName, FoundAeosMember.LastName\n{FoundAeosMember.FirstName}, {FoundAeosMember.LastName}");
                             if (!AeosExtensions.CompareUsers(FoundAeosMember, SFMember, FirstNameOrder) || !AeosExtensions.CompareUserPhoto(FoundAeosMember, SFMember, FirstNameOrder, KeepPhotoUpToDate))
                             {
 
                                 if (!AeosExtensions.CompareUserPhoto(FoundAeosMember, SFMember, FirstNameOrder, KeepPhotoUpToDate))
                                 {
-                                    this.logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated the image does not match");
-                                    this.logger.Debug($"SFMember.ImageDataId: {SFMember.ImageDataId}");
-                                    EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, FoundAeosMember.ImageData, AeosExtensions.getImageHash(FoundAeosMember.ImageData), SFMember.ImageDataId));
+
+                                    if(FoundAeosMember.ImageData != null)
+                                    {
+                                        this.logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated as the image does not match");
+                                        this.logger.Debug($"SFMember.ImageDataId: {SFMember.ImageDataId}");
+                                        EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, FoundAeosMember.ImageData, AeosExtensions.getImageHash(FoundAeosMember.ImageData), SFMember.ImageDataId));
+                                    }
+                                    
                                 }
                                 else
                                 {
-                                    this.logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated as there is a difference in data");
-                                    this.logger.Debug($"SFMember.ImageDataId: {SFMember.ImageDataId}");
-                                    EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, null, AeosExtensions.getImageHash(null), SFMember.ImageDataId));
+                                    if(FoundAeosMember.ImageData != null)
+                                    {
+                                        this.logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated as there is a difference in user data. Image preserved.");
+                                        this.logger.Debug($"SFMember.ImageDataId: {SFMember.ImageDataId}");
+                                        EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, FoundAeosMember.ImageData, AeosExtensions.getImageHash(FoundAeosMember.ImageData), SFMember.ImageDataId));
+                                    }
+                                    else
+                                    {
+                                        this.logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated as there is a difference in user data. No image.");
+                                        this.logger.Debug($"SFMember.ImageDataId: {SFMember.ImageDataId}");
+                                        EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, null, AeosExtensions.getImageHash(null), SFMember.ImageDataId));
+                                    }
+                                    
                                 }
                             }
+                            /*
                             else
                             {
                                 if (!AeosExtensions.CompareUserPhoto(FoundAeosMember, SFMember, FirstNameOrder, KeepPhotoUpToDate))
                                 {
+                                    this.logger.Debug($"DEBUG THIS SHOULD NOT HAPPEN");
                                     this.logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated the image does not match");
                                     this.logger.Debug($"SFMember.ImageDataId: {SFMember.ImageDataId}");
                                     EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, FoundAeosMember.ImageData, AeosExtensions.getImageHash(FoundAeosMember.ImageData), SFMember.ImageDataId));
                                 }
                             }
+                            */
                         }
                     }
                     else
@@ -192,12 +225,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             if ((Member.SmartFaceId == null || Member.SmartFaceId == "@NotEnabled") && Member.ImageData != null)
                             {
                                 this.logger.Debug($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} is being checked for enabling biometry.");
+                                this.logger.Debug($"SupportData.FreefieldDefinitionId {SupportData.FreefieldDefinitionId} SupportData.SmartFaceBadgeIdentifierType {SupportData.SmartFaceBadgeIdentifierType}.");
 
                                 var returnValue = await this.aeosDataAdapter.EnableBiometryOnEmployee(Member.Id, SupportData.FreefieldDefinitionId, SupportData.SmartFaceBadgeIdentifierType);
 
                                 if (returnValue)
                                 {
-                                    this.logger.Information($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id}> biometry was enabled.");
+                                    this.logger.Debug($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id}> biometry was enabled.");
                                     var employeeResponse = await this.aeosDataAdapter.GetEmployeeByAeosId(Member.Id);
                                     if (employeeResponse != null)
                                     {
@@ -219,6 +253,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                                 {
                                     this.logger.Warning($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} does not have SmartFace Id defined as a custom field. This user will not be migrated.");
                                 }
+                                
                                 if (Member.ImageData == null)
                                 {
                                     if (NoImageWarningNotification)
@@ -237,6 +272,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             if (Member.ImageData == null)
                             {
                                 this.logger.Warning($"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} and SmartFaceId {Member.SmartFaceId} does not have an image in the AOES. User will be removed from SmartFace");
+                                this.logger.Debug($"EmployeesToBeUpdatedSmartFace.Count {EmployeesToBeUpdatedSmartFace.Count}");
+                                
                                 EmployeesToBeRemovedSmartFace.Add(new SmartFaceMember(Member.SmartFaceId, AeosExtensions.JoinNames(Member.FirstName, Member.LastName, FirstNameOrder), AeosExtensions.JoinNames(Member.FirstName, Member.LastName, FirstNameOrder), null, null, null));
                             }
                             else
@@ -266,6 +303,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     {
                         this.logger.Debug($"Adding: {member.LastName} {member.FirstName} - {member.SmartFaceId}");
                         var returnValue = await aeosDataAdapter.CreateEmployees(member, SupportData.SmartFaceBadgeIdentifierType, SupportData.FreefieldDefinitionId);
+                        
                         this.logger.Debug($"Success: {returnValue}");
                         if (returnValue == true)
                         {
@@ -372,7 +410,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     foreach (var member in EmployeesToBeAddedSmartFace)
                     {
                         this.logger.Debug($"Adding user:-> {member.Id}, {member.FullName}");
-                        var returnValue = await smartFaceDataAdapter.CreateEmployee(member, AeosWatchlistId);
+                        var returnValue = await smartFaceDataAdapter.CreateEmployee(member, AeosWatchlistId, AutoBiometryPrefix);
                         this.logger.Debug($"User created {member.Id}:{member.FullName} success?: {returnValue}");
 
                         if (returnValue == true)
@@ -380,7 +418,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                             EmployeesToBeAddedSuccessCountSmartFace += 1;
 
-                            var BiometricStatusUpdated = aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Enabled", SupportData);
+                            var BiometricStatusUpdated = await aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Enabled", SupportData);
+                            if(!BiometricStatusUpdated)
+                            {
+                                this.logger.Warning("It was not possible to update biometric status.");
+                            }
                         }
                         else
                         {
@@ -439,6 +481,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                                 EmployeesToBeRemovedFailCountSmartFace += 1;
                             }
+
+                            try
+                            {
+                                var BiometricStatusUpdated = await aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Disabled", SupportData);
+                            }
+                            catch(Exception e)
+                            {
+                                this.logger.Error(e,"It was not possible to update biometric status.");
+                            }
+
                         }
                         else
                         {

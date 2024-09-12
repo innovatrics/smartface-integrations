@@ -3,6 +3,7 @@ using ServiceReference;
 using System.Security.Cryptography;
 using System.Text;
 using System;
+using System.IO;
 
 namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
@@ -178,6 +179,27 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 return null;
             }
+        }
+
+        public static string idRemovePrefix(string id, string prefix)
+        {
+
+            int index = id.IndexOf('_');
+
+            if (index != -1)
+            {
+                return id.Substring(index + 1);   
+            }
+            else
+            {
+                return id;
+            }
+            
+        }
+
+        public static string idAddPrefix(string id, string prefix)
+        {
+            return prefix + id;
         }
 
     }

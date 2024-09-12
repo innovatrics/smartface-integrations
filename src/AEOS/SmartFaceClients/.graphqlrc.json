@@ -1,0 +1,28 @@
+{
+    "schema": "schema.graphql",
+    "documents": "**/*.graphql",
+    "extensions": {
+        "strawberryShake": {
+            "name": "SmartFaceGraphQLClient",
+            "namespace": "Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients",
+            "dependencyInjection": true,
+            "strictSchemaValidation": true,
+            "hashAlgorithm": "md5",
+            "useSingleFile": true,
+            "requestStrategy": "Default",
+            "noStore": false,
+            "emitGeneratedCode": true,
+            "razorComponents": false,
+            "records": {
+                "inputs": false,
+                "entities": false
+            },
+            "transportProfiles": [
+                {
+                    "default": "Http",
+                    "subscription": "WebSocket"
+                }
+            ]
+        }
+    }
+}

@@ -5,8 +5,8 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-   <PackageReference Include="Grpc" Version="2.36.4" />
-   <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
+    <PackageReference Include="Grpc" Version="2.36.4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
@@ -18,16 +18,11 @@
     <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
     <PackageReference Include="Serilog.Sinks.Literate" Version="3.0.0" />
-    <PackageReference Include="StrawberryShake.CodeGeneration.CSharp.Analyzers" Version="12.16.0" />
-    <PackageReference Include="StrawberryShake.Transport.Http" Version="12.16.0" />    
-    <!-- <PackageReference Include="SmartFace.ApiClient" Version="4.2.0.1411" /> -->
-    <!-- <PackageReference Include="SmartFace.Contract" Version="4.1.0.1379" /> -->
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\AccessController\AccessController.csproj" />
-  </ItemGroup>    
-  <ItemGroup>  
-    <Compile Include="..\..\Shared\GeneratedApiClasses\SmartFaceApi.cs" Link="SmartFaceApi.cs" />
+    <ProjectReference Include="..\..\Shared\SmartFaceRestApiClient\SmartFaceRestApiClient.csproj" />
+    <ProjectReference Include="..\SmartFaceClients\SmartFaceClients.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="appsettings.json">
@@ -37,10 +32,12 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.ServiceModel.Duplex" Version="4.7.*" />
-    <PackageReference Include="System.ServiceModel.Http" Version="4.7.*" />
-    <PackageReference Include="System.ServiceModel.NetTcp" Version="4.7.*" />
-    <PackageReference Include="System.ServiceModel.Security" Version="4.7.*" />
+    <PackageReference Include="System.ServiceModel.Duplex" Version="4.10.*" />
+    <PackageReference Include="System.ServiceModel.Http" Version="4.10.*" />
+    <PackageReference Include="System.ServiceModel.NetTcp" Version="4.10.*" />
+    <PackageReference Include="System.ServiceModel.Security" Version="4.10  .*" />
   </ItemGroup>
-  
+  <ItemGroup>
+    <PackageReference Include="System.ServiceModel.Federation" Version="4.10.*" />
+  </ItemGroup>
 </Project>
