@@ -17,7 +17,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly GrpcReaderFactory grpcReaderFactory;
-        private readonly IAutoEnrollmentService bridge;
+        private readonly IAutoEnrollmentService autoEnrollmentService;
         private readonly INotificationSourceFactory notificationSourceFactory;
         private INotificationSource notificationSource;
 
@@ -32,7 +32,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.grpcReaderFactory = grpcReaderFactory ?? throw new ArgumentNullException(nameof(grpcReaderFactory));
-            this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
+            this.autoEnrollmentService = bridge ?? throw new ArgumentNullException(nameof(bridge));
             this.notificationSourceFactory = notificationSourceFactory ?? throw new ArgumentNullException(nameof(notificationSourceFactory));
         }
 
@@ -66,7 +66,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 // StreamId = notification.StreamId
             });
 
-            await this.bridge.ProcessGrantedNotificationAsync(notification);
+            await this.autoEnrollmentService.ProcessGrantedNotificationAsync(notification);
         }
     }
 }
