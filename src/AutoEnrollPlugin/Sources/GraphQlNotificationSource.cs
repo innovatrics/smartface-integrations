@@ -17,15 +17,17 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 {
     public class GraphQlNotificationSource : INotificationSource
     {
+        public event Func<Notification22, Task> OnNotification;
+
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private GraphQLHttpClient _graphQlClient;
-        public event Func<Notification22, Task> OnNotification;
+        
+        private IDisposable subscription;
 
         public GraphQlNotificationSource(
             ILogger logger,
-            IConfiguration configuration,
-            IHttpClientFactory httpClientFactory
+            IConfiguration configuration
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -34,52 +36,42 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
         public Task StartAsync()
         {
-            this.logger.Information("Start receiving gRPC notifications");
+            this.logger.Information("Start receiving graphQL notifications");
 
             this.startReceivingGraphQlNotifications();
-
-            this.startPingTimer();
 
             return Task.CompletedTask;
         }
 
         public async Task StopAsync()
         {
-            this.logger.Information($"Stopping receiving gRPC notifications");
+            this.logger.Information($"Stopping receiving graphQL notifications");
 
-            await this.stopReceivingGrpcNotificationsAsync();
-
-            this.accessControllerPingTimer?.Stop();
-            this.accessControllerPingTimer?.Dispose();
+            await this.stopReceivingGraphQlNotificationsAsync();
         }
 
-        private GrpcNotificationReader CreateGrpcReader()
+        private GraphQLHttpClient CreateGraphQlClient()
         {
-            var grpcHost = this.configuration.GetValue<string>("AccessController:Host");
-            var grpcPort = this.configuration.GetValue<int>("AccessController:Port");
-
-            this.logger.Information("gRPC configured to host={host}, port={port}", grpcHost, grpcPort);
-
-            return this.grpcReaderFactory.Create(grpcHost, grpcPort);
-        }
-
-        private void startReceivingGraphQlNotifications()
-        {
-            this.logger.Information("Start receiving GraphQL notifications");
-
             var serverUrl = this.configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL");
             var port = this.configuration.GetValue<int>("Source:GraphQL:Port", 8097);
 
             var graphQLOptions = new GraphQLHttpClientOptions
             {
-                EndPoint = new Uri($"{serverUrl}:{port}/")                
+                EndPoint = new Uri($"{serverUrl}:{port}/")
             };
 
             this.logger.Information("Subscription EndPoint {endpoint}", graphQLOptions.EndPoint);
-            
-            _graphQlClient = new GraphQLHttpClient(graphQLOptions, new NewtonsoftJsonSerializer());
 
-            var subscriptionQuery = new GraphQLRequest
+            return new GraphQLHttpClient(graphQLOptions, new NewtonsoftJsonSerializer());
+        }
+
+        private void startReceivingGraphQlNotifications()
+        {
+            this.logger.Information("Start receiving GraphQL notifications");
+            
+            _graphQlClient = this.CreateGraphQlClient();
+
+            var _graphQLRequest = new GraphQLRequest
             {
                 // This is a query used to listen to GraphQL Subscriptions. This can be expanded as needed
                 Query = @"
@@ -100,73 +92,52 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                     }
                     }"
             };
+
+            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<GraphQLResponse<dynamic>>(_graphQLRequest);
+
+            this.subscription = _subscriptionStream.
+                Subscribe(
+                    async response =>
+                    {
+
+                        // DateTime now = DateTime.Now;
+                        // string imageDataId;
+                        // var message_type = (GenericObjectType) response.Data["objectInserted"]["genericObjectType"].Value<int>();
+                        // var message_quality = response.Data["objectInserted"]["quality"];
+                        // var message_size = response.Data["objectInserted"]["size"];
+                        // var message_streamId = response.Data["objectInserted"]["streamId"];
+                        // var message_imageDataId = response.Data["objectInserted"]["imageDataId"];
+
+                        // string imageString = "";
+
+                        // if(message_imageDataId != null)
+                        // {
+                        //     imageString += $"image: {serverUrl}:{restApiPort}/api/v1/Images/{message_imageDataId}";
+
+                        //     Console.WriteLine($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}] at {now.ToLocalTime()} | {imageString}", webhookUrl);
+
+                        //     // Sending the information to the Google Space
+                        //     SendMessageToGoogleSpaceAsync($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}] at {now.ToLocalTime()} {imageString}", webhookUrl);
+                        // }
+                        // else
+                        // {
+                        //     Console.WriteLine($"Error: \n{message_type} [size: {message_size}px; detection quality: {message_quality}; streamId: {message_streamId} ] at {now.ToLocalTime()} | {imageString}", webhookUrl);
+                        // }
+
+
+                    },
+                    onError: err =>
+                    {
+                        Console.WriteLine("Error:" + err);
+                    }
+                );
         }
 
-        private async Task stopReceivingGrpcNotificationsAsync()
+        private Task stopReceivingGraphQlNotificationsAsync()
         {
-            this.grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
-            this.grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
-            await this.grpcNotificationReader.DisposeAsync();
-        }
-
-        private Task OnGrpcPing(DateTime sentAt)
-        {
-            this.logger.Debug("gRPC ping received");
-            this.lastGrpcPing = DateTime.UtcNow;
+            this.subscription?.Dispose();
+            
             return Task.CompletedTask;
-        }
-
-        private Task OnGrpcGrantedNotification(GrantedNotification notification)
-        {
-            this.logger.Information("Processing 'GRANTED' notification {@notification}", new
-            {
-                WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                WatchlistMemberId = notification.WatchlistMemberId,
-                FaceDetectedAt = notification.FaceDetectedAt,
-                StreamId = notification.StreamId
-            });
-
-            this.logger.Debug("Notification details {@notification}", notification);
-
-            this.OnNotification?.Invoke(new object());
-
-            return Task.CompletedTask;
-        }
-
-        private void startPingTimer()
-        {
-            this.lastGrpcPing = DateTime.UtcNow;
-            accessControllerPingTimer = new System.Timers.Timer();
-
-            accessControllerPingTimer.Interval = 5000;
-            accessControllerPingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
-            {
-                var timeDiff = DateTime.UtcNow - lastGrpcPing;
-
-                this.logger.Debug("Timer ping check: {@ms} ms", timeDiff.TotalMilliseconds);
-
-                if (timeDiff.TotalSeconds > 15)
-                {
-                    this.logger.Warning("gRPC ping not received, last {@ses} sec ago", timeDiff.TotalSeconds);
-                }
-
-                if (timeDiff.TotalSeconds > 60)
-                {
-                    this.logger.Error("gRPC ping timeout reached");
-                    this.logger.Information("gRPC restarting");
-
-                    accessControllerPingTimer.Stop();
-
-                    await this.stopReceivingGrpcNotificationsAsync();
-                    this.startReceivingGraphQlNotifications();
-
-                    accessControllerPingTimer.Start();
-
-                    this.logger.Information("gRPC restarted");
-                }
-            };
-
-            accessControllerPingTimer.Start();
         }
     }
 }

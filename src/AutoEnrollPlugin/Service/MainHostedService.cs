@@ -66,7 +66,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 // StreamId = notification.StreamId
             });
 
-            await this.autoEnrollmentService.ProcessGrantedNotificationAsync(notification);
+            // await this.autoEnrollmentService.ProcessGrantedNotificationAsync(notification);
         }
     }
 }
