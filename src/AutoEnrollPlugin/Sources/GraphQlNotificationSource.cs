@@ -1,65 +1,61 @@
 using System;
-using System.Threading;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessController.Readers;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services;
+using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
+using Microsoft.Extensions.Configuration;
+using Serilog;
 
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
+namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
 {
-    public class MainHostedService : IHostedService
+    
+}
+
+namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
+{
+    public class GraphQlNotificationSource : INotificationSource
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly GrpcReaderFactory grpcReaderFactory;
-        private readonly IBridgeService bridge;
         private GrpcNotificationReader grpcNotificationReader;
         private System.Timers.Timer accessControllerPingTimer;
-        private System.Timers.Timer keepAlivePingTimer;
         private DateTime lastGrpcPing;
+        public event Func<object, Task> OnNotification;
 
-        public MainHostedService(
+        public GraphQlNotificationSource(
             ILogger logger,
             IConfiguration configuration,
-            GrpcReaderFactory grpcReaderFactory,
-            IBridgeService bridge
+            IHttpClientFactory httpClientFactory
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.grpcReaderFactory = grpcReaderFactory ?? throw new ArgumentNullException(nameof(grpcReaderFactory));
-            this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public Task StartAsync()
         {
-            this.logger.Information($"{nameof(MainHostedService)} is starting");
-
             this.logger.Information("Start receiving gRPC notifications");
 
             this.startReceivingGrpcNotifications();
 
             this.startPingTimer();
 
-            this.startKeepAliveTimer();
-
             return Task.CompletedTask;
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync()
         {
-            this.logger.Information($"{nameof(MainHostedService)} is stopping");
+            this.logger.Information($"Stopping receiving gRPC notifications");
 
             await this.stopReceivingGrpcNotificationsAsync();
 
             this.accessControllerPingTimer?.Stop();
             this.accessControllerPingTimer?.Dispose();
-            this.keepAlivePingTimer?.Stop();
-            this.keepAlivePingTimer?.Dispose();
         }
 
         private GrpcNotificationReader CreateGrpcReader()
@@ -80,7 +76,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
 
             grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
 
-            grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
+            grpcNotificationReader.OnGrpcDeniedNotification += (DeniedNotification notification) =>
             {
                 this.logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
@@ -89,7 +85,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
                 });
             };
 
-            grpcNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
+            grpcNotificationReader.OnGrpcBlockedNotification += (BlockedNotification notification) =>
             {
                 this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
                 {
@@ -119,7 +115,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             return Task.CompletedTask;
         }
 
-        private async Task OnGrpcGrantedNotification(GrantedNotification notification)
+        private Task OnGrpcGrantedNotification(GrantedNotification notification)
         {
             this.logger.Information("Processing 'GRANTED' notification {@notification}", new
             {
@@ -131,7 +127,9 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
 
             this.logger.Debug("Notification details {@notification}", notification);
 
-            await this.bridge.ProcessGrantedNotificationAsync(notification);
+            this.OnNotification?.Invoke(new object());
+
+            return Task.CompletedTask;
         }
 
         private void startPingTimer()
@@ -168,29 +166,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             };
 
             accessControllerPingTimer.Start();
-        }
-
-        private void startKeepAliveTimer()
-        {
-            var keepAliveEnabled = this.configuration.GetValue<bool>("KeepAlive:Enabled", true);
-            var keepAliveInterval = this.configuration.GetValue<int>("KeepAlive:Interval", 3600);
-
-            this.logger.Information("KeepAlive configured enabled={enabled}, interval={interval}", keepAliveEnabled, keepAliveInterval);
-
-            if (keepAliveEnabled)
-            {
-                keepAlivePingTimer = new System.Timers.Timer();
-
-                keepAlivePingTimer.Interval = keepAliveInterval * 1000;
-                keepAlivePingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
-                {
-                    this.logger.Information("KeepAlive interval elapsed, process ping");
-
-                    await this.bridge.SendKeepAliveSignalAsync();
-                };
-
-                keepAlivePingTimer.Start();
-            }
         }
     }
 }

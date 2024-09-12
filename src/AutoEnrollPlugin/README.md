@@ -17,10 +17,10 @@ To run application localy, follow these steps
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/Plugins/AutoEnrollPlugin/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll-plugin:0.11 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll-plugin:0.11 registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll-plugin:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll-plugin:0.11`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll-plugin:latest`
+ - `docker build -f src/Plugins/AutoEnrollPlugin/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.11 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.11 registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.11`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
 
 ## Usage
 Add following pattern to existing docker compose:
@@ -38,7 +38,7 @@ Add following pattern to existing docker compose:
     env_file: .env.sfstation
 
   auto-enroll:
-    image: ${REGISTRY}integrations-auto-enroll-plugin
+    image: ${REGISTRY}integrations-auto-enroll
     restart: unless-stopped
     environment:
       - AccessController__Host=SFAccessController
