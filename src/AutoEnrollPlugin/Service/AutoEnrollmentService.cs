@@ -26,7 +26,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             this.validationServiceFactory = validationServiceFactory ?? throw new ArgumentNullException(nameof(validationServiceFactory));
         }
 
-        public async Task ProcessNotificationAsync(Notification22 notification)
+        public async Task ProcessNotificationAsync(Notification notification)
         {
             if (notification == null)
             {

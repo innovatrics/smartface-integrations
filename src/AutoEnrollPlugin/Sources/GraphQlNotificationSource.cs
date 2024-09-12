@@ -17,12 +17,12 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 {
     public class GraphQlNotificationSource : INotificationSource
     {
-        public event Func<Notification22, Task> OnNotification;
+        public event Func<Notification, Task> OnNotification;
 
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private GraphQLHttpClient _graphQlClient;
-        
+
         private IDisposable subscription;
 
         public GraphQlNotificationSource(
@@ -69,7 +69,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
         private void startReceivingGraphQlNotifications()
         {
             this.logger.Information("Start receiving GraphQL notifications");
-            
+
             _graphQlClient = this.CreateGraphQlClient();
 
             var _graphQLRequest = new GraphQLRequest
@@ -79,6 +79,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                 subscription {
                     noMatchResult {
                         streamId,
+                        faceId,
+                        trackletId,
                         cropImage,                        
                         faceArea,
                         faceSize,
@@ -96,43 +98,27 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                 }"
             };
 
-            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<dynamic>(_graphQLRequest);
+            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<NoMatchResultResponse>(_graphQLRequest);
 
             this.subscription = _subscriptionStream.
                 Subscribe(
                     async response =>
                     {
-                        this.logger.Information("Success! {stream}", response.Data.noMatchResult?.streamId);
+                        this.logger.Information("Success! {stream}", response.Data.NoMatchResult?.StreamId);
 
-                        // DateTime now = DateTime.Now;
-                        // string imageDataId;
-                        // var message_type = (GenericObjectType) response.Data["objectInserted"]["genericObjectType"].Value<int>();
-                        // var message_quality = response.Data["objectInserted"]["quality"];
-                        // var message_size = response.Data["objectInserted"]["size"];
-                        // var message_streamId = response.Data["objectInserted"]["streamId"];
-                        // var message_imageDataId = response.Data["objectInserted"]["imageDataId"];
+                        var notification = new Notification()
+                        {
+                            StreamId = response.Data.NoMatchResult.StreamId,
+                            FaceId = response.Data.NoMatchResult.FaceId,
+                            TrackletId = response.Data.NoMatchResult.TrackletId,
+                            CropImage = response.Data.NoMatchResult.CropImage
+                        };
 
-                        // string imageString = "";
-
-                        // if(message_imageDataId != null)
-                        // {
-                        //     imageString += $"image: {serverUrl}:{restApiPort}/api/v1/Images/{message_imageDataId}";
-
-                        //     Console.WriteLine($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}] at {now.ToLocalTime()} | {imageString}", webhookUrl);
-
-                        //     // Sending the information to the Google Space
-                        //     SendMessageToGoogleSpaceAsync($"Detected: {message_type} [size: {message_size}px; detection quality: {message_quality}] at {now.ToLocalTime()} {imageString}", webhookUrl);
-                        // }
-                        // else
-                        // {
-                        //     Console.WriteLine($"Error: \n{message_type} [size: {message_size}px; detection quality: {message_quality}; streamId: {message_streamId} ] at {now.ToLocalTime()} | {imageString}", webhookUrl);
-                        // }
-
-
+                        this.OnNotification?.Invoke(notification);
                     },
                     onError: err =>
                     {
-                        Console.WriteLine("Error:" + err);
+                        this.logger.Error(err, "GraphQL Subscription error");
                     }
                 );
 
@@ -142,7 +128,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
         private Task stopReceivingGraphQlNotificationsAsync()
         {
             this.subscription?.Dispose();
-            
+
             return Task.CompletedTask;
         }
     }

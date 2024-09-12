@@ -25,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
         private GrpcNotificationReader grpcNotificationReader;
         private System.Timers.Timer accessControllerPingTimer;
         private DateTime lastGrpcPing;
-        public event Func<Notification22, Task> OnNotification;
+        public event Func<Models.Notification, Task> OnNotification;
 
         public GrpcNotificationSource(
             ILogger logger,
@@ -127,7 +127,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
             this.logger.Debug("Notification details {@notification}", notification);
 
-            this.OnNotification?.Invoke(new Notification22());
+            this.OnNotification?.Invoke(new Models.Notification());
 
             return Task.CompletedTask;
         }

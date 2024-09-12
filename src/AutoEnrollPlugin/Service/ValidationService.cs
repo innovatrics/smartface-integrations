@@ -4,7 +4,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
     public class ValidationService : IValidationService
     {
-        public bool ValidateNotification(Notification22 notification)
+        public bool ValidateNotification(Notification notification)
         {
             return true;
         }

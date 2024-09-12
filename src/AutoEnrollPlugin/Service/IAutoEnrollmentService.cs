@@ -5,6 +5,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
     public interface IAutoEnrollmentService
     {
-        Task ProcessNotificationAsync(Notification22 notification);
+        Task ProcessNotificationAsync(Notification notification);
     }
 }

@@ -6,7 +6,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 {
     public interface INotificationSource
     {
-        event Func<Notification22, Task> OnNotification;
+        event Func<Notification, Task> OnNotification;
 
         Task StartAsync();
 
