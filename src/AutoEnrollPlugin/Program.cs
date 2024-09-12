@@ -48,7 +48,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
             var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace"));
-            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
+            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
             var loggerConfiguration = new LoggerConfiguration()
@@ -75,7 +75,9 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             services.AddSingleton<IGrpcStreamSubscriber, GrpcStreamSubscriber>();
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
-
+            
+            services.AddSingleton<IExclusiveMemoryCache, ExclusiveMemoryCache>();
+            services.AddSingleton<IDebouncingService, DebouncingService>();
             services.AddSingleton<IValidationService, ValidationService>();
             services.AddSingleton<IStreamMappingService, StreamMappingService>();
             services.AddSingleton<INotificationSourceFactory, NotificationSourceFactory>();

@@ -22,6 +22,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         private readonly IHttpClientFactory httpClientFactory;
         private readonly IValidationService validationService;
         private readonly IStreamMappingService streamMappingService;
+        private readonly IDebouncingService debouncingService;
         private readonly string debugOutputFolder;
 
         private ActionBlock<Notification> actionBlock;
@@ -30,42 +31,59 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
-            IValidationService validationServiceFactory,
+            IDebouncingService debouncingService,
+            IValidationService validationService,
             IStreamMappingService streamMappingService
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            this.validationService = validationServiceFactory ?? throw new ArgumentNullException(nameof(validationServiceFactory));
+            this.validationService = validationService ?? throw new ArgumentNullException(nameof(validationService));
             this.streamMappingService = streamMappingService ?? throw new ArgumentNullException(nameof(streamMappingService));
+            this.debouncingService = debouncingService ?? throw new ArgumentNullException(nameof(debouncingService));
+            
+            debugOutputFolder = this.configuration.GetValue<string>("Config:DebugOutputFolder");
 
-            this.debugOutputFolder = this.configuration.GetValue<string>("Config:DebugOutputFolder");
-
-            this.MAX_PARALLEL_BLOCKS = this.configuration.GetValue<int>("Config:MaxParallelActionBlocks", 4);
+            MAX_PARALLEL_BLOCKS = this.configuration.GetValue<int>("Config:MaxParallelActionBlocks", 4);
         }
 
         public void Start()
         {
             this.actionBlock = new ActionBlock<Notification>(async notification =>
             {
-                var mappings = this.streamMappingService.CreateMappings(notification.StreamId);
-
-                this.logger.Debug("Found {mappings} mappings for stream {stream}", mappings?.Count, notification.StreamId);
-
-                foreach (var mapping in mappings)
+                try
                 {
-                    var isValidationPassed = this.validationService.Validate(notification, mapping);
+                    var mappings = streamMappingService.CreateMappings(notification.StreamId);
 
-                    if (isValidationPassed)
+                    this.logger.Debug("Found {mappings} mappings for stream {stream}", mappings?.Count, notification.StreamId);
+
+                    foreach (var mapping in mappings)
                     {
-                        await this.enrollAsync(notification, mapping);
+                        var isValidationPassed = validationService.Validate(notification, mapping);
+
+                        if (isValidationPassed)
+                        {
+                            var isBlocked = this.debouncingService.IsBlocked(notification, mapping);
+
+                            if (isBlocked)
+                            {
+                                continue;
+                            }
+
+                            await enrollAsync(notification, mapping);
+                        }
                     }
-                }                
+                }
+                catch (Exception ex)
+                {
+                    this.logger.Error(ex, "Failed to process message");
+                    throw;
+                }
             },
             new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = this.MAX_PARALLEL_BLOCKS
+                MaxDegreeOfParallelism = MAX_PARALLEL_BLOCKS
             });
         }
 

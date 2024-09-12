@@ -227,7 +227,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 validationResults[i] = isValid;
             }
 
-            this.logger.Information("Validation result [{result}]", string.Join(',', validationResults));
+            this.logger.Information("Validation result [{result}]", string.Join(',', validationResults.Select(s => s ? 1 : 0)));
 
             var allResult = validationResults
                                 .All(w => w == true);
