@@ -111,7 +111,10 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                             StreamId = response.Data.NoMatchResult.StreamId,
                             FaceId = response.Data.NoMatchResult.FaceId,
                             TrackletId = response.Data.NoMatchResult.TrackletId,
-                            CropImage = response.Data.NoMatchResult.CropImage
+                            CropImage = response.Data.NoMatchResult.CropImage,
+                            
+                            OriginProcessedAt = response.Data.NoMatchResult.ProcessedAt,
+                            ReceivedAt = DateTime.UtcNow
                         };
 
                         this.OnNotification?.Invoke(notification);

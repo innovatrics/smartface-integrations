@@ -4,11 +4,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
-using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
-using Innovatrics.SmartFace.Integrations.AccessController.Readers;
 using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Factories;
 using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources;
+using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
@@ -16,7 +14,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly GrpcReaderFactory grpcReaderFactory;
         private readonly IAutoEnrollmentService autoEnrollmentService;
         private readonly INotificationSourceFactory notificationSourceFactory;
         private INotificationSource notificationSource;
@@ -24,14 +21,12 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         public MainHostedService(
             ILogger logger,
             IConfiguration configuration,
-            GrpcReaderFactory grpcReaderFactory,
             INotificationSourceFactory notificationSourceFactory,
             IAutoEnrollmentService bridge
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.grpcReaderFactory = grpcReaderFactory ?? throw new ArgumentNullException(nameof(grpcReaderFactory));
             this.autoEnrollmentService = bridge ?? throw new ArgumentNullException(nameof(bridge));
             this.notificationSourceFactory = notificationSourceFactory ?? throw new ArgumentNullException(nameof(notificationSourceFactory));
         }
@@ -56,15 +51,9 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             await this.notificationSource.StopAsync();
         }
 
-        private async Task OnNotification(object notification)
+        private async Task OnNotification(Notification notification)
         {
-            this.logger.Information("Processing OnNotification {@notification}", new
-            {
-                // WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                // WatchlistMemberId = notification.WatchlistMemberId,
-                // FaceDetectedAt = notification.FaceDetectedAt,
-                // StreamId = notification.StreamId
-            });
+            this.logger.Information("Processing OnNotification {notification}", new { notification.StreamId, notification.ReceivedAt });
 
             // await this.autoEnrollmentService.ProcessGrantedNotificationAsync(notification);
         }

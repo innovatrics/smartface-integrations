@@ -20,6 +20,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
         // public double YawAngle { get; set; }
         // public double RollAngle { get; set; }
         // public double PitchAngle { get; set; }
+
+        public DateTime? ProcessedAt { get; set; }
     }
 
     public class NoMatchResultResponse
