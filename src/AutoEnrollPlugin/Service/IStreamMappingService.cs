@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
-    public interface IValidationServiceFactory
+    public interface IStreamMappingService
     {
-        IValidationService Create(string streamId);
+        ICollection<StreamMapping> CreateMappings(string streamId);
     }
 }

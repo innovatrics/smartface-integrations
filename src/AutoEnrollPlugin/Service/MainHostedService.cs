@@ -55,7 +55,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         {
             this.logger.Information("Processing OnNotification {notification}", new { notification.StreamId, notification.ReceivedAt });
 
-            // await this.autoEnrollmentService.ProcessGrantedNotificationAsync(notification);
+            await this.autoEnrollmentService.ProcessNotificationAsync(notification);
         }
     }
 }

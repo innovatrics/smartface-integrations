@@ -13,17 +13,20 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly IValidationServiceFactory validationServiceFactory;
+        private readonly IValidationService validationService;
+        private readonly IStreamMappingService streamMappingService;
 
         public AutoEnrollmentService(
             ILogger logger,
             IConfiguration configuration,
-            IValidationServiceFactory validationServiceFactory
+            IValidationService validationServiceFactory,
+            IStreamMappingService streamMappingService
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.validationServiceFactory = validationServiceFactory ?? throw new ArgumentNullException(nameof(validationServiceFactory));
+            this.validationService = validationServiceFactory ?? throw new ArgumentNullException(nameof(validationServiceFactory));
+            this.streamMappingService = streamMappingService ?? throw new ArgumentNullException(nameof(streamMappingService));
         }
 
         public async Task ProcessNotificationAsync(Notification notification)
@@ -33,13 +36,18 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            var validationService = this.validationServiceFactory.Create(notification.StreamId);
+            var mappings = this.streamMappingService.CreateMappings(notification.StreamId);
 
-            var isValid = validationService.ValidateNotification(notification);
+            this.logger.Debug("Found {mappings} mappings for stream {stream}", mappings?.Count, notification.StreamId);
 
-            if (isValid)
+            foreach (var mapping in mappings)
             {
-                //await this.EnrollAsync(Notification22);
+                var isValid = this.validationService.Validate(notification, mapping);
+
+                if (isValid)
+                {
+                    //await this.EnrollAsync(Notification22);
+                }
             }
         }
     }

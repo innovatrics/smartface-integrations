@@ -5,6 +5,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
     public interface IValidationService
     {
-        bool ValidateNotification(Notification notification);
+        bool Validate(Notification notification, StreamMapping mapping);
     }
 }

@@ -102,7 +102,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
             this.subscription = _subscriptionStream.
                 Subscribe(
-                    async response =>
+                    response =>
                     {
                         this.logger.Information("Success! {stream}", response.Data.NoMatchResult?.StreamId);
 
