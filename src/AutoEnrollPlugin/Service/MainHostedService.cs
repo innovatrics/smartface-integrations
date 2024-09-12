@@ -36,7 +36,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             this.notificationSourceFactory = notificationSourceFactory ?? throw new ArgumentNullException(nameof(notificationSourceFactory));
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             this.logger.Information($"{nameof(MainHostedService)} is starting");
 
@@ -46,14 +46,14 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             this.notificationSource.OnNotification += OnNotification;
 
-            return Task.CompletedTask;
+            await this.notificationSource.StartAsync();
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             this.logger.Information($"{nameof(MainHostedService)} is stopping");
 
-            return this.notificationSource.StopAsync();
+            await this.notificationSource.StopAsync();
         }
 
         private async Task OnNotification(object notification)

@@ -25,6 +25,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
         public IValidationService Create(string streamId)
         {
+            return null;
+            
             // var cameraToStreamMappings = this.getCameraMappings(streamId);
 
             // if (cameraToStreamMappings.Length == 0)

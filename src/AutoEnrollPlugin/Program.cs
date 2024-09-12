@@ -76,6 +76,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
 
+            services.AddSingleton<IValidationServiceFactory, ValidationServiceFactory>();
             services.AddSingleton<INotificationSourceFactory, NotificationSourceFactory>();
             services.AddSingleton<IAutoEnrollmentService, AutoEnrollmentService>();
 

@@ -46,7 +46,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Factories
                     throw new NotImplementedException($"{nameof(INotificationSource)} of type {notificationSourceType} not supported");
 
                 case NotificationSourceType.GraphQL:
-                    return new GraphQlNotificationSource(this.logger, this.configuration, this.httpClientFactory);
+                    return new GraphQlNotificationSource(this.logger, this.configuration);
 
                 case NotificationSourceType.gRPC:
                     return new GrpcNotificationSource(this.logger, this.configuration, this.httpClientFactory);

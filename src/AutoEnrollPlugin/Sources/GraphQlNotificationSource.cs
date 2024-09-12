@@ -52,12 +52,13 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
         private GraphQLHttpClient CreateGraphQlClient()
         {
-            var serverUrl = this.configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL");
+            var schema = this.configuration.GetValue<string>("Source:GraphQL:Schema", "http");
+            var host = this.configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL");
             var port = this.configuration.GetValue<int>("Source:GraphQL:Port", 8097);
 
             var graphQLOptions = new GraphQLHttpClientOptions
             {
-                EndPoint = new Uri($"{serverUrl}:{port}/")
+                EndPoint = new Uri($"{schema}://{host}:{port}/")
             };
 
             this.logger.Information("Subscription EndPoint {endpoint}", graphQLOptions.EndPoint);
@@ -76,29 +77,32 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                 // This is a query used to listen to GraphQL Subscriptions. This can be expanded as needed
                 Query = @"
                 subscription {
-                    objectInserted {
-                        id
-                        imageDataId                        
-                        quality
-                        genericObjectType
-                        size
-                        objectOrderOnFrameForType
-                        objectsOnFrameCountForType
-                        areaOnFrame
-                        cropLeftTopX
-                        cropLeftTopY
-                        cropRightBottomX
-                        cropRightBottomY
+                    noMatchResult {
+                        streamId,
+                        cropImage,                        
+                        faceArea,
+                        faceSize,
+                        faceOrder,
+                        facesOnFrameCount,
+                        faceMaskStatus,
+                        faceQuality,
+                        templateQuality,
+                        sharpness,
+                        brightness,
+                        yawAngle,
+                        rollAngle,
+                        pitchAngle
                     }
-                    }"
+                }"
             };
 
-            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<GraphQLResponse<dynamic>>(_graphQLRequest);
+            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<dynamic>(_graphQLRequest);
 
             this.subscription = _subscriptionStream.
                 Subscribe(
                     async response =>
                     {
+                        this.logger.Information("Success! {stream}", response.Data.noMatchResult?.streamId);
 
                         // DateTime now = DateTime.Now;
                         // string imageDataId;
@@ -131,6 +135,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                         Console.WriteLine("Error:" + err);
                     }
                 );
+
+            this.logger.Information("GraphQL subscription created");
         }
 
         private Task stopReceivingGraphQlNotificationsAsync()
