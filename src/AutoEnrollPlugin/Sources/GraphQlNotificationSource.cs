@@ -104,7 +104,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                 Subscribe(
                     response =>
                     {
-                        this.logger.Information("Success! {stream}", response.Data.NoMatchResult?.StreamId);
+                        this.logger.Debug("NoMatchResult received for {stream}", response.Data.NoMatchResult?.StreamId);
 
                         var notification = new Notification()
                         {
@@ -112,7 +112,22 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                             FaceId = response.Data.NoMatchResult.FaceId,
                             TrackletId = response.Data.NoMatchResult.TrackletId,
                             CropImage = response.Data.NoMatchResult.CropImage,
+
+                            DetectionQuality = response.Data.NoMatchResult.FaceQuality,
+                            ExtractionQuality = response.Data.NoMatchResult.TemplateQuality,
                             
+                            FaceArea = response.Data.NoMatchResult.FaceArea,
+                            FaceSize = response.Data.NoMatchResult.FaceSize,
+                            FaceOrder = response.Data.NoMatchResult.FaceOrder,
+                            FacesOnFrameCount = response.Data.NoMatchResult.FacesOnFrameCount,
+
+                            Brightness = response.Data.NoMatchResult.Brightness,
+                            Sharpness = response.Data.NoMatchResult.Sharpness,
+
+                            PitchAngle = response.Data.NoMatchResult.PitchAngle,
+                            RollAngle = response.Data.NoMatchResult.RollAngle,
+                            YawAngle = response.Data.NoMatchResult.YawAngle,
+
                             OriginProcessedAt = response.Data.NoMatchResult.ProcessedAt,
                             ReceivedAt = DateTime.UtcNow
                         };

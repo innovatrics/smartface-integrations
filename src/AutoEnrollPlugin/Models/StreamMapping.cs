@@ -5,17 +5,29 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
     public class StreamMapping
     {
         public Guid StreamId { get; set; }
+        public string[] WatchlistIds { get; set; }
 
-        public int? MinDetectionQuality { get; set; }
-        public int? MinExtractionQuality { get; set; }
+        public Range<double?> FaceSize { get; set; }
+        public Range<double?> FaceArea { get; set; }
+        public Range<double?> FaceOrder { get; set; }
+        public Range<double?> FacesOnFrameCount { get; set; }
 
-        public double? MinYawAngle { get; set; }
-        public double? MaxYawAngle { get; set; }
+        public Range<int?> DetectionQuality { get; set; }
+        public Range<int?> ExtractionQuality { get; set; }
 
-        public double? MinPitchAngle { get; set; }
-        public double? MaxPitchAngle { get; set; }
+        public Range<double?> Brightness { get; set; }
+        public Range<double?> Sharpness { get; set; }
 
-        public double? MinRollAngle { get; set; }
-        public double? MaxRollAngle { get; set; }
+        public Range<double?> YawAngle { get; set; }
+        public Range<double?> PitchAngle { get; set; }
+        public Range<double?> RollAngle { get; set; }
+
+        public bool KeepAutoLearn { get; set; }
+    }
+
+    public class Range<T> 
+    {
+        public T Min { get; set; }
+        public T Max { get; set; }
     }
 }
