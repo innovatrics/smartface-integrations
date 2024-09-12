@@ -104,7 +104,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                 Subscribe(
                     response =>
                     {
-                        this.logger.Debug("NoMatchResult received for {stream}", response.Data.NoMatchResult?.StreamId);
+                        this.logger.Information("NoMatchResult received for stream {stream} with face quality {detection}, face size {faceSize}", response.Data.NoMatchResult?.StreamId, response.Data.NoMatchResult?.FaceQuality, response.Data.NoMatchResult?.FaceSize);
 
                         var notification = new Notification()
                         {

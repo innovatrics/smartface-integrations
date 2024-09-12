@@ -65,7 +65,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.FaceArea?.Min ?? 0) <= input.notification.FaceArea &&
+                (input.streamMapping.FaceArea?.Min ?? Double.MinValue) <= input.notification.FaceArea &&
                 (input.streamMapping.FaceArea?.Max ?? Double.MaxValue) >= input.notification.FaceArea)
             {
                 return true;
@@ -116,7 +116,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.Brightness?.Min ?? 0) <= input.notification.Brightness &&
+                (input.streamMapping.Brightness?.Min ?? Double.MinValue) <= input.notification.Brightness &&
                 (input.streamMapping.Brightness?.Max ?? Double.MaxValue) >= input.notification.Brightness)
             {
                 return true;
@@ -133,7 +133,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.Sharpness?.Min ?? 0) <= input.notification.Sharpness &&
+                (input.streamMapping.Sharpness?.Min ?? Double.MinValue) <= input.notification.Sharpness &&
                 (input.streamMapping.Sharpness?.Max ?? Double.MaxValue) >= input.notification.Sharpness)
             {
                 return true;
@@ -150,7 +150,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.YawAngle?.Min ?? 0) <= input.notification.YawAngle &&
+                (input.streamMapping.YawAngle?.Min ?? Double.MinValue) <= input.notification.YawAngle &&
                 (input.streamMapping.YawAngle?.Max ?? Double.MaxValue) >= input.notification.YawAngle)
             {
                 return true;
@@ -168,7 +168,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.RollAngle?.Min ?? 0) <= input.notification.RollAngle &&
+                (input.streamMapping.RollAngle?.Min ?? Double.MinValue) <= input.notification.RollAngle &&
                 (input.streamMapping.RollAngle?.Max ?? Double.MaxValue) >= input.notification.RollAngle)
             {
                 return true;
@@ -186,7 +186,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.PitchAngle?.Min ?? 0) <= input.notification.PitchAngle &&
+                (input.streamMapping.PitchAngle?.Min ?? Double.MinValue) <= input.notification.PitchAngle &&
                 (input.streamMapping.PitchAngle?.Max ?? Double.MaxValue) >= input.notification.PitchAngle)
             {
                 return true;
@@ -218,12 +218,18 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
         public bool Validate(Notification notification, StreamMapping streamMapping)
         {
-            var allResult = validateAll
-                                .Select(s =>
-                                {
-                                    var isValid = s.Invoke((notification, streamMapping));
-                                    return isValid;
-                                })
+            var validationResults = new bool[validateAll.Length];
+
+            for (var i = 0; i < validationResults.Length; i++)
+            {
+                var fn = validateAll[i];
+                var isValid = fn.Invoke((notification, streamMapping));
+                validationResults[i] = isValid;
+            }
+
+            this.logger.Information("Validation result [{result}]", string.Join(',', validationResults));
+
+            var allResult = validationResults
                                 .All(w => w == true);
 
             return allResult;
