@@ -25,21 +25,21 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
         public IValidationService Create(string streamId)
         {
-            // var cameraToAccessControlMappings = this.getCameraMappings(streamId);
+            // var cameraToStreamMappings = this.getCameraMappings(streamId);
 
-            // if (cameraToAccessControlMappings.Length == 0)
+            // if (cameraToStreamMappings.Length == 0)
             // {
             //     this.logger.Warning("Stream {streamId} has not any mapping to AccessControl", notification.StreamId);
             //     return;
             // }
 
-            // foreach (var cameraToAccessControlMapping in cameraToAccessControlMappings)
+            // foreach (var cameraToStreamMapping in cameraToStreamMappings)
             // {
-            //     this.logger.Warning("Handling mapping {type}", cameraToAccessControlMapping.Type);
+            //     this.logger.Warning("Handling mapping {type}", cameraToStreamMapping.Type);
 
-            //     if (cameraToAccessControlMapping.WatchlistExternalIds != null)
+            //     if (cameraToStreamMapping.WatchlistExternalIds != null)
             //     {
-            //         if (cameraToAccessControlMapping.WatchlistExternalIds.Length > 0 && !cameraToAccessControlMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
+            //         if (cameraToStreamMapping.WatchlistExternalIds.Length > 0 && !cameraToStreamMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
             //         {
             //             this.logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.", notification.WatchlistExternalId, notification.StreamId);
             //             return;
@@ -48,11 +48,11 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             //     string accessControlUser = null;
 
-            //     var notificationSource = this.notificationSourceFactory.Create(cameraToAccessControlMapping.Type);
+            //     var notificationSource = this.notificationSourceFactory.Create(cameraToStreamMapping.Type);
 
-            //     if (cameraToAccessControlMapping.UserResolver != null)
+            //     if (cameraToStreamMapping.UserResolver != null)
             //     {
-            //         var userResolver = this.userResolverFactory.Create(cameraToAccessControlMapping.UserResolver);
+            //         var userResolver = this.userResolverFactory.Create(cameraToStreamMapping.UserResolver);
 
             //         accessControlUser = await userResolver.ResolveUserAsync(notification.WatchlistMemberId);
 
@@ -64,34 +64,34 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             //         }
             //     }
 
-            //     await notificationSource.OpenAsync(cameraToAccessControlMapping, accessControlUser);
+            //     await notificationSource.OpenAsync(cameraToStreamMapping, accessControlUser);
             // }
         }
 
-        private AccessControlMapping[] getCameraMappings(string streamId)
+        private StreamMapping[] getCameraMappings(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
             {
                 throw new InvalidOperationException($"{nameof(streamId)} is expected as GUID");
             }
 
-            var accessControlMapping = this.configuration.GetSection("AccessControlMapping").Get<AccessControlMapping[]>();
+            var streamMapping = this.configuration.GetSection("StreamMapping").Get<StreamMapping[]>();
 
-            if (accessControlMapping == null)
+            if (streamMapping == null)
             {
-                return new AccessControlMapping[] { };
+                return new StreamMapping[] { };
             }
 
-            return accessControlMapping
+            return streamMapping
                         .Where(w => w.StreamId == streamGuid)
                         .ToArray();
         }
 
-        private AccessControlMapping[] getAllCameraMappings()
+        private StreamMapping[] getAllCameraMappings()
         {
             return this.configuration
-                            .GetSection("AccessControlMapping")
-                            .Get<AccessControlMapping[]>();
+                            .GetSection("StreamMapping")
+                            .Get<StreamMapping[]>();
         }
     }
 }

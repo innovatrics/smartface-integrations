@@ -3,17 +3,15 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
-using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
-using Innovatrics.SmartFace.Integrations.AccessController.Readers;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
+
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
-{
-    
-}
+using GraphQL;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.Newtonsoft;
+
+using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 {
@@ -21,11 +19,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly GrpcReaderFactory grpcReaderFactory;
-        private GrpcNotificationReader grpcNotificationReader;
-        private System.Timers.Timer accessControllerPingTimer;
-        private DateTime lastGrpcPing;
-        public event Func<object, Task> OnNotification;
+        private GraphQLHttpClient _graphQlClient;
+        public event Func<Notification22, Task> OnNotification;
 
         public GraphQlNotificationSource(
             ILogger logger,
@@ -41,7 +36,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
         {
             this.logger.Information("Start receiving gRPC notifications");
 
-            this.startReceivingGrpcNotifications();
+            this.startReceivingGraphQlNotifications();
 
             this.startPingTimer();
 
@@ -68,37 +63,43 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
             return this.grpcReaderFactory.Create(grpcHost, grpcPort);
         }
 
-        private void startReceivingGrpcNotifications()
+        private void startReceivingGraphQlNotifications()
         {
-            this.logger.Information("Start receiving gRPC notifications");
+            this.logger.Information("Start receiving GraphQL notifications");
 
-            grpcNotificationReader = this.CreateGrpcReader();
+            var serverUrl = this.configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL");
+            var port = this.configuration.GetValue<int>("Source:GraphQL:Port", 8097);
 
-            grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
-
-            grpcNotificationReader.OnGrpcDeniedNotification += (DeniedNotification notification) =>
+            var graphQLOptions = new GraphQLHttpClientOptions
             {
-                this.logger.Information("Processing 'DENIED' notification {@notification}", new
-                {
-                    FaceDetectedAt = notification.FaceDetectedAt,
-                    StreamId = notification.StreamId
-                });
+                EndPoint = new Uri($"{serverUrl}:{port}/")                
             };
 
-            grpcNotificationReader.OnGrpcBlockedNotification += (BlockedNotification notification) =>
+            this.logger.Information("Subscription EndPoint {endpoint}", graphQLOptions.EndPoint);
+            
+            _graphQlClient = new GraphQLHttpClient(graphQLOptions, new NewtonsoftJsonSerializer());
+
+            var subscriptionQuery = new GraphQLRequest
             {
-                this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
-                {
-                    WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                    WatchlistMemberId = notification.WatchlistMemberId,
-                    FaceDetectedAt = notification.FaceDetectedAt,
-                    StreamId = notification.StreamId
-                });
+                // This is a query used to listen to GraphQL Subscriptions. This can be expanded as needed
+                Query = @"
+                subscription {
+                    objectInserted {
+                        id
+                        imageDataId                        
+                        quality
+                        genericObjectType
+                        size
+                        objectOrderOnFrameForType
+                        objectsOnFrameCountForType
+                        areaOnFrame
+                        cropLeftTopX
+                        cropLeftTopY
+                        cropRightBottomX
+                        cropRightBottomY
+                    }
+                    }"
             };
-
-            grpcNotificationReader.OnGrpcPing += OnGrpcPing;
-
-            grpcNotificationReader.StartReceiving();
         }
 
         private async Task stopReceivingGrpcNotificationsAsync()
@@ -157,7 +158,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                     accessControllerPingTimer.Stop();
 
                     await this.stopReceivingGrpcNotificationsAsync();
-                    this.startReceivingGrpcNotifications();
+                    this.startReceivingGraphQlNotifications();
 
                     accessControllerPingTimer.Start();
 

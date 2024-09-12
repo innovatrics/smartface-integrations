@@ -40,7 +40,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         {
             this.logger.Information($"{nameof(MainHostedService)} is starting");
 
-            var notificationSourceType = this.configuration.GetValue<string>("NotificationSource", "GraphQL");
+            var notificationSourceType = this.configuration.GetValue<string>("Source:Type", "GraphQL");
 
             this.notificationSource = this.notificationSourceFactory.Create(notificationSourceType);
 
