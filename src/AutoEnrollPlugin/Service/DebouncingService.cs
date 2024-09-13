@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Serilog;
 
 using Microsoft.Extensions.Configuration;
@@ -11,7 +10,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
     public class DebouncingService : IDebouncingService
     {
-        private readonly int HARD_SLIDING_EXPIRATION_MS;
+        private readonly int HARD_ABSOLUTE_EXPIRATION_MS;
         private readonly ILogger logger;
         private readonly IExclusiveMemoryCache exclusiveMemoryCache;
 
@@ -24,12 +23,30 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.exclusiveMemoryCache = exclusiveMemoryCache ?? throw new ArgumentNullException(nameof(exclusiveMemoryCache));
 
-            HARD_SLIDING_EXPIRATION_MS = configuration.GetValue<int>("Config:HardSlidingExpirationMs", 10000);
+            HARD_ABSOLUTE_EXPIRATION_MS = configuration.GetValue<int>("Config:HardAbsoluteExpirationMs", 10000);
+        }
+
+        public void Block(Notification notification, StreamMapping mapping)
+        {
+            if (mapping.TrackletDebounceMs > 0)
+            {
+                Block(notification.TrackletId, mapping.TrackletDebounceMs.Value);
+            }
+
+            if (mapping.StreamDebounceMs > 0)
+            {
+                Block(notification.StreamId, mapping.StreamDebounceMs.Value);
+            }
+
+            if (mapping.GroupDebounceMs > 0 && mapping.StreamGroupId != null)
+            {
+                Block(mapping.StreamGroupId, mapping.GroupDebounceMs.Value);
+            }
         }
 
         public bool IsBlocked(Notification notification, StreamMapping mapping)
         {
-            if (mapping.TrackletDebounceMs > 0) 
+            if (mapping.TrackletDebounceMs > 0)
             {
                 if (IsBlocked(notification.TrackletId, mapping.TrackletDebounceMs.Value))
                 {
@@ -38,7 +55,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 }
             }
 
-            if (mapping.StreamDebounceMs > 0) 
+            if (mapping.StreamDebounceMs > 0)
             {
                 if (IsBlocked(notification.StreamId, mapping.StreamDebounceMs.Value))
                 {
@@ -47,11 +64,11 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 }
             }
 
-            if (mapping.GroupDebounceMs > 0 && mapping.StreamGroupId != null) 
+            if (mapping.GroupDebounceMs > 0 && mapping.StreamGroupId != null)
             {
-                if (IsBlocked(mapping.StreamGroupId , mapping.GroupDebounceMs.Value))
+                if (IsBlocked(mapping.StreamGroupId, mapping.GroupDebounceMs.Value))
                 {
-                    this.logger.Information("StreamGroupId {group} blocked for {ms}", mapping.StreamGroupId , mapping.GroupDebounceMs.Value);
+                    this.logger.Information("StreamGroupId {group} blocked for {ms}", mapping.StreamGroupId, mapping.GroupDebounceMs.Value);
                     return true;
                 }
             }
@@ -73,6 +90,20 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             return false;
+        }
+
+        private void Block(object key, long debounceMs)
+        {
+            lock (exclusiveMemoryCache.Lock)
+            {
+                var now = DateTime.UtcNow;
+
+                var absoluteExpiration = now.AddMilliseconds(HARD_ABSOLUTE_EXPIRATION_MS);
+
+                exclusiveMemoryCache.Set(key, now, absoluteExpiration);
+
+                this.logger.Debug("Cached {key} up to {expire}", key, absoluteExpiration);
+            }
         }
     }
 }

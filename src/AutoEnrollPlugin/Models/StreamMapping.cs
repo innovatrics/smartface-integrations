@@ -13,8 +13,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
         public Range<double?> FaceOrder { get; set; }
         public Range<double?> FacesOnFrameCount { get; set; }
 
-        public Range<int?> DetectionQuality { get; set; }
-        public Range<int?> ExtractionQuality { get; set; }
+        public Range<int?> FaceQuality { get; set; }
+        public Range<int?> TemplateQuality { get; set; }
 
         public Range<double?> Brightness { get; set; }
         public Range<double?> Sharpness { get; set; }

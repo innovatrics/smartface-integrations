@@ -10,14 +10,14 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
     {
         private readonly ILogger logger;
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateDetectionQuality = (input) =>
+        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateFaceQuality = (input) =>
         {
-            if (input.notification.DetectionQuality == null)
+            if (input.notification.FaceQuality == null)
             {
                 return true;
             }
 
-            if ((input.streamMapping.DetectionQuality?.Min ?? 0) <= input.notification.DetectionQuality)
+            if ((input.streamMapping.FaceQuality?.Min ?? 0) <= input.notification.FaceQuality)
             {
                 return true;
             }
@@ -25,14 +25,14 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             return false;
         };
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateExtractionQuality = (input) =>
+        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateTemplateQuality = (input) =>
         {
-            if (input.notification.ExtractionQuality == null)
+            if (input.notification.TemplateQuality == null)
             {
                 return true;
             }
 
-            if ((input.streamMapping.ExtractionQuality?.Min ?? 0) <= input.notification.ExtractionQuality)
+            if ((input.streamMapping.TemplateQuality?.Min ?? 0) <= input.notification.TemplateQuality)
             {
                 return true;
             }
@@ -196,8 +196,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         };
 
         private static readonly Func<(Notification notification, StreamMapping streamMapping), bool>[] validateAll = new[] {
-            validateDetectionQuality,
-            validateExtractionQuality,
+            validateFaceQuality,
+            validateTemplateQuality,
             validateFaceSize,
             validateFaceArea,
             validateFaceOrder,
@@ -218,6 +218,11 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
         public bool Validate(Notification notification, StreamMapping streamMapping)
         {
+            this.logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templatequality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle} pitchAngle {pitchAngle}", 
+                                            notification.FaceQuality, notification.TemplateQuality, notification.FaceSize,
+                                            notification.YawAngle, notification.RollAngle, notification.PitchAngle
+                                );
+
             var validationResults = new bool[validateAll.Length];
 
             for (var i = 0; i < validationResults.Length; i++)

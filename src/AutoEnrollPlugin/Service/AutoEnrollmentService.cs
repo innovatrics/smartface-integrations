@@ -71,6 +71,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                                 continue;
                             }
 
+                            this.debouncingService.Block(notification, mapping);
+
                             await enrollAsync(notification, mapping);
                         }
                     }

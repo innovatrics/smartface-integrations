@@ -12,8 +12,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
         public string TrackletId { get; set; }
         public byte[] CropImage { get; set; }
         
-        public double? DetectionQuality { get; set; }
-        public double? ExtractionQuality { get; set; }
+        public double? FaceQuality { get; set; }
+        public double? TemplateQuality { get; set; }
         public double? FaceArea { get; set; }
         public double? FaceSize { get; set; }
         public int? FaceOrder { get; set; }

@@ -47,7 +47,7 @@ Add following pattern to existing docker compose:
 
       - StreamMappings__0__StreamId=ec0437ae-7716-4141-99d9-a9b2a4dd2106
       - StreamMappings__0__WatchlistIds__0=ip-of-the-watchlist
-      - StreamMappings__0__DetectionQuality__Min=4500
+      - StreamMappings__0__FaceQuality__Min=4500
       - StreamMappings__0__FaceSize__Min=70
       - StreamMappings__0__FaceSize__Max=450
 

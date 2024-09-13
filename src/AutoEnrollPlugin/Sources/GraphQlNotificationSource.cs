@@ -104,7 +104,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                 Subscribe(
                     response =>
                     {
-                        this.logger.Information("NoMatchResult received for stream {stream} with face quality {detection}, face size {faceSize}", response.Data.NoMatchResult?.StreamId, response.Data.NoMatchResult?.FaceQuality, response.Data.NoMatchResult?.FaceSize);
+                        this.logger.Information("NoMatchResult received for stream {stream} and tracklet {tracklet}", response.Data.NoMatchResult?.StreamId, response.Data.NoMatchResult?.TrackletId);
 
                         var notification = new Notification()
                         {
@@ -113,8 +113,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                             TrackletId = response.Data.NoMatchResult.TrackletId,
                             CropImage = response.Data.NoMatchResult.CropImage,
 
-                            DetectionQuality = response.Data.NoMatchResult.FaceQuality,
-                            ExtractionQuality = response.Data.NoMatchResult.TemplateQuality,
+                            FaceQuality = response.Data.NoMatchResult.FaceQuality,
+                            TemplateQuality = response.Data.NoMatchResult.TemplateQuality,
                             
                             FaceArea = response.Data.NoMatchResult.FaceArea,
                             FaceSize = response.Data.NoMatchResult.FaceSize,
