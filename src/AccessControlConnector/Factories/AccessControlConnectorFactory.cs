@@ -58,8 +58,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 case AccessControlConnectorTypes.AXIS_A1001:
                     return new A1001Connector(this.logger, this.configuration, this.httpClientFactory);
 
-                case AccessControlConnectorTypes.AXIS_D4100:
-                    return new D4100Connector(this.logger, this.configuration, this.httpClientFactory);
+                case AccessControlConnectorTypes.AXIS_SIRENE:
+                    return new SireneAndLightConnector(this.logger, this.configuration, this.httpClientFactory);
+
+                case AccessControlConnectorTypes.AXIS_IO_PORT:
+                    return new IOPortConnector(this.logger, this.httpClientFactory);
             }
         }
     }
