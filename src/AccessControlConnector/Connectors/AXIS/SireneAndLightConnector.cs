@@ -37,7 +37,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
                 accessControlMapping.Host,
                 accessControlMapping.Port ?? 80,
                 accessControlMapping.Username,
-                accessControlMapping.Password
+                accessControlMapping.Password,
+                accessControlMapping.Params ?? "access_granted"
             );
 
             return;
@@ -48,7 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             return Task.CompletedTask;
         }
 
-        private async Task sendOpenAsync(string scheme, string host, int? port, string username, string password)
+        private async Task sendOpenAsync(string scheme, string host, int? port, string username, string password, string @params)
         {
             var httpClient = this.httpClientFactory.CreateClient();
 
@@ -62,7 +63,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
                 method = "start",
                 @params = new
                 {
-                    profile = "access_granted"
+                    profile = @params
                 }
             };
 
