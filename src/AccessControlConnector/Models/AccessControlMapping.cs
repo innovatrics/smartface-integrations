@@ -20,5 +20,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
         public string Reader                            { get; set; }
 
         public string Token                             { get; set; }
+        public string Params                            { get; set; }
     }
 }
