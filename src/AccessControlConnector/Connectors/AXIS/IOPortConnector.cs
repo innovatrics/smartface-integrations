@@ -11,20 +11,17 @@ using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.AXIS
 {
-    public class SireneAndLightConnector : IAccessControlConnector
+    public class IOPortConnector : IAccessControlConnector
     {
         private readonly ILogger logger;
-        private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        public SireneAndLightConnector(
+        public IOPortConnector(
             ILogger logger,
-            IConfiguration configuration,
             IHttpClientFactory httpClientFactory
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
@@ -37,7 +34,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
                 accessControlMapping.Host,
                 accessControlMapping.Port ?? 80,
                 accessControlMapping.Username,
-                accessControlMapping.Password
+                accessControlMapping.Password,
+                accessControlMapping.Params
             );
 
             return;
@@ -48,27 +46,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             return Task.CompletedTask;
         }
 
-        private async Task sendOpenAsync(string scheme, string host, int? port, string username, string password)
+        private async Task sendOpenAsync(string scheme, string host, int? port, string username, string password, string @params)
         {
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"{scheme ?? "http"}://{host}:{port}/axis-cgi/siren_and_light.cgi";
+            var requestUri = $"{scheme ?? "http"}://{host}:{port}/axis-cgi/io/port.cgi?{@params}";
 
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
-
-            var content = new
-            {
-                apiVersion = "1.0",
-                method = "start",
-                @params = new
-                {
-                    profile = "access_granted"
-                }
-            };
-
-            var jsonContent = Newtonsoft.Json.JsonConvert.SerializeObject(content);
-
-            httpRequest.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
             if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
             {
@@ -78,7 +62,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
 
-            this.logger.Information("sendOpenAsync to {url} with {body}", requestUri, jsonContent);
+            this.logger.Information("sendOpenAsync to {url} with {body}", requestUri);
 
             var httpResponse = await httpClient.SendAsync(httpRequest);
 
