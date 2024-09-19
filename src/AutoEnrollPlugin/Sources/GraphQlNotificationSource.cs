@@ -12,6 +12,7 @@ using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.Newtonsoft;
 
 using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
+using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 {
@@ -19,58 +20,67 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
     {
         public event Func<Notification, Task> OnNotification;
 
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IOAuthService _oauthService;
         private GraphQLHttpClient _graphQlClient;
 
         private IDisposable subscription;
 
         public GraphQlNotificationSource(
             ILogger logger,
-            IConfiguration configuration
+            IConfiguration configuration,
+            IOAuthService oauthService
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this._oauthService = oauthService ?? throw new ArgumentNullException(nameof(oauthService));
         }
 
-        public Task StartAsync()
+        public async Task StartAsync()
         {
-            this.logger.Information("Start receiving graphQL notifications");
+            this._logger.Information("Start receiving graphQL notifications");
 
-            this.startReceivingGraphQlNotifications();
-
-            return Task.CompletedTask;
+            await this.startReceivingGraphQlNotifications();
         }
 
         public async Task StopAsync()
         {
-            this.logger.Information($"Stopping receiving graphQL notifications");
+            this._logger.Information($"Stopping receiving graphQL notifications");
 
             await this.stopReceivingGraphQlNotificationsAsync();
         }
 
-        private GraphQLHttpClient CreateGraphQlClient()
+        private async Task<GraphQLHttpClient> CreateGraphQlClient()
         {
-            var schema = this.configuration.GetValue<string>("Source:GraphQL:Schema", "http");
-            var host = this.configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL");
-            var port = this.configuration.GetValue<int>("Source:GraphQL:Port", 8097);
+            var schema = this._configuration.GetValue<string>("Source:GraphQL:Schema", "http");
+            var host = this._configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL");
+            var port = this._configuration.GetValue<int>("Source:GraphQL:Port", 8097);
 
             var graphQLOptions = new GraphQLHttpClientOptions
             {
                 EndPoint = new Uri($"{schema}://{host}:{port}/")
             };
 
-            this.logger.Information("Subscription EndPoint {endpoint}", graphQLOptions.EndPoint);
+            this._logger.Information("Subscription EndPoint {endpoint}", graphQLOptions.EndPoint);
 
-            return new GraphQLHttpClient(graphQLOptions, new NewtonsoftJsonSerializer());
+            var client = new GraphQLHttpClient(graphQLOptions, new NewtonsoftJsonSerializer());
+
+            if (this._oauthService.IsEnabled)
+            {
+                var token = await this._oauthService.GetTokenAsync();
+                client.HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
+
+            return client;
         }
 
-        private void startReceivingGraphQlNotifications()
+        private async Task startReceivingGraphQlNotifications()
         {
-            this.logger.Information("Start receiving GraphQL notifications");
+            this._logger.Information("Start receiving GraphQL notifications");
 
-            _graphQlClient = this.CreateGraphQlClient();
+            _graphQlClient = await this.CreateGraphQlClient();
 
             var _graphQLRequest = new GraphQLRequest
             {
@@ -104,7 +114,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                 Subscribe(
                     response =>
                     {
-                        this.logger.Information("NoMatchResult received for stream {stream} and tracklet {tracklet}", response.Data.NoMatchResult?.StreamId, response.Data.NoMatchResult?.TrackletId);
+                        this._logger.Information("NoMatchResult received for stream {stream} and tracklet {tracklet}", response.Data.NoMatchResult?.StreamId, response.Data.NoMatchResult?.TrackletId);
 
                         var notification = new Notification()
                         {
@@ -115,7 +125,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
                             FaceQuality = response.Data.NoMatchResult.FaceQuality,
                             TemplateQuality = response.Data.NoMatchResult.TemplateQuality,
-                            
+
                             FaceArea = response.Data.NoMatchResult.FaceArea,
                             FaceSize = response.Data.NoMatchResult.FaceSize,
                             FaceOrder = response.Data.NoMatchResult.FaceOrder,
@@ -136,11 +146,11 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                     },
                     onError: err =>
                     {
-                        this.logger.Error(err, "GraphQL Subscription error");
+                        this._logger.Error(err, "GraphQL Subscription error");
                     }
                 );
 
-            this.logger.Information("GraphQL subscription created");
+            this._logger.Information("GraphQL subscription created");
         }
 
         private Task stopReceivingGraphQlNotificationsAsync()
