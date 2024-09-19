@@ -1,7 +1,4 @@
 using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Configuration;
@@ -40,8 +37,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
         public async Task StartAsync()
         {
-            this._logger.Information("Start receiving graphQL notifications");
-
             await this.startReceivingGraphQlNotifications();
         }
 
@@ -57,21 +52,29 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
             var schema = this._configuration.GetValue<string>("Source:GraphQL:Schema", "http");
             var host = this._configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL");
             var port = this._configuration.GetValue<int>("Source:GraphQL:Port", 8097);
+            var path = this._configuration.GetValue<string>("Source:GraphQL:Path");
 
             var graphQLOptions = new GraphQLHttpClientOptions
             {
-                EndPoint = new Uri($"{schema}://{host}:{port}/")
+                EndPoint = new Uri($"{schema}://{host}:{port}{normalizePath(path)}")
             };
+
+            if (this._oauthService.IsEnabled)
+            {
+                var authToken = await this._oauthService.GetTokenAsync();
+
+                graphQLOptions.ConfigureWebSocketConnectionInitPayload = (GraphQLHttpClientOptions opts) =>
+                    {
+                        return new
+                        {
+                            authorization = $"Bearer {authToken}",
+                        };
+                    };
+            }
 
             this._logger.Information("Subscription EndPoint {endpoint}", graphQLOptions.EndPoint);
 
             var client = new GraphQLHttpClient(graphQLOptions, new NewtonsoftJsonSerializer());
-
-            if (this._oauthService.IsEnabled)
-            {
-                var token = await this._oauthService.GetTokenAsync();
-                client.HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
 
             return client;
         }
@@ -84,7 +87,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
             var _graphQLRequest = new GraphQLRequest
             {
-                // This is a query used to listen to GraphQL Subscriptions. This can be expanded as needed
                 Query = @"
                 subscription {
                     noMatchResult {
@@ -108,7 +110,12 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                 }"
             };
 
-            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<NoMatchResultResponse>(_graphQLRequest);
+            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<NoMatchResultResponse>(
+                _graphQLRequest,
+                (Exception e) =>
+                {
+                    this._logger.Error(e, "GraphQL subscription init error");
+                });
 
             this.subscription = _subscriptionStream.
                 Subscribe(
@@ -146,7 +153,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                     },
                     onError: err =>
                     {
-                        this._logger.Error(err, "GraphQL Subscription error");
+                        this._logger.Error(err, "GraphQL subscription runtime error");
                     }
                 );
 
@@ -158,6 +165,21 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
             this.subscription?.Dispose();
 
             return Task.CompletedTask;
+        }
+
+        private string normalizePath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
+
+            if (!path.StartsWith("/"))
+            {
+                path = $"/{path}";
+            }
+
+            return path;
         }
     }
 }

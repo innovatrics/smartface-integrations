@@ -31,6 +31,10 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 throw new InvalidOperationException($"{nameof(streamId)} is expected as GUID");
             }
 
+            var config = configuration.GetSection("Config").Get<Config>();
+
+            config.Conditions = this.normalizeConditionsWithDefaults(config.Conditions);
+
             var streamMapping = this.configuration.GetSection("StreamMappings").Get<StreamMapping[]>();
 
             if (streamMapping == null)
@@ -38,56 +42,154 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 streamMapping = Array.Empty<StreamMapping>();
             }
 
-            return streamMapping
-                        .Where(w => w.StreamId == streamGuid)
-                        .Select(s => this.normalizeMappingWithDefaults(s))
-                        .ToArray();
+            streamMapping = streamMapping
+                                .Where(w => w.StreamId == streamGuid)
+                                .Select(s => this.normalizeMappingWithDefaults(s, config.Conditions))
+                                .ToArray();
 
+            if (streamMapping.Length == 0 && config.ApplyForAllStreams)
+            {
+                streamMapping = new[] {
+                    this.normalizeMappingWithDefaults(new StreamMapping(), config.Conditions)
+                };
+            }
+
+            return streamMapping;
         }
 
-        private StreamMapping normalizeMappingWithDefaults(StreamMapping mapping)
+        private Conditions normalizeConditionsWithDefaults(Conditions conditions)
+        {
+            if (conditions == null)
+            {
+                conditions = new Conditions();
+            }
+
+            if (conditions.FaceQuality == null)
+            {
+                conditions.FaceQuality = new Range<int?>()
+                {
+                    Min = 2000
+                };
+            }
+
+            if (conditions.TemplateQuality == null)
+            {
+                conditions.TemplateQuality = new Range<int?>()
+                {
+                    Min = 80,
+                };
+            }
+
+            if (conditions.YawAngle == null)
+            {
+                conditions.YawAngle = new Range<double?>()
+                {
+                    Min = -7,
+                    Max = 7
+                };
+            }
+
+            if (conditions.PitchAngle == null)
+            {
+                conditions.PitchAngle = new Range<double?>()
+                {
+                    Min = -25,
+                    Max = 25
+                };
+            }
+
+            if (conditions.RollAngle == null)
+            {
+                conditions.RollAngle = new Range<double?>()
+                {
+                    Min = -15,
+                    Max = 15
+                };
+            }
+
+            return conditions;
+        }
+
+        private StreamMapping normalizeMappingWithDefaults(StreamMapping mapping, Conditions config)
         {
             if (mapping.FaceQuality == null)
             {
-                mapping.FaceQuality = new Range<int?>()
-                {
-                    Min = this.configuration.GetValue<int>("Config:FaceQuality:Min", 2000)
-                };
+                mapping.FaceQuality = config.FaceQuality;
             }
 
             if (mapping.TemplateQuality == null)
             {
-                mapping.TemplateQuality = new Range<int?>()
-                {
-                    Min = this.configuration.GetValue<int>("Config:TemplateQuality:Min", 80)
-                };
+                mapping.TemplateQuality = config.TemplateQuality;
+            }
+
+            if (mapping.FaceArea == null)
+            {
+                mapping.FaceArea = config.FaceArea;
+            }
+
+            if (mapping.FaceOrder == null)
+            {
+                mapping.FaceOrder = config.FaceOrder;
+            }
+
+            if (mapping.FaceSize == null)
+            {
+                mapping.FaceSize = config.FaceSize;
+            }
+
+            if (mapping.FacesOnFrameCount == null)
+            {
+                mapping.FacesOnFrameCount = config.FacesOnFrameCount;
+            }
+
+            if (mapping.Brightness == null)
+            {
+                mapping.Brightness = config.Brightness;
+            }
+
+            if (mapping.Sharpness == null)
+            {
+                mapping.Sharpness = config.Sharpness;
+            }
+
+            if (mapping.WatchlistIds == null || mapping.WatchlistIds?.Length == 0)
+            {
+                mapping.WatchlistIds = config.WatchlistIds;
+            }
+
+            if (mapping.KeepAutoLearn == null)
+            {
+                mapping.KeepAutoLearn = config.KeepAutoLearn;
+            }
+
+            if (mapping.GroupDebounceMs == null)
+            {
+                mapping.GroupDebounceMs = config.GroupDebounceMs;
+            }
+
+            if (mapping.StreamDebounceMs == null)
+            {
+                mapping.StreamDebounceMs = config.StreamDebounceMs;
+            }
+
+            if (mapping.TrackletDebounceMs == null)
+            {
+                mapping.TrackletDebounceMs = config.TrackletDebounceMs;
             }
 
             if (mapping.YawAngle == null)
             {
-                mapping.YawAngle = new Range<double?>()
-                {
-                    Min = this.configuration.GetValue<double>("Config:YawAngle:Min", -7),
-                    Max = this.configuration.GetValue<double>("Config:YawAngle:Max", 7)
-                };
+                mapping.YawAngle = config.YawAngle;
             }
 
             if (mapping.PitchAngle == null)
             {
-                mapping.PitchAngle = new Range<double?>()
-                {
-                    Min = this.configuration.GetValue<double>("Config:PitchAngle:Min", -25),
-                    Max = this.configuration.GetValue<double>("Config:PitchAngle:Max", 25)
-                };
+                mapping.PitchAngle = config.PitchAngle;
             }
 
             if (mapping.RollAngle == null)
             {
-                mapping.RollAngle = new Range<double?>()
-                {
-                    Min = this.configuration.GetValue<double>("Config:RollAngle:Min", -15),
-                    Max = this.configuration.GetValue<double>("Config:RollAngle:Max", 15)
-                };
+                mapping.RollAngle = config.RollAngle;
             }
 
             return mapping;

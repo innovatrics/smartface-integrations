@@ -50,6 +50,22 @@ Add following pattern to existing docker compose:
       - StreamMappings__0__FaceQuality__Min=4500
       - StreamMappings__0__FaceSize__Min=70
       - StreamMappings__0__FaceSize__Max=450
+      - StreamMappings__0__FaceArea__Min=0.01
+      - StreamMappings__0__FaceArea__Max=1.50
+      - StreamMappings__0__FaceOrder__Max=1
+      - StreamMappings__0__FacesOnFrameCount__Max=2
+      - StreamMappings__0__FaceQuality__Min=1000
+      - StreamMappings__0__TemplateQuality__Min=80
+      - StreamMappings__0__Brightness__Min=0.001
+      - StreamMappings__0__Brightness__Max=1000
+      - StreamMappings__0__Sharpness__Min=0.001
+      - StreamMappings__0__Sharpness__Max=1000
+      - StreamMappings__0__YawAngle__Min=-7
+      - StreamMappings__0__YawAngle__Max=7
+      - StreamMappings__0__PitchAngle__Min=-25
+      - StreamMappings__0__PitchAngle__Max=25
+      - StreamMappings__0__RollAngle__Min=-15
+      - StreamMappings__0__RollAngle__Max=15
 
       - StreamMappings__1__StreamId=d5ff8f40-f900-4492-8ecc-6a2539648964
       - StreamMappings__1__WatchlistIds__0=ip-of-the-watchlist

@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Configuration;
 
 using Serilog;
-
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
 using Newtonsoft.Json.Linq;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
@@ -22,9 +19,10 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         private readonly string tokenUrl;
         private readonly string clientId;
         private readonly string clientSecret;
-        private readonly string scope;
+        private readonly string audience;
 
-        public bool IsEnabled => this.tokenUrl != null && this.clientId != null && this.scope != null;
+
+        public bool IsEnabled => this.tokenUrl != null && this.clientId != null && this.clientSecret != null;
         
         public OAuthService(
             ILogger logger,
@@ -39,19 +37,19 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             this.tokenUrl = this.configuration.GetValue<string>("Source:OAuth:Url");
             this.clientId = this.configuration.GetValue<string>("Source:OAuth:ClientId");
             this.clientSecret = this.configuration.GetValue<string>("Source:OAuth:ClientSecret");
-            this.scope = this.configuration.GetValue<string>("Source:OAuth:Scope");
+            this.audience = this.configuration.GetValue<string>("Source:OAuth:Audience");
         }
 
         public async Task<string> GetTokenAsync()
         {
-            this.logger.Information("Get OAuth token from endpoint {url} for client_id {clientId} and scope {scope}", this.tokenUrl, this.clientId, this.scope);
+            this.logger.Information("Get OAuth token from endpoint {url} for client_id {clientId}", this.tokenUrl, this.clientId);
 
             var requestBody = new Dictionary<string, string>
             {
                 { "client_id", clientId },
                 { "client_secret", clientSecret },
                 { "grant_type", "client_credentials" },
-                { "scope", scope }
+                { "audience", audience }
             };
 
             var httpClient = this.httpClientFactory.CreateClient();
@@ -63,7 +61,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             {
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 var tokenObj = JObject.Parse(jsonResponse);
-                return tokenObj["access_token"]?.ToString();
+                var token = tokenObj["access_token"].ToString();
+                return token;
             }
 
             throw new Exception("Unable to retrieve JWT token.");

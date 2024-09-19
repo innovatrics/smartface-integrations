@@ -147,7 +147,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 registerRequest.WatchlistIds.Add(w);
             }
 
-            registerRequest.KeepAutoLearnPhotos = mapping.KeepAutoLearn;
+            registerRequest.KeepAutoLearnPhotos = mapping.KeepAutoLearn ?? false;
 
             registerRequest.FaceDetectorConfig = new FaceDetectorConfig();
             registerRequest.FaceDetectorConfig.MaxFaces = 3;
