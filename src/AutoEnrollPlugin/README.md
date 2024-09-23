@@ -16,9 +16,9 @@ To run application localy, follow these steps
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/AutoEnrollPlugin/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.1 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.1 registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.1`
+ - `docker build -f src/AutoEnrollPlugin/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2 registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
 
 ## Usage
@@ -42,6 +42,12 @@ Add following pattern to existing docker compose:
     environment:
       - Source__GraphQL__Host=SFGraphQL
       - Source__GraphQL__Port=8097
+
+      - Source__OAuth__Url=https://smartface-staging.eu.auth0.com/oauth/token
+      - Source__OAuth__ClientId=
+      - Source__OAuth__ClientSecret=
+      - Source__OAuth__Audience=
+
       - Target__Host=SFApi
       - Target__Port=8098
 
