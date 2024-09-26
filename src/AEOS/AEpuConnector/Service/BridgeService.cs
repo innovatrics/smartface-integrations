@@ -31,7 +31,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Services
             this.AEpuConnectorFactory = AEpuConnectorFactory ?? throw new ArgumentNullException(nameof(AEpuConnectorFactory));
         }
 
-        public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
+        public async Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification)
         {
             if (notification == null)
             {

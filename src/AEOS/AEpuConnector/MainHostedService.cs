@@ -73,7 +73,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
 
             grpcNotificationReader = this.CreateGrpcReader();
 
-            grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
+            grpcNotificationReader.OnGrpcFaceGrantedNotification += OnGrpcGrantedNotification;
             grpcNotificationReader.OnGrpcPing += OnGrpcPing;
 
             grpcNotificationReader.StartReceiving();
@@ -82,7 +82,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
         private async Task StopReceivingGrpcNotificationsAsync()
         {
             this.grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
-            this.grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
+            this.grpcNotificationReader.OnGrpcFaceGrantedNotification -= OnGrpcGrantedNotification;
             await this.grpcNotificationReader.DisposeAsync();
         }
 
@@ -93,7 +93,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
             return Task.CompletedTask;
         }
 
-        private async Task OnGrpcGrantedNotification(GrantedNotification notification)
+        private async Task OnGrpcGrantedNotification(FaceGrantedNotification notification)
         {
             this.logger.Information("Processing 'GRANTED' notification {@notification}", new
             {
@@ -105,7 +105,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
 
             this.logger.Debug("Notification details {@notification}", notification);
 
-            await this.bridge.ProcessGrantedNotificationAsync(notification);
+            await this.bridge.ProcessFaceGrantedNotificationAsync(notification);
         }
 
         private void StartPingTimer()

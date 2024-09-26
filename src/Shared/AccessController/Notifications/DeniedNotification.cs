@@ -2,7 +2,7 @@
 
 namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
 {
-    public class DeniedNotification : Notification
+    public class FaceDeniedNotification : Notification
     {
     }
 }

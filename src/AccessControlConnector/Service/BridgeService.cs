@@ -30,7 +30,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             this.userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
         }
 
-        public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
+        public async Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification)
         {
             if (notification == null)
             {

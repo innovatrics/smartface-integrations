@@ -26,7 +26,7 @@ namespace Innovatrics.SmartFace.Integrations.FaceGate
             this.faceGate = faceGate ?? throw new ArgumentNullException(nameof(faceGate));
         }
 
-        public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
+        public async Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification)
         {
             if (notification == null)
             {
