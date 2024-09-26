@@ -16,9 +16,9 @@ To run application localy, follow these steps
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/AutoEnrollPlugin/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2 registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2`
+ - `docker build -f src/AutoEnrollPlugin/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.1 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.1 registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.1`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
 
 ## Usage
