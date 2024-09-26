@@ -16,6 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
     public class AutoEnrollmentService : IAutoEnrollmentService
     {
         public readonly int MAX_PARALLEL_BLOCKS;
+        public readonly int DETECTOR_MAX_FACES;
         public readonly int DETECTOR_MIN_FACE_SIZE;
         public readonly int DETECTOR_MAX_FACE_SIZE;
         public readonly int DETECTOR_FACE_CONFIDENCE;
@@ -53,6 +54,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             this.debugOutputFolder = config.DebugOutputFolder;
             MAX_PARALLEL_BLOCKS = config.MaxParallelActionBlocks ?? 4;
+            DETECTOR_MAX_FACES = config.RegisterMaxFaces ?? 3;
             DETECTOR_MIN_FACE_SIZE = config.RegisterMinFaceSize ?? 30;
             DETECTOR_MAX_FACE_SIZE = config.RegisterMaxFaceSize ?? 600;
             DETECTOR_FACE_CONFIDENCE = config.RegisterFaceConfidence ?? 450;
@@ -168,7 +170,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             registerRequest.FaceDetectorConfig = new FaceDetectorConfig();
             
-            registerRequest.FaceDetectorConfig.MaxFaces = 1;
+            registerRequest.FaceDetectorConfig.MaxFaces = DETECTOR_MAX_FACES;
             registerRequest.FaceDetectorConfig.MinFaceSize = DETECTOR_MIN_FACE_SIZE;
             registerRequest.FaceDetectorConfig.MaxFaceSize = DETECTOR_MAX_FACE_SIZE;
             registerRequest.FaceDetectorConfig.ConfidenceThreshold = DETECTOR_FACE_CONFIDENCE;
