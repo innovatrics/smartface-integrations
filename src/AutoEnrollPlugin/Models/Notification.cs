@@ -19,8 +19,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
         public int? FaceOrder { get; set; }
         public int? FacesOnFrameCount { get; set; }
         public double? FaceMaskStatus { get; set; }
-        // public double FaceQuality { get; set; }
-        // public double TemplateQuality { get; set; }
         public double? Sharpness { get; set; }
         public double? Brightness { get; set; }
         public double? YawAngle { get; set; }
