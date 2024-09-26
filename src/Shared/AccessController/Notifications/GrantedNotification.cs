@@ -2,7 +2,7 @@
 
 namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
 {
-    public class GrantedNotification : Notification
+    public class FaceGrantedNotification : Notification
     {
         public string WatchlistMemberExternalId  { get; set; }
         public string WatchlistExternalId { get; set; }

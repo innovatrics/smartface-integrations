@@ -17,10 +17,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
             };
         }
 
-        public static GrantedNotification GetGrantedNotification(this AccessNotification accessNotification)
+        public static FaceGrantedNotification GetGrantedNotification(this AccessNotification accessNotification)
         {
             var accessNotificationGranted = accessNotification.AccessNotificationGranted;
-            var grantedNotification = new GrantedNotification
+            var grantedNotification = new FaceGrantedNotification
             {
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
@@ -39,10 +39,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
             return grantedNotification;
         }
 
-        public static BlockedNotification GetBlockedNotification(this AccessNotification accessNotification)
+        public static FaceBlockedNotification GetBlockedNotification(this AccessNotification accessNotification)
         {
             var accessNotificationBlocked = accessNotification.AccessNotificationBlocked;
-            var blockedNotification = new BlockedNotification
+            var blockedNotification = new FaceBlockedNotification
             {
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
@@ -59,10 +59,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
             return blockedNotification;
         }
 
-        public static DeniedNotification GetDeniedNotification(this AccessNotification accessNotification)
+        public static FaceDeniedNotification GetDeniedNotification(this AccessNotification accessNotification)
         {
             var accessNotificationDenied = accessNotification.AccessNotificationDenied;
-            var deniedNotification = new DeniedNotification
+            var deniedNotification = new FaceDeniedNotification
             {
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
