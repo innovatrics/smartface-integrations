@@ -1,11 +1,7 @@
-﻿using System;
-
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
+﻿namespace SmartFace.AutoEnrollment.Models
 {
-    public class StreamMapping
+    public class Conditions
     {
-        public string StreamGroupId { get; set; }
-        public Guid StreamId { get; set; }
         public string[] WatchlistIds { get; set; }
 
         public Range<double?> FaceSize { get; set; }
@@ -23,7 +19,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
         public Range<double?> PitchAngle { get; set; }
         public Range<double?> RollAngle { get; set; }
 
-        public bool? KeepAutoLearn { get; set; }
+        public bool KeepAutoLearn { get; set; }
 
         public int? StreamDebounceMs { get; set; }
         public int? TrackletDebounceMs { get; set; } = 4000;

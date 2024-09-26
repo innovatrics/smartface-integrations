@@ -1,22 +1,21 @@
 ﻿using System;
 using System.IO;
+using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
+using Innovatrics.SmartFace.Integrations.Shared.Extensions;
+using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
-using Innovatrics.SmartFace.Integrations.Shared.Logging;
-using Innovatrics.SmartFace.Integrations.Shared.Extensions;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services;
-using AutoEnrollPlugin.Sources;
-using AutoEnrollPlugin.Service;
+using SmartFace.AutoEnrollment.NotificationReceivers;
+using SmartFace.AutoEnrollment.Service;
 
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
+namespace SmartFace.AutoEnrollment
 {
     public class Program
     {
-        public const string LOG_FILE_NAME = "SmartFace.Integrations.AutoEnroll.log";
-        public const string JSON_CONFIG_FILE_NAME = "appsettings.json";
+        public const string LogFileName = "SmartFace.AutoEnrollment.log";
+        public const string JsonConfigFileName = "appsettings.json";
 
         private static void Main(string[] args)
         {
@@ -26,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
 
                 var logger = ConfigureLogger(configurationRoot);
 
-                Log.Information("Starting up.");
+                Log.Information("Starting up");
 
                 var hostBuilder = CreateHostBuilder(args, logger, configurationRoot);
                 using var host = hostBuilder.Build();
@@ -35,12 +34,12 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             }
             catch (Exception ex)
             {
-                Log.Fatal(ex, "Host failed.");
+                Log.Fatal(ex, "Host failed");
                 Log.CloseAndFlush();
                 throw;
             }
 
-            Log.Information("Program exited successfully.");
+            Log.Information("Program exited successfully");
             Log.CloseAndFlush();
         }
 
@@ -50,7 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
 
             var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace"));
             logDir = configuration.GetValue("Serilog:LogDirectory", logDir);
-            var logFilePath = Path.Combine(logDir, LOG_FILE_NAME);
+            var logFilePath = Path.Combine(logDir, LogFileName);
 
             var loggerConfiguration = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
@@ -91,7 +90,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
         {
             return new ConfigurationBuilder()
                     .SetMainModuleBasePath()
-                    .AddJsonFile(JSON_CONFIG_FILE_NAME, optional: false)
+                    .AddJsonFile(JsonConfigFileName, optional: false)
                     .AddEnvironmentVariables()
                     .AddEnvironmentVariables("SF_INT_RELAY_")
                     .AddCommandLine(args)

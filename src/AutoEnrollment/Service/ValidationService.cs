@@ -1,10 +1,9 @@
 using System;
 using System.Linq;
 using Serilog;
+using SmartFace.AutoEnrollment.Models;
 
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
-
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
+namespace SmartFace.AutoEnrollment.Service
 {
     public class ValidationService
     {

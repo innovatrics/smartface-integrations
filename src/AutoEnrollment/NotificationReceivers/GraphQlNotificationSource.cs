@@ -1,17 +1,14 @@
 using System;
 using System.Threading.Tasks;
-
-using Microsoft.Extensions.Configuration;
-using Serilog;
-
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.Newtonsoft;
+using Microsoft.Extensions.Configuration;
+using Serilog;
+using SmartFace.AutoEnrollment.Models;
+using SmartFace.AutoEnrollment.Service;
 
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services;
-
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
+namespace SmartFace.AutoEnrollment.NotificationReceivers
 {
     public class GraphQlNotificationSource : INotificationSource
     {

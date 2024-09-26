@@ -1,13 +1,10 @@
 using System;
-using Serilog;
-
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
+using Serilog;
+using SmartFace.AutoEnrollment.Models;
 
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
-using AutoEnrollPlugin.Service;
-
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
+namespace SmartFace.AutoEnrollment.Service
 {
     public class DebouncingService
     {

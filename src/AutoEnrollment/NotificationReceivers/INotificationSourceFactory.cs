@@ -1,6 +1,4 @@
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources;
-
-namespace AutoEnrollPlugin.Sources
+namespace SmartFace.AutoEnrollment.NotificationReceivers
 {
     public interface INotificationSourceFactory
     {

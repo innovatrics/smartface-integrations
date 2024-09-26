@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace AutoEnrollPlugin.Service
+namespace SmartFace.AutoEnrollment.Service
 {
     public class ExclusiveMemoryCache : IMemoryCache
     {

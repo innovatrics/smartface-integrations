@@ -1,11 +1,9 @@
 using System;
 using Microsoft.Extensions.Configuration;
 using Serilog;
+using SmartFace.AutoEnrollment.Service;
 
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services;
-
-namespace AutoEnrollPlugin.Sources
+namespace SmartFace.AutoEnrollment.NotificationReceivers
 {
     public class NotificationSourceFactory : INotificationSourceFactory
     {

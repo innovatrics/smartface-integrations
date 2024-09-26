@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Serilog;
 using Newtonsoft.Json;
+using Serilog;
 
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
+namespace SmartFace.AutoEnrollment.Service
 {
     public class OAuthService
     {
@@ -35,7 +35,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
         public async Task<string> GetTokenAsync()
         {
-            if (_lastToken == null || _lastToken.ExpiresAt <= DateTime.UtcNow)
+            if (_lastToken == null || _lastToken.ExpiresAt <= DateTime.UtcNow.AddSeconds(-30))
             {
                 _lastToken = await GetTokenInternalAsync();
             }

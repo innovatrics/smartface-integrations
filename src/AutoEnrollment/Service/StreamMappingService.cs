@@ -1,10 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
-using System.Collections.Generic;
+using SmartFace.AutoEnrollment.Models;
 
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
+namespace SmartFace.AutoEnrollment.Service
 {
     public class StreamMappingService
     {

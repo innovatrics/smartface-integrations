@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
+﻿namespace SmartFace.AutoEnrollment.Models
 {
     public class Config
     {

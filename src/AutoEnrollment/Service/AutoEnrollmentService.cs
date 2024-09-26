@@ -1,17 +1,14 @@
 using System;
-using System.Net.Http;
 using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-
-using Microsoft.Extensions.Configuration;
-
-using Serilog;
-
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
 using Innovatrics.SmartFace.Integrations.Shared.SmartFaceRestApiClient;
+using Microsoft.Extensions.Configuration;
+using Serilog;
+using SmartFace.AutoEnrollment.Models;
 
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
+namespace SmartFace.AutoEnrollment.Service
 {
     public class AutoEnrollmentService
     {

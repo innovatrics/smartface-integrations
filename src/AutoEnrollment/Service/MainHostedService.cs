@@ -4,11 +4,10 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
-using AutoEnrollPlugin.Sources;
+using SmartFace.AutoEnrollment.Models;
+using SmartFace.AutoEnrollment.NotificationReceivers;
 
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
+namespace SmartFace.AutoEnrollment.Service
 {
     public class MainHostedService : IHostedService
     {
