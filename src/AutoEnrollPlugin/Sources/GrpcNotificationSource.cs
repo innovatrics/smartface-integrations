@@ -3,16 +3,17 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
-using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
-using Innovatrics.SmartFace.Integrations.AccessController.Readers;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
+
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
+using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
+using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
+using Innovatrics.SmartFace.Integrations.AccessController.Readers;
+
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models
 {
-    
+
 }
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
@@ -29,8 +30,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
         public GrpcNotificationSource(
             ILogger logger,
-            IConfiguration configuration,
-            IHttpClientFactory httpClientFactory
+            IConfiguration configuration
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -74,26 +74,31 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
             grpcNotificationReader = this.CreateGrpcReader();
 
-            grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
+            grpcNotificationReader.OnGrpcGrantedNotification += (GrantedNotification Notification) =>
+            {
+                this.logger.Information("Processing 'GRANTED' notification skipped");
+                return Task.CompletedTask;
+            };
 
             grpcNotificationReader.OnGrpcDeniedNotification += (DeniedNotification notification) =>
             {
-                this.logger.Information("Processing 'DENIED' notification {@notification}", new
+                this.logger.Information("Processing 'DENIED' notification skipped");
+
+                var notification2 =
+
+                this.OnNotification?.Invoke(new Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models.Notification()
                 {
-                    FaceDetectedAt = notification.FaceDetectedAt,
-                    StreamId = notification.StreamId
+                    StreamId = notification.StreamId,
+                    FaceId = notification.FaceId,
+                    TrackletId = notification.TrackletId,
+                    CropImage = notification.CropImage,
+                    ReceivedAt = DateTime.UtcNow
                 });
             };
 
             grpcNotificationReader.OnGrpcBlockedNotification += (BlockedNotification notification) =>
             {
-                this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
-                {
-                    WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                    WatchlistMemberId = notification.WatchlistMemberId,
-                    FaceDetectedAt = notification.FaceDetectedAt,
-                    StreamId = notification.StreamId
-                });
+                this.logger.Information("Processing 'BLOCKED' notification skipped");
             };
 
             grpcNotificationReader.OnGrpcPing += OnGrpcPing;
@@ -103,8 +108,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
         private async Task stopReceivingGrpcNotificationsAsync()
         {
-            this.grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
-            this.grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
             await this.grpcNotificationReader.DisposeAsync();
         }
 
@@ -112,23 +115,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
         {
             this.logger.Debug("gRPC ping received");
             this.lastGrpcPing = DateTime.UtcNow;
-            return Task.CompletedTask;
-        }
-
-        private Task OnGrpcGrantedNotification(GrantedNotification notification)
-        {
-            this.logger.Information("Processing 'GRANTED' notification {@notification}", new
-            {
-                WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                WatchlistMemberId = notification.WatchlistMemberId,
-                FaceDetectedAt = notification.FaceDetectedAt,
-                StreamId = notification.StreamId
-            });
-
-            this.logger.Debug("Notification details {@notification}", notification);
-
-            this.OnNotification?.Invoke(new Models.Notification());
-
             return Task.CompletedTask;
         }
 

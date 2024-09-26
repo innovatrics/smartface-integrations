@@ -53,7 +53,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Factories
                     return new GraphQlNotificationSource(this.logger, this.configuration, this.oAuthService);
 
                 case NotificationSourceType.gRPC:
-                    return new GrpcNotificationSource(this.logger, this.configuration, this.httpClientFactory);
+                    return new GrpcNotificationSource(this.logger, this.configuration);
             }
         }
     }
