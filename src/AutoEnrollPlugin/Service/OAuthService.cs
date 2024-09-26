@@ -2,86 +2,92 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-
 using Microsoft.Extensions.Configuration;
-
 using Serilog;
-using Newtonsoft.Json.Linq;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
+using Newtonsoft.Json;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
     public class OAuthService
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly ILogger _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        private readonly string tokenUrl;
-        private readonly string clientId;
-        private readonly string clientSecret;
-        private readonly string audience;
+        private readonly string _tokenUrl;
+        private readonly string _clientId;
+        private readonly string _clientSecret;
+        private readonly string _audience;
 
-        public bool IsEnabled => this.tokenUrl != null && this.clientId != null && this.clientSecret != null;
+        private OAuthToken _lastToken;
 
-        private OAuthToken lastToken;
+        public bool IsEnabled => _tokenUrl != null && _clientId != null && _clientSecret != null;
 
-        public OAuthService(
-            ILogger logger,
-            IConfiguration configuration,
-            IHttpClientFactory httpClientFactory
-        )
+        public OAuthService(ILogger logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-            this.tokenUrl = this.configuration.GetValue<string>("Source:OAuth:Url");
-            this.clientId = this.configuration.GetValue<string>("Source:OAuth:ClientId");
-            this.clientSecret = this.configuration.GetValue<string>("Source:OAuth:ClientSecret");
-            this.audience = this.configuration.GetValue<string>("Source:OAuth:Audience");
+            _tokenUrl = configuration.GetValue<string>("Source:OAuth:Url");
+            _clientId = configuration.GetValue<string>("Source:OAuth:ClientId");
+            _clientSecret = configuration.GetValue<string>("Source:OAuth:ClientSecret");
+            _audience = configuration.GetValue<string>("Source:OAuth:Audience");
         }
 
         public async Task<string> GetTokenAsync()
         {
-            if (this.lastToken == null || this.lastToken.ExpiresAt <= DateTime.UtcNow)
+            if (_lastToken == null || _lastToken.ExpiresAt <= DateTime.UtcNow)
             {
-                this.lastToken = await this.getTokenAsync();
+                _lastToken = await GetTokenInternalAsync();
             }
 
-            return this.lastToken.AccessToken;
+            return _lastToken.AccessToken;
         }
 
-        private async Task<OAuthToken> getTokenAsync()
+        private async Task<OAuthToken> GetTokenInternalAsync()
         {
-            this.logger.Information("Get OAuth token from endpoint {url} for client_id {clientId}", this.tokenUrl, this.clientId);
+            _logger.Information("Get OAuth token from endpoint {url} for client_id {clientId}", _tokenUrl, _clientId);
 
             var requestBody = new Dictionary<string, string>
             {
-                { "client_id", clientId },
-                { "client_secret", clientSecret },
+                { "client_id", _clientId },
+                { "client_secret", _clientSecret },
                 { "grant_type", "client_credentials" },
-                { "audience", audience }
+                { "audience", _audience }
             };
 
-            var httpClient = this.httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
             var requestContent = new FormUrlEncodedContent(requestBody);
-            var response = await httpClient.PostAsync(tokenUrl, requestContent);
+            var response = await httpClient.PostAsync(_tokenUrl, requestContent);
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                var jsonResponse = await response.Content.ReadAsStringAsync();
-                var tokenResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<OAuthResponse>(jsonResponse);
-
-                return new OAuthToken()
-                {
-                    AccessToken = tokenResponse.AccessToken,
-                    ExpiresAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn).AddSeconds(-5)
-                };
+                throw new InvalidOperationException("Unable to retrieve JWT token.");
             }
 
-            throw new Exception("Unable to retrieve JWT token.");
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            var tokenResponse = JsonConvert.DeserializeObject<OAuthResponse>(jsonResponse);
+
+            return new OAuthToken
+            {
+                AccessToken = tokenResponse.AccessToken,
+                ExpiresAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn).AddSeconds(-5)
+            };
         }
+    }
+
+    public class OAuthResponse
+    {
+        [JsonProperty("access_token")]
+        public string AccessToken { get; set; }
+
+        [JsonProperty("expires_in")]
+        public long ExpiresIn { get; set; }
+    }
+
+    public class OAuthToken
+    {
+        public string AccessToken { get; set; }
+        public DateTime ExpiresAt { get; set; }
     }
 }

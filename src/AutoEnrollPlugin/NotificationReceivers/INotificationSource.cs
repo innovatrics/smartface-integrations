@@ -9,7 +9,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
         event Func<Notification, Task> OnNotification;
 
         Task StartAsync();
-
         Task StopAsync();
     }
 }   

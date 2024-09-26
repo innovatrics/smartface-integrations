@@ -5,25 +5,26 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Memory;
 
 using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
+using AutoEnrollPlugin.Service;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
     public class DebouncingService
     {
-        private readonly int HARD_ABSOLUTE_EXPIRATION_MS;
-        private readonly ILogger logger;
-        private readonly ExclusiveMemoryCache exclusiveMemoryCache;
+        private readonly int _hardAbsoluteExpirationMs;
+
+        private readonly ILogger _logger;
+        private readonly ExclusiveMemoryCache _exclusiveMemoryCache;
 
         public DebouncingService(
             ILogger logger,
             IConfiguration configuration,
-            ExclusiveMemoryCache exclusiveMemoryCache
-        )
+            ExclusiveMemoryCache exclusiveMemoryCache)
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.exclusiveMemoryCache = exclusiveMemoryCache ?? throw new ArgumentNullException(nameof(exclusiveMemoryCache));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _exclusiveMemoryCache = exclusiveMemoryCache ?? throw new ArgumentNullException(nameof(exclusiveMemoryCache));
 
-            HARD_ABSOLUTE_EXPIRATION_MS = configuration.GetValue<int>("Config:HardAbsoluteExpirationMs", 10000);
+            _hardAbsoluteExpirationMs = configuration.GetValue<int>("Config:HardAbsoluteExpirationMs", 10000);
         }
 
         public void Block(Notification notification, StreamMapping mapping)
@@ -50,7 +51,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             {
                 if (IsBlocked(notification.TrackletId, mapping.TrackletDebounceMs.Value))
                 {
-                    this.logger.Information("Tracklet {tracklet} blocked for {ms}", notification.TrackletId, mapping.TrackletDebounceMs.Value);
+                    _logger.Information("Tracklet {tracklet} blocked for {ms}", notification.TrackletId, mapping.TrackletDebounceMs.Value);
                     return true;
                 }
             }
@@ -59,7 +60,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             {
                 if (IsBlocked(notification.StreamId, mapping.StreamDebounceMs.Value))
                 {
-                    this.logger.Information("Stream {stream} blocked for {ms}", notification.StreamId, mapping.StreamDebounceMs.Value);
+                    _logger.Information("Stream {stream} blocked for {ms}", notification.StreamId, mapping.StreamDebounceMs.Value);
                     return true;
                 }
             }
@@ -68,7 +69,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             {
                 if (IsBlocked(mapping.StreamGroupId, mapping.GroupDebounceMs.Value))
                 {
-                    this.logger.Information("StreamGroupId {group} blocked for {ms}", mapping.StreamGroupId, mapping.GroupDebounceMs.Value);
+                    _logger.Information("StreamGroupId {group} blocked for {ms}", mapping.StreamGroupId, mapping.GroupDebounceMs.Value);
                     return true;
                 }
             }
@@ -78,9 +79,9 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
         private bool IsBlocked(object key, long debounceMs)
         {
-            lock (exclusiveMemoryCache.Lock)
+            lock (_exclusiveMemoryCache.Lock)
             {
-                if (exclusiveMemoryCache.TryGetValue(key, out DateTime timeStamp))
+                if (_exclusiveMemoryCache.TryGetValue(key, out DateTime timeStamp))
                 {
                     if ((DateTime.UtcNow - timeStamp).TotalMilliseconds < debounceMs)
                     {
@@ -94,15 +95,15 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
         private void Block(object key, long debounceMs)
         {
-            lock (exclusiveMemoryCache.Lock)
+            lock (_exclusiveMemoryCache.Lock)
             {
                 var now = DateTime.UtcNow;
 
-                var absoluteExpiration = now.AddMilliseconds(HARD_ABSOLUTE_EXPIRATION_MS);
+                var absoluteExpiration = now.AddMilliseconds(_hardAbsoluteExpirationMs);
 
-                exclusiveMemoryCache.Set(key, now, absoluteExpiration);
+                _exclusiveMemoryCache.Set(key, now, absoluteExpiration);
 
-                this.logger.Debug("Cached {key} up to {expire}", key, absoluteExpiration);
+                _logger.Debug("Cached {key} up to {expire}", key, absoluteExpiration);
             }
         }
     }

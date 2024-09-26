@@ -1,8 +1,6 @@
-using System;
-using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources;
 
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Factories
+namespace AutoEnrollPlugin.Sources
 {
     public interface INotificationSourceFactory
     {

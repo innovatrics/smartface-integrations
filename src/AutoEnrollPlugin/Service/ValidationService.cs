@@ -8,7 +8,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
     public class ValidationService
     {
-        private readonly ILogger logger;
+        private readonly ILogger _logger;
 
         private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateFaceQuality = (input) =>
         {
@@ -49,7 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             if (
                 (input.streamMapping.FaceSize?.Min ?? 0) <= input.notification.FaceSize &&
-                (input.streamMapping.FaceSize?.Max ?? Double.MaxValue) >= input.notification.FaceSize)
+                (input.streamMapping.FaceSize?.Max ?? double.MaxValue) >= input.notification.FaceSize)
             {
                 return true;
             }
@@ -65,8 +65,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.FaceArea?.Min ?? Double.MinValue) <= input.notification.FaceArea &&
-                (input.streamMapping.FaceArea?.Max ?? Double.MaxValue) >= input.notification.FaceArea)
+                (input.streamMapping.FaceArea?.Min ?? double.MinValue) <= input.notification.FaceArea &&
+                (input.streamMapping.FaceArea?.Max ?? double.MaxValue) >= input.notification.FaceArea)
             {
                 return true;
             }
@@ -83,7 +83,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             if (
                 (input.streamMapping.FaceOrder?.Min ?? 0) <= input.notification.FaceOrder &&
-                (input.streamMapping.FaceOrder?.Max ?? Double.MaxValue) >= input.notification.FaceOrder)
+                (input.streamMapping.FaceOrder?.Max ?? double.MaxValue) >= input.notification.FaceOrder)
             {
                 return true;
             }
@@ -100,7 +100,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             if (
                 (input.streamMapping.FacesOnFrameCount?.Min ?? 0) <= input.notification.FacesOnFrameCount &&
-                (input.streamMapping.FacesOnFrameCount?.Max ?? Double.MaxValue) >= input.notification.FacesOnFrameCount)
+                (input.streamMapping.FacesOnFrameCount?.Max ?? double.MaxValue) >= input.notification.FacesOnFrameCount)
             {
                 return true;
             }
@@ -116,8 +116,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.Brightness?.Min ?? Double.MinValue) <= input.notification.Brightness &&
-                (input.streamMapping.Brightness?.Max ?? Double.MaxValue) >= input.notification.Brightness)
+                (input.streamMapping.Brightness?.Min ?? double.MinValue) <= input.notification.Brightness &&
+                (input.streamMapping.Brightness?.Max ?? double.MaxValue) >= input.notification.Brightness)
             {
                 return true;
             }
@@ -133,8 +133,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.Sharpness?.Min ?? Double.MinValue) <= input.notification.Sharpness &&
-                (input.streamMapping.Sharpness?.Max ?? Double.MaxValue) >= input.notification.Sharpness)
+                (input.streamMapping.Sharpness?.Min ?? double.MinValue) <= input.notification.Sharpness &&
+                (input.streamMapping.Sharpness?.Max ?? double.MaxValue) >= input.notification.Sharpness)
             {
                 return true;
             }
@@ -150,8 +150,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.YawAngle?.Min ?? Double.MinValue) <= input.notification.YawAngle &&
-                (input.streamMapping.YawAngle?.Max ?? Double.MaxValue) >= input.notification.YawAngle)
+                (input.streamMapping.YawAngle?.Min ?? double.MinValue) <= input.notification.YawAngle &&
+                (input.streamMapping.YawAngle?.Max ?? double.MaxValue) >= input.notification.YawAngle)
             {
                 return true;
             }
@@ -168,8 +168,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.RollAngle?.Min ?? Double.MinValue) <= input.notification.RollAngle &&
-                (input.streamMapping.RollAngle?.Max ?? Double.MaxValue) >= input.notification.RollAngle)
+                (input.streamMapping.RollAngle?.Min ?? double.MinValue) <= input.notification.RollAngle &&
+                (input.streamMapping.RollAngle?.Max ?? double.MaxValue) >= input.notification.RollAngle)
             {
                 return true;
             }
@@ -186,8 +186,8 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             }
 
             if (
-                (input.streamMapping.PitchAngle?.Min ?? Double.MinValue) <= input.notification.PitchAngle &&
-                (input.streamMapping.PitchAngle?.Max ?? Double.MaxValue) >= input.notification.PitchAngle)
+                (input.streamMapping.PitchAngle?.Min ?? double.MinValue) <= input.notification.PitchAngle &&
+                (input.streamMapping.PitchAngle?.Max ?? double.MaxValue) >= input.notification.PitchAngle)
             {
                 return true;
             }
@@ -209,19 +209,16 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             validatePitchAngle
         };
 
-        public ValidationService(
-            ILogger logger
-        )
+        public ValidationService(ILogger logger)
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public bool Validate(Notification notification, StreamMapping streamMapping)
         {
-            this.logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templatequality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle} pitchAngle {pitchAngle}", 
+            _logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templatequality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle} pitchAngle {pitchAngle}", 
                                             notification.FaceQuality, notification.TemplateQuality, notification.FaceSize,
-                                            notification.YawAngle, notification.RollAngle, notification.PitchAngle
-                                );
+                                            notification.YawAngle, notification.RollAngle, notification.PitchAngle);
 
             var validationResults = new bool[validateAll.Length];
 
@@ -232,10 +229,9 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 validationResults[i] = isValid;
             }
 
-            this.logger.Information("Validation result [{result}]", string.Join(',', validationResults.Select(s => s ? 1 : 0)));
+            _logger.Information("Validation result [{result}]", string.Join(',', validationResults.Select(s => s ? 1 : 0)));
 
-            var allResult = validationResults
-                                .All(w => w == true);
+            var allResult = validationResults.All(w => w);
 
             return allResult;
         }

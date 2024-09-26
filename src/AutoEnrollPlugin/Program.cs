@@ -7,8 +7,9 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Factories;
 using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services;
+using AutoEnrollPlugin.Sources;
+using AutoEnrollPlugin.Service;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
 {
@@ -23,7 +24,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             {
                 var configurationRoot = ConfigureBuilder(args);
 
-                var logger = ConfigureLogger(args, configurationRoot);
+                var logger = ConfigureLogger(configurationRoot);
 
                 Log.Information("Starting up.");
 
@@ -43,13 +44,13 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             Log.CloseAndFlush();
         }
 
-        private static ILogger ConfigureLogger(string[] args, IConfiguration configuration)
+        private static ILogger ConfigureLogger(IConfiguration configuration)
         {
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
             var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace"));
-            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);
-            var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
+            logDir = configuration.GetValue("Serilog:LogDirectory", logDir);
+            var logFilePath = Path.Combine(logDir, LOG_FILE_NAME);
 
             var loggerConfiguration = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
@@ -66,16 +67,15 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             return logger;
         }
 
-        private static IServiceCollection ConfigureServices(IServiceCollection services, ILogger logger)
+        private static void ConfigureServices(IServiceCollection services, ILogger logger)
         {
             services.AddHttpClient();
-
-            services.AddSingleton<ILogger>(logger);
+            services.AddSingleton(logger);
 
             services.AddSingleton<IGrpcStreamSubscriber, GrpcStreamSubscriber>();
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
-            
+
             services.AddSingleton<OAuthService>();
             services.AddSingleton<ExclusiveMemoryCache>();
             services.AddSingleton<DebouncingService>();
@@ -85,8 +85,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             services.AddSingleton<AutoEnrollmentService>();
 
             services.AddHostedService<MainHostedService>();
-
-            return services;
         }
 
         private static IConfigurationRoot ConfigureBuilder(string[] args)
@@ -95,7 +93,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
                     .SetMainModuleBasePath()
                     .AddJsonFile(JSON_CONFIG_FILE_NAME, optional: false)
                     .AddEnvironmentVariables()
-                    .AddEnvironmentVariables($"SF_INT_RELAY_")
+                    .AddEnvironmentVariables("SF_INT_RELAY_")
                     .AddCommandLine(args)
                     .Build();
         }
@@ -108,7 +106,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
                     builder.Sources.Clear();
                     builder.AddConfiguration(configurationRoot);
                 })
-                .ConfigureServices((context, services) =>
+                .ConfigureServices((_, services) =>
                 {
                     ConfigureServices(services, logger);
                 })
@@ -117,6 +115,5 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
                 .UseWindowsService()
             ;
         }
-
     }
 }

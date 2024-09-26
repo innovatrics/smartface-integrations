@@ -1,15 +1,15 @@
 ﻿using System;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
+namespace AutoEnrollPlugin.Service
 {
     public class ExclusiveMemoryCache : IMemoryCache
     {
-        internal const int CACHE_SYNC_TIME_MS = 50;
+        internal const int CacheSyncTimeMs = 50;
 
         private readonly MemoryCache _cache = new(new MemoryCacheOptions
         {
-            ExpirationScanFrequency = TimeSpan.FromMilliseconds(CACHE_SYNC_TIME_MS)
+            ExpirationScanFrequency = TimeSpan.FromMilliseconds(CacheSyncTimeMs)
         });
 
         public object Lock => _cache;

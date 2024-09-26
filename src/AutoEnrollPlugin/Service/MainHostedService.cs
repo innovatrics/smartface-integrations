@@ -4,19 +4,19 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Factories;
 using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources;
 using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
+using AutoEnrollPlugin.Sources;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
     public class MainHostedService : IHostedService
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly AutoEnrollmentService autoEnrollmentService;
-        private readonly INotificationSourceFactory notificationSourceFactory;
-        private INotificationSource notificationSource;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly AutoEnrollmentService _autoEnrollmentService;
+        private readonly INotificationSourceFactory _notificationSourceFactory;
+        private INotificationSource _notificationSource;
 
         public MainHostedService(
             ILogger logger,
@@ -24,39 +24,39 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             INotificationSourceFactory notificationSourceFactory,
             AutoEnrollmentService autoEnrollmentService)
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.autoEnrollmentService = autoEnrollmentService ?? throw new ArgumentNullException(nameof(autoEnrollmentService));
-            this.notificationSourceFactory = notificationSourceFactory ?? throw new ArgumentNullException(nameof(notificationSourceFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _autoEnrollmentService = autoEnrollmentService ?? throw new ArgumentNullException(nameof(autoEnrollmentService));
+            _notificationSourceFactory = notificationSourceFactory ?? throw new ArgumentNullException(nameof(notificationSourceFactory));
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            this.logger.Information($"{nameof(MainHostedService)} is starting");
+            _logger.Information($"{nameof(MainHostedService)} is starting");
 
-            var notificationSourceType = this.configuration.GetValue<string>("Source:Type", "GraphQL");
+            var notificationSourceType = _configuration.GetValue("Source:Type", "GraphQL");
 
-            this.notificationSource = this.notificationSourceFactory.Create(notificationSourceType);
+            _notificationSource = _notificationSourceFactory.Create(notificationSourceType);
 
-            this.notificationSource.OnNotification += OnNotification;
+            _notificationSource.OnNotification += HandleNotificationAsync;
 
-            await this.notificationSource.StartAsync();
-            this.autoEnrollmentService.Start();
+            await _notificationSource.StartAsync();
+            _autoEnrollmentService.Start();
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            this.logger.Information($"{nameof(MainHostedService)} is stopping");
+            _logger.Information($"{nameof(MainHostedService)} is stopping");
 
-            await this.notificationSource.StopAsync();
-            await this.autoEnrollmentService.StopAsync();
+            await _notificationSource.StopAsync();
+            await _autoEnrollmentService.StopAsync();
         }
 
-        private Task OnNotification(Notification notification)
+        private Task HandleNotificationAsync(Notification notification)
         {
-            this.logger.Information("Processing OnNotification {notification}", new { notification.StreamId, notification.ReceivedAt });
+            _logger.Information("Processing HandleNotificationAsync {notification}", new { notification.StreamId, notification.ReceivedAt });
 
-            this.autoEnrollmentService.ProcessNotification(notification);
+            _autoEnrollmentService.ProcessNotification(notification);
 
             return Task.CompletedTask;
         }

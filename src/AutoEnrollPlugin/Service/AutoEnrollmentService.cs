@@ -15,22 +15,22 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
     public class AutoEnrollmentService
     {
-        public readonly int MAX_PARALLEL_BLOCKS;
-        public readonly int DETECTOR_MAX_FACES;
-        public readonly int DETECTOR_MIN_FACE_SIZE;
-        public readonly int DETECTOR_MAX_FACE_SIZE;
-        public readonly int DETECTOR_FACE_CONFIDENCE;
+        public readonly int MaxParallelBlocks;
+        public readonly int DetectorMaxFaces;
+        public readonly int DetectorMinFaceSize;
+        public readonly int DetectorMaxFaceSize;
+        public readonly int DetectorFaceConfidence;
 
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
-        private readonly ValidationService validationService;
-        private readonly StreamMappingService streamMappingService;
-        private readonly DebouncingService debouncingService;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ValidationService _validationService;
+        private readonly StreamMappingService _streamMappingService;
+        private readonly DebouncingService _debouncingService;
         private readonly OAuthService _oAuthService;
-        private readonly string debugOutputFolder;
+        private readonly string _debugOutputFolder;
 
-        private ActionBlock<Notification> actionBlock;
+        private ActionBlock<Notification> _actionBlock;
 
         public AutoEnrollmentService(
             ILogger logger,
@@ -39,71 +39,70 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             OAuthService oAuthService,
             DebouncingService debouncingService,
             ValidationService validationService,
-            StreamMappingService streamMappingService
-        )
+            StreamMappingService streamMappingService)
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            this.validationService = validationService ?? throw new ArgumentNullException(nameof(validationService));
-            this.streamMappingService = streamMappingService ?? throw new ArgumentNullException(nameof(streamMappingService));
-            this.debouncingService = debouncingService ?? throw new ArgumentNullException(nameof(debouncingService));
-            this._oAuthService = oAuthService ?? throw new ArgumentNullException(nameof(oAuthService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _validationService = validationService ?? throw new ArgumentNullException(nameof(validationService));
+            _streamMappingService = streamMappingService ?? throw new ArgumentNullException(nameof(streamMappingService));
+            _debouncingService = debouncingService ?? throw new ArgumentNullException(nameof(debouncingService));
+            _oAuthService = oAuthService ?? throw new ArgumentNullException(nameof(oAuthService));
             
             var config = configuration.GetSection("Config").Get<Config>();
 
-            this.debugOutputFolder = config.DebugOutputFolder;
-            MAX_PARALLEL_BLOCKS = config.MaxParallelActionBlocks ?? 4;
-            DETECTOR_MAX_FACES = config.RegisterMaxFaces ?? 3;
-            DETECTOR_MIN_FACE_SIZE = config.RegisterMinFaceSize ?? 30;
-            DETECTOR_MAX_FACE_SIZE = config.RegisterMaxFaceSize ?? 600;
-            DETECTOR_FACE_CONFIDENCE = config.RegisterFaceConfidence ?? 450;
+            _debugOutputFolder = config.DebugOutputFolder;
+            MaxParallelBlocks = config.MaxParallelActionBlocks ?? 4;
+            DetectorMaxFaces = config.RegisterMaxFaces ?? 3;
+            DetectorMinFaceSize = config.RegisterMinFaceSize ?? 30;
+            DetectorMaxFaceSize = config.RegisterMaxFaceSize ?? 600;
+            DetectorFaceConfidence = config.RegisterFaceConfidence ?? 450;
         }
 
         public void Start()
         {
-            this.actionBlock = new ActionBlock<Notification>(async notification =>
+            _actionBlock = new ActionBlock<Notification>(async notification =>
             {
                 try
                 {
-                    var mappings = streamMappingService.CreateMappings(notification.StreamId);
+                    var mappings = _streamMappingService.CreateMappings(notification.StreamId);
 
-                    this.logger.Debug("Found {mappings} mappings for stream {stream}", mappings?.Count, notification.StreamId);
+                    _logger.Debug("Found {Mappings} mappings for stream {Stream}", mappings?.Count, notification.StreamId);
 
                     foreach (var mapping in mappings)
                     {
-                        var isValidationPassed = validationService.Validate(notification, mapping);
+                        var isValidationPassed = _validationService.Validate(notification, mapping);
 
                         if (isValidationPassed)
                         {
-                            var isBlocked = this.debouncingService.IsBlocked(notification, mapping);
+                            var isBlocked = _debouncingService.IsBlocked(notification, mapping);
 
                             if (isBlocked)
                             {
                                 continue;
                             }
 
-                            this.debouncingService.Block(notification, mapping);
+                            _debouncingService.Block(notification, mapping);
 
-                            await enrollAsync(notification, mapping);
+                            await EnrollAsync(notification, mapping);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    this.logger.Error(ex, "Failed to process message");
+                    _logger.Error(ex, "Failed to process message");
                 }
             },
             new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = MAX_PARALLEL_BLOCKS
+                MaxDegreeOfParallelism = MaxParallelBlocks
             });
         }
 
         public async Task StopAsync()
         {
-            actionBlock.Complete();
-            await actionBlock.Completion;
+            _actionBlock.Complete();
+            await _actionBlock.Completion;
         }
 
         public void ProcessNotification(Notification notification)
@@ -113,10 +112,10 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            this.actionBlock.Post(notification);
+            _actionBlock.Post(notification);
         }
 
-        private async Task enrollAsync(Notification notification, StreamMapping mapping)
+        private async Task EnrollAsync(Notification notification, StreamMapping mapping)
         {
             if (notification == null)
             {
@@ -128,25 +127,25 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 throw new ArgumentNullException(nameof(mapping));
             }
 
-            this.logger.Information("Enrolling new member to watchlist {watchlist}", mapping.WatchlistIds);
+            _logger.Information("Enrolling new member to watchlist {Watchlist}", mapping.WatchlistIds);
 
             if (!(mapping.WatchlistIds?.Length > 0))
             {
-                this.logger.Information("No target watchlist id, skipped");
+                _logger.Information("No target watchlist id, skipped");
                 return;
             }
 
-            var schema = this.configuration.GetValue<string>("Target:Schema", "http");
-            var host = this.configuration.GetValue<string>("Target:Host", "SFApi");
-            var port = this.configuration.GetValue<int>("Target:Port", 8098);
+            var schema = _configuration.GetValue("Target:Schema", "http");
+            var host = _configuration.GetValue("Target:Host", "SFApi");
+            var port = _configuration.GetValue("Target:Port", 8098);
 
             var baseUri = new Uri($"{schema}://{host}:{port}/");
 
-            var httpClient = this.httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
-            if (this._oAuthService.IsEnabled)
+            if (_oAuthService.IsEnabled)
             {
-                var authToken = await this._oAuthService.GetTokenAsync();
+                var authToken = await _oAuthService.GetTokenAsync();
                 httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
             }
 
@@ -168,23 +167,22 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             registerRequest.KeepAutoLearnPhotos = mapping.KeepAutoLearn ?? false;
 
-            registerRequest.FaceDetectorConfig = new FaceDetectorConfig();
-            
-            registerRequest.FaceDetectorConfig.MaxFaces = DETECTOR_MAX_FACES;
-            registerRequest.FaceDetectorConfig.MinFaceSize = DETECTOR_MIN_FACE_SIZE;
-            registerRequest.FaceDetectorConfig.MaxFaceSize = DETECTOR_MAX_FACE_SIZE;
-            registerRequest.FaceDetectorConfig.ConfidenceThreshold = DETECTOR_FACE_CONFIDENCE;
+            registerRequest.FaceDetectorConfig = new FaceDetectorConfig
+            {
+                MaxFaces = DetectorMaxFaces,
+                MinFaceSize = DetectorMinFaceSize,
+                MaxFaceSize = DetectorMaxFaceSize,
+                ConfidenceThreshold = DetectorFaceConfidence
+            };
 
             var imageAdd = new RegistrationImageData
             {
                 Data = notification.CropImage
             };
 
-            this.logger.Debug($"ImageData in bytes: {notification.CropImage.Length}");
-
-            if (!string.IsNullOrEmpty(debugOutputFolder))
+            if (!string.IsNullOrEmpty(_debugOutputFolder))
             {
-                System.IO.File.WriteAllBytes(Path.Combine(debugOutputFolder, $"{registerRequest.FullName}.jpg"), notification.CropImage);
+                await File.WriteAllBytesAsync(Path.Combine(_debugOutputFolder, $"{registerRequest.FullName}.jpg"), notification.CropImage);
             }
 
             registerRequest.Images.Add(imageAdd);
