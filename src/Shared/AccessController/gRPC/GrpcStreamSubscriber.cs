@@ -100,9 +100,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
             return grpcClient.GetAccessNotifications(new AccessNotificationRequest
             {
                 SendImageData = true,
-                TypeOfAccessNotification = (uint)AccessNotificationType.Granted
-                                                                                   | (uint)AccessNotificationType.Denied
-                                                                                   | (uint)AccessNotificationType.Blacklist
+                TypeOfAccessNotification = (uint)AccessNotificationType.FaceGranted
+                                                                                   | (uint)AccessNotificationType.FaceGranted
+                                                                                   | (uint)AccessNotificationType.FaceBlocked
                                                                                    | (uint)AccessNotificationType.Ping
             }, cancellationToken: cancellationToken);
         }

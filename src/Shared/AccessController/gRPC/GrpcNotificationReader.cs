@@ -1,11 +1,11 @@
 ﻿using System;
-using Innovatrics.Smartface;
+using System.Threading.Tasks;
 
+using Innovatrics.Smartface;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessController.Utils;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
-using System.Threading.Tasks;
 
 namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
 {
@@ -76,17 +76,17 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
 
         private static bool IsGrantedMessage(AccessNotification notification)
         {
-            return notification.TypeOfAccessNotification == (uint)AccessNotificationType.Granted;
+            return notification.TypeOfAccessNotification == (uint)AccessNotificationType.FaceGranted;
         }
 
         private static bool IsDeniedMessage(AccessNotification notification)
         {
-            return notification.TypeOfAccessNotification == (uint)AccessNotificationType.Denied;
+            return notification.TypeOfAccessNotification == (uint)AccessNotificationType.FaceGranted;
         }
 
         private static bool IsBlockedMessage(AccessNotification notification)
         {
-            return notification.TypeOfAccessNotification == (uint)AccessNotificationType.Blacklist;
+            return notification.TypeOfAccessNotification == (uint)AccessNotificationType.FaceBlocked;
         }
 
         private bool IsPingNotification(AccessNotification notification)
