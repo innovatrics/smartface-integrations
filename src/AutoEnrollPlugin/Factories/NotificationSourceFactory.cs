@@ -14,19 +14,19 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Factories
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
-        private readonly IOAuthService oauthService;
+        private readonly IOAuthService oAuthService;
 
         public NotificationSourceFactory(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
-            IOAuthService oauthService
+            IOAuthService oAuthService
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            this.oauthService = oauthService ?? throw new ArgumentNullException(nameof(oauthService));
+            this.oAuthService = oAuthService ?? throw new ArgumentNullException(nameof(oAuthService));
         }
 
         public INotificationSource Create(string notificationSourceType)
@@ -50,7 +50,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Factories
                     throw new NotImplementedException($"{nameof(INotificationSource)} of type {notificationSourceType} not supported");
 
                 case NotificationSourceType.GraphQL:
-                    return new GraphQlNotificationSource(this.logger, this.configuration, this.oauthService);
+                    return new GraphQlNotificationSource(this.logger, this.configuration, this.oAuthService);
 
                 case NotificationSourceType.gRPC:
                     return new GrpcNotificationSource(this.logger, this.configuration, this.httpClientFactory);

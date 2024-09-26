@@ -16,6 +16,9 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
     public class AutoEnrollmentService : IAutoEnrollmentService
     {
         public readonly int MAX_PARALLEL_BLOCKS;
+        public readonly int DETECTOR_MIN_FACE_SIZE;
+        public readonly int DETECTOR_MAX_FACE_SIZE;
+        public readonly int DETECTOR_FACE_CONFIDENCE;
 
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
@@ -23,6 +26,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         private readonly IValidationService validationService;
         private readonly IStreamMappingService streamMappingService;
         private readonly IDebouncingService debouncingService;
+        private readonly IOAuthService _oAuthService;
         private readonly string debugOutputFolder;
 
         private ActionBlock<Notification> actionBlock;
@@ -31,6 +35,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
+            IOAuthService oAuthService,
             IDebouncingService debouncingService,
             IValidationService validationService,
             IStreamMappingService streamMappingService
@@ -42,10 +47,15 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             this.validationService = validationService ?? throw new ArgumentNullException(nameof(validationService));
             this.streamMappingService = streamMappingService ?? throw new ArgumentNullException(nameof(streamMappingService));
             this.debouncingService = debouncingService ?? throw new ArgumentNullException(nameof(debouncingService));
+            this._oAuthService = oAuthService ?? throw new ArgumentNullException(nameof(oAuthService));
             
-            debugOutputFolder = this.configuration.GetValue<string>("Config:DebugOutputFolder");
+            var config = configuration.GetSection("Config").Get<Config>();
 
-            MAX_PARALLEL_BLOCKS = this.configuration.GetValue<int>("Config:MaxParallelActionBlocks", 4);
+            this.debugOutputFolder = config.DebugOutputFolder;
+            MAX_PARALLEL_BLOCKS = config.MaxParallelActionBlocks ?? 4;
+            DETECTOR_MIN_FACE_SIZE = config.RegisterMinFaceSize ?? 30;
+            DETECTOR_MAX_FACE_SIZE = config.RegisterMaxFaceSize ?? 600;
+            DETECTOR_FACE_CONFIDENCE = config.RegisterFaceConfidence ?? 450;
         }
 
         public void Start()
@@ -80,7 +90,6 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
                 catch (Exception ex)
                 {
                     this.logger.Error(ex, "Failed to process message");
-                    throw;
                 }
             },
             new ExecutionDataflowBlockOptions
@@ -131,8 +140,16 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 
             var baseUri = new Uri($"{schema}://{host}:{port}/");
 
-            var client = new SmartFaceRestApiClient(baseUri.ToString(), this.httpClientFactory.CreateClient());
+            var httpClient = this.httpClientFactory.CreateClient();
 
+            if (this._oAuthService.IsEnabled)
+            {
+                var authToken = await this._oAuthService.GetTokenAsync();
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
+            }
+
+            var client = new SmartFaceRestApiClient(baseUri.ToString(), httpClient);
+            
             var registerRequest = new RegisterWatchlistMemberRequest();
 
             var id = Guid.NewGuid();
@@ -150,12 +167,11 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             registerRequest.KeepAutoLearnPhotos = mapping.KeepAutoLearn ?? false;
 
             registerRequest.FaceDetectorConfig = new FaceDetectorConfig();
-            registerRequest.FaceDetectorConfig.MaxFaces = 3;
-
-            registerRequest.FaceDetectorConfig.MinFaceSize = 10;
-            registerRequest.FaceDetectorConfig.MaxFaceSize = 600;
-
-            registerRequest.FaceDetectorConfig.ConfidenceThreshold = 450;
+            
+            registerRequest.FaceDetectorConfig.MaxFaces = 1;
+            registerRequest.FaceDetectorConfig.MinFaceSize = DETECTOR_MIN_FACE_SIZE;
+            registerRequest.FaceDetectorConfig.MaxFaceSize = DETECTOR_MAX_FACE_SIZE;
+            registerRequest.FaceDetectorConfig.ConfidenceThreshold = DETECTOR_FACE_CONFIDENCE;
 
             var imageAdd = new RegistrationImageData
             {

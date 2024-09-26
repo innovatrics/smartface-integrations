@@ -19,7 +19,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
-        private readonly IOAuthService _oauthService;
+        private readonly IOAuthService _oAuthService;
         private GraphQLHttpClient _graphQlClient;
 
         private IDisposable subscription;
@@ -27,12 +27,12 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
         public GraphQlNotificationSource(
             ILogger logger,
             IConfiguration configuration,
-            IOAuthService oauthService
+            IOAuthService oAuthService
         )
         {
             this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this._configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this._oauthService = oauthService ?? throw new ArgumentNullException(nameof(oauthService));
+            this._oAuthService = oAuthService ?? throw new ArgumentNullException(nameof(oAuthService));
         }
 
         public async Task StartAsync()
@@ -59,9 +59,9 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                 EndPoint = new Uri($"{schema}://{host}:{port}{normalizePath(path)}")
             };
 
-            if (this._oauthService.IsEnabled)
+            if (this._oAuthService.IsEnabled)
             {
-                var authToken = await this._oauthService.GetTokenAsync();
+                var authToken = await this._oAuthService.GetTokenAsync();
 
                 graphQLOptions.ConfigureWebSocketConnectionInitPayload = (GraphQLHttpClientOptions opts) =>
                     {

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 
 using Serilog;
 using Newtonsoft.Json.Linq;
+using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
@@ -21,9 +22,10 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         private readonly string clientSecret;
         private readonly string audience;
 
-
         public bool IsEnabled => this.tokenUrl != null && this.clientId != null && this.clientSecret != null;
-        
+
+        private OAuthToken lastToken;
+
         public OAuthService(
             ILogger logger,
             IConfiguration configuration,
@@ -41,6 +43,16 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         }
 
         public async Task<string> GetTokenAsync()
+        {
+            if (this.lastToken == null || this.lastToken.ExpiresAt <= DateTime.UtcNow)
+            {
+                this.lastToken = await this.getTokenAsync();
+            }
+
+            return this.lastToken.AccessToken;
+        }
+
+        private async Task<OAuthToken> getTokenAsync()
         {
             this.logger.Information("Get OAuth token from endpoint {url} for client_id {clientId}", this.tokenUrl, this.clientId);
 
@@ -60,9 +72,13 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             if (response.IsSuccessStatusCode)
             {
                 var jsonResponse = await response.Content.ReadAsStringAsync();
-                var tokenObj = JObject.Parse(jsonResponse);
-                var token = tokenObj["access_token"].ToString();
-                return token;
+                var tokenResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<OAuthResponse>(jsonResponse);
+
+                return new OAuthToken()
+                {
+                    AccessToken = tokenResponse.AccessToken,
+                    ExpiresAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn).AddSeconds(-5)
+                };
             }
 
             throw new Exception("Unable to retrieve JWT token.");
