@@ -74,13 +74,13 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
             grpcNotificationReader = this.CreateGrpcReader();
 
-            grpcNotificationReader.OnGrpcGrantedNotification += (GrantedNotification Notification) =>
+            grpcNotificationReader.OnGrpcFaceGrantedNotification += (FaceGrantedNotification Notification) =>
             {
                 this.logger.Information("Processing 'GRANTED' notification skipped");
                 return Task.CompletedTask;
             };
 
-            grpcNotificationReader.OnGrpcDeniedNotification += (DeniedNotification notification) =>
+            grpcNotificationReader.OnGrpcFaceDeniedNotification += (FaceDeniedNotification notification) =>
             {
                 this.logger.Information("Processing 'DENIED' notification skipped");
 
@@ -96,7 +96,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
                 });
             };
 
-            grpcNotificationReader.OnGrpcBlockedNotification += (BlockedNotification notification) =>
+            grpcNotificationReader.OnGrpcFaceBlockedNotification += (FaceBlockedNotification notification) =>
             {
                 this.logger.Information("Processing 'BLOCKED' notification skipped");
             };
