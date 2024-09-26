@@ -31,7 +31,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Services
             this.myQConnectorFactory = MyQConnectorFactory ?? throw new ArgumentNullException(nameof(MyQConnectorFactory));
         }
 
-        public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
+        public async Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification)
         {
             if (notification == null)
             {

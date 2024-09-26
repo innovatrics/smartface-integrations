@@ -78,9 +78,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 
             grpcNotificationReader = this.CreateGrpcReader();
 
-            grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
+            grpcNotificationReader.OnGrpcFaceGrantedNotification += OnGrpcGrantedNotification;
 
-            grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
+            grpcNotificationReader.OnGrpcFaceDeniedNotification += async (FaceDeniedNotification notification) =>
             {
                 this.logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
@@ -89,7 +89,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                 });
             };
 
-            grpcNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
+            grpcNotificationReader.OnGrpcFaceBlockedNotification += async (FaceBlockedNotification notification) =>
             {
                 this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
                 {
@@ -108,7 +108,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
         private async Task stopReceivingGrpcNotificationsAsync()
         {
             this.grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
-            this.grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
+            this.grpcNotificationReader.OnGrpcFaceGrantedNotification -= OnGrpcGrantedNotification;
             await this.grpcNotificationReader.DisposeAsync();
         }
 
@@ -119,7 +119,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             return Task.CompletedTask;
         }
 
-        private async Task OnGrpcGrantedNotification(GrantedNotification notification)
+        private async Task OnGrpcGrantedNotification(FaceGrantedNotification notification)
         {
             this.logger.Information("Processing 'GRANTED' notification {@notification}", new
             {
@@ -131,7 +131,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 
             this.logger.Debug("Notification details {@notification}", notification);
 
-            await this.bridge.ProcessGrantedNotificationAsync(notification);
+            await this.bridge.ProcessFaceGrantedNotificationAsync(notification);
         }
 
         private void startPingTimer()
