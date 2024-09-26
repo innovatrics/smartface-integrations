@@ -8,16 +8,16 @@ using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
-    public class DebouncingService : IDebouncingService
+    public class DebouncingService
     {
         private readonly int HARD_ABSOLUTE_EXPIRATION_MS;
         private readonly ILogger logger;
-        private readonly IExclusiveMemoryCache exclusiveMemoryCache;
+        private readonly ExclusiveMemoryCache exclusiveMemoryCache;
 
         public DebouncingService(
             ILogger logger,
             IConfiguration configuration,
-            IExclusiveMemoryCache exclusiveMemoryCache
+            ExclusiveMemoryCache exclusiveMemoryCache
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

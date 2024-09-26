@@ -13,7 +13,7 @@ using Innovatrics.SmartFace.Integrations.Shared.SmartFaceRestApiClient;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
-    public class AutoEnrollmentService : IAutoEnrollmentService
+    public class AutoEnrollmentService
     {
         public readonly int MAX_PARALLEL_BLOCKS;
         public readonly int DETECTOR_MAX_FACES;
@@ -24,10 +24,10 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
-        private readonly IValidationService validationService;
-        private readonly IStreamMappingService streamMappingService;
-        private readonly IDebouncingService debouncingService;
-        private readonly IOAuthService _oAuthService;
+        private readonly ValidationService validationService;
+        private readonly StreamMappingService streamMappingService;
+        private readonly DebouncingService debouncingService;
+        private readonly OAuthService _oAuthService;
         private readonly string debugOutputFolder;
 
         private ActionBlock<Notification> actionBlock;
@@ -36,10 +36,10 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
-            IOAuthService oAuthService,
-            IDebouncingService debouncingService,
-            IValidationService validationService,
-            IStreamMappingService streamMappingService
+            OAuthService oAuthService,
+            DebouncingService debouncingService,
+            ValidationService validationService,
+            StreamMappingService streamMappingService
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

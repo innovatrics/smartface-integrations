@@ -11,7 +11,7 @@ using Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
-    public class OAuthService : IOAuthService
+    public class OAuthService
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;

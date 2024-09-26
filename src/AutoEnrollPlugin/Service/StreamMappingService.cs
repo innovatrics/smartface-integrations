@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
-    public class StreamMappingService : IStreamMappingService
+    public class StreamMappingService
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;

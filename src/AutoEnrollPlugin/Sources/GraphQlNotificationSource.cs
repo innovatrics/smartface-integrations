@@ -19,7 +19,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
 
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
-        private readonly IOAuthService _oAuthService;
+        private readonly OAuthService _oAuthService;
         private GraphQLHttpClient _graphQlClient;
 
         private IDisposable subscription;
@@ -27,7 +27,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Sources
         public GraphQlNotificationSource(
             ILogger logger,
             IConfiguration configuration,
-            IOAuthService oAuthService
+            OAuthService oAuthService
         )
         {
             this._logger = logger ?? throw new ArgumentNullException(nameof(logger));

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
 {
-    public class ExclusiveMemoryCache : IExclusiveMemoryCache
+    public class ExclusiveMemoryCache : IMemoryCache
     {
         internal const int CACHE_SYNC_TIME_MS = 50;
 

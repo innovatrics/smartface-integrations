@@ -14,13 +14,13 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Factories
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
-        private readonly IOAuthService oAuthService;
+        private readonly OAuthService oAuthService;
 
         public NotificationSourceFactory(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
-            IOAuthService oAuthService
+            OAuthService oAuthService
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

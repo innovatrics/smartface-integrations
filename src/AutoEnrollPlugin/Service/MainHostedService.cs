@@ -14,7 +14,7 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
-        private readonly IAutoEnrollmentService autoEnrollmentService;
+        private readonly AutoEnrollmentService autoEnrollmentService;
         private readonly INotificationSourceFactory notificationSourceFactory;
         private INotificationSource notificationSource;
 
@@ -22,12 +22,11 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin.Services
             ILogger logger,
             IConfiguration configuration,
             INotificationSourceFactory notificationSourceFactory,
-            IAutoEnrollmentService bridge
-        )
+            AutoEnrollmentService autoEnrollmentService)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.autoEnrollmentService = bridge ?? throw new ArgumentNullException(nameof(bridge));
+            this.autoEnrollmentService = autoEnrollmentService ?? throw new ArgumentNullException(nameof(autoEnrollmentService));
             this.notificationSourceFactory = notificationSourceFactory ?? throw new ArgumentNullException(nameof(notificationSourceFactory));
         }
 

@@ -76,13 +76,13 @@ namespace Innovatrics.SmartFace.Integrations.AutoEnrollPlugin
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
             
-            services.AddSingleton<IOAuthService, OAuthService>();
-            services.AddSingleton<IExclusiveMemoryCache, ExclusiveMemoryCache>();
-            services.AddSingleton<IDebouncingService, DebouncingService>();
-            services.AddSingleton<IValidationService, ValidationService>();
-            services.AddSingleton<IStreamMappingService, StreamMappingService>();
+            services.AddSingleton<OAuthService>();
+            services.AddSingleton<ExclusiveMemoryCache>();
+            services.AddSingleton<DebouncingService>();
+            services.AddSingleton<ValidationService>();
+            services.AddSingleton<StreamMappingService>();
             services.AddSingleton<INotificationSourceFactory, NotificationSourceFactory>();
-            services.AddSingleton<IAutoEnrollmentService, AutoEnrollmentService>();
+            services.AddSingleton<AutoEnrollmentService>();
 
             services.AddHostedService<MainHostedService>();
 
