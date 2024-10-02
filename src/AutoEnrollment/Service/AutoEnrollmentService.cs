@@ -45,7 +45,7 @@ namespace SmartFace.AutoEnrollment.Service
             _streamMappingService = streamMappingService ?? throw new ArgumentNullException(nameof(streamMappingService));
             _debouncingService = debouncingService ?? throw new ArgumentNullException(nameof(debouncingService));
             _oAuthService = oAuthService ?? throw new ArgumentNullException(nameof(oAuthService));
-            
+
             var config = configuration.GetSection("Config").Get<Config>();
 
             _debugOutputFolder = config.DebugOutputFolder;
@@ -124,6 +124,21 @@ namespace SmartFace.AutoEnrollment.Service
                 throw new ArgumentNullException(nameof(mapping));
             }
 
+            await RegisterAsync(notification, mapping);
+        }
+
+        private async Task RegisterAsync(Notification notification, StreamMapping mapping)
+        {
+            if (notification == null)
+            {
+                throw new ArgumentNullException(nameof(notification));
+            }
+
+            if (mapping == null)
+            {
+                throw new ArgumentNullException(nameof(mapping));
+            }
+
             _logger.Information("Enrolling new member to watchlist {Watchlist}", mapping.WatchlistIds);
 
             if (!(mapping.WatchlistIds?.Length > 0))
@@ -147,7 +162,7 @@ namespace SmartFace.AutoEnrollment.Service
             }
 
             var client = new SmartFaceRestApiClient(baseUri.ToString(), httpClient);
-            
+
             var registerRequest = new RegisterWatchlistMemberRequest();
 
             var id = Guid.NewGuid();
@@ -185,6 +200,70 @@ namespace SmartFace.AutoEnrollment.Service
             registerRequest.Images.Add(imageAdd);
 
             await client.RegisterAsync(registerRequest);
+        }
+
+        private async Task EnrolExistingFaceAsync(Notification notification, StreamMapping mapping)
+        {
+            if (notification == null)
+            {
+                throw new ArgumentNullException(nameof(notification));
+            }
+
+            if (mapping == null)
+            {
+                throw new ArgumentNullException(nameof(mapping));
+            }
+
+            _logger.Information("Enrolling new member to watchlist {Watchlist}", mapping.WatchlistIds);
+
+            if (!(mapping.WatchlistIds?.Length > 0))
+            {
+                _logger.Information("No target watchlist id, skipped");
+                return;
+            }
+
+            var schema = _configuration.GetValue("Target:Schema", "http");
+            var host = _configuration.GetValue("Target:Host", "SFApi");
+            var port = _configuration.GetValue("Target:Port", 8098);
+
+            var baseUri = new Uri($"{schema}://{host}:{port}/");
+
+            var httpClient = _httpClientFactory.CreateClient();
+
+            if (_oAuthService.IsEnabled)
+            {
+                var authToken = await _oAuthService.GetTokenAsync();
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
+            }
+
+            var client = new SmartFaceRestApiClient(baseUri.ToString(), httpClient);
+
+            var wlMemberCreateRequest = new WatchlistMemberCreateRequest();
+
+            var id = Guid.NewGuid();
+
+            wlMemberCreateRequest.FullName = $"{id}";
+            wlMemberCreateRequest.DisplayName = $"{id}";
+
+            var wlMemberCreateResponse = await client.WatchlistMembersPOSTAsync(wlMemberCreateRequest);
+
+            foreach (var watchlistId in mapping.WatchlistIds)
+            {
+                await client.LinkToWatchlistAsync(new WatchlistMembersLinkRequest()
+                {
+                    WatchlistId = watchlistId,
+                    WatchlistMembersIds = new string[] { wlMemberCreateResponse.Id }
+                });
+            }
+
+            if (!string.IsNullOrEmpty(_debugOutputFolder))
+            {
+                await File.WriteAllBytesAsync(Path.Combine(_debugOutputFolder, $"{wlMemberCreateRequest.FullName}.jpg"), notification.CropImage);
+            }
+
+            await client.AddFaceFromSystemAsync(wlMemberCreateResponse.Id, new FaceWatchlistMemberLinkingRequest() {
+                FaceId = Guid.Parse(notification.FaceId)
+            });
         }
     }
 }
