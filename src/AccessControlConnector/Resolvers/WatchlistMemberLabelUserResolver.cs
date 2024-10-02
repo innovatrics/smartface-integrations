@@ -8,6 +8,7 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange;
 using Innovatrics.SmartFace.Models.API;
 using System.Linq;
+using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 {
@@ -37,39 +38,24 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             RESOLVER_KEY = NormalizeLabelKey(labelKey);
         }
 
-        public async Task<string> ResolveUserAsync(string watchlistMemberId)
+        public async Task<string> ResolveUserAsync(FaceGrantedNotification notification)
         {
-            if (watchlistMemberId == null)
+            if (notification == null)
             {
-                throw new ArgumentNullException(nameof(watchlistMemberId));
+                throw new ArgumentNullException(nameof(notification));
             }
 
-            this.logger.Information("Resolving {watchlistMemberId}", watchlistMemberId);
+            logger.Information("Resolving {watchlistMemberId}", notification.WatchlistMemberId);
 
-            var apiSchema = this.configuration.GetValue<string>("API:Schema", "http");
-            var apiHost = this.configuration.GetValue<string>("API:Host", "SFApi");
-            var apiPort = this.configuration.GetValue<int?>("API:Port", 80);
+            if (notification.WatchlistMemberLabels != null)
+            {
+                return notification.WatchlistMemberLabels?
+                                        .Where(w => w.Key.ToUpper() == RESOLVER_KEY)
+                                        .Select(s => s.Value)
+                                        .SingleOrDefault();
+            }
 
-            this.logger.Information("API configured to {schema}://{host}:{port}", apiSchema, apiHost, apiPort);
-
-            var httpClient = this.httpClientFactory.CreateClient();
-
-            var requestUri = $"{apiSchema}://{apiHost}:{apiPort}/api/v1/WatchlistMembers/{watchlistMemberId}";
-
-            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-            var httpRequest = await httpClient.SendAsync(httpRequestMessage);
-
-            httpRequest.EnsureSuccessStatusCode();
-
-            var httpRequestStringContent = await httpRequest.Content.ReadAsStringAsync();
-
-            var watchlistMember = Newtonsoft.Json.JsonConvert.DeserializeObject<WatchlistMember>(httpRequestStringContent);
-
-            return watchlistMember.Labels?
-                                    .Where(w => w.Key.ToUpper() == RESOLVER_KEY)
-                                    .Select(s => s.Value)
-                                    .SingleOrDefault();
+            return await FetchLabelFromAPI(notification);
         }
         
         private string NormalizeLabelKey(string labelKey)
@@ -81,6 +67,34 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
                                 .Skip(1);
 
             return string.Join('_', labelParts);
+        }
+
+        private async Task<string> FetchLabelFromAPI(FaceGrantedNotification notification)
+        {
+            var apiSchema = this.configuration.GetValue<string>("API:Schema", "http");
+            var apiHost = this.configuration.GetValue<string>("API:Host", "SFApi");
+            var apiPort = this.configuration.GetValue<int?>("API:Port", 80);
+
+            this.logger.Information("API configured to {schema}://{host}:{port}", apiSchema, apiHost, apiPort);
+
+            var httpClient = this.httpClientFactory.CreateClient();
+
+            var requestUri = $"{apiSchema}://{apiHost}:{apiPort}/api/v1/WatchlistMembers/{notification.WatchlistMemberId}";
+
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+            var httpRequest = await httpClient.SendAsync(httpRequestMessage);
+
+            httpRequest.EnsureSuccessStatusCode();
+
+            var httpRequestStringContent = await httpRequest.Content.ReadAsStringAsync();
+
+            var watchlistMember = Newtonsoft.Json.JsonConvert.DeserializeObject<WatchlistMember>(httpRequestStringContent);
+            
+            return watchlistMember.Labels?
+                                    .Where(w => w.Key.ToUpper() == RESOLVER_KEY)
+                                    .Select(s => s.Value)
+                                    .SingleOrDefault();
         }
     }
 }
