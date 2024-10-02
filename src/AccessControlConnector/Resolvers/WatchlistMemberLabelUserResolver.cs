@@ -34,13 +34,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
                 throw new ArgumentNullException(nameof(labelKey));
             }
 
-            var labelParts = labelKey
-                                .ToUpper()
-                                .Replace('-', '_')
-                                .Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries)
-                                .Skip(1);
-
-            this.RESOLVER_KEY = string.Join('_', labelParts);
+            RESOLVER_KEY = NormalizeLabelKey(labelKey);
         }
 
         public async Task<string> ResolveUserAsync(string watchlistMemberId)
@@ -52,9 +46,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 
             this.logger.Information("Resolving {watchlistMemberId}", watchlistMemberId);
 
-            var apiSchema = this.configuration.GetValue<string>("API:Schema");
-            var apiHost = this.configuration.GetValue<string>("API:Host");
-            var apiPort = this.configuration.GetValue<int?>("API:Port");
+            var apiSchema = this.configuration.GetValue<string>("API:Schema", "http");
+            var apiHost = this.configuration.GetValue<string>("API:Host", "SFApi");
+            var apiPort = this.configuration.GetValue<int?>("API:Port", 80);
 
             this.logger.Information("API configured to {schema}://{host}:{port}", apiSchema, apiHost, apiPort);
 
@@ -72,12 +66,21 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 
             var watchlistMember = Newtonsoft.Json.JsonConvert.DeserializeObject<WatchlistMember>(httpRequestStringContent);
 
-            var cardId = watchlistMember.Labels?
-                                            .Where(w => w.Key.ToUpper() == this.RESOLVER_KEY)
-                                            .Select(s => s.Value)
-                                            .SingleOrDefault();
+            return watchlistMember.Labels?
+                                    .Where(w => w.Key.ToUpper() == RESOLVER_KEY)
+                                    .Select(s => s.Value)
+                                    .SingleOrDefault();
+        }
+        
+        private string NormalizeLabelKey(string labelKey)
+        {
+            var labelParts = labelKey
+                                .ToUpper()
+                                .Replace('-', '_')
+                                .Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries)
+                                .Skip(1);
 
-            return cardId;
+            return string.Join('_', labelParts);
         }
     }
 }

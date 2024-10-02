@@ -7,6 +7,7 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.AXIS;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.NN;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
@@ -63,6 +64,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AccessControlConnectorTypes.AXIS_IO_PORT:
                     return new IOPortConnector(this.logger, this.httpClientFactory);
+                
+                case AccessControlConnectorTypes.NN_IP_INTERCOM:
+                    return new IpIntercomConnector(this.logger, this.httpClientFactory);
             }
         }
     }
