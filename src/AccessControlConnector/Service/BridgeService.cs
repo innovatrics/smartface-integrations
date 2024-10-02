@@ -68,7 +68,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
                     accessControlUser = await userResolver.ResolveUserAsync(notification);
 
-                    this.logger.Information("Resolved {wlMember} to {accessControlUser}", notification.WatchlistMemberFullName, accessControlUser);
+                    this.logger.Information("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
 
                     if (accessControlUser == null)
                     {

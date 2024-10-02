@@ -45,7 +45,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            logger.Information("Resolving {watchlistMemberId}", notification.WatchlistMemberId);
+            logger.Information("Resolving {watchlistMemberId} ({watchlistMemberName})", notification.WatchlistMemberId, notification.WatchlistMemberFullName);
 
             if (notification.WatchlistMemberLabels != null)
             {
