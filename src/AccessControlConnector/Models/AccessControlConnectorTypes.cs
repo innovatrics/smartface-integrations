@@ -10,5 +10,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
         public const string AXIS_A1001                  = "AXIS_A1001";
         public const string AXIS_SIRENE                 = "AXIS_SIRENE";
         public const string AXIS_IO_PORT                = "AXIS_IO_PORT";
+        public const string NN_IP_INTERCOM              = "2N_IP_INTERCOM";
     }
 }

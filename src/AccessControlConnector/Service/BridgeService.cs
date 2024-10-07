@@ -66,9 +66,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 {
                     var userResolver = this.userResolverFactory.Create(cameraToAccessControlMapping.UserResolver);
 
-                    accessControlUser = await userResolver.ResolveUserAsync(notification.WatchlistMemberId);
+                    accessControlUser = await userResolver.ResolveUserAsync(notification);
 
-                    this.logger.Information("Resolved {wlMember} to {accessControlUser}", notification.WatchlistMemberFullName, accessControlUser);
+                    this.logger.Information("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
 
                     if (accessControlUser == null)
                     {

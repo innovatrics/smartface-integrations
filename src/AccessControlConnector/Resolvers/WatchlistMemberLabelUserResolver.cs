@@ -8,6 +8,7 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange;
 using Innovatrics.SmartFace.Models.API;
 using System.Linq;
+using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 {
@@ -34,33 +35,51 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
                 throw new ArgumentNullException(nameof(labelKey));
             }
 
+            RESOLVER_KEY = NormalizeLabelKey(labelKey);
+        }
+
+        public async Task<string> ResolveUserAsync(FaceGrantedNotification notification)
+        {
+            if (notification == null)
+            {
+                throw new ArgumentNullException(nameof(notification));
+            }
+
+            logger.Information("Resolving {watchlistMemberId} ({watchlistMemberName})", notification.WatchlistMemberId, notification.WatchlistMemberFullName);
+
+            if (notification.WatchlistMemberLabels != null)
+            {
+                return notification.WatchlistMemberLabels?
+                                        .Where(w => w.Key.ToUpper() == RESOLVER_KEY)
+                                        .Select(s => s.Value)
+                                        .SingleOrDefault();
+            }
+
+            return await FetchLabelFromAPI(notification);
+        }
+        
+        private string NormalizeLabelKey(string labelKey)
+        {
             var labelParts = labelKey
                                 .ToUpper()
                                 .Replace('-', '_')
                                 .Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries)
                                 .Skip(1);
 
-            this.RESOLVER_KEY = string.Join('_', labelParts);
+            return string.Join('_', labelParts);
         }
 
-        public async Task<string> ResolveUserAsync(string watchlistMemberId)
+        private async Task<string> FetchLabelFromAPI(FaceGrantedNotification notification)
         {
-            if (watchlistMemberId == null)
-            {
-                throw new ArgumentNullException(nameof(watchlistMemberId));
-            }
-
-            this.logger.Information("Resolving {watchlistMemberId}", watchlistMemberId);
-
-            var apiSchema = this.configuration.GetValue<string>("API:Schema");
-            var apiHost = this.configuration.GetValue<string>("API:Host");
-            var apiPort = this.configuration.GetValue<int?>("API:Port");
+            var apiSchema = this.configuration.GetValue<string>("API:Schema", "http");
+            var apiHost = this.configuration.GetValue<string>("API:Host", "SFApi");
+            var apiPort = this.configuration.GetValue<int?>("API:Port", 80);
 
             this.logger.Information("API configured to {schema}://{host}:{port}", apiSchema, apiHost, apiPort);
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"{apiSchema}://{apiHost}:{apiPort}/api/v1/WatchlistMembers/{watchlistMemberId}";
+            var requestUri = $"{apiSchema}://{apiHost}:{apiPort}/api/v1/WatchlistMembers/{notification.WatchlistMemberId}";
 
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
@@ -71,13 +90,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             var httpRequestStringContent = await httpRequest.Content.ReadAsStringAsync();
 
             var watchlistMember = Newtonsoft.Json.JsonConvert.DeserializeObject<WatchlistMember>(httpRequestStringContent);
-
-            var cardId = watchlistMember.Labels?
-                                            .Where(w => w.Key.ToUpper() == this.RESOLVER_KEY)
-                                            .Select(s => s.Value)
-                                            .SingleOrDefault();
-
-            return cardId;
+            
+            return watchlistMember.Labels?
+                                    .Where(w => w.Key.ToUpper() == RESOLVER_KEY)
+                                    .Select(s => s.Value)
+                                    .SingleOrDefault();
         }
     }
 }
