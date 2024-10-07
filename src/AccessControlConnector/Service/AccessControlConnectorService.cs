@@ -15,7 +15,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        private ActionBlock<Notification> _actionBlock;
+        private ActionBlock<FaceGrantedNotification> _actionBlock;
 
         public AccessControlConnectorService(
             ILogger logger,
@@ -46,7 +46,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
         public void Start()
         {
-            _actionBlock = new ActionBlock<Notification>(async notification =>
+            _actionBlock = new ActionBlock<FaceGrantedNotification>(async notification =>
             {
                 try
                 {
@@ -90,7 +90,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             await _actionBlock.Completion;
         }
 
-        public void ProcessNotification(Notification notification)
+        public void ProcessNotification(FaceGrantedNotification notification)
         {
             if (notification == null)
             {
@@ -100,7 +100,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _actionBlock.Post(notification);
         }
 
-        private async Task EnrollAsync(Notification notification, StreamMapping mapping)
+        private async Task EnrollAsync(FaceGrantedNotification notification, StreamMapping mapping)
         {
             if (notification == null)
             {
@@ -115,7 +115,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             await RegisterAsync(notification, mapping);
         }
 
-        private async Task RegisterAsync(Notification notification, StreamMapping mapping)
+        private async Task RegisterAsync(FaceGrantedNotification notification, StreamMapping mapping)
         {
             if (notification == null)
             {
@@ -190,7 +190,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             await client.RegisterAsync(registerRequest);
         }
 
-        private async Task EnrolExistingFaceAsync(Notification notification, StreamMapping mapping)
+        private async Task EnrolExistingFaceAsync(FaceGrantedNotification notification, StreamMapping mapping)
         {
             if (notification == null)
             {
@@ -252,6 +252,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             await client.AddFaceFromSystemAsync(wlMemberCreateResponse.Id, new FaceWatchlistMemberLinkingRequest() {
                 FaceId = Guid.Parse(notification.FaceId)
             });
+        }
+
+        internal async Task SendKeepAliveSignalAsync()
+        {
+            throw new NotImplementedException();
         }
     }
 }

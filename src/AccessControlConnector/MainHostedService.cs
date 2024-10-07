@@ -131,7 +131,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 
             this.logger.Debug("Notification details {@notification}", notification);
 
-            await this.accessControlConnectorService.ProcessFaceGrantedNotificationAsync(notification);
+            await this.accessControlConnectorService.ProcessNotification(notification);
         }
 
         private void startPingTimer()
