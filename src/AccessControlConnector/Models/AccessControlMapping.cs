@@ -24,5 +24,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
         
         public string Switch                            { get; set; }
         public string Action                            { get; set; }
+        
+        public int? NextCallDelayMs                     { get; set; }
     }
 }

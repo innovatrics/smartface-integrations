@@ -17,9 +17,9 @@ To run application localy, follow these steps
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.2.4 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.2.4 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.2.4`
+ - `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.2.5 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.2.5 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.2.5`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
 
 ## Usage

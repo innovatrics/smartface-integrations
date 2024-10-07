@@ -7,6 +7,7 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
+using System.Threading;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
@@ -77,6 +78,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 }
 
                 await accessControlConnector.OpenAsync(cameraToAccessControlMapping, accessControlUser);
+
+                if (cameraToAccessControlMapping.NextCallDelayMs != null && 
+                    cameraToAccessControlMapping.NextCallDelayMs > 0)
+                {
+                    this.logger.Information("Delay next call for {nextCallDelayMs} ms", cameraToAccessControlMapping.NextCallDelayMs);
+
+                    await Task.Delay(cameraToAccessControlMapping.NextCallDelayMs.Value);
+                }
             }
         }
 
