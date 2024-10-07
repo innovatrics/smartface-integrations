@@ -16,7 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly GrpcReaderFactory grpcReaderFactory;
-        private readonly IBridgeService bridge;
+        private readonly AccessControlConnectorService accessControlConnectorService;
         private GrpcNotificationReader grpcNotificationReader;
         private System.Timers.Timer accessControllerPingTimer;
         private System.Timers.Timer keepAlivePingTimer;
@@ -26,13 +26,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             ILogger logger,
             IConfiguration configuration,
             GrpcReaderFactory grpcReaderFactory,
-            IBridgeService bridge
+            AccessControlConnectorService accessControlConnectorService
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.grpcReaderFactory = grpcReaderFactory ?? throw new ArgumentNullException(nameof(grpcReaderFactory));
-            this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
+            this.accessControlConnectorService = accessControlConnectorService ?? throw new ArgumentNullException(nameof(accessControlConnectorService));
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -131,7 +131,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 
             this.logger.Debug("Notification details {@notification}", notification);
 
-            await this.bridge.ProcessFaceGrantedNotificationAsync(notification);
+            await this.accessControlConnectorService.ProcessFaceGrantedNotificationAsync(notification);
         }
 
         private void startPingTimer()
@@ -186,7 +186,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                 {
                     this.logger.Information("KeepAlive interval elapsed, process ping");
 
-                    await this.bridge.SendKeepAliveSignalAsync();
+                    await this.accessControlConnectorService.SendKeepAliveSignalAsync();
                 };
 
                 keepAlivePingTimer.Start();
