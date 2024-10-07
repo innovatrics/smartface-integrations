@@ -81,6 +81,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             services.AddSingleton<IUserResolverFactory, UserResolverFactory>();
             services.AddSingleton<IBridgeService, BridgeService>();
 
+            services.AddSingleton<AccessControlConnectorService>();
+
             services.AddHostedService<MainHostedService>();
 
             return services;
