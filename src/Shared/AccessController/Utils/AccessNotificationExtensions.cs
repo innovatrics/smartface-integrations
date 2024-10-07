@@ -1,4 +1,5 @@
-﻿using Innovatrics.Smartface;
+﻿using System.Linq;
+using Innovatrics.Smartface;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
@@ -30,6 +31,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 WatchlistMemberExternalId = accessNotificationGranted.WatchlistMemberExternalId,
                 WatchlistExternalId = accessNotificationGranted.WatchlistExternalId,
                 WatchlistFullName = accessNotificationGranted.WatchlistFullName,
+                WatchlistMemberLabels = accessNotificationGranted.WatchlistMemberLabels.ToArray(),
                 WatchlistId = accessNotificationGranted.WatchlistId,
                 MatchResultScore = accessNotificationGranted.MatchResultScore,
                 CropImage = accessNotificationGranted.CropImage.ToByteArray(),

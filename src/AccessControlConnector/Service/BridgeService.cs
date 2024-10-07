@@ -7,6 +7,7 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
+using System.Threading;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
@@ -66,9 +67,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 {
                     var userResolver = this.userResolverFactory.Create(cameraToAccessControlMapping.UserResolver);
 
-                    accessControlUser = await userResolver.ResolveUserAsync(notification.WatchlistMemberId);
+                    accessControlUser = await userResolver.ResolveUserAsync(notification);
 
-                    this.logger.Information("Resolved {wlMember} to {accessControlUser}", notification.WatchlistMemberFullName, accessControlUser);
+                    this.logger.Information("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
 
                     if (accessControlUser == null)
                     {
@@ -77,6 +78,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 }
 
                 await accessControlConnector.OpenAsync(cameraToAccessControlMapping, accessControlUser);
+
+                if (cameraToAccessControlMapping.NextCallDelayMs != null && 
+                    cameraToAccessControlMapping.NextCallDelayMs > 0)
+                {
+                    this.logger.Information("Delay next call for {nextCallDelayMs} ms", cameraToAccessControlMapping.NextCallDelayMs);
+
+                    await Task.Delay(cameraToAccessControlMapping.NextCallDelayMs.Value);
+                }
             }
         }
 
