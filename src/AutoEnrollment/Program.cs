@@ -1,21 +1,21 @@
 ﻿using System;
 using System.IO;
+using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
+using Innovatrics.SmartFace.Integrations.Shared.Extensions;
+using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
-using Innovatrics.SmartFace.Integrations.Shared.Logging;
-using Innovatrics.SmartFace.Integrations.Shared.Extensions;
-using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
-using Innovatrics.SmartFace.Integrations.AccessControlConnector.Services;
+using SmartFace.AutoEnrollment.NotificationReceivers;
+using SmartFace.AutoEnrollment.Service;
 
-namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
+namespace SmartFace.AutoEnrollment
 {
     public class Program
     {
-        public const string LOG_FILE_NAME = "SmartFace.AccessControlConnector.log";
-        public const string JSON_CONFIG_FILE_NAME = "appsettings.json";
+        public const string LogFileName = "SmartFace.AutoEnrollment.log";
+        public const string JsonConfigFileName = "appsettings.json";
 
         private static void Main(string[] args)
         {
@@ -23,9 +23,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             {
                 var configurationRoot = ConfigureBuilder(args);
 
-                var logger = ConfigureLogger(args, configurationRoot);
+                var logger = ConfigureLogger(configurationRoot);
 
-                Log.Information("Starting up.");
+                Log.Information("Starting up");
 
                 var hostBuilder = CreateHostBuilder(args, logger, configurationRoot);
                 using var host = hostBuilder.Build();
@@ -34,23 +34,22 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             }
             catch (Exception ex)
             {
-                Log.Fatal(ex, "Host failed.");
+                Log.Fatal(ex, "Host failed");
                 Log.CloseAndFlush();
                 throw;
             }
 
-            Log.Information("Program exited successfully.");
+            Log.Information("Program exited successfully");
             Log.CloseAndFlush();
         }
 
-        private static ILogger ConfigureLogger(string[] args, IConfiguration configuration)
+        private static ILogger ConfigureLogger(IConfiguration configuration)
         {
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
-            // ReSharper disable once StringLiteralTypo
             var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace"));
-            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
-            var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
+            logDir = configuration.GetValue("Serilog:LogDirectory", logDir);
+            var logFilePath = Path.Combine(logDir, LogFileName);
 
             var loggerConfiguration = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
@@ -67,32 +66,31 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             return logger;
         }
 
-        private static IServiceCollection ConfigureServices(IServiceCollection services, ILogger logger)
+        private static void ConfigureServices(IServiceCollection services, ILogger logger)
         {
             services.AddHttpClient();
-
-            services.AddSingleton<ILogger>(logger);
+            services.AddSingleton(logger);
 
             services.AddSingleton<IGrpcStreamSubscriber, GrpcStreamSubscriber>();
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
 
-            services.AddSingleton<IAccessControlConnectorFactory, AccessControlConnectorFactory>();
-            services.AddSingleton<IUserResolverFactory, UserResolverFactory>();
-            services.AddSingleton<IBridgeService, BridgeService>();
-
-            services.AddSingleton<AccessControlConnectorService>();
+            services.AddSingleton<OAuthService>();
+            services.AddSingleton<ExclusiveMemoryCache>();
+            services.AddSingleton<DebouncingService>();
+            services.AddSingleton<ValidationService>();
+            services.AddSingleton<StreamConfigurationService>();
+            services.AddSingleton<INotificationSourceFactory, NotificationSourceFactory>();
+            services.AddSingleton<AutoEnrollmentService>();
 
             services.AddHostedService<MainHostedService>();
-
-            return services;
         }
 
         private static IConfigurationRoot ConfigureBuilder(string[] args)
         {
             return new ConfigurationBuilder()
                     .SetMainModuleBasePath()
-                    .AddJsonFile(JSON_CONFIG_FILE_NAME, optional: false)
+                    .AddJsonFile(JsonConfigFileName, optional: false)
                     .AddEnvironmentVariables()
                     .AddCommandLine(args)
                     .Build();
@@ -106,7 +104,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                     builder.Sources.Clear();
                     builder.AddConfiguration(configurationRoot);
                 })
-                .ConfigureServices((context, services) =>
+                .ConfigureServices((_, services) =>
                 {
                     ConfigureServices(services, logger);
                 })
@@ -115,6 +113,5 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                 .UseWindowsService()
             ;
         }
-
     }
 }
