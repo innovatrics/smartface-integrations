@@ -1,5 +1,5 @@
 # AutoEnrollment App
-This app connects to SmartFace GraphQL endpoint and listens to NoMatch notification. Based on defined criteria then auto-enroll all unmatched people that pass validation criteria into one or many watchlists.
+AutoEnrollment App connects to SmartFace GraphQL endpoint and listens to NoMatch notification. Based on defined criteria then auto-enroll all unmatched people that pass validation criteria into one or many watchlists.
 
 ## Development
 To run application localy, follow these steps
