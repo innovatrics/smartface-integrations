@@ -86,7 +86,6 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
                     .SetMainModuleBasePath()
                     .AddJsonFile(JSON_CONFIG_FILE_NAME, optional: false)
                     .AddEnvironmentVariables()
-                    .AddEnvironmentVariables($"SF_INT_RELAY_")
                     .AddCommandLine(args)
                     .Build();
         }

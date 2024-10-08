@@ -92,7 +92,6 @@ namespace SmartFace.AutoEnrollment
                     .SetMainModuleBasePath()
                     .AddJsonFile(JsonConfigFileName, optional: false)
                     .AddEnvironmentVariables()
-                    .AddEnvironmentVariables("SF_INT_RELAY_")
                     .AddCommandLine(args)
                     .Build();
         }
