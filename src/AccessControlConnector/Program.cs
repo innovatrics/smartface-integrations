@@ -14,7 +14,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 {
     public class Program
     {
-        public const string LOG_FILE_NAME = "SmartFace.Integrations.AccessControl.log";
+        public const string LOG_FILE_NAME = "SmartFace.AccessControlConnector.log";
         public const string JSON_CONFIG_FILE_NAME = "appsettings.json";
 
         private static void Main(string[] args)
@@ -48,7 +48,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
             // ReSharper disable once StringLiteralTypo
-            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "AccessControlConnector"));
+            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace"));
             logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
