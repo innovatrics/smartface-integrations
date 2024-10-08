@@ -48,7 +48,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
             // ReSharper disable once StringLiteralTypo
-            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AccessControl"));
+            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "AccessControlConnector"));
             logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
