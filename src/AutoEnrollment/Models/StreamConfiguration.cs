@@ -2,7 +2,7 @@
 
 namespace SmartFace.AutoEnrollment.Models
 {
-    public class StreamMapping
+    public class StreamConfiguration
     {
         public string StreamGroupId { get; set; }
         public Guid StreamId { get; set; }

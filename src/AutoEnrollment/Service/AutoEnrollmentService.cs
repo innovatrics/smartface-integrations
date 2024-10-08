@@ -22,7 +22,7 @@ namespace SmartFace.AutoEnrollment.Service
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ValidationService _validationService;
-        private readonly StreamMappingService _streamMappingService;
+        private readonly StreamConfigurationService _streamMappingService;
         private readonly DebouncingService _debouncingService;
         private readonly OAuthService _oAuthService;
         private readonly string _debugOutputFolder;
@@ -36,7 +36,7 @@ namespace SmartFace.AutoEnrollment.Service
             OAuthService oAuthService,
             DebouncingService debouncingService,
             ValidationService validationService,
-            StreamMappingService streamMappingService)
+            StreamConfigurationService streamMappingService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -112,7 +112,7 @@ namespace SmartFace.AutoEnrollment.Service
             _actionBlock.Post(notification);
         }
 
-        private async Task EnrollAsync(Notification notification, StreamMapping mapping)
+        private async Task EnrollAsync(Notification notification, StreamConfiguration mapping)
         {
             if (notification == null)
             {
@@ -127,7 +127,7 @@ namespace SmartFace.AutoEnrollment.Service
             await RegisterAsync(notification, mapping);
         }
 
-        private async Task RegisterAsync(Notification notification, StreamMapping mapping)
+        private async Task RegisterAsync(Notification notification, StreamConfiguration mapping)
         {
             if (notification == null)
             {
@@ -202,7 +202,7 @@ namespace SmartFace.AutoEnrollment.Service
             await client.RegisterAsync(registerRequest);
         }
 
-        private async Task EnrolExistingFaceAsync(Notification notification, StreamMapping mapping)
+        private async Task EnrolExistingFaceAsync(Notification notification, StreamConfiguration mapping)
         {
             if (notification == null)
             {

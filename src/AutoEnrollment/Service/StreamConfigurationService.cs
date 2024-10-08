@@ -6,16 +6,16 @@ using SmartFace.AutoEnrollment.Models;
 
 namespace SmartFace.AutoEnrollment.Service
 {
-    public class StreamMappingService
+    public class StreamConfigurationService
     {
         private readonly IConfiguration _configuration;
 
-        public StreamMappingService(IConfiguration configuration)
+        public StreamConfigurationService(IConfiguration configuration)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
-        public ICollection<StreamMapping> CreateMappings(string streamId)
+        public ICollection<StreamConfiguration> CreateMappings(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
             {
@@ -26,11 +26,11 @@ namespace SmartFace.AutoEnrollment.Service
 
             config.Conditions = NormalizeConditionsWithDefaults(config.Conditions);
 
-            var streamMapping = _configuration.GetSection("StreamMappings").Get<StreamMapping[]>();
+            var streamMapping = _configuration.GetSection("StreamConfigurations").Get<StreamConfiguration[]>();
 
             if (streamMapping == null)
             {
-                streamMapping = Array.Empty<StreamMapping>();
+                streamMapping = Array.Empty<StreamConfiguration>();
             }
 
             streamMapping = streamMapping
@@ -41,7 +41,7 @@ namespace SmartFace.AutoEnrollment.Service
             if (streamMapping.Length == 0 && config.ApplyForAllStreams)
             {
                 streamMapping = new[] {
-                    NormalizeMappingWithDefaults(new StreamMapping(), config.Conditions)
+                    NormalizeMappingWithDefaults(new StreamConfiguration(), config.Conditions)
                 };
             }
 
@@ -83,7 +83,7 @@ namespace SmartFace.AutoEnrollment.Service
             return conditions;
         }
 
-        private static StreamMapping NormalizeMappingWithDefaults(StreamMapping mapping, Conditions config)
+        private static StreamConfiguration NormalizeMappingWithDefaults(StreamConfiguration mapping, Conditions config)
         {
             mapping.FaceQuality ??= config.FaceQuality;
             mapping.TemplateQuality ??= config.TemplateQuality;

@@ -24,7 +24,7 @@ namespace SmartFace.AutoEnrollment.Service
             _hardAbsoluteExpirationMs = configuration.GetValue<int>("Config:HardAbsoluteExpirationMs", 10000);
         }
 
-        public void Block(Notification notification, StreamMapping mapping)
+        public void Block(Notification notification, StreamConfiguration mapping)
         {
             if (mapping.TrackletDebounceMs > 0)
             {
@@ -42,7 +42,7 @@ namespace SmartFace.AutoEnrollment.Service
             }
         }
 
-        public bool IsBlocked(Notification notification, StreamMapping mapping)
+        public bool IsBlocked(Notification notification, StreamConfiguration mapping)
         {
             if (mapping.TrackletDebounceMs > 0)
             {

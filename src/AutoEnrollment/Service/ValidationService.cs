@@ -9,7 +9,7 @@ namespace SmartFace.AutoEnrollment.Service
     {
         private readonly ILogger _logger;
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateFaceQuality = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateFaceQuality = (input) =>
         {
             if (input.notification.FaceQuality == null)
             {
@@ -24,7 +24,7 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         };
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateTemplateQuality = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateTemplateQuality = (input) =>
         {
             if (input.notification.TemplateQuality == null)
             {
@@ -39,7 +39,7 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         };
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateFaceSize = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateFaceSize = (input) =>
         {
             if (input.notification.FaceSize == null)
             {
@@ -56,7 +56,7 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         };
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateFaceArea = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateFaceArea = (input) =>
         {
             if (input.notification.FaceArea == null)
             {
@@ -73,7 +73,7 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         };
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateFaceOrder = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateFaceOrder = (input) =>
         {
             if (input.notification.FaceOrder == null)
             {
@@ -90,7 +90,7 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         };
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateFacesOnFrameCount = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateFacesOnFrameCount = (input) =>
         {
             if (input.notification.FacesOnFrameCount == null)
             {
@@ -107,7 +107,7 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         };
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateBrightness = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateBrightness = (input) =>
         {
             if (input.notification.Brightness == null)
             {
@@ -124,7 +124,7 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         };
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateSharpness = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateSharpness = (input) =>
         {
             if (input.notification.Sharpness == null)
             {
@@ -141,7 +141,7 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         };
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateYawAngle = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateYawAngle = (input) =>
         {
             if (input.notification.YawAngle == null)
             {
@@ -159,7 +159,7 @@ namespace SmartFace.AutoEnrollment.Service
         };
 
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validateRollAngle = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateRollAngle = (input) =>
         {
             if (input.notification.RollAngle == null)
             {
@@ -177,7 +177,7 @@ namespace SmartFace.AutoEnrollment.Service
         };
 
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool> validatePitchAngle = (input) =>
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validatePitchAngle = (input) =>
         {
             if (input.notification.PitchAngle == null)
             {
@@ -194,7 +194,7 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         };
 
-        private static readonly Func<(Notification notification, StreamMapping streamMapping), bool>[] validateAll = new[] {
+        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool>[] validateAll = new[] {
             validateFaceQuality,
             validateTemplateQuality,
             validateFaceSize,
@@ -213,7 +213,7 @@ namespace SmartFace.AutoEnrollment.Service
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public bool Validate(Notification notification, StreamMapping streamMapping)
+        public bool Validate(Notification notification, StreamConfiguration streamMapping)
         {
             _logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templatequality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle} pitchAngle {pitchAngle}", 
                                             notification.FaceQuality, notification.TemplateQuality, notification.FaceSize,

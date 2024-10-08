@@ -79,7 +79,7 @@ namespace SmartFace.AutoEnrollment
             services.AddSingleton<ExclusiveMemoryCache>();
             services.AddSingleton<DebouncingService>();
             services.AddSingleton<ValidationService>();
-            services.AddSingleton<StreamMappingService>();
+            services.AddSingleton<StreamConfigurationService>();
             services.AddSingleton<INotificationSourceFactory, NotificationSourceFactory>();
             services.AddSingleton<AutoEnrollmentService>();
 
