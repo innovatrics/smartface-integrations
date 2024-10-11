@@ -79,9 +79,9 @@ namespace SmartFace.AutoEnrollment.Service
                                 continue;
                             }
 
-                            _debouncingService.Block(notification, mapping);
-
                             await EnrollAsync(notification, mapping);
+                            
+                            _debouncingService.Block(notification, mapping);
                         }
                     }
                 }
