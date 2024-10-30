@@ -4,8 +4,8 @@ import base64
 import os
 
 # Define the API endpoint
-API_ENDPOINT = "http://sface-integ-2u:8098/api/v1/WatchlistMembers/Register"
-WATCHLIST_ID = "13d80d4b-f512-46ca-9d36-3732fd615f04"
+API_ENDPOINT = "https://api.guard.smartfacecloud.com/api/v1/WatchlistMembers/Register"
+WATCHLIST_ID = "0d3b0376-b94a-4195-bbce-980ee2e61a67"
 IMAGE_FOLDER = "images"  # Folder where images are stored
 
 countSuccess = 0
@@ -46,6 +46,7 @@ def send_data_to_api(name, image_data, recordnumber):
             "maxFaces": 20,
             "confidenceThreshold": 300
         },
+        "faceValidationMode": "none",
         "faceDetectorResourceId": "cpu",
         "templateGeneratorResourceId": "cpu",
         "keepAutoLearnPhotos": False,
@@ -55,8 +56,12 @@ def send_data_to_api(name, image_data, recordnumber):
         "labels": []
     }
 
-    headers = {'Content-Type': 'application/json'}
-    
+   
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJSUz..."    
+    }
+
     # Sending the POST request to the API
     response = requests.post(API_ENDPOINT, headers=headers, data=json.dumps(payload))
     
