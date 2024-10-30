@@ -1,4 +1,3 @@
-import csv
 import requests
 import json
 import base64
@@ -14,21 +13,18 @@ countFailed = 0
 failedData = []
 
 # Function to read and encode image as base64
-def get_image_base64(image_filename):
-    # Construct the full path to the image file
-    image_path = os.path.join(IMAGE_FOLDER, image_filename)
-    
+def get_image_base64(image_path):
     try:
         # Read the image file and encode it to base64
         with open(image_path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
         return encoded_string
     except FileNotFoundError:
-        print(f"Image file '{image_filename}' not found.")
+        print(f"Image file '{image_path}' not found.")
         return ""
 
 # Function to send POST request to the API
-def send_data_to_api(name, full_name, note, image_data, years,recordnumber):
+def send_data_to_api(name, image_data, recordnumber):
     global countSuccess
     global countFailed
     global failedData
@@ -55,13 +51,8 @@ def send_data_to_api(name, full_name, note, image_data, years,recordnumber):
         "keepAutoLearnPhotos": False,
         "displayName": name,
         "fullName": name,
-        "note": years,
-        "labels": [{
-            
-            "key": "years",
-            "value": years
-            }
-        ]
+        "note": "",
+        "labels": []
     }
 
     headers = {'Content-Type': 'application/json'}
@@ -70,48 +61,42 @@ def send_data_to_api(name, full_name, note, image_data, years,recordnumber):
     response = requests.post(API_ENDPOINT, headers=headers, data=json.dumps(payload))
     
     if response.status_code == 201:
-        print(f"Success: {note} data sent.")
+        print(f"Success: {name} data sent.")
         countSuccess += 1
     else:
-        failedMessage = f"Failed to send data for {note}. Status code: {response.status_code}, Response: {response.text}"
+        failedMessage = f"Failed to send data for {name}. Status code: {response.status_code}, Response: {response.text}"
         print(failedMessage)
         countFailed += 1
         failedData.append({
-            'name': note,
+            'name': name,
             'status': response.status_code,
             'response': response.text
         })  
 
-# Function to read CSV and process data
-def process_csv_and_send_data(csv_file_path):
-    with open(csv_file_path, mode='r', encoding='utf-8-sig') as file:
-        csv_reader = csv.DictReader(file, quotechar='"')
+# Function to process images and send data
+def process_images_and_send_data():
+    recordnumber = 1
+    
+    for image_filename in os.listdir(IMAGE_FOLDER):
+        # Ensure we are only processing image files
+        if not image_filename.lower().endswith(('.png', '.jpg', '.jpeg', '.jfif')):
+            continue
         
-        # Print the headers to check if they are correct
-        headers = csv_reader.fieldnames
-        print("CSV Headers:", headers)  # This will show what headers are actually being recognized
+        image_path = os.path.join(IMAGE_FOLDER, image_filename)
         
-        recordnumber = 1
-        
-        for row in csv_reader:
-            # Check if the 'Name' column exists
-            if 'Name' not in row:
-                print("Error: 'Name' column not found in the CSV. Check the headers.")
-                return  # Stop the script if 'Name' column is missing
-            
-            # Extract relevant data from CSV
-            name = row['Name']
-            note = row['Name and Surname']
-            image_file = row['Images']  # Get the image filename from the 'Images' column
-            years = row['Years']
-            
-            # Encode the image to base64
-            image_data = get_image_base64(image_file) if image_file else ""
+        # Use the first part of the filename before any underscore as the name
+        filename_without_ext = os.path.splitext(image_filename)[0]
+        name = filename_without_ext.split('_')[0]  # Take only the part before the first underscore
 
-            # Call API with the extracted data
-            send_data_to_api(name, name, note, image_data, years, recordnumber)
-            recordnumber += 1
+        # Encode the image to base64
+        image_data = get_image_base64(image_path)
 
+        # Call API with the image data
+        send_data_to_api(name, image_data, recordnumber)
+        recordnumber += 1
+
+
+# Function to log failed data
 def log_failed_data(log_file_path, failed_data):
     # Open the log file in append mode
     with open(log_file_path, 'a', encoding='utf-8') as log_file:
@@ -125,16 +110,13 @@ def log_failed_data(log_file_path, failed_data):
             log_file.write(f"Response: {fail['response']}\n")
             log_file.write("\n")  # Add a newline to separate entries
 
-# Specify the path to your CSV file
-csv_file_path = r'c:\Users\jberes\Documents\work\Projects\2024\20th-Anniversary\scripts\seedingScript\employees_v01.csv'
-
-# Process CSV and send data
-process_csv_and_send_data(csv_file_path)
+# Process images and send data
+process_images_and_send_data()
 
 # Example usage after processing all data
 log_file_path = 'failed_data_log.txt'
 
-# Call the logging function after your CSV processing is done
+# Call the logging function after image processing is done
 if failedData:
     log_failed_data(log_file_path, failedData)
 
