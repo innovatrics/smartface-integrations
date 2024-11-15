@@ -74,6 +74,8 @@ Add following pattern to existing docker compose:
       - StreamConfigurations__0__PitchAngle__Max=25
       - StreamConfigurations__0__RollAngle__Min=-15
       - StreamConfigurations__0__RollAngle__Max=15
+      - StreamConfigurations__0__FramePaddingAbsolute=50
+      - StreamConfigurations__0__FramePaddingRelative=0.15
 
       - StreamConfigurations__1__StreamId=d5ff8f40-f900-4492-8ecc-6a2539648964
       - StreamConfigurations__1__WatchlistIds__0=ip-of-the-watchlist

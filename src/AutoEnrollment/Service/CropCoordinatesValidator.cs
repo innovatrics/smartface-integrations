@@ -16,18 +16,27 @@ namespace SmartFace.AutoEnrollment.Service
 
         public bool Validate(Notification notification, StreamConfiguration streamMapping)
         {
-            _logger.Information("CropCoordinates: {cropLeftTopX}, {cropLeftTopY}, {cropRightBottomX}, {cropRightBottomY}",
+            if (streamMapping.FramePaddingAbsolute == null && streamMapping.FramePaddingRelative == null)
+            {
+                return true;
+            }
+
+            _logger.Information("CropCoordinates: {cropLeftTopX}, {cropLeftTopY}, {cropRightBottomX}, {cropRightBottomY}, {absolute}, {relative}",
                                     notification.CropCoordinates.CropLeftTopX, notification.CropCoordinates.CropLeftTopY,
-                                    notification.CropCoordinates.CropRightBottomX, notification.CropCoordinates.CropRightBottomY
+                                    notification.CropCoordinates.CropRightBottomX, notification.CropCoordinates.CropRightBottomY,
+                                    streamMapping.FramePaddingAbsolute, streamMapping.FramePaddingRelative
                                 );
 
+            
+            
             return IsImageWithinRange(
                 notification.FrameInformation.Width, notification.FrameInformation.Height,
                 notification.CropCoordinates.CropLeftTopX, notification.CropCoordinates.CropLeftTopY,
                 notification.CropCoordinates.CropRightTopX, notification.CropCoordinates.CropRightTopY,
                 notification.CropCoordinates.CropLeftBottomX, notification.CropCoordinates.CropLeftBottomY,
                 notification.CropCoordinates.CropRightBottomX, notification.CropCoordinates.CropRightBottomY,
-                0.0, false);
+                streamMapping.FramePaddingRelative ?? streamMapping.FramePaddingAbsolute ?? 0.0,
+                streamMapping.FramePaddingRelative != null);
         }
 
         public static bool IsImageWithinRange(
