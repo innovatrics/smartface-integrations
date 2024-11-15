@@ -103,6 +103,16 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
                                 id,
                                 trackletId,
                                 cropImage,
+                                cropCoordinates {
+                                    cropLeftTopX
+                                    cropLeftTopY
+                                    cropLeftBottomX
+                                    cropLeftBottomY        
+                                    cropRightTopX
+                                    cropRightTopY
+                                    cropRightBottomX
+                                    cropRightBottomY
+                                },
                                 faceArea,
                                 faceSize,
                                 faceOrder,
@@ -138,6 +148,9 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
                             FaceId = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Id,
                             TrackletId = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TrackletId,
                             CropImage = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropImage,
+
+                            FrameInformation = response.Data.IdentificationEvent?.FrameInformation,
+                            CropCoordinates = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropCoordinates,
 
                             FaceQuality = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceQuality,
                             TemplateQuality = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TemplateQuality,

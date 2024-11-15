@@ -11,7 +11,8 @@ namespace SmartFace.AutoEnrollment.Models
         public string FaceId { get; set; }
         public string TrackletId { get; set; }
         public byte[] CropImage { get; set; }
-        
+        public CropCoordinates CropCoordinates { get; set; }
+        public FrameInformation FrameInformation { get; set; }
         public double? FaceQuality { get; set; }
         public double? TemplateQuality { get; set; }
         public double? FaceArea { get; set; }

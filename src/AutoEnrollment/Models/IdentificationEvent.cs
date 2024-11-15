@@ -18,6 +18,18 @@ namespace SmartFace.AutoEnrollment.Models
         public int Height { get; set; }
     }
 
+    public class CropCoordinates
+    {
+        public double CropLeftTopX { get; set; }
+        public double CropLeftTopY { get; set; }
+        public double CropLeftBottomX { get; set; }
+        public double CropLeftBottomY { get; set; }
+        public double CropRightTopX { get; set; }
+        public double CropRightTopY { get; set; }
+        public double CropRightBottomX { get; set; }
+        public double CropRightBottomY { get; set; }
+    }
+
     public class StreamInformation
     {
         public string StreamId { get; set; }
@@ -33,7 +45,8 @@ namespace SmartFace.AutoEnrollment.Models
         public string Id { get; set; }
         public string TrackletId { get; set; }
         public byte[] CropImage { get; set; }
-
+        public CropCoordinates CropCoordinates { get; set; }
+        
         public double? FaceArea { get; set; }
         public double? FaceSize { get; set; }
         public int? FaceOrder { get; set; }
