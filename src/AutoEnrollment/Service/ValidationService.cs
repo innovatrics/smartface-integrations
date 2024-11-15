@@ -215,9 +215,11 @@ namespace SmartFace.AutoEnrollment.Service
 
         public bool Validate(Notification notification, StreamConfiguration streamMapping)
         {
-            _logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templatequality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle} pitchAngle {pitchAngle}", 
+            _logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templateQuality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle}, pitchAngle {pitchAngle}, brightness {brightness}, sharpness {sharpness}, facesOnFrameCount {facesOnFrameCount}, faceArea {faceArea}, faceOrder {faceOrder}",
                                             notification.FaceQuality, notification.TemplateQuality, notification.FaceSize,
-                                            notification.YawAngle, notification.RollAngle, notification.PitchAngle);
+                                            notification.YawAngle, notification.RollAngle, notification.PitchAngle, 
+                                            notification.Brightness, notification.Sharpness, notification.FacesOnFrameCount,
+                                            notification.FaceArea, notification.FaceOrder);
 
             var validationResults = new bool[validateAll.Length];
 
