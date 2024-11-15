@@ -83,28 +83,55 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
             {
                 Query = @"
                 subscription {
-                    noMatchResult {
-                        streamId,
-                        faceId,
-                        trackletId,
-                        cropImage,
-                        faceArea,
-                        faceSize,
-                        faceOrder,
-                        facesOnFrameCount,
-                        faceMaskStatus,
-                        faceQuality,
-                        templateQuality,
-                        sharpness,
-                        brightness,
-                        yawAngle,
-                        rollAngle,
-                        pitchAngle
+                    identificationEvent(
+                        where: { 
+                            identificationEventType: { in: NOT_IDENTIFIED }
+                            modality: { in: FACE }
+                        }
+                    ) {
+                        identificationEventType 
+                        streamInformation {
+                            streamId
+                        }
+                        frameInformation {
+                            width
+                            height
+                        }
+                        modality
+                        faceModalityInfo {
+                            faceInformation {
+                                id,
+                                trackletId,
+                                cropImage,
+                                cropCoordinates {
+                                    cropLeftTopX
+                                    cropLeftTopY
+                                    cropLeftBottomX
+                                    cropLeftBottomY        
+                                    cropRightTopX
+                                    cropRightTopY
+                                    cropRightBottomX
+                                    cropRightBottomY
+                                },
+                                faceArea,
+                                faceSize,
+                                faceOrder,
+                                facesOnFrameCount,
+                                faceMaskStatus,
+                                faceQuality,
+                                templateQuality,
+                                sharpness,
+                                brightness,
+                                yawAngle,
+                                rollAngle,
+                                pitchAngle
+                            }
+                        }
                     }
                 }"
             };
 
-            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<NoMatchResultResponse>(
+            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<IdentificationEventResponse>(
                 _graphQLRequest, ex =>
                 {
                     _logger.Error(ex, "GraphQL subscription init error");
@@ -112,32 +139,35 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
 
             _subscription = _subscriptionStream.Subscribe(response =>
                     {
-                        _logger.Information("NoMatchResult received for stream {Stream} and tracklet {Tracklet}",
-                            response.Data.NoMatchResult?.StreamId, response.Data.NoMatchResult?.TrackletId);
+                        _logger.Information("IdentificationEvent received for stream {Stream} and tracklet {Tracklet}",
+                            response.Data.IdentificationEvent?.StreamInformation?.StreamId, response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TrackletId);
 
                         var notification = new Notification
                         {
-                            StreamId = response.Data.NoMatchResult.StreamId,
-                            FaceId = response.Data.NoMatchResult.FaceId,
-                            TrackletId = response.Data.NoMatchResult.TrackletId,
-                            CropImage = response.Data.NoMatchResult.CropImage,
+                            StreamId = response.Data.IdentificationEvent?.StreamInformation?.StreamId,
+                            FaceId = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Id,
+                            TrackletId = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TrackletId,
+                            CropImage = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropImage,
 
-                            FaceQuality = response.Data.NoMatchResult.FaceQuality,
-                            TemplateQuality = response.Data.NoMatchResult.TemplateQuality,
+                            FrameInformation = response.Data.IdentificationEvent?.FrameInformation,
+                            CropCoordinates = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropCoordinates,
 
-                            FaceArea = response.Data.NoMatchResult.FaceArea,
-                            FaceSize = response.Data.NoMatchResult.FaceSize,
-                            FaceOrder = response.Data.NoMatchResult.FaceOrder,
-                            FacesOnFrameCount = response.Data.NoMatchResult.FacesOnFrameCount,
+                            FaceQuality = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceQuality,
+                            TemplateQuality = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TemplateQuality,
 
-                            Brightness = response.Data.NoMatchResult.Brightness,
-                            Sharpness = response.Data.NoMatchResult.Sharpness,
+                            FaceArea = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceArea,
+                            FaceSize = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceSize,
+                            FaceOrder = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceOrder,
+                            FacesOnFrameCount = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FacesOnFrameCount,
 
-                            PitchAngle = response.Data.NoMatchResult.PitchAngle,
-                            RollAngle = response.Data.NoMatchResult.RollAngle,
-                            YawAngle = response.Data.NoMatchResult.YawAngle,
+                            Brightness = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Brightness,
+                            Sharpness = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Sharpness,
 
-                            OriginProcessedAt = response.Data.NoMatchResult.ProcessedAt,
+                            PitchAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.PitchAngle,
+                            RollAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.RollAngle,
+                            YawAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.YawAngle,
+
+                            OriginProcessedAt = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.ProcessedAt,
                             ReceivedAt = DateTime.UtcNow
                         };
 
