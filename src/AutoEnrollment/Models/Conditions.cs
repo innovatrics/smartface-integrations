@@ -19,12 +19,14 @@
         public Range<double?> PitchAngle { get; set; }
         public Range<double?> RollAngle { get; set; }
 
+
+        public double? FramePaddingAbsolute { get; set; }
+        public double? FramePaddingRelative { get; set; }
+
         public bool KeepAutoLearn { get; set; }
 
         public int? StreamDebounceMs { get; set; }
         public int? TrackletDebounceMs { get; set; } = 4000;
         public int? GroupDebounceMs { get; set; }
-        public double? FramePaddingAbsolute { get; set; }
-        public double? FramePaddingRelative { get; set; }
     }
 }
