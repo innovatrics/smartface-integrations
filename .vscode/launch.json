@@ -10,9 +10,9 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/src/AEOSSyncTool/bin/Debug/netcoreapp3.1/AEOSSyncTool.dll",
+            "program": "${workspaceFolder}/src/scripts/CompareFilesInFolder/bin/Debug/net6.0/CompareFilesInFolder.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/src/AEOSSyncTool",
+            "cwd": "${workspaceFolder}/src/scripts/CompareFilesInFolder",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false
