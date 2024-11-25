@@ -9,6 +9,7 @@ namespace SmartFace.AutoEnrollment.Service
     public class ValidationService
     {
         private readonly ILogger _logger;
+        private readonly CropCoordinatesValidator _cropCoordinatesValidator;
 
         private static bool ValidateFaceQuality(Notification notification, StreamConfiguration streamMapping)
         {
@@ -193,37 +194,49 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         }
 
-        private static readonly Func<Notification, StreamConfiguration, bool>[] validateAllFunctions = new[] {
-            ValidateFaceQuality,
-            ValidateTemplateQuality,
-            ValidateFaceSize,
-            ValidateFaceArea,
-            ValidateFaceOrder,
-            ValidateFacesOnFrameCount,
-            ValidateBrightness,
-            ValidateSharpness,
-            ValidateYawAngle,
-            ValidateRollAngle,
-            ValidatePitchAngle
-        };
+        public Func<Notification, StreamConfiguration, bool>[] Validators
+        {
+            get
+            {
+                return new[] {
+                    ValidateFaceQuality,
+                    ValidateTemplateQuality,
+                    ValidateFaceSize,
+                    ValidateFaceArea,
+                    ValidateFaceOrder,
+                    ValidateFacesOnFrameCount,
+                    ValidateBrightness,
+                    ValidateSharpness,
+                    ValidateYawAngle,
+                    ValidateRollAngle,
+                    ValidatePitchAngle,
+                    (notification, streamConfiguration) => _cropCoordinatesValidator.Validate(notification, streamConfiguration)
+                };
+            }
+        }
 
-        public ValidationService(ILogger logger)
+        public ValidationService(
+            ILogger logger,
+            CropCoordinatesValidator cropCoordinatesValidator
+        )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _cropCoordinatesValidator = cropCoordinatesValidator ?? throw new ArgumentNullException(nameof(cropCoordinatesValidator));
         }
 
         public bool Validate(Notification notification, StreamConfiguration streamMapping)
         {
-            _logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templatequality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle} pitchAngle {pitchAngle}",
+            _logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templateQuality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle}, pitchAngle {pitchAngle}, brightness {brightness}, sharpness {sharpness}, facesOnFrameCount {facesOnFrameCount}, faceArea {faceArea}, faceOrder {faceOrder}",
                                             notification.FaceQuality, notification.TemplateQuality, notification.FaceSize,
-                                            notification.YawAngle, notification.RollAngle, notification.PitchAngle);
+                                            notification.YawAngle, notification.RollAngle, notification.PitchAngle,
+                                            notification.Brightness, notification.Sharpness, notification.FacesOnFrameCount,
+                                            notification.FaceArea, notification.FaceOrder);
 
-            var validationResults = new bool[validateAllFunctions.Length];
+            var validationResults = new bool[Validators.Length];
 
             for (var i = 0; i < validationResults.Length; i++)
             {
-                var fn = validateAllFunctions[i];
-
+                var fn = Validators[i];
                 var isValid = fn.Invoke(notification, streamMapping);
                 validationResults[i] = isValid;
 
