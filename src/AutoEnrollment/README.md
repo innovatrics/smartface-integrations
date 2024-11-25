@@ -16,9 +16,9 @@ To run application localy, follow these steps
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/AutoEnrollment/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.5 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.5 registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.5`
+ - `docker build -f src/AutoEnrollment/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.9 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.9 registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.9`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
 
 ## Usage
@@ -74,6 +74,8 @@ Add following pattern to existing docker compose:
       - StreamConfigurations__0__PitchAngle__Max=25
       - StreamConfigurations__0__RollAngle__Min=-15
       - StreamConfigurations__0__RollAngle__Max=15
+      - StreamConfigurations__0__FramePaddingAbsolute=50
+      - StreamConfigurations__0__FramePaddingRelative=0.15
 
       - StreamConfigurations__1__StreamId=d5ff8f40-f900-4492-8ecc-6a2539648964
       - StreamConfigurations__1__WatchlistIds__0=ip-of-the-watchlist

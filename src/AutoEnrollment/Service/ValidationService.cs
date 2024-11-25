@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using Serilog;
 using SmartFace.AutoEnrollment.Models;
 
@@ -8,224 +9,246 @@ namespace SmartFace.AutoEnrollment.Service
     public class ValidationService
     {
         private readonly ILogger _logger;
+        private readonly CropCoordinatesValidator _cropCoordinatesValidator;
 
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateFaceQuality = (input) =>
+        private static bool ValidateFaceQuality(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.FaceQuality == null)
+            if (notification.FaceQuality == null)
             {
                 return true;
             }
 
-            if ((input.streamMapping.FaceQuality?.Min ?? 0) <= input.notification.FaceQuality)
+            if ((streamMapping.FaceQuality?.Min ?? 0) <= notification.FaceQuality)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateTemplateQuality = (input) =>
+        private static bool ValidateTemplateQuality(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.TemplateQuality == null)
+            if (notification.TemplateQuality == null)
             {
                 return true;
             }
 
-            if ((input.streamMapping.TemplateQuality?.Min ?? 0) <= input.notification.TemplateQuality)
+            if ((streamMapping.TemplateQuality?.Min ?? 0) <= notification.TemplateQuality)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateFaceSize = (input) =>
+        private static bool ValidateFaceSize(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.FaceSize == null)
+            if (notification.FaceSize == null)
             {
                 return true;
             }
 
             if (
-                (input.streamMapping.FaceSize?.Min ?? 0) <= input.notification.FaceSize &&
-                (input.streamMapping.FaceSize?.Max ?? double.MaxValue) >= input.notification.FaceSize)
+                (streamMapping.FaceSize?.Min ?? 0) <= notification.FaceSize &&
+                (streamMapping.FaceSize?.Max ?? double.MaxValue) >= notification.FaceSize)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateFaceArea = (input) =>
+        private static bool ValidateFaceArea(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.FaceArea == null)
+            if (notification.FaceArea == null)
             {
                 return true;
             }
 
             if (
-                (input.streamMapping.FaceArea?.Min ?? double.MinValue) <= input.notification.FaceArea &&
-                (input.streamMapping.FaceArea?.Max ?? double.MaxValue) >= input.notification.FaceArea)
+                (streamMapping.FaceArea?.Min ?? double.MinValue) <= notification.FaceArea &&
+                (streamMapping.FaceArea?.Max ?? double.MaxValue) >= notification.FaceArea)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateFaceOrder = (input) =>
+        private static bool ValidateFaceOrder(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.FaceOrder == null)
+            if (notification.FaceOrder == null)
             {
                 return true;
             }
 
             if (
-                (input.streamMapping.FaceOrder?.Min ?? 0) <= input.notification.FaceOrder &&
-                (input.streamMapping.FaceOrder?.Max ?? double.MaxValue) >= input.notification.FaceOrder)
+                (streamMapping.FaceOrder?.Min ?? 0) <= notification.FaceOrder &&
+                (streamMapping.FaceOrder?.Max ?? double.MaxValue) >= notification.FaceOrder)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateFacesOnFrameCount = (input) =>
+        private static bool ValidateFacesOnFrameCount(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.FacesOnFrameCount == null)
+            if (notification.FacesOnFrameCount == null)
             {
                 return true;
             }
 
             if (
-                (input.streamMapping.FacesOnFrameCount?.Min ?? 0) <= input.notification.FacesOnFrameCount &&
-                (input.streamMapping.FacesOnFrameCount?.Max ?? double.MaxValue) >= input.notification.FacesOnFrameCount)
+                (streamMapping.FacesOnFrameCount?.Min ?? 0) <= notification.FacesOnFrameCount &&
+                (streamMapping.FacesOnFrameCount?.Max ?? double.MaxValue) >= notification.FacesOnFrameCount)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateBrightness = (input) =>
+        private static bool ValidateBrightness(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.Brightness == null)
+            if (notification.Brightness == null)
             {
                 return true;
             }
 
             if (
-                (input.streamMapping.Brightness?.Min ?? double.MinValue) <= input.notification.Brightness &&
-                (input.streamMapping.Brightness?.Max ?? double.MaxValue) >= input.notification.Brightness)
+                (streamMapping.Brightness?.Min ?? double.MinValue) <= notification.Brightness &&
+                (streamMapping.Brightness?.Max ?? double.MaxValue) >= notification.Brightness)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateSharpness = (input) =>
+        private static bool ValidateSharpness(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.Sharpness == null)
+            if (notification.Sharpness == null)
             {
                 return true;
             }
 
             if (
-                (input.streamMapping.Sharpness?.Min ?? double.MinValue) <= input.notification.Sharpness &&
-                (input.streamMapping.Sharpness?.Max ?? double.MaxValue) >= input.notification.Sharpness)
+                (streamMapping.Sharpness?.Min ?? double.MinValue) <= notification.Sharpness &&
+                (streamMapping.Sharpness?.Max ?? double.MaxValue) >= notification.Sharpness)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateYawAngle = (input) =>
+        private static bool ValidateYawAngle(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.YawAngle == null)
+            if (notification.YawAngle == null)
             {
                 return true;
             }
 
             if (
-                (input.streamMapping.YawAngle?.Min ?? double.MinValue) <= input.notification.YawAngle &&
-                (input.streamMapping.YawAngle?.Max ?? double.MaxValue) >= input.notification.YawAngle)
+                (streamMapping.YawAngle?.Min ?? double.MinValue) <= notification.YawAngle &&
+                (streamMapping.YawAngle?.Max ?? double.MaxValue) >= notification.YawAngle)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validateRollAngle = (input) =>
+        private static bool ValidateRollAngle(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.RollAngle == null)
+            if (notification.RollAngle == null)
             {
                 return true;
             }
 
             if (
-                (input.streamMapping.RollAngle?.Min ?? double.MinValue) <= input.notification.RollAngle &&
-                (input.streamMapping.RollAngle?.Max ?? double.MaxValue) >= input.notification.RollAngle)
+                (streamMapping.RollAngle?.Min ?? double.MinValue) <= notification.RollAngle &&
+                (streamMapping.RollAngle?.Max ?? double.MaxValue) >= notification.RollAngle)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool> validatePitchAngle = (input) =>
+        private static bool ValidatePitchAngle(Notification notification, StreamConfiguration streamMapping)
         {
-            if (input.notification.PitchAngle == null)
+            if (notification.PitchAngle == null)
             {
                 return true;
             }
 
             if (
-                (input.streamMapping.PitchAngle?.Min ?? double.MinValue) <= input.notification.PitchAngle &&
-                (input.streamMapping.PitchAngle?.Max ?? double.MaxValue) >= input.notification.PitchAngle)
+                (streamMapping.PitchAngle?.Min ?? double.MinValue) <= notification.PitchAngle &&
+                (streamMapping.PitchAngle?.Max ?? double.MaxValue) >= notification.PitchAngle)
             {
                 return true;
             }
 
             return false;
-        };
+        }
 
-        private static readonly Func<(Notification notification, StreamConfiguration streamMapping), bool>[] validateAll = new[] {
-            validateFaceQuality,
-            validateTemplateQuality,
-            validateFaceSize,
-            validateFaceArea,
-            validateFaceOrder,
-            validateFacesOnFrameCount,
-            validateBrightness,
-            validateSharpness,
-            validateYawAngle,
-            validateRollAngle,
-            validatePitchAngle
-        };
+        public Func<Notification, StreamConfiguration, bool>[] Validators
+        {
+            get
+            {
+                return new[] {
+                    ValidateFaceQuality,
+                    ValidateTemplateQuality,
+                    ValidateFaceSize,
+                    ValidateFaceArea,
+                    ValidateFaceOrder,
+                    ValidateFacesOnFrameCount,
+                    ValidateBrightness,
+                    ValidateSharpness,
+                    ValidateYawAngle,
+                    ValidateRollAngle,
+                    ValidatePitchAngle,
+                    (notification, streamConfiguration) => _cropCoordinatesValidator.Validate(notification, streamConfiguration)
+                };
+            }
+        }
 
-        public ValidationService(ILogger logger)
+        public ValidationService(
+            ILogger logger,
+            CropCoordinatesValidator cropCoordinatesValidator
+        )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _cropCoordinatesValidator = cropCoordinatesValidator ?? throw new ArgumentNullException(nameof(cropCoordinatesValidator));
         }
 
         public bool Validate(Notification notification, StreamConfiguration streamMapping)
         {
-            _logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templatequality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle} pitchAngle {pitchAngle}", 
+            _logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templateQuality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle}, pitchAngle {pitchAngle}, brightness {brightness}, sharpness {sharpness}, facesOnFrameCount {facesOnFrameCount}, faceArea {faceArea}, faceOrder {faceOrder}",
                                             notification.FaceQuality, notification.TemplateQuality, notification.FaceSize,
-                                            notification.YawAngle, notification.RollAngle, notification.PitchAngle);
+                                            notification.YawAngle, notification.RollAngle, notification.PitchAngle,
+                                            notification.Brightness, notification.Sharpness, notification.FacesOnFrameCount,
+                                            notification.FaceArea, notification.FaceOrder);
 
-            var validationResults = new bool[validateAll.Length];
+            var validationResults = new bool[Validators.Length];
 
             for (var i = 0; i < validationResults.Length; i++)
             {
-                var fn = validateAll[i];
-                var isValid = fn.Invoke((notification, streamMapping));
+                var fn = Validators[i];
+                var isValid = fn.Invoke(notification, streamMapping);
                 validationResults[i] = isValid;
+
+                if (!isValid)
+                {
+                    var methodInfo = fn.GetMethodInfo();
+
+                    if (methodInfo?.Name != null)
+                    {
+                        _logger.Information($"{methodInfo?.Name} failed");
+                    }
+                }
             }
 
             _logger.Information("Validation result [{result}]", string.Join(',', validationResults.Select(s => s ? 1 : 0)));

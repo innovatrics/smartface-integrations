@@ -100,6 +100,8 @@ namespace SmartFace.AutoEnrollment.Service
             mapping.YawAngle ??= config.YawAngle;
             mapping.PitchAngle ??= config.PitchAngle;
             mapping.RollAngle ??= config.RollAngle;
+            mapping.FramePaddingAbsolute ??= config.FramePaddingAbsolute;
+            mapping.FramePaddingRelative ??= config.FramePaddingRelative;
 
             if (mapping.WatchlistIds == null || mapping.WatchlistIds?.Length == 0)
             {

@@ -80,7 +80,7 @@ namespace SmartFace.AutoEnrollment.Service
                             }
 
                             await EnrollAsync(notification, mapping);
-                            
+
                             _debouncingService.Block(notification, mapping);
                         }
                     }
@@ -199,7 +199,15 @@ namespace SmartFace.AutoEnrollment.Service
 
             registerRequest.Images.Add(imageAdd);
 
-            await client.RegisterAsync(registerRequest);
+            try
+            {
+                await client.RegisterAsync(registerRequest);
+            }
+            catch (ApiException ae)
+            {
+                _logger.Error(ae, $"Register failed. Response {ae.Response}");
+                throw;
+            }
         }
 
         private async Task EnrolExistingFaceAsync(Notification notification, StreamConfiguration mapping)
@@ -261,7 +269,8 @@ namespace SmartFace.AutoEnrollment.Service
                 await File.WriteAllBytesAsync(Path.Combine(_debugOutputFolder, $"{wlMemberCreateRequest.FullName}.jpg"), notification.CropImage);
             }
 
-            await client.AddFaceFromSystemAsync(wlMemberCreateResponse.Id, new FaceWatchlistMemberLinkingRequest() {
+            await client.AddFaceFromSystemAsync(wlMemberCreateResponse.Id, new FaceWatchlistMemberLinkingRequest()
+            {
                 FaceId = Guid.Parse(notification.FaceId)
             });
         }
