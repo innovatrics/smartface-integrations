@@ -90,7 +90,7 @@ namespace SmartFace.AutoEnrollment
         private static IConfigurationRoot ConfigureBuilder(string[] args)
         {
             return new ConfigurationBuilder()
-                    // .SetMainModuleBasePath()
+                    .SetMainModuleBasePath()
                     .AddJsonFile(JsonConfigFileName, optional: false)
                     .AddEnvironmentVariables()
                     .AddCommandLine(args)
