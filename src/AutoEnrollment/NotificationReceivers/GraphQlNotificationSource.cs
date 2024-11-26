@@ -179,11 +179,11 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
                         }
                         else if (response.Errors != null && response.Errors.Length > 0)
                         {
-                            _logger.Information("{{errors}} errors from GraphQL received", response.Errors.Length);
+                            _logger.Information("{errors} errors from GraphQL received", response.Errors.Length);
 
                             foreach (var e in response.Errors)
                             {
-                                _logger.Information("Error: {{error}}", e.Message);
+                                _logger.Error("{error}", e.Message);
                             }
                         }
                     },
