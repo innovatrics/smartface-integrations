@@ -42,11 +42,11 @@ def apply_curl_to_items(api_url, image_data_ids, save_to_folder):
 
 
 if __name__ == '__main__':
-    api_url = 'http://10.11.64.18:8098/api/v1/Images'  # Replace with the actual API endpoint for image retrieval
+    api_url = 'http://192.168.1.11:8098/api/v1/Images'  # Replace with the actual API endpoint for image retrieval
     save_to_folder = "./images/"                  
 
     # GraphQL endpoint URL
-    graphql_url = "http://10.11.64.18:8097/graphql/"
+    graphql_url = "http://192.168.1.11:8097/graphql/"
 
     # GraphQL query
     query = """
