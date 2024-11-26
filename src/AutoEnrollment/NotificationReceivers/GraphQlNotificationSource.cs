@@ -132,46 +132,60 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
             };
 
             var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<IdentificationEventResponse>(
-                _graphQLRequest, ex =>
+                _graphQLRequest,
+                ex =>
                 {
                     _logger.Error(ex, "GraphQL subscription init error");
                 });
 
-            _subscription = _subscriptionStream.Subscribe(response =>
+            _subscription = _subscriptionStream.Subscribe(
+                    onNext: response =>
                     {
-                        _logger.Information("IdentificationEvent received for stream {Stream} and tracklet {Tracklet}",
-                            response.Data.IdentificationEvent?.StreamInformation?.StreamId, response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TrackletId);
-
-                        var notification = new Notification
+                        if (response.Data != null)
                         {
-                            StreamId = response.Data.IdentificationEvent?.StreamInformation?.StreamId,
-                            FaceId = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Id,
-                            TrackletId = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TrackletId,
-                            CropImage = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropImage,
+                            _logger.Information("IdentificationEvent received for stream {Stream} and tracklet {Tracklet}",
+                                response.Data.IdentificationEvent?.StreamInformation?.StreamId, response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TrackletId);
 
-                            FrameInformation = response.Data.IdentificationEvent?.FrameInformation,
-                            CropCoordinates = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropCoordinates,
+                            var notification = new Notification
+                            {
+                                StreamId = response.Data.IdentificationEvent?.StreamInformation?.StreamId,
+                                FaceId = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Id,
+                                TrackletId = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TrackletId,
+                                CropImage = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropImage,
 
-                            FaceQuality = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceQuality,
-                            TemplateQuality = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TemplateQuality,
+                                FrameInformation = response.Data.IdentificationEvent?.FrameInformation,
+                                CropCoordinates = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropCoordinates,
 
-                            FaceArea = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceArea,
-                            FaceSize = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceSize,
-                            FaceOrder = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceOrder,
-                            FacesOnFrameCount = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FacesOnFrameCount,
+                                FaceQuality = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceQuality,
+                                TemplateQuality = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TemplateQuality,
 
-                            Brightness = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Brightness,
-                            Sharpness = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Sharpness,
+                                FaceArea = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceArea,
+                                FaceSize = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceSize,
+                                FaceOrder = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceOrder,
+                                FacesOnFrameCount = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FacesOnFrameCount,
 
-                            PitchAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.PitchAngle,
-                            RollAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.RollAngle,
-                            YawAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.YawAngle,
+                                Brightness = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Brightness,
+                                Sharpness = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Sharpness,
 
-                            OriginProcessedAt = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.ProcessedAt,
-                            ReceivedAt = DateTime.UtcNow
-                        };
+                                PitchAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.PitchAngle,
+                                RollAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.RollAngle,
+                                YawAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.YawAngle,
 
-                        OnNotification?.Invoke(notification);
+                                OriginProcessedAt = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.ProcessedAt,
+                                ReceivedAt = DateTime.UtcNow
+                            };
+
+                            OnNotification?.Invoke(notification);
+                        }
+                        else if (response.Errors != null && response.Errors.Length > 0)
+                        {
+                            _logger.Information("{{errors}} errors from GraphQL received", response.Errors.Length);
+
+                            foreach (var e in response.Errors)
+                            {
+                                _logger.Information("Error: {{error}}", e.Message);
+                            }
+                        }
                     },
                     onError: err =>
                     {

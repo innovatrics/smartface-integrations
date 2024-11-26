@@ -48,12 +48,12 @@ namespace SmartFace.AutoEnrollment.Service
 
             var config = configuration.GetSection("Config").Get<Config>();
 
-            _debugOutputFolder = config.DebugOutputFolder;
-            MaxParallelBlocks = config.MaxParallelActionBlocks ?? 4;
-            DetectorMaxFaces = config.RegisterMaxFaces ?? 3;
-            DetectorMinFaceSize = config.RegisterMinFaceSize ?? 30;
-            DetectorMaxFaceSize = config.RegisterMaxFaceSize ?? 600;
-            DetectorFaceConfidence = config.RegisterFaceConfidence ?? 450;
+            _debugOutputFolder = config?.DebugOutputFolder;
+            MaxParallelBlocks = config?.MaxParallelActionBlocks ?? 4;
+            DetectorMaxFaces = config?.RegisterMaxFaces ?? 3;
+            DetectorMinFaceSize = config?.RegisterMinFaceSize ?? 30;
+            DetectorMaxFaceSize = config?.RegisterMaxFaceSize ?? 600;
+            DetectorFaceConfidence = config?.RegisterFaceConfidence ?? 450;
         }
 
         public void Start()
