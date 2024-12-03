@@ -25,8 +25,8 @@ namespace SmartFace.AutoEnrollment.Tests.Service
                 bottomRightX, bottomRightY,
                 padding, isRelativePadding
             );
-            
+
             Assert.Equal(expectedResult, result);
-            }
         }
+    }
 }
