@@ -140,6 +140,8 @@ namespace SmartFace.AutoEnrollment.Service
             try
             {
                 await client.RegisterAsync(registerRequest);
+
+                _logger.Information("Successfully enrolled WatchlistMember {watchlistMemberId}", id);
             }
             catch (ApiException ae)
             {
