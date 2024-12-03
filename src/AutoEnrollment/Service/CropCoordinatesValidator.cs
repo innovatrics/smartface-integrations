@@ -21,12 +21,13 @@ namespace SmartFace.AutoEnrollment.Service
                 return true;
             }
 
-            _logger.Information("CropCoordinates: {cropLeftTopX}, {cropLeftTopY}, {cropRightBottomX}, {cropRightBottomY}, {absolute}, {relative}",
+            _logger.Information("CropCoordinates: {cropLeftTopX}, {cropLeftTopY}, {cropRightTopX}, {cropRightTopY}, {cropLeftBottomX}, {cropLeftBottomY},{cropRightBottomX}, {cropRightBottomY}, {absolute}, {relative}",
                                     notification.CropCoordinates.CropLeftTopX, notification.CropCoordinates.CropLeftTopY,
+                                    notification.CropCoordinates.CropRightTopX, notification.CropCoordinates.CropRightTopY,
+                                    notification.CropCoordinates.CropLeftBottomX, notification.CropCoordinates.CropLeftBottomY,
                                     notification.CropCoordinates.CropRightBottomX, notification.CropCoordinates.CropRightBottomY,
                                     streamMapping.FramePaddingAbsolute, streamMapping.FramePaddingRelative
                                 );
-
             
             
             return IsImageWithinRange(
