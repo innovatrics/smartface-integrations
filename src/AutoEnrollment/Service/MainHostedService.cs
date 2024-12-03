@@ -13,7 +13,7 @@ namespace SmartFace.AutoEnrollment.Service
     {
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
-        private readonly AutoEnrollmentService _autoEnrollmentService;
+        private readonly QueueProcessingService _queueProcessingService;
         private readonly INotificationSourceFactory _notificationSourceFactory;
         private INotificationSource _notificationSource;
 
@@ -21,11 +21,11 @@ namespace SmartFace.AutoEnrollment.Service
             ILogger logger,
             IConfiguration configuration,
             INotificationSourceFactory notificationSourceFactory,
-            AutoEnrollmentService autoEnrollmentService)
+            QueueProcessingService QueueProcessingService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _autoEnrollmentService = autoEnrollmentService ?? throw new ArgumentNullException(nameof(autoEnrollmentService));
+            _queueProcessingService = QueueProcessingService ?? throw new ArgumentNullException(nameof(QueueProcessingService));
             _notificationSourceFactory = notificationSourceFactory ?? throw new ArgumentNullException(nameof(notificationSourceFactory));
         }
 
@@ -40,7 +40,7 @@ namespace SmartFace.AutoEnrollment.Service
             _notificationSource.OnNotification += HandleNotificationAsync;
 
             await _notificationSource.StartAsync();
-            _autoEnrollmentService.Start();
+            _queueProcessingService.Start();
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -48,14 +48,14 @@ namespace SmartFace.AutoEnrollment.Service
             _logger.Information($"{nameof(MainHostedService)} is stopping");
 
             await _notificationSource.StopAsync();
-            await _autoEnrollmentService.StopAsync();
+            await _queueProcessingService.StopAsync();
         }
 
         private Task HandleNotificationAsync(Notification notification)
         {
             _logger.Information("Processing HandleNotificationAsync {notification}", new { notification.StreamId, notification.ReceivedAt });
 
-            _autoEnrollmentService.ProcessNotification(notification);
+            _queueProcessingService.ProcessNotification(notification);
 
             return Task.CompletedTask;
         }
