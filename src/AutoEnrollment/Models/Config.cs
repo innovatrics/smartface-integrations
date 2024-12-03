@@ -10,6 +10,5 @@
         public int? RegisterMinFaceSize { get; set; }
         public int? RegisterMaxFaceSize { get; set; }
         public int? RegisterFaceConfidence { get; set; }
-        public int? DuplicateSearchThreshold { get; set; }
     }
 }

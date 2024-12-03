@@ -37,7 +37,7 @@ namespace SmartFace.AutoEnrollment.Service
 
             var config = configuration.GetSection("Config").Get<Config>();
 
-            MaxParallelBlocks = config?.MaxParallelActionBlocks ?? 4;            
+            MaxParallelBlocks = config?.MaxParallelActionBlocks ?? 4;
         }
 
         public void Start()
@@ -63,9 +63,9 @@ namespace SmartFace.AutoEnrollment.Service
                                 continue;
                             }
 
-                            _debouncingService.Block(notification, mapping);
+                            await EnrollAsync(notification, mapping);
 
-                            await EnrollAsync(notification, mapping);                            
+                            _debouncingService.Block(notification, mapping);
                         }
                     }
                 }

@@ -19,7 +19,6 @@ namespace SmartFace.AutoEnrollment.Service
         public readonly int DetectorMinFaceSize;
         public readonly int DetectorMaxFaceSize;
         public readonly int DetectorFaceConfidence;
-        public readonly int? DuplicateSearchThreshold;
 
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
@@ -46,22 +45,10 @@ namespace SmartFace.AutoEnrollment.Service
             DetectorMinFaceSize = config?.RegisterMinFaceSize ?? 30;
             DetectorMaxFaceSize = config?.RegisterMaxFaceSize ?? 600;
             DetectorFaceConfidence = config?.RegisterFaceConfidence ?? 450;
-            DuplicateSearchThreshold = config?.DuplicateSearchThreshold;
         }
 
         internal async Task EnrollAsync(Notification notification, StreamConfiguration mapping)
         {
-            if (DuplicateSearchThreshold > 0)
-            {
-                var isDuplicate = await CheckDuplicateAsync(notification, mapping, DuplicateSearchThreshold.Value);
-
-                if (isDuplicate)
-                {
-                    _logger.Information("Face is possible duplicate, quit");
-                    return;
-                }
-            }
-
             await RegisterAsync(notification, mapping);
         }
 
