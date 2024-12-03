@@ -52,6 +52,7 @@ Add following pattern to existing docker compose:
       - Target__Port=8098
 
       - Config__MaxParallelActionBlocks=1
+      - Config__DuplicateSearchThreshold=35
 
       - StreamConfigurations__0__StreamId=ec0437ae-7716-4141-99d9-a9b2a4dd2106
       - StreamConfigurations__0__WatchlistIds__0=ip-of-the-watchlist
