@@ -81,8 +81,9 @@ namespace SmartFace.AutoEnrollment
             services.AddSingleton<ValidationService>();
             services.AddSingleton<CropCoordinatesValidator>();
             services.AddSingleton<StreamConfigurationService>();
-            services.AddSingleton<INotificationSourceFactory, NotificationSourceFactory>();
             services.AddSingleton<AutoEnrollmentService>();
+            services.AddSingleton<INotificationSourceFactory, NotificationSourceFactory>();
+            services.AddSingleton<QueueProcessingService>();
 
             services.AddHostedService<MainHostedService>();
         }
