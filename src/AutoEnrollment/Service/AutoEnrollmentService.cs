@@ -65,78 +65,6 @@ namespace SmartFace.AutoEnrollment.Service
             await RegisterAsync(notification, mapping);
         }
 
-        public async Task<bool> CheckDuplicateAsync(Notification notification, StreamConfiguration mapping, int threshold)
-        {
-            if (notification == null)
-            {
-                throw new ArgumentNullException(nameof(notification));
-            }
-
-            if (mapping == null)
-            {
-                throw new ArgumentNullException(nameof(mapping));
-            }
-
-            _logger.Information("Searching for duplicate in watchlist {Watchlist}", mapping.WatchlistIds);
-
-            var schema = _configuration.GetValue("Target:Schema", "http");
-            var host = _configuration.GetValue("Target:Host", "SFApi");
-            var port = _configuration.GetValue("Target:Port", 8098);
-
-            var baseUri = new Uri($"{schema}://{host}:{port}/");
-
-            var httpClient = _httpClientFactory.CreateClient();
-
-            if (_oAuthService.IsEnabled)
-            {
-                var authToken = await _oAuthService.GetTokenAsync();
-                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
-            }
-
-            var client = new SmartFaceRestApiClient(baseUri.ToString(), httpClient);
-
-            var request = new SearchInWatchlistRequest()
-            {
-
-            };
-
-            if (mapping.WatchlistIds.Length > 0)
-            {
-                request.WatchlistIds = new List<string>();
-
-                foreach (var w in mapping.WatchlistIds)
-                {
-                    request.WatchlistIds.Add(w);
-                }
-            }
-
-            request.FaceDetectorConfig = new FaceDetectorConfig
-            {
-                MaxFaces = DetectorMaxFaces,
-                MinFaceSize = DetectorMinFaceSize,
-                MaxFaceSize = DetectorMaxFaceSize,
-                ConfidenceThreshold = DetectorFaceConfidence
-            };
-
-            request.Threshold = threshold;
-
-            request.Image = new ImageData()
-            {
-                Data = notification.CropImage
-            };
-
-            try
-            {
-                var response = await client.SearchAllAsync(request);
-                return response.SelectMany(sm => sm.MatchResults).Any();
-            }
-            catch (ApiException ae)
-            {
-                _logger.Error(ae, $"Register failed. Response {ae.Response}");
-                throw;
-            }
-        }
-
         public async Task RegisterAsync(Notification notification, StreamConfiguration mapping)
         {
             if (notification == null)
@@ -283,6 +211,79 @@ namespace SmartFace.AutoEnrollment.Service
             {
                 FaceId = Guid.Parse(notification.FaceId)
             });
+        }
+
+        
+        public async Task<bool> CheckDuplicateAsync(Notification notification, StreamConfiguration mapping, int threshold)
+        {
+            if (notification == null)
+            {
+                throw new ArgumentNullException(nameof(notification));
+            }
+
+            if (mapping == null)
+            {
+                throw new ArgumentNullException(nameof(mapping));
+            }
+
+            _logger.Information("Searching for duplicate in watchlist {Watchlist}", mapping.WatchlistIds);
+
+            var schema = _configuration.GetValue("Target:Schema", "http");
+            var host = _configuration.GetValue("Target:Host", "SFApi");
+            var port = _configuration.GetValue("Target:Port", 8098);
+
+            var baseUri = new Uri($"{schema}://{host}:{port}/");
+
+            var httpClient = _httpClientFactory.CreateClient();
+
+            if (_oAuthService.IsEnabled)
+            {
+                var authToken = await _oAuthService.GetTokenAsync();
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
+            }
+
+            var client = new SmartFaceRestApiClient(baseUri.ToString(), httpClient);
+
+            var request = new SearchInWatchlistRequest()
+            {
+
+            };
+
+            if (mapping.WatchlistIds.Length > 0)
+            {
+                request.WatchlistIds = new List<string>();
+
+                foreach (var w in mapping.WatchlistIds)
+                {
+                    request.WatchlistIds.Add(w);
+                }
+            }
+
+            request.FaceDetectorConfig = new FaceDetectorConfig
+            {
+                MaxFaces = DetectorMaxFaces,
+                MinFaceSize = DetectorMinFaceSize,
+                MaxFaceSize = DetectorMaxFaceSize,
+                ConfidenceThreshold = DetectorFaceConfidence
+            };
+
+            request.Threshold = threshold;
+
+            request.Image = new ImageData()
+            {
+                Data = notification.CropImage
+            };
+
+            try
+            {
+                var response = await client.SearchAllAsync(request);
+                return response.SelectMany(sm => sm.MatchResults).Any();
+            }
+            catch (ApiException ae)
+            {
+                _logger.Error(ae, $"Register failed. Response {ae.Response}");
+                throw;
+            }
         }
     }
 }
