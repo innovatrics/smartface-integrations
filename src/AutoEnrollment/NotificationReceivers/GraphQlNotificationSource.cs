@@ -44,6 +44,40 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
             await StopReceivingGraphQlNotificationsAsync();
         }
 
+        public static Notification ConvertToNotification(IdentificationEventResponse response)
+        {
+            var notification = new Notification
+            {
+                StreamId = response.IdentificationEvent?.StreamInformation?.StreamId,
+                FaceId = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Id,
+                TrackletId = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TrackletId,
+                CropImage = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropImage,
+
+                FrameInformation = response.IdentificationEvent?.FrameInformation,
+                CropCoordinates = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropCoordinates,
+
+                FaceQuality = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceQuality,
+                TemplateQuality = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TemplateQuality,
+
+                FaceArea = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceArea,
+                FaceSize = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceSize,
+                FaceOrder = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceOrder,
+                FacesOnFrameCount = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FacesOnFrameCount,
+
+                Brightness = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Brightness,
+                Sharpness = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Sharpness,
+
+                PitchAngle = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.PitchAngle,
+                RollAngle = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.RollAngle,
+                YawAngle = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.YawAngle,
+
+                OriginProcessedAt = response.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.ProcessedAt,
+                ReceivedAt = DateTime.UtcNow
+            };
+
+            return notification;
+        }
+
         private async Task<GraphQLHttpClient> CreateGraphQlClient()
         {
             var schema = _configuration.GetValue<string>("Source:GraphQL:Schema", "http");
@@ -146,34 +180,7 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
                             _logger.Information("IdentificationEvent received for stream {Stream} and tracklet {Tracklet}",
                                 response.Data.IdentificationEvent?.StreamInformation?.StreamId, response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TrackletId);
 
-                            var notification = new Notification
-                            {
-                                StreamId = response.Data.IdentificationEvent?.StreamInformation?.StreamId,
-                                FaceId = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Id,
-                                TrackletId = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TrackletId,
-                                CropImage = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropImage,
-
-                                FrameInformation = response.Data.IdentificationEvent?.FrameInformation,
-                                CropCoordinates = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.CropCoordinates,
-
-                                FaceQuality = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceQuality,
-                                TemplateQuality = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.TemplateQuality,
-
-                                FaceArea = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceArea,
-                                FaceSize = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceSize,
-                                FaceOrder = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FaceOrder,
-                                FacesOnFrameCount = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.FacesOnFrameCount,
-
-                                Brightness = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Brightness,
-                                Sharpness = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.Sharpness,
-
-                                PitchAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.PitchAngle,
-                                RollAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.RollAngle,
-                                YawAngle = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.YawAngle,
-
-                                OriginProcessedAt = response.Data.IdentificationEvent?.FaceModalityInfo?.FaceInformation?.ProcessedAt,
-                                ReceivedAt = DateTime.UtcNow
-                            };
+                            var notification = ConvertToNotification(response.Data);
 
                             OnNotification?.Invoke(notification);
                         }

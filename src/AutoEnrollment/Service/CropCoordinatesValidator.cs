@@ -14,9 +14,9 @@ namespace SmartFace.AutoEnrollment.Service
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public bool Validate(Notification notification, StreamConfiguration streamMapping)
+        public bool Validate(Notification notification, StreamConfiguration streamConfiguration)
         {
-            if (streamMapping.FramePaddingAbsolute == null && streamMapping.FramePaddingRelative == null)
+            if (streamConfiguration.FramePaddingAbsolute == null && streamConfiguration.FramePaddingRelative == null)
             {
                 return true;
             }
@@ -27,7 +27,7 @@ namespace SmartFace.AutoEnrollment.Service
                 notification.CropCoordinates.CropRightTopX, notification.CropCoordinates.CropRightTopY,
                 notification.CropCoordinates.CropLeftBottomX, notification.CropCoordinates.CropLeftBottomY,
                 notification.CropCoordinates.CropRightBottomX, notification.CropCoordinates.CropRightBottomY,
-                streamMapping.FramePaddingAbsolute, streamMapping.FramePaddingRelative
+                streamConfiguration.FramePaddingAbsolute, streamConfiguration.FramePaddingRelative
             );
 
             return IsImageWithinRange(
@@ -36,8 +36,8 @@ namespace SmartFace.AutoEnrollment.Service
                         notification.CropCoordinates.CropRightTopX, notification.CropCoordinates.CropRightTopY,
                         notification.CropCoordinates.CropLeftBottomX, notification.CropCoordinates.CropLeftBottomY,
                         notification.CropCoordinates.CropRightBottomX, notification.CropCoordinates.CropRightBottomY,
-                        streamMapping.FramePaddingRelative ?? streamMapping.FramePaddingAbsolute ?? 0.0,
-                        streamMapping.FramePaddingRelative != null);
+                        streamConfiguration.FramePaddingRelative ?? streamConfiguration.FramePaddingAbsolute ?? 0.0,
+                        streamConfiguration.FramePaddingRelative != null);
         }
 
         public static bool IsImageWithinRange(
