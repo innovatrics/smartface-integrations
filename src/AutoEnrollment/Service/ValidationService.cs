@@ -224,7 +224,7 @@ namespace SmartFace.AutoEnrollment.Service
             _cropCoordinatesValidator = cropCoordinatesValidator ?? throw new ArgumentNullException(nameof(cropCoordinatesValidator));
         }
 
-        public bool Validate(Notification notification, StreamConfiguration streamMapping)
+        public bool Validate(Notification notification, StreamConfiguration streamConfiguration)
         {
             _logger.Information("Face attributes: faceQuality {faceQuality}, templateQuality {templateQuality}, faceSize {faceSize}, yawAngle {yawAngle}, rollAngle {rollAngle}, pitchAngle {pitchAngle}, brightness {brightness}, sharpness {sharpness}, facesOnFrameCount {facesOnFrameCount}, faceArea {faceArea}, faceOrder {faceOrder}",
                                             notification.FaceQuality, notification.TemplateQuality, notification.FaceSize,
@@ -237,7 +237,7 @@ namespace SmartFace.AutoEnrollment.Service
             for (var i = 0; i < validationResults.Length; i++)
             {
                 var fn = Validators[i];
-                var isValid = fn.Invoke(notification, streamMapping);
+                var isValid = fn.Invoke(notification, streamConfiguration);
                 validationResults[i] = isValid;
 
                 if (!isValid)
