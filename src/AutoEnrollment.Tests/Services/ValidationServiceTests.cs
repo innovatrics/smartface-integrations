@@ -104,7 +104,7 @@ namespace SmartFace.AutoEnrollment.Tests.Service
         [Theory]
         [InlineData(NOT_IDENTIFIED_VALID, true, 0)]
         [InlineData(NOT_IDENTIFIED_INVALID_AT_BORDER, false, 0.15)]
-        public void IsImageWithinRange_ShouldReturnExpectedResult(
+        public void Validate_All(
             string rawNotification,
             bool expectedResult,
             double framePaddingRelative
