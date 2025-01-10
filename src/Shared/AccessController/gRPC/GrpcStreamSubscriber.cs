@@ -3,16 +3,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Net.Client;
-using Grpc.Net.Client.Configuration;
 using Innovatrics.Smartface;
 using Polly;
-using GrpcCore = Grpc.Core;
 
 namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
 {
     public class GrpcStreamSubscriber : IGrpcStreamSubscriber
     {
-        private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource cancellationTokenSource = new();
         private readonly TimeSpan GRPC_TIMEOUT = TimeSpan.FromSeconds(10);
 
         private Task subscribeTask;
@@ -44,7 +42,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
             return Task.Run(async () =>
                 {
                     await backgroundReadingAsync(cancellationTokenSource.Token);
-                }                
+                }
             );
         }
 
@@ -54,7 +52,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
             cancellationTokenSource.Cancel();
             await subscribeTask;
             await grpcChannel.ShutdownAsync();
-            cancellationTokenSource.Dispose();             
+            cancellationTokenSource.Dispose();
         }
 
         private async Task backgroundReadingAsync(CancellationToken cancellationToken = default)
@@ -95,19 +93,25 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
             }, cancellationToken);
         }
 
-        private AsyncServerStreamingCall<Innovatrics.Smartface.AccessNotification> getStreamingCall(CancellationToken cancellationToken)
+        private AsyncServerStreamingCall<AccessNotification> getStreamingCall(CancellationToken cancellationToken)
         {
             return grpcClient.GetAccessNotifications(new AccessNotificationRequest
             {
                 SendImageData = true,
                 TypeOfAccessNotification = (uint)AccessNotificationType.FaceGranted
-                                                                                   | (uint)AccessNotificationType.FaceGranted
-                                                                                   | (uint)AccessNotificationType.FaceBlocked
-                                                                                   | (uint)AccessNotificationType.Ping
+                                           | (uint)AccessNotificationType.FaceBlocked
+
+                                           | (uint)AccessNotificationType.OpticalCodeGranted
+                                           | (uint)AccessNotificationType.OpticalCodeBlocked
+
+                                           | (uint)AccessNotificationType.PalmGranted
+                                           | (uint)AccessNotificationType.PalmBlocked
+
+                                           | (uint)AccessNotificationType.Ping
             }, cancellationToken: cancellationToken);
         }
 
-        private IAsyncStreamReader<Innovatrics.Smartface.AccessNotification> GetStream(CancellationToken cancellationToken = default)
+        private IAsyncStreamReader<AccessNotification> GetStream(CancellationToken cancellationToken = default)
         {
             var call = this.getStreamingCall(cancellationToken);
             return call.ResponseStream;

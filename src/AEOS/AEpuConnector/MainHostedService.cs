@@ -93,13 +93,13 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
             return Task.CompletedTask;
         }
 
-        private async Task OnGrpcGrantedNotification(FaceGrantedNotification notification)
+        private async Task OnGrpcGrantedNotification(GrantedNotification notification)
         {
             this.logger.Information("Processing 'GRANTED' notification {@notification}", new
             {
-                WatchlistMemberFullName = notification.WatchlistMemberFullName,
+                WatchlistMemberFullName = notification.WatchlistMemberDisplayName,
                 WatchlistMemberId = notification.WatchlistMemberId,
-                FaceDetectedAt = notification.FaceDetectedAt,
+                FaceDetectedAt = notification.GrpcSentAt,
                 StreamId = notification.StreamId
             });
 
