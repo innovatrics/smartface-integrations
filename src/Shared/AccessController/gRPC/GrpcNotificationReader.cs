@@ -5,7 +5,6 @@ using Innovatrics.Smartface;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessController.Utils;
-using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
 {
@@ -15,9 +14,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
 
         public event Action<Notification> OnGrpcAnyNotification;
         public event Func<DateTime, Task> OnGrpcPing;
-        public event Func<FaceGrantedNotification, Task> OnGrpcFaceGrantedNotification;
-        public event Action<FaceDeniedNotification> OnGrpcFaceDeniedNotification;
-        public event Action<FaceBlockedNotification> OnGrpcFaceBlockedNotification;
+        public event Func<GrantedNotification, Task> OnGrpcFaceGrantedNotification;
+        public event Action<DeniedNotification> OnGrpcFaceDeniedNotification;
+        public event Action<BlockedNotification> OnGrpcFaceBlockedNotification;
         public event Action<Exception> OnGrpcError;
 
         private readonly IGrpcStreamSubscriber grpcStreamSubscriber;
@@ -36,7 +35,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
 
         private void AccessReceived(object source, AccessNotification accessNotification)
         {
-            // logger.Information("Received Notification {type} with props {@props} processing...", accessNotification.TypeOfAccessNotification, new { FaceId = accessNotification.FaceId, FaceDetectedAt = accessNotification.FaceDetectedAt });
+            // logger.Information("Received Notification {type} with props {@props} processing...", accessNotification.TypeOfAccessNotification, new { FaceId = accessNotification.FaceId, SentAt = accessNotification.SentAt });
 
             OnGrpcAnyNotification?.Invoke(accessNotification.GetNotification());
 
@@ -76,17 +75,29 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
 
         private static bool IsGrantedMessage(AccessNotification notification)
         {
-            return notification.TypeOfAccessNotification == (uint)AccessNotificationType.FaceGranted;
+            var type = (AccessNotificationType)notification.TypeOfAccessNotification;
+
+            return type.HasFlag(AccessNotificationType.FaceGranted) ||
+                   type.HasFlag(AccessNotificationType.OpticalCodeGranted) ||
+                   type.HasFlag(AccessNotificationType.PalmGranted);
         }
 
         private static bool IsDeniedMessage(AccessNotification notification)
         {
-            return notification.TypeOfAccessNotification == (uint)AccessNotificationType.FaceGranted;
+            var type = (AccessNotificationType)notification.TypeOfAccessNotification;
+
+            return type.HasFlag(AccessNotificationType.FaceDenied) ||
+                   type.HasFlag(AccessNotificationType.OpticalCodeDeniedUnsupported) ||
+                   type.HasFlag(AccessNotificationType.PalmDeniedUnsupported);
         }
 
         private static bool IsBlockedMessage(AccessNotification notification)
         {
-            return notification.TypeOfAccessNotification == (uint)AccessNotificationType.FaceBlocked;
+            var type = (AccessNotificationType)notification.TypeOfAccessNotification;
+
+            return type.HasFlag(AccessNotificationType.FaceBlocked) ||
+                   type.HasFlag(AccessNotificationType.OpticalCodeBlocked) ||
+                   type.HasFlag(AccessNotificationType.PalmBlocked);
         }
 
         private bool IsPingNotification(AccessNotification notification)

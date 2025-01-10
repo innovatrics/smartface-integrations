@@ -31,7 +31,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Services
             this.AEpuConnectorFactory = AEpuConnectorFactory ?? throw new ArgumentNullException(nameof(AEpuConnectorFactory));
         }
 
-        public async Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification)
+        public async Task ProcessFaceGrantedNotificationAsync(GrantedNotification notification)
         {
             if (notification == null)
             {
@@ -63,7 +63,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Services
 
             var AEpuConnector = this.AEpuConnectorFactory.Create(cameraToAEpuMapping.Type);
 
-            this.logger.Information("Open {AEpuHostname} for user {WatchlistMemberFullName} ({WatchlistMemberID})", cameraToAEpuMapping.AEpuHostname, notification.WatchlistMemberFullName, notification.WatchlistMemberExternalId);
+            this.logger.Information("Open {AEpuHostname} for user {WatchlistMemberDisplayName} ({WatchlistMemberID})", cameraToAEpuMapping.AEpuHostname, notification.WatchlistMemberDisplayName, notification.WatchlistMemberExternalId);
 
             await AEpuConnector.OpenAsync(
                 aepuHostname: cameraToAEpuMapping.AEpuHostname,
