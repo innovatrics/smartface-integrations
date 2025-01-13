@@ -26,6 +26,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 var logger = ConfigureLogger(args, configurationRoot);
 
                 Log.Information("SmartFace <-> Aeos Synchronization Tool Starting up.");
+                Log.Information("GQL SCHEMA updated.");
 
                 var hostBuilder = CreateHostBuilder(args, logger, configurationRoot);
                 using var host = hostBuilder.Build();
