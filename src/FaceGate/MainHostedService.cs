@@ -127,7 +127,7 @@ namespace Innovatrics.SmartFace.Integrations.FaceGate
         {
             this.logger.Information("Processing 'GRANTED' notification {@notification}", new
             {
-                WatchlistMemberFullName = notification.WatchlistMemberFullName,
+                WatchlistMemberFullName = notification.WatchlistMemberDisplayName,
                 WatchlistMemberId = notification.WatchlistMemberId,
                 FaceDetectedAt = notification.FaceDetectedAt,
                 StreamId = notification.StreamId
