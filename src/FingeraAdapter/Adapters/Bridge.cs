@@ -26,7 +26,7 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
             this.fingeraAdapter = fingeraAdapter ?? throw new ArgumentNullException(nameof(fingeraAdapter));
         }
 
-        public async Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification)
+        public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
         {
             if (notification == null)
             {
@@ -100,7 +100,7 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
                         .FirstOrDefault();
         }
 
-        private bool authorizePolicy(FaceGrantedNotification notification)
+        private bool authorizePolicy(GrantedNotification notification)
         {
             if (!authorizeTimePolicy(notification))
             {
@@ -111,7 +111,7 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
             return true;
         }
 
-        private bool authorizeTimePolicy(FaceGrantedNotification notification)
+        private bool authorizeTimePolicy(GrantedNotification notification)
         {
             var policy = this.configuration.GetSection("Policies:AllowedTimeWindow").Get<AllowedTimeWindowPolicy>();
 

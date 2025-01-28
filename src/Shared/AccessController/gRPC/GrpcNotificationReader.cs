@@ -14,9 +14,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
 
         public event Action<Notification> OnGrpcAnyNotification;
         public event Func<DateTime, Task> OnGrpcPing;
-        public event Func<GrantedNotification, Task> OnGrpcFaceGrantedNotification;
-        public event Action<DeniedNotification> OnGrpcFaceDeniedNotification;
-        public event Action<BlockedNotification> OnGrpcFaceBlockedNotification;
+        public event Func<GrantedNotification, Task> OnGrpcGrantedNotification;
+        public event Action<DeniedNotification> OnGrpcDeniedNotification;
+        public event Action<BlockedNotification> OnGrpcBlockedNotification;
         public event Action<Exception> OnGrpcError;
 
         private readonly IGrpcStreamSubscriber grpcStreamSubscriber;
@@ -49,21 +49,21 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
             if (IsGrantedMessage(accessNotification))
             {
                 var granted = accessNotification.GetGrantedNotification();
-                OnGrpcFaceGrantedNotification?.Invoke(granted);
+                OnGrpcGrantedNotification?.Invoke(granted);
                 return;
             }
 
             if (IsDeniedMessage(accessNotification))
             {
                 var denied = accessNotification.GetDeniedNotification();
-                OnGrpcFaceDeniedNotification?.Invoke(denied);
+                OnGrpcDeniedNotification?.Invoke(denied);
                 return;
             }
 
             if (IsBlockedMessage(accessNotification))
             {
                 var blocked = accessNotification.GetBlockedNotification();
-                OnGrpcFaceBlockedNotification?.Invoke(blocked);
+                OnGrpcBlockedNotification?.Invoke(blocked);
                 return;
             }
         }

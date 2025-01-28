@@ -12,6 +12,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
             {
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
+                FaceId = accessNotification.FaceId,
                 GrpcSentAt = accessNotification.SentAt.ToDateTime()
             };
         }
@@ -24,6 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
             {
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
+                FaceId = accessNotification.FaceId,
                 WatchlistMemberId = accessNotificationGranted.WatchlistMemberId,
                 WatchlistMemberDisplayName = accessNotificationGranted.WatchlistMemberDisplayName,
                 WatchlistMemberExternalId = accessNotificationGranted.WatchlistMemberExternalId,
@@ -46,6 +48,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
             {
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
+                FaceId = accessNotification.FaceId,
                 WatchlistMemberId = accessNotificationBlocked.WatchlistMemberId,
                 WatchlistMemberDisplayName = accessNotificationBlocked.WatchlistMemberDisplayName,
                 WatchlistDisplayName = accessNotificationBlocked.WatchlistDisplayName,
@@ -65,6 +68,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
             {
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
+                FaceId = accessNotification.FaceId,
                 CropImage = accessNotificationDenied.CropImage.ToByteArray(),
                 GrpcSentAt = accessNotification.SentAt.ToDateTime()
             };

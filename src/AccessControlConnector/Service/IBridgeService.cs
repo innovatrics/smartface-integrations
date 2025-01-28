@@ -5,7 +5,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
     public interface IBridgeService
     {
-        Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification);
+        Task ProcessGrantedNotificationAsync(GrantedNotification notification);
         
         Task SendKeepAliveSignalAsync();
     }

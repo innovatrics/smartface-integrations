@@ -73,7 +73,7 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
 
             grpcNotificationReader = this.CreateGrpcReader();
 
-            grpcNotificationReader.OnGrpcFaceGrantedNotification += async (FaceGrantedNotification notification) =>
+            grpcNotificationReader.OnGrpcGrantedNotification += async (GrantedNotification notification) =>
             {
                 this.logger.Information("Processing 'GRANTED' notification {@notification}", new
                 {
@@ -84,7 +84,7 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
                 });
             };
 
-            grpcNotificationReader.OnGrpcFaceDeniedNotification += async (FaceDeniedNotification notification) =>
+            grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
             {
                 this.logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
@@ -93,7 +93,7 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
                 });
             };
 
-            grpcNotificationReader.OnGrpcFaceBlockedNotification += async (FaceBlockedNotification notification) =>
+            grpcNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
             {
                 this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
                 {
@@ -160,7 +160,7 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
             accessControllerPingTimer.Start();
         }
 
-        private async Task saveBlockedAttemptAsync(FaceBlockedNotification notification)
+        private async Task saveBlockedAttemptAsync(BlockedNotification notification)
         {
             var targetDirPath = Path.Combine("./Output/Blocked/", $"{notification.FaceDetectedAt:yyyy-MM-dd}");
 

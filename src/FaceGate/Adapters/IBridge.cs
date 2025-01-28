@@ -5,6 +5,6 @@ namespace Innovatrics.SmartFace.Integrations.FaceGate
 {
     public interface IBridge
     {
-        Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification);
+        Task ProcessGrantedNotificationAsync(GrantedNotification notification);
     }
 }

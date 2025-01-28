@@ -5,6 +5,6 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Services
 {
     public interface IBridgeService
     {
-        Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification);
+        Task ProcessGrantedNotificationAsync(GrantedNotification notification);
     }
 }

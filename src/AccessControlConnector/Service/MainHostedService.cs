@@ -82,9 +82,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 
             grpcNotificationReader = this.CreateGrpcReader();
 
-            grpcNotificationReader.OnGrpcFaceGrantedNotification += OnGrpcGrantedNotification;
+            grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
 
-            grpcNotificationReader.OnGrpcFaceDeniedNotification += async (FaceDeniedNotification notification) =>
+            grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
             {
                 this.logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
@@ -93,7 +93,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                 });
             };
 
-            grpcNotificationReader.OnGrpcFaceBlockedNotification += async (FaceBlockedNotification notification) =>
+            grpcNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
             {
                 this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
                 {
@@ -112,7 +112,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
         private async Task stopReceivingGrpcNotificationsAsync()
         {
             this.grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
-            this.grpcNotificationReader.OnGrpcFaceGrantedNotification -= OnGrpcGrantedNotification;
+            this.grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
             await this.grpcNotificationReader.DisposeAsync();
         }
 
@@ -123,7 +123,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             return Task.CompletedTask;
         }
 
-        private Task OnGrpcGrantedNotification(FaceGrantedNotification notification)
+        private Task OnGrpcGrantedNotification(GrantedNotification notification)
         {
             this.logger.Information("Processing 'GRANTED' notification {@notification}", new
             {

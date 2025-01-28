@@ -38,7 +38,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             RESOLVER_KEY = NormalizeLabelKey(labelKey);
         }
 
-        public async Task<string> ResolveUserAsync(FaceGrantedNotification notification)
+        public async Task<string> ResolveUserAsync(GrantedNotification notification)
         {
             if (notification == null)
             {
@@ -69,7 +69,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             return string.Join('_', labelParts);
         }
 
-        private async Task<string> FetchLabelFromAPI(FaceGrantedNotification notification)
+        private async Task<string> FetchLabelFromAPI(GrantedNotification notification)
         {
             var apiSchema = this.configuration.GetValue<string>("API:Schema", "http");
             var apiHost = this.configuration.GetValue<string>("API:Host", "SFApi");
