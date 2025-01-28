@@ -129,7 +129,7 @@ namespace Innovatrics.SmartFace.Integrations.FaceGate
             {
                 WatchlistMemberFullName = notification.WatchlistMemberDisplayName,
                 WatchlistMemberId = notification.WatchlistMemberId,
-                FaceDetectedAt = notification.FaceDetectedAt,
+                FaceDetectedAt = notification.GrpcSentAt,
                 StreamId = notification.StreamId
             });
 

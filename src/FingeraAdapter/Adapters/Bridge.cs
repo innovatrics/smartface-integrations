@@ -58,7 +58,7 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
             await this.fingeraAdapter.OpenAsync(
                 stationId: fingeraCameraId, 
                 userId: fingeraUserId, 
-                timestamp: notification.FaceDetectedAt, 
+                timestamp: notification.GrpcSentAt, 
                 score: notification.MatchResultScore,
                 image: notification.CropImage    
             );
@@ -122,9 +122,9 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
                 return true;
             }
 
-            var notificationLocalTime = notification.FaceDetectedAt.GetLocalDateTime();
+            var notificationLocalTime = notification.GrpcSentAt.GetLocalDateTime();
 
-            this.logger.Information("Notification FaceDetectAt: {detectAtUtc}, Local: {detectAtLocal}", notification.FaceDetectedAt, notificationLocalTime);
+            this.logger.Information("Notification FaceDetectAt: {detectAtUtc}, Local: {detectAtLocal}", notification.GrpcSentAt, notificationLocalTime);
 
             var policyDay = policy.Days.ElementAtOrDefault((int)notificationLocalTime.DayOfWeek);
 

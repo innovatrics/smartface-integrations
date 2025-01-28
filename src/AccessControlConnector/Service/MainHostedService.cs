@@ -88,7 +88,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             {
                 this.logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
-                    FaceDetectedAt = notification.FaceDetectedAt,
+                    FaceDetectedAt = notification.GrpcSentAt,
                     StreamId = notification.StreamId
                 });
             };
@@ -99,7 +99,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                 {
                     WatchlistMemberFullName = notification.WatchlistMemberFullName,
                     WatchlistMemberId = notification.WatchlistMemberId,
-                    FaceDetectedAt = notification.FaceDetectedAt,
+                    FaceDetectedAt = notification.GrpcSentAt,
                     StreamId = notification.StreamId
                 });
             };
@@ -129,7 +129,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             {
                 WatchlistMemberFullName = notification.WatchlistMemberDisplayName,
                 WatchlistMemberId = notification.WatchlistMemberId,
-                FaceDetectedAt = notification.FaceDetectedAt,
+                FaceDetectedAt = notification.GrpcSentAt,
                 StreamId = notification.StreamId
             });
 

@@ -79,7 +79,7 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
                 {
                     WatchlistMemberFullName = notification.WatchlistMemberDisplayName,
                     WatchlistMemberId = notification.WatchlistMemberId,
-                    FaceDetectedAt = notification.FaceDetectedAt,
+                    FaceDetectedAt = notification.GrpcSentAt,
                     StreamId = notification.StreamId
                 });
             };
@@ -88,7 +88,7 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
             {
                 this.logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
-                    FaceDetectedAt = notification.FaceDetectedAt,
+                    FaceDetectedAt = notification.GrpcSentAt,
                     StreamId = notification.StreamId
                 });
             };
@@ -99,7 +99,7 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
                 {
                     WatchlistMemberFullName = notification.WatchlistMemberFullName,
                     WatchlistMemberId = notification.WatchlistMemberId,
-                    FaceDetectedAt = notification.FaceDetectedAt,
+                    FaceDetectedAt = notification.GrpcSentAt,
                     StreamId = notification.StreamId
                 });
 
@@ -162,7 +162,7 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
 
         private async Task saveBlockedAttemptAsync(BlockedNotification notification)
         {
-            var targetDirPath = Path.Combine("./Output/Blocked/", $"{notification.FaceDetectedAt:yyyy-MM-dd}");
+            var targetDirPath = Path.Combine("./Output/Blocked/", $"{notification.GrpcSentAt:yyyy-MM-dd}");
 
             if (!Directory.Exists(targetDirPath))
             {
@@ -171,7 +171,7 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
 
             if (notification.CropImage?.Length > 0)
             {
-                var cropFileName = $"{notification.FaceDetectedAt:HH-mm-ss}-{notification.WatchlistMemberId}-crop.jpeg";
+                var cropFileName = $"{notification.GrpcSentAt:HH-mm-ss}-{notification.WatchlistMemberId}-crop.jpeg";
 
                 await File.WriteAllBytesAsync(Path.Combine(targetDirPath, cropFileName), notification.CropImage);
             }
