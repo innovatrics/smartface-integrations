@@ -41,3 +41,4 @@ Output/
 [Pp]ublish/
 
 src/GrpcCamera/stream-out/*
+src/scripts/migrate-watchlist-members/images/*
