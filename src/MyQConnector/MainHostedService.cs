@@ -97,10 +97,10 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector
         {
             this.logger.Information("Processing 'GRANTED' notification {@notification}", new
             {
-                WatchlistMemberFullName = notification.WatchlistMemberDisplayName,
-                WatchlistMemberId = notification.WatchlistMemberId,
-                FaceDetectedAt = notification.GrpcSentAt,
-                StreamId = notification.StreamId
+                notification.WatchlistMemberDisplayName,
+                notification.WatchlistMemberId,
+                notification.GrpcSentAt,
+                notification.StreamId
             });
 
             this.logger.Debug("Notification details {@notification}", notification);

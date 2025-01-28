@@ -8,7 +8,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
         public string WatchlistDisplayName { get; set; }
         public string WatchlistFullName { get; set; }
         public string WatchlistMemberDisplayName { get; set; }
-        public string WatchlistMemberFullName { get; set; }
+        public string WatchlistMemberDisplayName { get; set; }
         public Guid FaceId { get; set; }
         public Guid TrackletId { get; set; }
         public DateTime? UpdatedAt { get; set; }

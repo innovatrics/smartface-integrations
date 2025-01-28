@@ -76,7 +76,7 @@ public class GrpcNotificationSource : INotificationSource
 
             var notification2 = OnNotification?.Invoke(new Models.Notification
             {
-                StreamId = notification.StreamId,
+                notification.StreamId,
                 FaceId = notification.FaceId,
                 TrackletId = notification.TrackletId,
                 CropImage = notification.CropImage,

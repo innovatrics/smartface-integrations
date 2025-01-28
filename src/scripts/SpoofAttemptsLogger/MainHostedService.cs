@@ -77,10 +77,10 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
             {
                 this.logger.Information("Processing 'GRANTED' notification {@notification}", new
                 {
-                    WatchlistMemberFullName = notification.WatchlistMemberDisplayName,
-                    WatchlistMemberId = notification.WatchlistMemberId,
-                    FaceDetectedAt = notification.GrpcSentAt,
-                    StreamId = notification.StreamId
+                    notification.WatchlistMemberDisplayName,
+                    notification.WatchlistMemberId,
+                    notification.GrpcSentAt,
+                    notification.StreamId
                 });
             };
 
@@ -88,8 +88,8 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
             {
                 this.logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
-                    FaceDetectedAt = notification.GrpcSentAt,
-                    StreamId = notification.StreamId
+                    notification.GrpcSentAt,
+                    notification.StreamId
                 });
             };
 
@@ -97,10 +97,10 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
             {
                 this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
                 {
-                    WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                    WatchlistMemberId = notification.WatchlistMemberId,
-                    FaceDetectedAt = notification.GrpcSentAt,
-                    StreamId = notification.StreamId
+                    notification.WatchlistMemberDisplayName,
+                    notification.WatchlistMemberId,
+                    notification.GrpcSentAt,
+                    notification.StreamId
                 });
 
                 await this.saveBlockedAttemptAsync(notification);
