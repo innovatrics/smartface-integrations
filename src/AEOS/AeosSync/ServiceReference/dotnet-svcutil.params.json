@@ -11,10 +11,10 @@
     "outputFile": "Reference.cs",
     "references": [
       "AsyncIO, {AsyncIO, 0.1.69}",
-      "C:\\Users\\jberes\\Documents\\work\\github\\smartface-integrations\\smartface-integrations\\src\\AEOS\\AeosSync\\bin\\Debug\\net6.0\\AccessController.dll",
-      "C:\\Users\\jberes\\Documents\\work\\github\\smartface-integrations\\smartface-integrations\\src\\AEOS\\AeosSync\\bin\\Debug\\net6.0\\Shared.dll",
-      "C:\\Users\\jberes\\Documents\\work\\github\\smartface-integrations\\smartface-integrations\\src\\AEOS\\AeosSync\\bin\\Debug\\net6.0\\SmartFaceClients.dll",
-      "C:\\Users\\jberes\\Documents\\work\\github\\smartface-integrations\\smartface-integrations\\src\\AEOS\\AeosSync\\bin\\Debug\\net6.0\\SmartFaceRestApiClient.dll",
+      "C:\\Users\\jberes\\Documents\\work\\github\\smartface-integrations\\smartface-integrations\\src\\AEOS\\AeosSync\\bin\\Debug\\net8.0\\AccessController.dll",
+      "C:\\Users\\jberes\\Documents\\work\\github\\smartface-integrations\\smartface-integrations\\src\\AEOS\\AeosSync\\bin\\Debug\\net8.0\\Shared.dll",
+      "C:\\Users\\jberes\\Documents\\work\\github\\smartface-integrations\\smartface-integrations\\src\\AEOS\\AeosSync\\bin\\Debug\\net8.0\\SmartFaceClients.dll",
+      "C:\\Users\\jberes\\Documents\\work\\github\\smartface-integrations\\smartface-integrations\\src\\AEOS\\AeosSync\\bin\\Debug\\net8.0\\SmartFaceRestApiClient.dll",
       "Fluid, {Fluid.Core, 2.2.15}",
       "Google.Protobuf, {Google.Protobuf, 3.16.0}",
       "Grpc.Core, {Grpc.Core, 2.36.4}",
@@ -162,7 +162,7 @@
       "System.Threading.Timer, {System.Threading.Timer, 4.0.1}",
       "TimeZoneConverter, {TimeZoneConverter, 3.5.0}"
     ],
-    "targetFramework": "net6.0",
+    "targetFramework": "net8.0",
     "typeReuseMode": "All"
   }
 }
