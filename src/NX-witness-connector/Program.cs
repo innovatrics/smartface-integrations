@@ -12,8 +12,6 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
 {
     public class Program
     {
-        private const string APP_NAME = "NXWitnessConnector";
-
         public static CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         public static bool ReadKeyToStop = Environment.UserInteractive;
 
@@ -21,7 +19,7 @@ namespace Innovatrics.SmartFace.Integrations.NXWitnessConnector
         {
             try
             {
-                var logger =  LoggingSetup.SetupBasicLogging(APP_NAME);
+                var logger =  LoggingSetup.SetupBasicLogging();
 
                 var configurationRoot = new ConfigurationBuilder()
                     .AddJsonFile("appSettings.json", optional: false)

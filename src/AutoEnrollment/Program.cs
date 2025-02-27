@@ -51,17 +51,7 @@ namespace SmartFace.AutoEnrollment
             logDir = configuration.GetValue("Serilog:LogDirectory", logDir);
             var logFilePath = Path.Combine(logDir, LogFileName);
 
-            var loggerConfiguration = new LoggerConfiguration()
-                .ReadFrom.Configuration(configuration)
-                .Enrich.FromLogContext()
-                .Destructure.ToMaximumCollectionCount(100)
-                .Destructure.ToMaximumDepth(5)
-                .Destructure.ToMaximumStringLength(1000)
-                .WithRollingFile(logFilePath, 15, 7)
-                .WithConsole();
-
-            var logger = loggerConfiguration.CreateLogger();
-            Log.Logger = logger;
+            var logger = LoggingSetup.SetupBasicLogging(logFilePath);
 
             return logger;
         }
