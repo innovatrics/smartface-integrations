@@ -32,6 +32,10 @@ namespace Innovatrics.SmartFace.DataCollection.Services
             _logger.Information($"{nameof(MainHostedService)} is starting");
 
             var sources = _configuration.GetValue<Source[]>("Sources");
+            
+            var observer = new Observer(_logger);
+
+            observer.OnNotification += HandleNotificationAsync;
 
             _notificationSources = new List<GraphQlNotificationService>();
 
@@ -42,10 +46,9 @@ namespace Innovatrics.SmartFace.DataCollection.Services
                     source.Schema,
                     source.Host,
                     source.Port,
-                    source.Path
+                    source.Path,
+                    observer
                 );
-
-                notificationSource.OnNotification += HandleNotificationAsync;
 
                 notificationSource.Start();
 

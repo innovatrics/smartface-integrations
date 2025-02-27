@@ -10,15 +10,13 @@ namespace Innovatrics.SmartFace.DataCollection.Services
 {
     public class GraphQlNotificationService
     {
-        public event Func<Notification, Task> OnNotification;
-
         private readonly ILogger _logger;
 
         private readonly string _schema;
         private readonly string _host;
         private readonly int _port;
         private readonly string _path;
-
+        private readonly Observer _observer;
         private GraphQLHttpClient _graphQlClient;
 
         private IDisposable _subscription;
@@ -28,7 +26,8 @@ namespace Innovatrics.SmartFace.DataCollection.Services
             string schema,
             string host,
             int port,
-            string path
+            string path,
+            Observer observer
         )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -36,6 +35,7 @@ namespace Innovatrics.SmartFace.DataCollection.Services
             _host = host ?? throw new ArgumentNullException(nameof(host));
             _port = port == 0 ? throw new ArgumentNullException(nameof(port)) : port;
             _path = path ?? throw new ArgumentNullException(nameof(path));
+            _observer = observer ?? throw new ArgumentNullException(nameof(observer));
         }
 
         public void Start()
@@ -48,23 +48,6 @@ namespace Innovatrics.SmartFace.DataCollection.Services
             _logger.Information($"Stopping receiving graphQL notifications");
 
             StopReceivingGraphQlNotifications();
-        }
-
-        public static Notification ConvertToNotification(MatchResultResponse response)
-        {
-            var notification = new Notification
-            {
-                StreamId = response.MatchResult?.StreamId,
-                CropImage = response.MatchResult?.CropImage,
-                WatchlistMemberId = response.MatchResult?.WatchlistMemberId,
-                WatchlistMemberDisplayName = response.MatchResult?.WatchlistMemberDisplayName,
-                WatchlistMemberFullName = response.MatchResult?.WatchlistMemberFullName,
-                Score = response.MatchResult?.Score,
-
-                ReceivedAt = DateTime.UtcNow
-            };
-
-            return notification;
         }
 
         private GraphQLHttpClient CreateGraphQlClient()
@@ -107,35 +90,10 @@ namespace Innovatrics.SmartFace.DataCollection.Services
                 ex =>
                 {
                     _logger.Error(ex, "GraphQL subscription init error");
-                });
+                }
+            );
 
-            _subscription = _subscriptionStream.Subscribe(
-                    onNext: response =>
-                    {
-                        if (response.Data != null)
-                        {
-                            _logger.Information("MatchResult received for stream {Stream} and WatchlistMember {WatchlistMember} ({WatchlistMemberDisplayName})",
-                                response.Data.MatchResult?.StreamId, response.Data.MatchResult?.WatchlistMemberId, (response.Data.MatchResult?.WatchlistMemberDisplayName ?? response.Data.MatchResult?.WatchlistMemberFullName));
-
-                            var notification = ConvertToNotification(response.Data);
-
-                            OnNotification?.Invoke(notification);
-                        }
-                        else if (response.Errors != null && response.Errors.Length > 0)
-                        {
-                            _logger.Information("{errors} errors from GraphQL received", response.Errors.Length);
-
-                            foreach (var e in response.Errors)
-                            {
-                                _logger.Error("{error}", e.Message);
-                            }
-                        }
-                    },
-                    onError: err =>
-                    {
-                        _logger.Error(err, "GraphQL subscription runtime error");
-                    }
-                );
+            _subscription = _subscriptionStream.Subscribe(_observer);
 
             _logger.Information("GraphQL subscription created");
         }
