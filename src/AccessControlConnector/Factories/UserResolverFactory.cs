@@ -47,6 +47,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 case "LABEL_2N_USER_ID":
                 case "LABEL_ACCESS_CARD_ID":
                     return new WatchlistMemberLabelUserResolver(this.logger, this.configuration, this.httpClientFactory, type);
+                case "LABEL_EMAIL":                    
+                    return new WatchlistMemberLabelUserResolver(this.logger, this.configuration, this.httpClientFactory, type);
             }
         }
     }
