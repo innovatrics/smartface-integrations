@@ -25,6 +25,7 @@ namespace Innovatrics.SmartFace.DataCollection.Services
         private readonly string _accessKey;
         private readonly string _secretKey;
         private readonly string _bucketName;
+        private readonly string _targetFolder;
         private readonly bool _useSsl;
 
         private ActionBlock<Notification> _actionBlock;
@@ -45,6 +46,7 @@ namespace Innovatrics.SmartFace.DataCollection.Services
             _accessKey = configuration.GetValue<string>("Minio:AccessKey");
             _secretKey = configuration.GetValue<string>("Minio:SecretKey");
             _bucketName = configuration.GetValue<string>("Minio:BucketName");
+            _targetFolder = configuration.GetValue<string>("Minio:TargetFolder");
             _useSsl = configuration.GetValue<bool>("Minio:UseSsl", false);
         }
 
@@ -61,7 +63,7 @@ namespace Innovatrics.SmartFace.DataCollection.Services
                 try
                 {
 
-                    string objectName = $"{notification.WatchlistMemberId}/{notification.ReceivedAt.ToString("yyyy-MM-dd")}/{notification.Score}_{notification.ReceivedAt.ToString("HH-mm-ss")}.jpg";
+                    string objectName = $"{_targetFolder}/{notification.WatchlistMemberId}/{notification.ReceivedAt.ToString("yyyy-MM-dd")}/{notification.Score}_{notification.ReceivedAt.ToString("HH-mm-ss")}.jpg";
                     byte[] imageData = notification.CropImage;
 
                     using var ms = new MemoryStream(imageData);
