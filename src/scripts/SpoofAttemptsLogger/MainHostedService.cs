@@ -73,34 +73,34 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
 
             grpcNotificationReader = this.CreateGrpcReader();
 
-            grpcNotificationReader.OnGrpcFaceGrantedNotification += async (FaceGrantedNotification notification) =>
+            grpcNotificationReader.OnGrpcGrantedNotification += async (GrantedNotification notification) =>
             {
                 this.logger.Information("Processing 'GRANTED' notification {@notification}", new
                 {
-                    WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                    WatchlistMemberId = notification.WatchlistMemberId,
-                    FaceDetectedAt = notification.FaceDetectedAt,
-                    StreamId = notification.StreamId
+                    notification.WatchlistMemberDisplayName,
+                    notification.WatchlistMemberId,
+                    notification.GrpcSentAt,
+                    notification.StreamId
                 });
             };
 
-            grpcNotificationReader.OnGrpcFaceDeniedNotification += async (FaceDeniedNotification notification) =>
+            grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
             {
                 this.logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
-                    FaceDetectedAt = notification.FaceDetectedAt,
-                    StreamId = notification.StreamId
+                    notification.GrpcSentAt,
+                    notification.StreamId
                 });
             };
 
-            grpcNotificationReader.OnGrpcFaceBlockedNotification += async (FaceBlockedNotification notification) =>
+            grpcNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
             {
                 this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
                 {
-                    WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                    WatchlistMemberId = notification.WatchlistMemberId,
-                    FaceDetectedAt = notification.FaceDetectedAt,
-                    StreamId = notification.StreamId
+                    notification.WatchlistMemberDisplayName,
+                    notification.WatchlistMemberId,
+                    notification.GrpcSentAt,
+                    notification.StreamId
                 });
 
                 await this.saveBlockedAttemptAsync(notification);
@@ -160,9 +160,9 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
             accessControllerPingTimer.Start();
         }
 
-        private async Task saveBlockedAttemptAsync(FaceBlockedNotification notification)
+        private async Task saveBlockedAttemptAsync(BlockedNotification notification)
         {
-            var targetDirPath = Path.Combine("./Output/Blocked/", $"{notification.FaceDetectedAt:yyyy-MM-dd}");
+            var targetDirPath = Path.Combine("./Output/Blocked/", $"{notification.GrpcSentAt:yyyy-MM-dd}");
 
             if (!Directory.Exists(targetDirPath))
             {
@@ -171,7 +171,7 @@ namespace Innovatrics.SmartFace.Integrations.SpoofAttemptsLogger
 
             if (notification.CropImage?.Length > 0)
             {
-                var cropFileName = $"{notification.FaceDetectedAt:HH-mm-ss}-{notification.WatchlistMemberId}-crop.jpeg";
+                var cropFileName = $"{notification.GrpcSentAt:HH-mm-ss}-{notification.WatchlistMemberId}-crop.jpeg";
 
                 await File.WriteAllBytesAsync(Path.Combine(targetDirPath, cropFileName), notification.CropImage);
             }

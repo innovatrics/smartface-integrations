@@ -13,65 +13,64 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
                 FaceId = accessNotification.FaceId,
-                GrpcSentAt = accessNotification.SentAt.ToDateTime(),
-                FaceDetectedAt = accessNotification.FaceDetectedAt?.ToDateTime()
+                GrpcSentAt = accessNotification.SentAt.ToDateTime()
             };
         }
 
-        public static FaceGrantedNotification GetGrantedNotification(this AccessNotification accessNotification)
+        public static GrantedNotification GetGrantedNotification(this AccessNotification accessNotification)
         {
             var accessNotificationGranted = accessNotification.AccessNotificationGranted;
-            var grantedNotification = new FaceGrantedNotification
+
+            var grantedNotification = new GrantedNotification
             {
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
                 FaceId = accessNotification.FaceId,
                 WatchlistMemberId = accessNotificationGranted.WatchlistMemberId,
-                WatchlistMemberFullName = accessNotificationGranted.WatchlistMemberFullName,
+                WatchlistMemberDisplayName = accessNotificationGranted.WatchlistMemberDisplayName,
                 WatchlistMemberExternalId = accessNotificationGranted.WatchlistMemberExternalId,
                 WatchlistExternalId = accessNotificationGranted.WatchlistExternalId,
-                WatchlistFullName = accessNotificationGranted.WatchlistFullName,
+                WatchlistDisplayName = accessNotificationGranted.WatchlistDisplayName,
                 WatchlistMemberLabels = accessNotificationGranted.WatchlistMemberLabels.ToArray(),
                 WatchlistId = accessNotificationGranted.WatchlistId,
                 MatchResultScore = accessNotificationGranted.MatchResultScore,
                 CropImage = accessNotificationGranted.CropImage.ToByteArray(),
-                GrpcSentAt = accessNotification.SentAt.ToDateTime(),
-                FaceDetectedAt = accessNotification.FaceDetectedAt.ToDateTime()
+                GrpcSentAt = accessNotification.SentAt.ToDateTime()
             };
             return grantedNotification;
         }
 
-        public static FaceBlockedNotification GetBlockedNotification(this AccessNotification accessNotification)
+        public static BlockedNotification GetBlockedNotification(this AccessNotification accessNotification)
         {
             var accessNotificationBlocked = accessNotification.AccessNotificationBlocked;
-            var blockedNotification = new FaceBlockedNotification
+
+            var blockedNotification = new BlockedNotification
             {
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
                 FaceId = accessNotification.FaceId,
                 WatchlistMemberId = accessNotificationBlocked.WatchlistMemberId,
-                WatchlistMemberFullName = accessNotificationBlocked.WatchlistMemberFullName,
-                WatchlistFullName = accessNotificationBlocked.WatchlistFullName,
+                WatchlistMemberDisplayName = accessNotificationBlocked.WatchlistMemberDisplayName,
+                WatchlistDisplayName = accessNotificationBlocked.WatchlistDisplayName,
                 WatchlistId = accessNotificationBlocked.WatchlistId,
                 MatchResultScore = accessNotificationBlocked.MatchResultScore,
                 CropImage = accessNotificationBlocked.CropImage.ToByteArray(),
-                GrpcSentAt = accessNotification.SentAt.ToDateTime(),
-                FaceDetectedAt = accessNotification.FaceDetectedAt.ToDateTime()
+                GrpcSentAt = accessNotification.SentAt.ToDateTime()
             };
             return blockedNotification;
         }
 
-        public static FaceDeniedNotification GetDeniedNotification(this AccessNotification accessNotification)
+        public static DeniedNotification GetDeniedNotification(this AccessNotification accessNotification)
         {
             var accessNotificationDenied = accessNotification.AccessNotificationDenied;
-            var deniedNotification = new FaceDeniedNotification
+
+            var deniedNotification = new DeniedNotification
             {
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
                 FaceId = accessNotification.FaceId,
                 CropImage = accessNotificationDenied.CropImage.ToByteArray(),
-                GrpcSentAt = accessNotification.SentAt.ToDateTime(),
-                FaceDetectedAt = accessNotification.FaceDetectedAt.ToDateTime()
+                GrpcSentAt = accessNotification.SentAt.ToDateTime()
             };
             return deniedNotification;
         }

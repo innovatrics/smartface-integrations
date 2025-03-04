@@ -64,19 +64,19 @@ public class GrpcNotificationSource : INotificationSource
 
         _grpcNotificationReader = CreateGrpcReader();
 
-        _grpcNotificationReader.OnGrpcFaceGrantedNotification += (FaceGrantedNotification Notification) =>
+        _grpcNotificationReader.OnGrpcGrantedNotification += (GrantedNotification Notification) =>
         {
             _logger.Information("Processing 'GRANTED' notification skipped");
             return Task.CompletedTask;
         };
 
-        _grpcNotificationReader.OnGrpcFaceDeniedNotification += (FaceDeniedNotification notification) =>
+        _grpcNotificationReader.OnGrpcDeniedNotification += (DeniedNotification notification) =>
         {
             _logger.Information("Processing 'DENIED' notification skipped");
 
             var notification2 = OnNotification?.Invoke(new Models.Notification
             {
-                StreamId = notification.StreamId,
+                notification.StreamId,
                 FaceId = notification.FaceId,
                 TrackletId = notification.TrackletId,
                 CropImage = notification.CropImage,
@@ -84,7 +84,7 @@ public class GrpcNotificationSource : INotificationSource
             });
         };
 
-        _grpcNotificationReader.OnGrpcFaceBlockedNotification += (FaceBlockedNotification notification) =>
+        _grpcNotificationReader.OnGrpcBlockedNotification += (BlockedNotification notification) =>
         {
             _logger.Information("Processing 'BLOCKED' notification skipped");
         };
