@@ -27,7 +27,7 @@ public class Program
 
         var subscription = subscriptionStream.Subscribe((Action<GraphQLResponse<MatchResultSubscriptionResult>>)(response =>
         {
-            Console.WriteLine($"Match: '{response.Data.matchResult.WatchlistMemberFullName}'");
+            Console.WriteLine($"Match: '{response.Data.matchResult.WatchlistMemberDisplayName}'");
         }));
 
         Console.WriteLine($"Press any key to quit");

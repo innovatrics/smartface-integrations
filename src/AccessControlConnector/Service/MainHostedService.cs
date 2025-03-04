@@ -82,25 +82,25 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 
             grpcNotificationReader = this.CreateGrpcReader();
 
-            grpcNotificationReader.OnGrpcFaceGrantedNotification += OnGrpcGrantedNotification;
+            grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
 
-            grpcNotificationReader.OnGrpcFaceDeniedNotification += async (FaceDeniedNotification notification) =>
+            grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
             {
                 this.logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
-                    FaceDetectedAt = notification.FaceDetectedAt,
-                    StreamId = notification.StreamId
+                    notification.GrpcSentAt,
+                    notification.StreamId
                 });
             };
 
-            grpcNotificationReader.OnGrpcFaceBlockedNotification += async (FaceBlockedNotification notification) =>
+            grpcNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
             {
                 this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
                 {
-                    WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                    WatchlistMemberId = notification.WatchlistMemberId,
-                    FaceDetectedAt = notification.FaceDetectedAt,
-                    StreamId = notification.StreamId
+                    notification.WatchlistMemberDisplayName,
+                    notification.WatchlistMemberId,
+                    notification.GrpcSentAt,
+                    notification.StreamId
                 });
             };
 
@@ -112,7 +112,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
         private async Task stopReceivingGrpcNotificationsAsync()
         {
             this.grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
-            this.grpcNotificationReader.OnGrpcFaceGrantedNotification -= OnGrpcGrantedNotification;
+            this.grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
             await this.grpcNotificationReader.DisposeAsync();
         }
 
@@ -123,14 +123,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             return Task.CompletedTask;
         }
 
-        private Task OnGrpcGrantedNotification(FaceGrantedNotification notification)
+        private Task OnGrpcGrantedNotification(GrantedNotification notification)
         {
             this.logger.Information("Processing 'GRANTED' notification {@notification}", new
             {
-                WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                WatchlistMemberId = notification.WatchlistMemberId,
-                FaceDetectedAt = notification.FaceDetectedAt,
-                StreamId = notification.StreamId
+                notification.WatchlistMemberDisplayName,
+                notification.WatchlistMemberId,
+                notification.GrpcSentAt,
+                notification.StreamId
             });
 
             this.logger.Debug("Notification details {@notification}", notification);

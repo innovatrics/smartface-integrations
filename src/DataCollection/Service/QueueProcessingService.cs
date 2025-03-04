@@ -25,6 +25,7 @@ namespace Innovatrics.SmartFace.DataCollection.Services
         private readonly string _accessKey;
         private readonly string _secretKey;
         private readonly string _bucketName;
+        private readonly string _targetFolder;
         private readonly bool _useSsl;
 
         private ActionBlock<Notification> _actionBlock;
@@ -45,23 +46,25 @@ namespace Innovatrics.SmartFace.DataCollection.Services
             _accessKey = configuration.GetValue<string>("Minio:AccessKey");
             _secretKey = configuration.GetValue<string>("Minio:SecretKey");
             _bucketName = configuration.GetValue<string>("Minio:BucketName");
+            _targetFolder = configuration.GetValue<string>("Minio:TargetFolder");
             _useSsl = configuration.GetValue<bool>("Minio:UseSsl", false);
         }
 
         public void Start()
         {
             var minioClient = new MinioClient()
-                .WithEndpoint(_endpoint, _port)
-                .WithCredentials(_accessKey, _secretKey)
-                .WithSSL(_useSsl)
-                .Build();
+                                    .WithEndpoint(_endpoint, _port)
+                                    .WithCredentials(_accessKey, _secretKey)
+                                    .WithSSL(_useSsl)
+                                    .Build();
 
             _actionBlock = new ActionBlock<Notification>(async notification =>
             {
                 try
-                {
+                {                    
+                    _logger.Information($"Processing {nameof(ActionBlock<Notification>)}: for {{watchlistMemberId}}", notification.WatchlistMemberId);
 
-                    string objectName = $"{notification.WatchlistMemberId}/{notification.ReceivedAt.ToString("yyyy-MM-dd")}/{notification.Score}_{notification.ReceivedAt.ToString("HH-mm-ss")}.jpg";
+                    string objectName = $"{_targetFolder}/{notification.WatchlistMemberId}/{notification.ReceivedAt.ToString("yyyy-MM-dd")}/{notification.Score}__{notification.ReceivedAt.ToString("HH-mm-ss")}.jpg";
                     byte[] imageData = notification.CropImage;
 
                     using var ms = new MemoryStream(imageData);
@@ -85,9 +88,9 @@ namespace Innovatrics.SmartFace.DataCollection.Services
                         _logger.Information("Uploading object: {objectName}, Size: {size} bytes", objectName, ms.Length);
 
                         // Upload the file
-                        await minioClient.PutObjectAsync(putObjectArgs);
+                        var putObjectResponse = await minioClient.PutObjectAsync(putObjectArgs);
 
-                        _logger.Information("Successfully uploaded {objectName} to {bucketName}", objectName, _bucketName);
+                        _logger.Information("Upload finished with status {status} for {objectName}", putObjectResponse?.ResponseStatusCode, putObjectResponse?.ObjectName);
                     }
                     catch (Exception ex)
                     {
@@ -114,11 +117,8 @@ namespace Innovatrics.SmartFace.DataCollection.Services
 
         public void ProcessNotification(Notification notification)
         {
-            if (notification == null)
-            {
-                throw new ArgumentNullException(nameof(notification));
-            }
-
+            ArgumentNullException.ThrowIfNull(notification);
+            
             _actionBlock.Post(notification);
         }
     }

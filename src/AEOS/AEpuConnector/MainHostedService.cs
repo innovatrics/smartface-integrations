@@ -73,7 +73,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
 
             grpcNotificationReader = this.CreateGrpcReader();
 
-            grpcNotificationReader.OnGrpcFaceGrantedNotification += OnGrpcGrantedNotification;
+            grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
             grpcNotificationReader.OnGrpcPing += OnGrpcPing;
 
             grpcNotificationReader.StartReceiving();
@@ -82,7 +82,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
         private async Task StopReceivingGrpcNotificationsAsync()
         {
             this.grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
-            this.grpcNotificationReader.OnGrpcFaceGrantedNotification -= OnGrpcGrantedNotification;
+            this.grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
             await this.grpcNotificationReader.DisposeAsync();
         }
 
@@ -93,19 +93,19 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
             return Task.CompletedTask;
         }
 
-        private async Task OnGrpcGrantedNotification(FaceGrantedNotification notification)
+        private async Task OnGrpcGrantedNotification(GrantedNotification notification)
         {
             this.logger.Information("Processing 'GRANTED' notification {@notification}", new
             {
-                WatchlistMemberFullName = notification.WatchlistMemberFullName,
-                WatchlistMemberId = notification.WatchlistMemberId,
-                FaceDetectedAt = notification.FaceDetectedAt,
-                StreamId = notification.StreamId
+                notification.WatchlistMemberDisplayName,
+                notification.WatchlistMemberId,
+                notification.GrpcSentAt,
+                notification.StreamId
             });
 
             this.logger.Debug("Notification details {@notification}", notification);
 
-            await this.bridge.ProcessFaceGrantedNotificationAsync(notification);
+            await this.bridge.ProcessGrantedNotificationAsync(notification);
         }
 
         private void StartPingTimer()

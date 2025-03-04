@@ -31,7 +31,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Services
             this.myQConnectorFactory = MyQConnectorFactory ?? throw new ArgumentNullException(nameof(MyQConnectorFactory));
         }
 
-        public async Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification)
+        public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
         {
             if (notification == null)
             {
@@ -64,7 +64,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Services
 
             var myQConnector = this.myQConnectorFactory.Create(cameraToMyQMapping.Type);
 
-            this.logger.Information("Opening printer: {PrinterSn} for user {WatchlistMemberFullName} ({WatchlistMemberID}) on streamID {StreamId}", cameraToMyQMapping.PrinterSn, notification.WatchlistMemberFullName, notification.WatchlistMemberExternalId, cameraToMyQMapping.StreamId);
+            this.logger.Information("Opening printer: {PrinterSn} for user {WatchlistMemberDisplayName} ({WatchlistMemberID}) on streamID {StreamId}", cameraToMyQMapping.PrinterSn, notification.WatchlistMemberDisplayName, notification.WatchlistMemberExternalId, cameraToMyQMapping.StreamId);
 
             await myQConnector.OpenAsync(
                 myqPrinter: cameraToMyQMapping.PrinterSn,

@@ -16,7 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IBridgeService _bridgeService;
-        private ActionBlock<FaceGrantedNotification> _actionBlock;
+        private ActionBlock<GrantedNotification> _actionBlock;
 
         public AccessControlConnectorService(
             ILogger logger,
@@ -35,11 +35,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
         public void Start()
         {
-            _actionBlock = new ActionBlock<FaceGrantedNotification>(async notification =>
+            _actionBlock = new ActionBlock<GrantedNotification>(async notification =>
             {
                 try
                 {
-                    await _bridgeService.ProcessFaceGrantedNotificationAsync(notification);
+                    await _bridgeService.ProcessGrantedNotificationAsync(notification);
                 }
                 catch (Exception ex)
                 {
@@ -58,7 +58,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             await _actionBlock.Completion;
         }
 
-        public void ProcessNotification(FaceGrantedNotification notification)
+        public void ProcessNotification(GrantedNotification notification)
         {
             if (notification == null)
             {

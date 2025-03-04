@@ -5,6 +5,6 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector.Services
 {
     public interface IBridgeService
     {
-        Task ProcessFaceGrantedNotificationAsync(FaceGrantedNotification notification);
+        Task ProcessGrantedNotificationAsync(GrantedNotification notification);
     }
 }
