@@ -61,6 +61,8 @@ namespace Innovatrics.SmartFace.DataCollection
             services.AddHttpClient();
             services.AddSingleton(logger);
 
+            services.AddSingleton<QueueProcessingService>();
+
             services.AddHostedService<MainHostedService>();
         }
 

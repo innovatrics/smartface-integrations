@@ -19,28 +19,30 @@ namespace Innovatrics.SmartFace.DataCollection.Services
         public MainHostedService(
             ILogger logger,
             IConfiguration configuration,
-            QueueProcessingService QueueProcessingService
+            QueueProcessingService queueProcessingService
         )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _queueProcessingService = QueueProcessingService ?? throw new ArgumentNullException(nameof(QueueProcessingService));
+            _queueProcessingService = queueProcessingService ?? throw new ArgumentNullException(nameof(queueProcessingService));
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.Information($"{nameof(MainHostedService)} is starting");
-
-            var sources = _configuration.GetValue<Source[]>("Sources");
             
             var observer = new Observer(_logger);
 
             observer.OnNotification += HandleNotificationAsync;
 
+            var sources = _configuration.GetSection("Sources").Get<Source[]>();
+            
             _notificationSources = new List<GraphQlNotificationService>();
 
             foreach (var source in sources)
             {
+                _logger.Information("Starting notification source for {source}", source);
+
                 var notificationSource = new GraphQlNotificationService(
                     _logger,
                     source.Schema,
@@ -50,9 +52,9 @@ namespace Innovatrics.SmartFace.DataCollection.Services
                     observer
                 );
 
-                notificationSource.Start();
-
                 _notificationSources.Add(notificationSource);
+                
+                notificationSource.Start();
             }
 
             _queueProcessingService.Start();

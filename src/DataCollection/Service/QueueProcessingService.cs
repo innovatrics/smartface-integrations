@@ -21,6 +21,7 @@ namespace Innovatrics.SmartFace.DataCollection.Services
         private readonly ILogger _logger;
 
         private readonly string _endpoint;
+        private readonly int _port;
         private readonly string _accessKey;
         private readonly string _secretKey;
         private readonly string _bucketName;
@@ -40,6 +41,7 @@ namespace Innovatrics.SmartFace.DataCollection.Services
             MaxParallelBlocks = config?.MaxParallelActionBlocks ?? 4;
 
             _endpoint = configuration.GetValue<string>("Minio:Endpoint");
+            _port = configuration.GetValue<int>("Minio:Port", 9000);
             _accessKey = configuration.GetValue<string>("Minio:AccessKey");
             _secretKey = configuration.GetValue<string>("Minio:SecretKey");
             _bucketName = configuration.GetValue<string>("Minio:BucketName");
@@ -49,7 +51,7 @@ namespace Innovatrics.SmartFace.DataCollection.Services
         public void Start()
         {
             var minioClient = new MinioClient()
-                .WithEndpoint(_endpoint)
+                .WithEndpoint(_endpoint, _port)
                 .WithCredentials(_accessKey, _secretKey)
                 .WithSSL(_useSsl)
                 .Build();
@@ -59,34 +61,37 @@ namespace Innovatrics.SmartFace.DataCollection.Services
                 try
                 {
 
-                    string objectName = $"/{notification.WatchlistMemberId}{notification.ReceivedAt.ToString("yyyy-MM-dd")}.jpg";
+                    string objectName = $"{notification.WatchlistMemberId}/{notification.ReceivedAt.ToString("yyyy-MM-dd")}/{notification.Score}_{notification.ReceivedAt.ToString("HH-mm-ss")}.jpg";
                     byte[] imageData = notification.CropImage;
 
-                    using (MemoryStream ms = new MemoryStream(imageData))
+                    using var ms = new MemoryStream(imageData);
+
+                    try
                     {
-                        try
+                        // Ensure the bucket exists
+                        bool found = await minioClient.BucketExistsAsync(new BucketExistsArgs().WithBucket(_bucketName));
+                        if (!found)
                         {
-                            // Ensure the bucket exists
-                            bool found = await minioClient.BucketExistsAsync(new BucketExistsArgs().WithBucket(_bucketName));
-                            if (!found)
-                            {
-                                await minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_bucketName));
-                            }
-
-                            // Upload the file
-                            await minioClient.PutObjectAsync(new PutObjectArgs()
-                                .WithBucket(_bucketName)
-                                .WithObject(objectName)
-                                .WithStreamData(ms)
-                                .WithObjectSize(ms.Length)
-                                .WithContentType("image/jpeg"));
-
-                            Console.WriteLine($"Successfully uploaded {objectName} to {_bucketName}");
+                            await minioClient.MakeBucketAsync(new MakeBucketArgs().WithBucket(_bucketName));
                         }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error: {ex.Message}");
-                        }
+
+                        var putObjectArgs = new PutObjectArgs()
+                            .WithBucket(_bucketName)
+                            .WithObject(objectName)
+                            .WithStreamData(ms)
+                            .WithObjectSize(ms.Length)
+                            .WithContentType("image/jpeg");
+
+                        _logger.Information("Uploading object: {objectName}, Size: {size} bytes", objectName, ms.Length);
+
+                        // Upload the file
+                        await minioClient.PutObjectAsync(putObjectArgs);
+
+                        _logger.Information("Successfully uploaded {objectName} to {bucketName}", objectName, _bucketName);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex, "Failed to upload image to Minio");
                     }
 
                 }

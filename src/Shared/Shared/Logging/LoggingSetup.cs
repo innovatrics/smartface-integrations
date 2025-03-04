@@ -11,7 +11,7 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
             return new LoggerConfiguration()
                 .WriteTo.Console()
                 .WriteTo.File(
-                            logFileName,
+                            path: logFileName,
                             restrictedToMinimumLevel: LogEventLevel.Debug,
                             formatProvider: null,
                             fileSizeLimitBytes: (100 * 1024 * 1024),
@@ -19,7 +19,7 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
                             shared: true,
                             rollOnFileSizeLimit: true,
                             retainedFileCountLimit: 10
-                    );
+                        );
         }
 
         public static ILogger SetupBasicLogging(string logFileName = "app.log")
