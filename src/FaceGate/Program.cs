@@ -50,17 +50,7 @@ namespace Innovatrics.SmartFace.Integrations.FaceGate
             logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
-            var loggerConfiguration = new LoggerConfiguration()
-                .ReadFrom.Configuration(configuration)
-                .Enrich.FromLogContext()
-                .Destructure.ToMaximumCollectionCount(100)
-                .Destructure.ToMaximumDepth(5)
-                .Destructure.ToMaximumStringLength(1000)
-                .WithRollingFile(logFilePath, 15, 7)
-                .WithConsole();
-
-            var logger = loggerConfiguration.CreateLogger();
-            Log.Logger = logger;
+            var logger = LoggingSetup.SetupBasicLogging(logFilePath);
 
             return logger;
         }

@@ -1,42 +1,42 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-<PropertyGroup>
-<TargetFramework>net6.0</TargetFramework>
-<Authors>Innovatrics</Authors>
-<Product>SmartFace</Product>
-</PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Authors>Innovatrics</Authors>
+        <Product>SmartFace</Product>
+    </PropertyGroup>
 
-<ItemGroup>
-
-<PackageReference Include="NetMQ" Version="4.0.1.6" />
-<PackageReference Include="NETStandard.Library" Version="2.0.3" />
-<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-<PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
-<PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
-<PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
-<PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.6" />
-<PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="3.1.6" />
-<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="3.1.6" />
-<PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
-<PackageReference Include="Serilog.Sinks.Literate" Version="3.0.0" />
-<PackageReference Include="Serilog.Sinks.Network" Version="2.0.2.68" />
-</ItemGroup>
-
-<Choose>
-<When Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.4">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+
+        <PackageReference Include="NetMQ" Version="4.0.1.13" />
+        <PackageReference Include="NETStandard.Library" Version="2.0.3" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Microsoft.AspNetCore" Version="2.3.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.3.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.3.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.2" />
+
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     </ItemGroup>
-</When>
-<Otherwise>
-</Otherwise>
-</Choose>
 
-<ItemGroup>
+    <Choose>
+        <When Condition="'$(Configuration)' == 'Release'">
+            <ItemGroup>
+                <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.4">
+                    <PrivateAssets>all</PrivateAssets>
+                    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+                </PackageReference>
+            </ItemGroup>
+        </When>
+        <Otherwise>
+        </Otherwise>
+    </Choose>
 
-</ItemGroup>
+    <ItemGroup>
+
+    </ItemGroup>
 
 </Project>

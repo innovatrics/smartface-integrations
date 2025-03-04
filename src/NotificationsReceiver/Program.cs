@@ -21,7 +21,7 @@ namespace Innovatrics.SmartFace.Integrations.NotificationsReceiver
         {
             try
             {
-                var logger =  LoggingSetup.SetupBasicLogging(APP_NAME);
+                var logger =  LoggingSetup.SetupBasicLogging();
 
                 var configurationRoot = new ConfigurationBuilder()
                     .AddJsonFile("appSettings.json", optional: false)

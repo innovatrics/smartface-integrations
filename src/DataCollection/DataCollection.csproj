@@ -6,22 +6,28 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Shared\AccessController\AccessController.csproj" />
+        <ProjectReference Include="..\Shared\SmartFaceRestApiClient\SmartFaceRestApiClient.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Grpc" Version="2.46.6" />
+        <PackageReference Include="GraphQL.Client" Version="6.1.0" />
+        <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.1.0" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.2" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.2" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.2" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
         <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.2" />
         <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.2" />
+        <PackageReference Include="Minio" Version="6.0.4" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Polly" Version="8.5.2" />
         <PackageReference Include="Serilog" Version="4.2.0" />
-
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
-
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\Shared\AccessController\AccessController.csproj" />
+        <PackageReference Include="System.Threading.Tasks.Dataflow" Version="9.0.2" />
     </ItemGroup>
 
     <ItemGroup>

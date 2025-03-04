@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
@@ -11,22 +11,22 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Grpc" Version="2.36.4" />
-        <PackageReference Include="GraphQL.Client" Version="6.0.0" />
-        <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="6.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-        <PackageReference Include="Polly" Version="7.2.1" />
-        <PackageReference Include="Serilog" Version="2.9.0" />
-        <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
-        <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
-        <PackageReference Include="Serilog.Sinks.Literate" Version="3.0.0" />
-        <PackageReference Include="System.Threading.Tasks.Dataflow" Version="8.0.1" />
+        <PackageReference Include="Grpc" Version="2.46.6" />
+        <PackageReference Include="GraphQL.Client" Version="6.1.0" />
+        <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.1.0" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.2" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Polly" Version="8.5.2" />
+        <PackageReference Include="Serilog" Version="4.2.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+
+        <PackageReference Include="System.Threading.Tasks.Dataflow" Version="9.0.2" />
     </ItemGroup>
 
     <ItemGroup>
