@@ -32,13 +32,18 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
                 throw new NotImplementedException($"{nameof(INotificationSource)} of type {notificationSourceType} not supported");
             }
 
-            return result switch
+            switch (result)
             {
-                NotificationSourceType.GraphQL => new GraphQlNotificationSource(_logger, _configuration, _oAuthService),
-                NotificationSourceType.gRPC => new GrpcNotificationSource(_logger, _configuration),
-                _ => throw new NotImplementedException(
-                    $"{nameof(INotificationSource)} of type {notificationSourceType} not supported")
-            };
+                case NotificationSourceType.GraphQL:
+                    return new GraphQlNotificationSource(_logger, _configuration, _oAuthService);
+
+                case NotificationSourceType.gRPC:
+                    return new GrpcNotificationSource(_logger, _configuration);
+                    
+                default:
+                    throw new NotImplementedException(
+                        $"{nameof(INotificationSource)} of type {notificationSourceType} not supported");
+            }
         }
     }
 
