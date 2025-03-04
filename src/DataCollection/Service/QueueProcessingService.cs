@@ -62,7 +62,6 @@ namespace Innovatrics.SmartFace.DataCollection.Services
             {
                 try
                 {
-
                     string objectName = $"{_targetFolder}/{notification.WatchlistMemberId}/{notification.ReceivedAt.ToString("yyyy-MM-dd")}/{notification.Score}_{notification.ReceivedAt.ToString("HH-mm-ss")}.jpg";
                     byte[] imageData = notification.CropImage;
 
