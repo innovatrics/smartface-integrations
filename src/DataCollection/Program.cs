@@ -1,21 +1,21 @@
 ﻿using System;
 using System.IO;
+using Innovatrics.SmartFace.DataCollection.Services;
+using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
+using Innovatrics.SmartFace.Integrations.Shared.Extensions;
+using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
-using Innovatrics.SmartFace.Integrations.Shared.Logging;
-using Innovatrics.SmartFace.Integrations.Shared.Extensions;
-using Innovatrics.SmartFace.Integrations.MyQConnector.Factories;
-using Innovatrics.SmartFace.Integrations.MyQConnector.Services;
+using Innovatrics.SmartFace.DataCollection.Services;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnector
+namespace Innovatrics.SmartFace.DataCollection
 {
     public class Program
     {
-        public const string LOG_FILE_NAME = "SmartFace.Integrations.MyQConnector.log";
-        public const string JSON_CONFIG_FILE_NAME = "appsettings.json";
+        public const string LogFileName = "SmartFace.DataCollection.log";
+        public const string JsonConfigFileName = "appsettings.json";
 
         private static void Main(string[] args)
         {
@@ -23,9 +23,9 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector
             {
                 var configurationRoot = ConfigureBuilder(args);
 
-                var logger = ConfigureLogger(args, configurationRoot);
+                var logger = ConfigureLogger(configurationRoot);
 
-                Log.Information("Starting up.");
+                Log.Information("Starting up");
 
                 var hostBuilder = CreateHostBuilder(args, logger, configurationRoot);
                 using var host = hostBuilder.Build();
@@ -34,51 +34,44 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector
             }
             catch (Exception ex)
             {
-                Log.Fatal(ex, "Host failed.");
+                Log.Fatal(ex, "Host failed");
                 Log.CloseAndFlush();
                 throw;
             }
 
-            Log.Information("Program exited successfully.");
+            Log.Information("Program exited successfully");
             Log.CloseAndFlush();
         }
 
-        private static ILogger ConfigureLogger(string[] args, IConfiguration configuration)
+        private static ILogger ConfigureLogger(IConfiguration configuration)
         {
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
-            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "MyQConnector"));
-            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
-            var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
+            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace"));
+            logDir = configuration.GetValue("Serilog:LogDirectory", logDir);
+            var logFilePath = Path.Combine(logDir, LogFileName);
 
             var logger = LoggingSetup.SetupBasicLogging(logFilePath);
 
             return logger;
         }
 
-        private static IServiceCollection ConfigureServices(IServiceCollection services, ILogger logger)
+        private static void ConfigureServices(IServiceCollection services, ILogger logger)
         {
             services.AddHttpClient();
+            services.AddSingleton(logger);
 
-            services.AddSingleton<ILogger>(logger);
-            services.AddSingleton<IGrpcStreamSubscriber, GrpcStreamSubscriber>();
-            services.AddSingleton<GrpcStreamSubscriberFactory>();
-            services.AddSingleton<GrpcReaderFactory>();
-            services.AddSingleton<IMyQConnectorFactory, MyQConnectorFactory>();
-            services.AddSingleton<IBridgeService, BridgeService>();
+            services.AddSingleton<QueueProcessingService>();
 
             services.AddHostedService<MainHostedService>();
-
-            return services;
         }
 
         private static IConfigurationRoot ConfigureBuilder(string[] args)
         {
             return new ConfigurationBuilder()
                     .SetMainModuleBasePath()
-                    .AddJsonFile(JSON_CONFIG_FILE_NAME, optional: false)
+                    .AddJsonFile(JsonConfigFileName, optional: false)
                     .AddEnvironmentVariables()
-                    .AddEnvironmentVariables($"SF_INT_AEPU_")
                     .AddCommandLine(args)
                     .Build();
         }
@@ -91,7 +84,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector
                     builder.Sources.Clear();
                     builder.AddConfiguration(configurationRoot);
                 })
-                .ConfigureServices((context, services) =>
+                .ConfigureServices((_, services) =>
                 {
                     ConfigureServices(services, logger);
                 })
@@ -100,6 +93,5 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector
                 .UseWindowsService()
             ;
         }
-
     }
 }
