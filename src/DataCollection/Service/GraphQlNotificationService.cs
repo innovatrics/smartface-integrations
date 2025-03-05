@@ -81,6 +81,7 @@ namespace Innovatrics.SmartFace.DataCollection.Services
                         watchlistMemberFullName
                         cropImage
                         score
+                        watchlistId
                     }
                 }"
             };

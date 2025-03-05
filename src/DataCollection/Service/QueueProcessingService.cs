@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -17,7 +18,8 @@ namespace Innovatrics.SmartFace.DataCollection.Services
 {
     public class QueueProcessingService
     {
-        public readonly int MaxParallelBlocks;
+        private readonly int _maxParallelBlocks;
+        private readonly string[] _watchlistIds;
         private readonly ILogger _logger;
 
         private readonly string _endpoint;
@@ -39,7 +41,8 @@ namespace Innovatrics.SmartFace.DataCollection.Services
 
             var config = configuration.GetSection("Config").Get<Config>();
 
-            MaxParallelBlocks = config?.MaxParallelActionBlocks ?? 4;
+            _maxParallelBlocks = config?.MaxParallelActionBlocks ?? 4;
+            _watchlistIds = config?.WatchlistIds ?? new string[] { };
 
             _endpoint = configuration.GetValue<string>("Minio:Endpoint");
             _port = configuration.GetValue<int>("Minio:Port", 9000);
@@ -63,6 +66,12 @@ namespace Innovatrics.SmartFace.DataCollection.Services
                 try
                 {                    
                     _logger.Information($"Processing {nameof(ActionBlock<Notification>)}: for {{watchlistMemberId}}", notification.WatchlistMemberId);
+
+                    if (_watchlistIds.Length > 0 && !_watchlistIds.Contains(notification.WatchlistId))
+                    {
+                        _logger.Information("Watchlist {watchlistId} not in watchlistIds", notification.WatchlistId); 
+                        return;
+                    }
 
                     string objectName = $"{_targetFolder}/{notification.WatchlistMemberId}/{notification.ReceivedAt.ToString("yyyy-MM-dd")}/{notification.Score}__{notification.ReceivedAt.ToString("HH-mm-ss")}.jpg";
                     byte[] imageData = notification.CropImage;
@@ -105,7 +114,7 @@ namespace Innovatrics.SmartFace.DataCollection.Services
             },
             new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = MaxParallelBlocks
+                MaxDegreeOfParallelism = _maxParallelBlocks
             });
         }
 
