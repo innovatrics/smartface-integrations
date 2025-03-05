@@ -1,12 +1,16 @@
 ﻿using System;
 using System.IO;
+using System.Net.Http;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 using Serilog;
-using System.Net.Http;
+
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
+using Innovatrics.SmartFace.Integrations.AeosSync.Clients;
 
 namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
@@ -60,18 +64,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private static IServiceCollection ConfigureServices(IServiceCollection services, ILogger logger, IConfiguration configuration)
         {
             services.AddHttpClient();
-            services.AddSmartFaceGraphQLClient()
-                        .ConfigureHttpClient((serviceProvider, httpClient) =>
-                        {
-                            var url = configuration.GetValue<string>("aeossync:SmartFace:GraphQL:ServerUrl");
-
-                            if(url == null)
-                            {
-                                throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
-                            }
-                            httpClient.BaseAddress = new Uri(url);
-                        });
             services.AddSingleton<ILogger>(logger);
+            services.AddSingleton<SmartFaceGraphQLClient>();
             services.AddSingleton<ISmartFaceDataAdapter, SmartFaceDataAdapter>();
             services.AddSingleton<IAeosDataAdapter, AeosDataAdapter>();
             services.AddSingleton<IDataOrchestrator, DataOrchestrator>();

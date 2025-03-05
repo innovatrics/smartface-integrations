@@ -1,43 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Grpc" Version="2.46.6" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.2" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Polly" Version="8.5.2" />
-    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Grpc" Version="2.46.6" />
+        <PackageReference Include="GraphQL.Client" Version="6.1.0" />
+        <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.1.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.2" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Polly" Version="8.5.2" />
+        <PackageReference Include="Serilog" Version="4.2.0" />
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageReference Include="Serilog.Sinks.Literate" Version="3.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Shared\AccessController\AccessController.csproj" />
-    <ProjectReference Include="..\..\Shared\SmartFaceRestApiClient\SmartFaceRestApiClient.csproj" />
-    <ProjectReference Include="..\SmartFaceClients\SmartFaceClients.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="System.ServiceModel.Duplex" Version="6.0.0" />
-    <PackageReference Include="System.ServiceModel.Http" Version="8.1.1" />
-    <PackageReference Include="System.ServiceModel.NetTcp" Version="8.1.1" />
-    <PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="System.ServiceModel.Federation" Version="8.1.1" />
-  </ItemGroup>
+        <PackageReference Include="Serilog.Sinks.Literate" Version="3.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\..\Shared\AccessController\AccessController.csproj" />
+        <ProjectReference Include="..\..\Shared\SmartFaceRestApiClient\SmartFaceRestApiClient.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="System.ServiceModel.Duplex" Version="6.0.0" />
+        <PackageReference Include="System.ServiceModel.Http" Version="8.1.1" />
+        <PackageReference Include="System.ServiceModel.NetTcp" Version="8.1.1" />
+        <PackageReference Include="System.ServiceModel.Security" Version="6.0.0" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="System.ServiceModel.Federation" Version="8.1.1" />
+    </ItemGroup>
 </Project>
