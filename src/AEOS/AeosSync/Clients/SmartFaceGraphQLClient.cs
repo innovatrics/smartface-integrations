@@ -66,36 +66,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync.Clients
             return response.Data;
         }
 
-        private GraphQLHttpClient CreateGraphQlClient()
-        {
-            var graphQlHttpClientOptions = new GraphQLHttpClientOptions
-            {
-                EndPoint = new Uri($"{_schema}://{_host}:{_port}{NormalizePath(_path)}")
-            };
-
-            _logger.Information("Subscription EndPoint {Endpoint}", graphQlHttpClientOptions.EndPoint);
-
-            var client = new GraphQLHttpClient(graphQlHttpClientOptions, new NewtonsoftJsonSerializer());
-
-            return client;
-        }
-
-
-        private static string NormalizePath(string path)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                return string.Empty;
-            }
-
-            if (!path.StartsWith("/"))
-            {
-                path = $"/{path}";
-            }
-
-            return path;
-        }
-
         public async Task<WatchlistMembersResponse> GetWatchlistMembersPerWatchlistAsync(int skipValue, int smartFaceSetPageSize, string watchlistId)
         {
             var graphQlClient = CreateGraphQlClient();
@@ -171,6 +141,35 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync.Clients
             _logger.Information("Faces: {faces}", response.Data.Faces?.Items.Length);
 
             return response.Data;
+        }
+        
+        private GraphQLHttpClient CreateGraphQlClient()
+        {
+            var graphQlHttpClientOptions = new GraphQLHttpClientOptions
+            {
+                EndPoint = new Uri($"{_schema}://{_host}:{_port}{NormalizePath(_path)}")
+            };
+
+            _logger.Information("Subscription EndPoint {Endpoint}", graphQlHttpClientOptions.EndPoint);
+
+            var client = new GraphQLHttpClient(graphQlHttpClientOptions, new NewtonsoftJsonSerializer());
+
+            return client;
+        }
+
+        private static string NormalizePath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
+
+            if (!path.StartsWith("/"))
+            {
+                path = $"/{path}";
+            }
+
+            return path;
         }
     }
 }
