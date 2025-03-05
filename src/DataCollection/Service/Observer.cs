@@ -62,6 +62,8 @@ namespace Innovatrics.SmartFace.DataCollection.Services
                 WatchlistMemberFullName = response.MatchResult?.WatchlistMemberFullName,
                 Score = response.MatchResult?.Score,
 
+                WatchlistId = response.MatchResult?.WatchlistId,
+
                 ReceivedAt = DateTime.UtcNow
             };
 

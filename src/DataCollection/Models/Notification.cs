@@ -11,6 +11,8 @@ namespace Innovatrics.SmartFace.DataCollection.Models
         public string WatchlistMemberDisplayName { get; set; }
         public string WatchlistMemberFullName { get; set; }
         public double? Score { get; set; }
+
+        public string WatchlistId { get; set; }
         
         public DateTime ReceivedAt { get; set; }
     }
