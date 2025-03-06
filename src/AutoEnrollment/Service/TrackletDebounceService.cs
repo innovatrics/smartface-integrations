@@ -17,6 +17,13 @@ namespace SmartFace.AutoEnrollment.Service
     public class TrackletDebounceService
     {
         private readonly int TRACKLET_TIMEOUT_MS = 5000;
+        private readonly double WEIGHT_FACE_SIZE = 50;
+        private readonly double WEIGHT_YAW_ANGLE = 20;
+        private readonly double WEIGHT_PITCH_ANGLE = 10;
+        private readonly double WEIGHT_ROLL_ANGLE = 10;
+        private readonly double WEIGHT_SHARPNESS = 5;
+        private readonly double WEIGHT_BRIGHTNESS = 5;
+
 
         private readonly ILogger _logger;
         private readonly ExclusiveMemoryCache _exclusiveMemoryCache;
@@ -85,13 +92,6 @@ namespace SmartFace.AutoEnrollment.Service
             _logger.Information($"{nameof(HandleTrackletTimeout)} tracklet {{trackletId}} timed out after {{timeout}}ms with {{count}} notifications.", 
                 trackletId, TRACKLET_TIMEOUT_MS, notifications.Count);
 
-            double weightFaceSize = 50;
-            double weightYawAngle = 20;
-            double weightPitchAngle = 10;
-            double weightRollAngle = 10;
-            double weightSharpness = 5;
-            double weightBrightness = 5;
-
             double maxFaceSize = notifications.Max(i => i.FaceSize ?? 0);
             double maxYawAngle = notifications.Max(i => Math.Abs(i.YawAngle ?? 0));
             double maxPitchAngle = notifications.Max(i => Math.Abs(i.PitchAngle ?? 0));
@@ -100,12 +100,12 @@ namespace SmartFace.AutoEnrollment.Service
             double maxBrightness = notifications.Max(i => Math.Abs(i.Brightness ?? 0));
 
             var notification = notifications
-                                    .OrderByDescending(w => ((w.FaceSize / maxFaceSize) * weightFaceSize) +
-                                                            ((Math.Abs(w.YawAngle ?? 0) / maxYawAngle) * weightYawAngle) +
-                                                            ((Math.Abs(w.PitchAngle ?? 0) / maxPitchAngle) * weightPitchAngle) +
-                                                            ((Math.Abs(w.RollAngle ?? 0) / maxRollAngle) * weightRollAngle) +
-                                                            ((Math.Abs(w.Sharpness ?? 0) / maxSharpness) * weightSharpness) +
-                                                            ((Math.Abs(w.Brightness ?? 0) / maxBrightness) * weightBrightness))
+                                    .OrderByDescending(w => ((w.FaceSize / maxFaceSize) * WEIGHT_FACE_SIZE) +
+                                                            ((Math.Abs(w.YawAngle ?? 0) / maxYawAngle) * WEIGHT_YAW_ANGLE) +
+                                                            ((Math.Abs(w.PitchAngle ?? 0) / maxPitchAngle) * WEIGHT_PITCH_ANGLE) +
+                                                            ((Math.Abs(w.RollAngle ?? 0) / maxRollAngle) * WEIGHT_ROLL_ANGLE) +
+                                                            ((Math.Abs(w.Sharpness ?? 0) / maxSharpness) * WEIGHT_SHARPNESS) +
+                                                            ((Math.Abs(w.Brightness ?? 0) / maxBrightness) * WEIGHT_BRIGHTNESS))
                                     .First();
             
             _onTimeout?.Invoke(notification, streamConfig);            
