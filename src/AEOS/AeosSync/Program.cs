@@ -63,6 +63,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         {
             services.AddHttpClient();
             services.AddSingleton<ILogger>(logger);
+            services.AddSingleton<IConfiguration>(configuration);
             services.AddSingleton<SmartFaceGraphQLClient>();
             services.AddSingleton<ISmartFaceDataAdapter, SmartFaceDataAdapter>();
             services.AddSingleton<IAeosDataAdapter, AeosDataAdapter>();
