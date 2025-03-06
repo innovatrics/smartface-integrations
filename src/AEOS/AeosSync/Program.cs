@@ -51,15 +51,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         {
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
-            // ReSharper disable once StringLiteralTypo
-            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AeosSync"));
+            var logDir = Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AeosSync");
             logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
-            var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
+            var logFilePath = Path.Combine(logDir, "app.log");
 
-            var logger = LoggingSetup.SetupBasicLogging(logFilePath);
+            var logLevel = configuration.GetValue("Logging:LogLevel:Default", "Debug");
+
+            var logger = LoggingSetup.SetupBasicLogging(logFilePath, "Debug");
 
             return logger;
         }
+
 
         private static IServiceCollection ConfigureServices(IServiceCollection services, ILogger logger, IConfiguration configuration)
         {

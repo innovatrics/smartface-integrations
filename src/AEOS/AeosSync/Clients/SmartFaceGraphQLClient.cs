@@ -18,7 +18,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync.Clients
     {
         private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        private readonly string _schema = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:ServerUrl") ?? throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
+        private readonly string _schema = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:Schema") ?? throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
         private readonly string _host = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:ServerUrl") ?? throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
         private readonly int _port = configuration.GetValue<int>("AeosSync:SmartFace:GraphQL:Port");
         private readonly string _path = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:Path");
