@@ -56,6 +56,9 @@ Add following pattern to existing docker compose:
 
       - Config__MaxParallelActionBlocks=1
       - Config__DuplicateSearchThreshold=35
+      - Config__EnrollStrategy=FirstPassingCriteria
+      - Config__HardAbsoluteExpirationMs=300000
+      - Config__TrackletTimeoutMs=5000
 
       - StreamConfigurations__0__StreamId=ec0437ae-7716-4141-99d9-a9b2a4dd2106
       - StreamConfigurations__0__WatchlistIds__0=ip-of-the-watchlist
