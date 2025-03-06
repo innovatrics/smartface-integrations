@@ -5,12 +5,12 @@ ARG VERSION
 WORKDIR /source
 
 COPY . .
-RUN dotnet restore src/AutoEnrollment/SmartFace.AutoEnrollment.csproj
-RUN dotnet build -c Release --no-restore -p:Version=$VERSION src/AutoEnrollment/SmartFace.AutoEnrollment.csproj
+RUN dotnet restore src/AutoEnrollment/AutoEnrollment.csproj
+RUN dotnet build -c Release --no-restore -p:Version=$VERSION src/AutoEnrollment/AutoEnrollment.csproj
 
 FROM build AS publish
 ARG VERSION
-RUN dotnet publish -c Release --no-build -o /build_output -p:Version=$VERSION src/AutoEnrollment/SmartFace.AutoEnrollment.csproj
+RUN dotnet publish -c Release --no-build -o /build_output -p:Version=$VERSION src/AutoEnrollment/AutoEnrollment.csproj
 
 FROM mcr.microsoft.com/dotnet/runtime:8.0 AS tool
 WORKDIR /build_output

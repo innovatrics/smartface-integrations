@@ -5,7 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\AutoEnrollment\SmartFace.AutoEnrollment.csproj" />
+        <ProjectReference Include="..\AutoEnrollment\AutoEnrollment.csproj" />
     </ItemGroup>
 
     <ItemGroup>

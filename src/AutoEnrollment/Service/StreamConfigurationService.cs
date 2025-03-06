@@ -6,14 +6,9 @@ using SmartFace.AutoEnrollment.Models;
 
 namespace SmartFace.AutoEnrollment.Service
 {
-    public class StreamConfigurationService
+    public class StreamConfigurationService(IConfiguration configuration)
     {
-        private readonly IConfiguration _configuration;
-
-        public StreamConfigurationService(IConfiguration configuration)
-        {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        }
+        private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
         public ICollection<StreamConfiguration> CreateMappings(string streamId)
         {

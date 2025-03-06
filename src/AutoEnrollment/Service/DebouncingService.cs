@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Concurrent;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Serilog;
@@ -8,7 +11,8 @@ namespace SmartFace.AutoEnrollment.Service
 {
     public class DebouncingService
     {
-        private readonly int _hardAbsoluteExpirationMs;
+        private readonly int HARD_ABSOLUTE_EXPIRATION_MS = 10000;
+
 
         private readonly ILogger _logger;
         private readonly ExclusiveMemoryCache _exclusiveMemoryCache;
@@ -21,24 +25,26 @@ namespace SmartFace.AutoEnrollment.Service
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _exclusiveMemoryCache = exclusiveMemoryCache ?? throw new ArgumentNullException(nameof(exclusiveMemoryCache));
 
-            _hardAbsoluteExpirationMs = configuration.GetValue<int>("Config:HardAbsoluteExpirationMs", 10000);
+            var config = configuration.GetSection("Config").Get<Config>();
+
+            HARD_ABSOLUTE_EXPIRATION_MS = config?.HardAbsoluteExpirationMs ?? HARD_ABSOLUTE_EXPIRATION_MS;
         }
 
         public void Block(Notification notification, StreamConfiguration mapping)
         {
             if (mapping.TrackletDebounceMs > 0)
             {
-                Block(notification.TrackletId, mapping.TrackletDebounceMs.Value);
+                Block(notification.TrackletId);
             }
 
             if (mapping.StreamDebounceMs > 0)
             {
-                Block(notification.StreamId, mapping.StreamDebounceMs.Value);
+                Block(notification.StreamId);
             }
 
             if (mapping.GroupDebounceMs > 0 && mapping.StreamGroupId != null)
             {
-                Block(mapping.StreamGroupId, mapping.GroupDebounceMs.Value);
+                Block(mapping.StreamGroupId);
             }
         }
 
@@ -90,13 +96,13 @@ namespace SmartFace.AutoEnrollment.Service
             return false;
         }
 
-        private void Block(object key, long debounceMs)
+        private void Block(object key)
         {
             lock (_exclusiveMemoryCache.Lock)
             {
                 var now = DateTime.UtcNow;
 
-                var absoluteExpiration = now.AddMilliseconds(_hardAbsoluteExpirationMs);
+                var absoluteExpiration = now.AddMilliseconds(HARD_ABSOLUTE_EXPIRATION_MS);
 
                 _exclusiveMemoryCache.Set(key, now, absoluteExpiration);
 

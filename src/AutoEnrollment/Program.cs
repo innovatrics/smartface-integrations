@@ -68,6 +68,7 @@ namespace SmartFace.AutoEnrollment
             services.AddSingleton<OAuthService>();
             services.AddSingleton<ExclusiveMemoryCache>();
             services.AddSingleton<DebouncingService>();
+            services.AddSingleton<TrackletDebounceService>();
             services.AddSingleton<ValidationService>();
             services.AddSingleton<CropCoordinatesValidator>();
             services.AddSingleton<StreamConfigurationService>();
