@@ -85,8 +85,27 @@ namespace SmartFace.AutoEnrollment.Service
             _logger.Information($"{nameof(HandleTrackletTimeout)} tracklet {{trackletId}} timed out after {{timeout}}ms with {{count}} notifications.", 
                 trackletId, TRACKLET_TIMEOUT_MS, notifications.Count);
 
+            double weightFaceSize = 0.5;
+            double weightYawAngle = 0.3;
+            double weightPitchAngle = 0.05;
+            double weightRollAngle = 0.05;
+            double weightSharpness = 0.025;
+            double weightBrightness = 0.025;
+
+            double maxFaceSize = notifications.Max(i => i.FaceSize ?? 0);
+            double maxYawAngle = notifications.Max(i => Math.Abs(i.YawAngle ?? 0));
+            double maxPitchAngle = notifications.Max(i => Math.Abs(i.PitchAngle ?? 0));
+            double maxRollAngle = notifications.Max(i => Math.Abs(i.RollAngle ?? 0));
+            double maxSharpness = notifications.Max(i => Math.Abs(i.Sharpness ?? 0));
+            double maxBrightness = notifications.Max(i => Math.Abs(i.Brightness ?? 0));
+
             var notification = notifications
-                                    .OrderByDescending(w => w.TemplateQuality)
+                                    .OrderByDescending(w => ((w.FaceSize / maxFaceSize) * weightFaceSize) +
+                                                            ((Math.Abs(w.YawAngle ?? 0) / maxYawAngle) * weightYawAngle) +
+                                                            ((Math.Abs(w.PitchAngle ?? 0) / maxPitchAngle) * weightPitchAngle) +
+                                                            ((Math.Abs(w.RollAngle ?? 0) / maxRollAngle) * weightRollAngle) +
+                                                            ((Math.Abs(w.Sharpness ?? 0) / maxSharpness) * weightSharpness) +
+                                                            ((Math.Abs(w.Brightness ?? 0) / maxBrightness) * weightBrightness))
                                     .First();
             
             _onTimeout?.Invoke(notification, streamConfig);            
