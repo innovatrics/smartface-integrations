@@ -85,12 +85,12 @@ namespace SmartFace.AutoEnrollment.Service
             _logger.Information($"{nameof(HandleTrackletTimeout)} tracklet {{trackletId}} timed out after {{timeout}}ms with {{count}} notifications.", 
                 trackletId, TRACKLET_TIMEOUT_MS, notifications.Count);
 
-            double weightFaceSize = 0.5;
-            double weightYawAngle = 0.3;
-            double weightPitchAngle = 0.05;
-            double weightRollAngle = 0.05;
-            double weightSharpness = 0.025;
-            double weightBrightness = 0.025;
+            double weightFaceSize = 50;
+            double weightYawAngle = 20;
+            double weightPitchAngle = 10;
+            double weightRollAngle = 10;
+            double weightSharpness = 5;
+            double weightBrightness = 5;
 
             double maxFaceSize = notifications.Max(i => i.FaceSize ?? 0);
             double maxYawAngle = notifications.Max(i => Math.Abs(i.YawAngle ?? 0));
