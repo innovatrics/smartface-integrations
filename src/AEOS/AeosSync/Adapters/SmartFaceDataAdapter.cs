@@ -237,7 +237,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             return result;
         }
 
-        public async Task<bool> CreateEmployee(SmartFaceMember member, string watchlistId, string autoBiometryPrefix = null)
+        public async Task<bool> CreateEmployee(SmartFaceMember member, string watchlistId, string autoBiometryPrefix)
         {
             _logger.Debug($"Adding Employee > {member.ToString()} into WatchlistId->{watchlistId}");
 
