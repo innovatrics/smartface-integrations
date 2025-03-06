@@ -19,9 +19,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         public const string LOG_FILE_NAME = "SmartFace.Integrations.AeosSync.log";
         public const string JSON_CONFIG_FILE_NAME = "appsettings.json";
 
-        private static readonly HttpClient httpClientSoap = new HttpClient();
-
-           private static void Main(string[] args)
+        private static void Main(string[] args)
         {
             try
             {
@@ -53,7 +51,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             // ReSharper disable once StringLiteralTypo
             var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AeosSync"));
-            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
+            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
             var logger = LoggingSetup.SetupBasicLogging(logFilePath);
@@ -95,7 +93,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    ConfigureServices(services, logger,configurationRoot);
+                    ConfigureServices(services, logger, configurationRoot);
                 })
                 .UseSerilog()
                 .UseSystemd()
