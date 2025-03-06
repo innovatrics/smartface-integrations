@@ -19,9 +19,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         public const string LOG_FILE_NAME = "SmartFace.Integrations.AeosSync.log";
         public const string JSON_CONFIG_FILE_NAME = "appsettings.json";
 
-        private static readonly HttpClient httpClientSoap = new HttpClient();
-
-           private static void Main(string[] args)
+        private static void Main(string[] args)
         {
             try
             {
@@ -51,13 +49,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         {
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
-            var logDir = Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AeosSync");
-            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
-            var logFilePath = Path.Combine(logDir, "app.log");
+            // ReSharper disable once StringLiteralTypo
+            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AeosSync"));
+            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);
+            var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
-            var logLevel = configuration.GetValue("Logging:LogLevel:Default", "Debug");
-
-            var logger = LoggingSetup.SetupBasicLogging(logFilePath, "Debug");
+            var logger = LoggingSetup.SetupBasicLogging(logFilePath, configuration);
 
             return logger;
         }
@@ -67,6 +64,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         {
             services.AddHttpClient();
             services.AddSingleton<ILogger>(logger);
+            services.AddSingleton<IConfiguration>(configuration);
             services.AddSingleton<SmartFaceGraphQLClient>();
             services.AddSingleton<ISmartFaceDataAdapter, SmartFaceDataAdapter>();
             services.AddSingleton<IAeosDataAdapter, AeosDataAdapter>();
@@ -97,9 +95,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    ConfigureServices(services, logger,configurationRoot);
+                    ConfigureServices(services, logger, configurationRoot);
                 })
-                .UseSerilog()
+                .UseSerilog(logger)
                 .UseSystemd()
                 .UseWindowsService()
             ;
