@@ -10,27 +10,20 @@ using SmartFace.AutoEnrollment.Service;
 
 namespace SmartFace.AutoEnrollment.NotificationReceivers
 {
-    public class GraphQlNotificationSource : INotificationSource
+    public class GraphQlNotificationSource(
+        ILogger logger,
+        IConfiguration configuration,
+        OAuthService oAuthService
+        ) : INotificationSource
     {
-        public event Func<Notification, Task> OnNotification;
-
-        private readonly ILogger _logger;
-        private readonly IConfiguration _configuration;
-        private readonly OAuthService _oAuthService;
+        private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        private readonly OAuthService _oAuthService = oAuthService ?? throw new ArgumentNullException(nameof(oAuthService));
         private GraphQLHttpClient _graphQlClient;
 
         private IDisposable _subscription;
 
-        public GraphQlNotificationSource(
-            ILogger logger,
-            IConfiguration configuration,
-            OAuthService oAuthService
-        )
-        {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _oAuthService = oAuthService ?? throw new ArgumentNullException(nameof(oAuthService));
-        }
+        public event Func<Notification, Task> OnNotification;
 
         public async Task StartAsync()
         {
