@@ -51,7 +51,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
             logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
-            var logger = LoggingSetup.SetupBasicLogging(logFilePath);
+            var logger = LoggingSetup.SetupBasicLogging(logFilePath, configuration);
 
             return logger;
         }
@@ -97,7 +97,7 @@ namespace Innovatrics.SmartFace.Integrations.AEpuConnector
                 {
                     ConfigureServices(services, logger);
                 })
-                .UseSerilog()
+                .UseSerilog(logger)
                 .UseSystemd()
                 .UseWindowsService()
             ;
