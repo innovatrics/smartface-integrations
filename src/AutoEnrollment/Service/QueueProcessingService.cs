@@ -12,11 +12,14 @@ namespace SmartFace.AutoEnrollment.Service
 {
     public class QueueProcessingService
     {
-        public readonly int MaxParallelBlocks;
+        private readonly int MAX_PARALLEL_BLOCKS = 4;
+        private readonly EnrollStrategy ENROLL_STRATEGY = EnrollStrategy.FirstPassingCriteria;
+
         private readonly ILogger _logger;
         private readonly ValidationService _validationService;
         private readonly StreamConfigurationService _streamMappingService;
         private readonly DebouncingService _debouncingService;
+        private readonly TrackletDebounceService _trackletTimer;
         private readonly AutoEnrollmentService _autoEnrollmentService;
 
         private ActionBlock<Notification> _actionBlock;
@@ -25,6 +28,7 @@ namespace SmartFace.AutoEnrollment.Service
             ILogger logger,
             IConfiguration configuration,
             DebouncingService debouncingService,
+            TrackletDebounceService trackletTimer,
             ValidationService validationService,
             StreamConfigurationService streamMappingService,
             AutoEnrollmentService restAutoEnrollmentService)
@@ -33,11 +37,13 @@ namespace SmartFace.AutoEnrollment.Service
             _validationService = validationService ?? throw new ArgumentNullException(nameof(validationService));
             _streamMappingService = streamMappingService ?? throw new ArgumentNullException(nameof(streamMappingService));
             _debouncingService = debouncingService ?? throw new ArgumentNullException(nameof(debouncingService));
+            _trackletTimer = trackletTimer ?? throw new ArgumentNullException(nameof(trackletTimer));
             _autoEnrollmentService = restAutoEnrollmentService ?? throw new ArgumentNullException(nameof(restAutoEnrollmentService));
 
             var config = configuration.GetSection("Config").Get<Config>();
 
-            MaxParallelBlocks = config?.MaxParallelActionBlocks ?? 4;
+            MAX_PARALLEL_BLOCKS = config?.MaxParallelActionBlocks ?? MAX_PARALLEL_BLOCKS;
+            ENROLL_STRATEGY = config?.EnrollStrategy ?? ENROLL_STRATEGY;
         }
 
         public void Start()
@@ -56,16 +62,25 @@ namespace SmartFace.AutoEnrollment.Service
 
                         if (isValidationPassed)
                         {
-                            var isBlocked = _debouncingService.IsBlocked(notification, mapping);
-
-                            if (isBlocked)
+                            switch (ENROLL_STRATEGY)
                             {
-                                continue;
+                                case EnrollStrategy.FirstPassingCriteria:
+                                    var isBlocked = _debouncingService.IsBlocked(notification, mapping);
+
+                                    if (isBlocked)
+                                    {
+                                        return;
+                                    }
+
+                                    _debouncingService.Block(notification, mapping);
+
+                                    await EnrollAsync(notification, mapping);
+                                    break;
+
+                                case EnrollStrategy.BestOfTracklet:
+                                    _trackletTimer.Enqueue(notification, mapping);
+                                    break;
                             }
-
-                            _debouncingService.Block(notification, mapping);
-
-                            await EnrollAsync(notification, mapping);
                         }
                     }
                 }
@@ -76,8 +91,10 @@ namespace SmartFace.AutoEnrollment.Service
             },
             new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = MaxParallelBlocks
+                MaxDegreeOfParallelism = MAX_PARALLEL_BLOCKS
             });
+
+            _trackletTimer.HandleTimeout(EnrollAsync);
         }
 
         public async Task StopAsync()
@@ -88,25 +105,15 @@ namespace SmartFace.AutoEnrollment.Service
 
         public void ProcessNotification(Notification notification)
         {
-            if (notification == null)
-            {
-                throw new ArgumentNullException(nameof(notification));
-            }
+            ArgumentNullException.ThrowIfNull(notification);
 
             _actionBlock.Post(notification);
         }
 
         private async Task EnrollAsync(Notification notification, StreamConfiguration mapping)
         {
-            if (notification == null)
-            {
-                throw new ArgumentNullException(nameof(notification));
-            }
-
-            if (mapping == null)
-            {
-                throw new ArgumentNullException(nameof(mapping));
-            }
+            ArgumentNullException.ThrowIfNull(notification);
+            ArgumentNullException.ThrowIfNull(mapping);
 
             await _autoEnrollmentService.EnrollAsync(notification, mapping);
         }

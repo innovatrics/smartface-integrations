@@ -16,10 +16,13 @@ To run application localy, follow these steps
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/AutoEnrollment/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.12 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.12 registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.12`
+ - `docker build -f src/AutoEnrollment/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.13 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.13 registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:0.2.13`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-auto-enroll:latest`
+
+- or run
+ - `.\src\AutoEnrollment\release.ps1 0.2.13`
 
 ## Usage
 Add following pattern to existing docker compose:
@@ -53,6 +56,9 @@ Add following pattern to existing docker compose:
 
       - Config__MaxParallelActionBlocks=1
       - Config__DuplicateSearchThreshold=35
+      - Config__EnrollStrategy=FirstPassingCriteria
+      - Config__HardAbsoluteExpirationMs=300000
+      - Config__TrackletTimeoutMs=5000
 
       - StreamConfigurations__0__StreamId=ec0437ae-7716-4141-99d9-a9b2a4dd2106
       - StreamConfigurations__0__WatchlistIds__0=ip-of-the-watchlist

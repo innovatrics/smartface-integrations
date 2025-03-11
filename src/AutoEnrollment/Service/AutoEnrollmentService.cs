@@ -67,15 +67,8 @@ namespace SmartFace.AutoEnrollment.Service
 
         public async Task RegisterAsync(Notification notification, StreamConfiguration mapping)
         {
-            if (notification == null)
-            {
-                throw new ArgumentNullException(nameof(notification));
-            }
-
-            if (mapping == null)
-            {
-                throw new ArgumentNullException(nameof(mapping));
-            }
+            ArgumentNullException.ThrowIfNull(notification);
+            ArgumentNullException.ThrowIfNull(mapping);
 
             _logger.Information("Enrolling new member to watchlist {Watchlist}", mapping.WatchlistIds);
 
