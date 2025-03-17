@@ -6,6 +6,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Models
     {
         public string Type                              { get; set; } = "MyQ";
         public Guid StreamId                            { get; set; }
+        public string MyQSchema                         { get; set; } = "https";
         public string MyQHostname                      { get; set; }
         public int MyQPort                             { get; set; } = 80;
         public string PrinterSn                         { get; set; }
