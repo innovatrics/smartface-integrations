@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: yyyyyyyyyyyy
+      POSTGRES_DB: sf_store
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  agent:
+    image: registry.gitlab.com/innovatrics/smartface/integrations-store-notifications
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      ConnectionStrings__MainDatabase: Host=postgres;Database=sf_store;Username=postgres;Password=yyyyyyyyyyyy;TrustServerCertificate=True;
+      Sources__0__Schema: ws
+      Sources__0__Host: xxxxxxxxxx
+      Sources__0__Port: 8097
+      Sources__0__Path: graphql
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  postgres_data:
+  grafana_data:
