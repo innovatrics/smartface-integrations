@@ -8,11 +8,11 @@ using Innovatrics.SmartFace.StoreNotifications.Models;
 
 namespace Innovatrics.SmartFace.StoreNotifications.Services
 {
-    public class MatchResultObserver : IObserver<GraphQLResponse<MatchResultProcessedResponse>>
+    public class MatchResultObserver : IObserver<GraphQLResponse<MatchResultResponse>>
     {
         private readonly ILogger _logger;
 
-        public event Func<MatchResultProcessedNotification, Task> OnNotification;
+        public event Func<MatchResultNotification, Task> OnNotification;
 
         public MatchResultObserver(ILogger logger)
         {
@@ -29,14 +29,14 @@ namespace Innovatrics.SmartFace.StoreNotifications.Services
             throw new NotImplementedException();
         }
 
-        public void OnNext(GraphQLResponse<MatchResultProcessedResponse> response)
+        public void OnNext(GraphQLResponse<MatchResultResponse> response)
         {
             if (response.Data != null)
             {
                 _logger.Information("MatchResultProcessed received for stream {Stream} and FaceOrder {FaceOrder}",
-                    response.Data.MatchResultProcessed?.StreamId, response.Data.MatchResultProcessed?.FaceOrder);
+                    response.Data.MatchResult?.StreamId, response.Data.MatchResult?.FaceOrder);
 
-                OnNotification?.Invoke(response.Data.MatchResultProcessed);
+                OnNotification?.Invoke(response.Data.MatchResult);
             }
             else if (response.Errors != null && response.Errors.Length > 0)
             {

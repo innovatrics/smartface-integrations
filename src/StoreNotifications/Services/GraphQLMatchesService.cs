@@ -90,7 +90,7 @@ subscription {
 }"
             };
 
-            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<MatchResultProcessedResponse>(
+            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<MatchResultResponse>(
                 _graphQLRequest,
                 ex =>
                 {

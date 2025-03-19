@@ -39,6 +39,7 @@ namespace Innovatrics.SmartFace.StoreNotifications.Data
                 entity.Property(e => e.Id).HasColumnName("id");
                 entity.Property(e => e.StreamId).HasColumnName("stream_id");
                 entity.Property(e => e.FrameId).HasColumnName("frame_id");
+                entity.Property(e => e.ProcessedAt).HasColumnName("processed_at");
                 entity.Property(e => e.TrackletId).HasColumnName("tracklet_id");
                 entity.Property(e => e.WatchlistId).HasColumnName("watchlist_id");
                 entity.Property(e => e.WatchlistMemberId).HasColumnName("watchlist_member_id");

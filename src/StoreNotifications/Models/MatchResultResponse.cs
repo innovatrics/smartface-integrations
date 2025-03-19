@@ -2,7 +2,7 @@
 
 namespace Innovatrics.SmartFace.StoreNotifications.Models
 {
-    public class MatchResultProcessedNotification
+    public class MatchResultNotification
     {
         public string StreamId { get; set; }
         public string FrameId { get; set; }
@@ -17,8 +17,8 @@ namespace Innovatrics.SmartFace.StoreNotifications.Models
         public double FaceQuality { get; set; }
     }
 
-    public class MatchResultProcessedResponse
+    public class MatchResultResponse
     {
-        public MatchResultProcessedNotification MatchResultProcessed { get; set; }
+        public MatchResultNotification MatchResult { get; set; }
     }
 }
