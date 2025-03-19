@@ -77,6 +77,7 @@ subscription {
   matchResult {
     streamId
     frameId
+    processedAt
     trackletId
     watchlistId
     watchlistMemberId

@@ -6,6 +6,7 @@ namespace Innovatrics.SmartFace.StoreNotifications.Models
     {
         public string StreamId { get; set; }
         public string FrameId { get; set; }
+        public DateTime ProcessedAt { get; set; }
         public string TrackletId { get; set; }
         public string WatchlistId { get; set; }
         public string WatchlistMemberId { get; set; }

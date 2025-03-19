@@ -119,6 +119,7 @@ namespace Innovatrics.SmartFace.StoreNotifications.Services
                     {
                         StreamId = notification.StreamId,
                         FrameId = notification.FrameId,
+                        ProcessedAt = notification.ProcessedAt,
                         TrackletId = notification.TrackletId,
                         WatchlistId = notification.WatchlistId,
                         WatchlistMemberId = notification.WatchlistMemberId,
