@@ -16,17 +16,17 @@ To run the application locally, follow these steps
 ### Deploy to Docker
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/MyQConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.4 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.4 registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.4`
+ - `docker build -f src/MyQConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.5 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.5 registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.5`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest`
 
  ### Deploy to Docker on Arm
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/MyQConnector/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.3-arm .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.3-arm registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest-arm`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.3-arm`
+ - `docker build -f src/MyQConnector/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.5-arm .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.5-arm registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest-arm`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.5-arm`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest-arm`
 
 ## Usage
