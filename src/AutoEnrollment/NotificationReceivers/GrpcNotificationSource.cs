@@ -8,24 +8,19 @@ using Serilog;
 
 namespace SmartFace.AutoEnrollment.NotificationReceivers;
 
-public class GrpcNotificationSource : INotificationSource
+public class GrpcNotificationSource(
+    ILogger logger,
+    IConfiguration configuration,
+    GrpcReaderFactory grpcReaderFactory) : INotificationSource
 {
-    private readonly ILogger _logger;
-    private readonly IConfiguration _configuration;
-    private readonly GrpcReaderFactory _grpcReaderFactory;
+    private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+    private readonly GrpcReaderFactory _grpcReaderFactory = grpcReaderFactory ?? throw new ArgumentNullException(nameof(grpcReaderFactory));
     private GrpcNotificationReader _grpcNotificationReader;
     private System.Timers.Timer _accessControllerPingTimer;
     private DateTime _lastGrpcPing;
 
     public event Func<Models.Notification, Task> OnNotification;
-
-    public GrpcNotificationSource(
-        ILogger logger,
-        IConfiguration configuration)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-    }
 
     public Task StartAsync()
     {

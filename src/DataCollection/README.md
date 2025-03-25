@@ -20,3 +20,5 @@ To run application localy, follow these steps
  - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-data-collection:0.1.1 registry.gitlab.com/innovatrics/smartface/integrations-data-collection:latest`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-data-collection:0.1.1`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-data-collection:latest`
+
+- or run `.\src\DataCollection\release.ps1 0.1.1`

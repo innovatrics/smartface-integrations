@@ -13,6 +13,8 @@ namespace Innovatrics.SmartFace.DataCollection.Models
 
         public double? Score { get; set; }
 
+        public string WatchlistId { get; set; }
+
         public string StreamId { get; set; }
     }
 

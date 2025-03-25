@@ -16,17 +16,17 @@ To run the application locally, follow these steps
 ### Deploy to Docker
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/MyQConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1 registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1`
+ - `docker build -f src/MyQConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.4 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.4 registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.4`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest`
 
  ### Deploy to Docker on Arm
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/MyQConnector/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1-arm .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1-arm registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest-arm`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.1-arm`
+ - `docker build -f src/MyQConnector/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.3-arm .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.3-arm registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest-arm`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:0.3-arm`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-myqconnector:latest-arm`
 
 ## Usage
@@ -61,6 +61,7 @@ MyQConfiguration__clientId=<clientID>
 MyQConfiguration__clientSecret=<clientSecret>
 MyQConfiguration__scope=users printers
 MyQConfiguration__loginInfoType=1
+MyQConfiguration__MyQSchema=https
 MyQConfiguration__MyQHostname=<myq-server-hostname-or-ip>
 MyQConfiguration__MyQPort=8090
 MyQConfiguration__SmartFaceURL=<smartface-rest-api-url-and-port>
