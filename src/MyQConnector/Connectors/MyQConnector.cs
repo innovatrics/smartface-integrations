@@ -41,12 +41,12 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
             myQPort = configuration.GetValue<int>("MyQConfiguration:MyQPort");
             smartFaceURL = configuration.GetValue<string>("MyQConfiguration:SmartFaceURL");
             bypassSslValidation = configuration.GetValue<bool>("MyQConfiguration:BypassSslValidation");
+            this.logger.Information("Connector created.");
         }
 
         public async Task OpenAsync(string myqPrinter, Guid myqStreamId, string watchlistMemberId)
         {
-            this.logger.Information("MyQ Printer Unlocking");
-            this.logger.Information($"WatchlistMemberID: {watchlistMemberId}");
+            this.logger.Information($"MyQ Printer: {myqPrinter} Initiating OpenAsync for WatchlistMemberID: {watchlistMemberId}, using stream mapping: {myqStreamId}");
 
             try
             {
