@@ -69,7 +69,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                     return new IpIntercomConnector(this.logger, this.httpClientFactory);
 
                 case AccessControlConnectorTypes.MYQ_CONNECTOR:
-                    return new IpIntercomConnector(this.logger, this.httpClientFactory);
+                    return new MyQConnector(this.logger, this.configuration, this.httpClientFactory);
             }
         }
     }

@@ -27,9 +27,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
         
         public int? NextCallDelayMs                     { get; set; }
 
-        public string myqPrinter                        { get; set; }
-        public Guid myqStreamId                         { get; set; }
-        public string watchlistMemberId                 { get; set; }
+        public string MyqPrinter                        { get; set; }
 
     }
 }
