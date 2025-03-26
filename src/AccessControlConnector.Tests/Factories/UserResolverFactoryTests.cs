@@ -12,9 +12,22 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Factor
 {
     public class UserResolverFactoryTests
     {
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly UserResolverFactory _userResolverFactory;
+
         public UserResolverFactoryTests()
         {
+            _logger = Substitute.For<ILogger>();
+            _configuration = Substitute.For<IConfiguration>();
+            _httpClientFactory = Substitute.For<IHttpClientFactory>();
 
+            _userResolverFactory = new UserResolverFactory(
+                _logger,
+                _configuration,
+                _httpClientFactory
+            );
         }
 
         [Theory]
@@ -28,17 +41,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Factor
             string expectedNormalizedType
         )
         {
-            var logger = Substitute.For<ILogger>();
-            var configuration = Substitute.For<IConfiguration>();
-            var httpClientFactory = Substitute.For<IHttpClientFactory>();
-
-            var userResolverFactory = new UserResolverFactory(
-                logger,
-                configuration,
-                httpClientFactory
-            );
-
-            var result = userResolverFactory.NormalizeType(configurationType);
+            var result = _userResolverFactory.NormalizeType(configurationType);
 
             Assert.Equal(expectedNormalizedType, result);
         }
@@ -55,22 +58,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Factor
             string expectedLabelKey
         )
         {
-            var logger = Substitute.For<ILogger>();
-            var configuration = Substitute.For<IConfiguration>();
-            var httpClientFactory = Substitute.For<IHttpClientFactory>();
-
-            var userResolverFactory = new UserResolverFactory(
-                logger,
-                configuration,
-                httpClientFactory
-            );
-
-            var result = userResolverFactory.Create(configurationType) as WatchlistMemberLabelUserResolver;
+            var result = _userResolverFactory.Create(configurationType) as WatchlistMemberLabelUserResolver;
 
             Assert.NotNull(result);
-
             Assert.Equal(typeof(WatchlistMemberLabelUserResolver), result.GetType());
-
             Assert.Equal(expectedLabelKey, result.NormalizedLabelKey);
         }
     }
