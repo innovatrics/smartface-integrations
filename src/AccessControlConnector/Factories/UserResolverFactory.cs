@@ -11,9 +11,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 {
     public class UserResolverFactory : IUserResolverFactory
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
+        public const string WATCHLIST_MEMBER_LABEL_TYPE = "WATCHLIST_MEMBER_LABEL";
+        
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public UserResolverFactory(
             ILogger logger,
@@ -21,9 +23,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
             IHttpClientFactory httpClientFactory
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
         public IUserResolver Create(string type)
@@ -33,21 +35,39 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 throw new ArgumentNullException(nameof(type));
             }
 
-            this.logger.Information("Creating IUserResolver for type {type}", type);
+            _logger.Information("Creating IUserResolver for type {type}", type);
 
-            type = type
+            var normalizedType = NormalizeType(type);
+
+            switch (normalizedType)
+            {
+                default:
+                    throw new NotImplementedException($"{nameof(IUserResolver)} of type {type} not supported");
+
+                case WATCHLIST_MEMBER_LABEL_TYPE:
+                    return new WatchlistMemberLabelUserResolver(_logger, _configuration, _httpClientFactory, type);
+            }
+        }
+
+        public string NormalizeType(string type)
+        {
+            var normalizedType = type   
                     .ReplaceAll(new string[] { "-", " ", "." }, new string[] { "_", "_", "_" })
                     .ToUpper();
 
-            switch (type)
+            if (normalizedType.StartsWith("LABEL_"))
             {
-                default:
-                    throw new NotImplementedException($"IUserResolver of type {type} not supported");
-
-                case "LABEL_2N_USER_ID":
-                case "LABEL_ACCESS_CARD_ID":
-                    return new WatchlistMemberLabelUserResolver(this.logger, this.configuration, this.httpClientFactory, type);
+                normalizedType = WATCHLIST_MEMBER_LABEL_TYPE;
             }
+
+            if (normalizedType.StartsWith(WATCHLIST_MEMBER_LABEL_TYPE))
+            {
+                normalizedType = WATCHLIST_MEMBER_LABEL_TYPE;
+            }
+
+            _logger.Information("Normalized type {type} to {normalizedType}", type, normalizedType);
+
+            return normalizedType;
         }
     }
 }
