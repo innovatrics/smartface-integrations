@@ -45,7 +45,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             myQPort = configuration.GetValue<int>("MyQConfiguration:MyQPort");
             smartFaceURL = configuration.GetValue<string>("MyQConfiguration:SmartFaceURL");
             bypassSslValidation = configuration.GetValue<bool>("MyQConfiguration:BypassSslValidation");
-            this.logger.Information("Connector created.");
         }
         
         public Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
@@ -55,14 +54,17 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         
         public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            
 
-            this.logger.Information($"MyQ Printer: {accessControlMapping.MyqPrinter} Initiating OpenAsync for WatchlistMemberID: (), using email: ({watchlistmemberEmail}) , using stream mapping: {accessControlMapping.StreamId}");
+            this.logger.Information($"MyQ Printer: {accessControlMapping.MyqPrinter} Initiating OpenAsync using email: ({accessControlUserId}), using stream mapping: {accessControlMapping.StreamId}");
+            if(accessControlUserId == null)
+            {
+                return;
+            }            
+
             try
             {
-                // email from UserRevolver
                 string token = await AuthenticateWithMyQAPI();
-                string userInfo = await GetUserInfo(watchlistmemberEmail, token);
+                string userInfo = await GetUserInfo(accessControlUserId, token);
                 string userToken = await AuthenticateUserWithMyQAPI(userInfo);
                 await UnlockPrinter(accessControlMapping.MyqPrinter, accessControlMapping.StreamId, userToken);
             }

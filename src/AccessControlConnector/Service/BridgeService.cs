@@ -76,7 +76,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                         return;
                     }
                 }
-
+                
                 await accessControlConnector.OpenAsync(cameraToAccessControlMapping, accessControlUser);
 
                 if (cameraToAccessControlMapping.NextCallDelayMs != null && 
