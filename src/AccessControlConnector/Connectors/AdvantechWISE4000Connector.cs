@@ -11,9 +11,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 {
     public class AdvantechWISE4000Connector : IAccessControlConnector
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public AdvantechWISE4000Connector(
             ILogger logger,
@@ -21,16 +21,16 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             IHttpClientFactory httpClientFactory
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
         public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            this.logger.Information("Send Open to {host}:{port}/do_value/slot_0/ and channel: {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Channel);
+            _logger.Information("Send Open to {host}:{port}/do_value/slot_0/ and channel: {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Channel);
 
-            var httpClient = this.httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
             var port = accessControlMapping.Port ?? 80;
 
@@ -67,19 +67,19 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
             if (httpRequest.IsSuccessStatusCode)
             {
-                this.logger.Information("OK");
+                _logger.Information("OK");
             }
             else
             {
-                this.logger.Error("Fail with {statusCode}", httpRequest.StatusCode);
+                _logger.Error("Fail with {statusCode}", httpRequest.StatusCode);
             }
         }
 
         public async Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
         {
-            this.logger.Information("Send KeepAlive to {host}:{port}/di_value/slot_0/ and channel: {channel}", host, port, channel);
+            _logger.Information("Send KeepAlive to {host}:{port}/di_value/slot_0/ and channel: {channel}", host, port, channel);
 
-            var httpClient = this.httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
             var requestUri = $"{schema ?? "http"}://{host}:{port}/di_value/slot_0/";
 
@@ -103,11 +103,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
             if (result.IsSuccessStatusCode)
             {
-                this.logger.Information("OK");
+                _logger.Information("OK");
             }
             else
             {
-                this.logger.Error("Fail with {statusCode}", result.StatusCode);
+                _logger.Error("Fail with {statusCode}", result.StatusCode);
             }
         }
     }
