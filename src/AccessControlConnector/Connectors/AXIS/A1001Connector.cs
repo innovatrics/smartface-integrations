@@ -13,9 +13,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
 {
     public class A1001Connector : IAccessControlConnector
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public A1001Connector(
             ILogger logger,
@@ -23,16 +23,16 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             IHttpClientFactory httpClientFactory
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this._httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
         public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            this.logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
+            this._logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
-            await this.sendOpenAsync(
+            await this.SendOpenAsync(
                 accessControlMapping.Schema,
                 accessControlMapping.Host,
                 accessControlMapping.Port ?? 80,
@@ -49,9 +49,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             return Task.CompletedTask;
         }
 
-        private async Task sendOpenAsync(string scheme, string host, int? port, string username, string password, string token)
+        private async Task SendOpenAsync(string scheme, string host, int? port, string username, string password, string token)
         {
-            var httpClient = this.httpClientFactory.CreateClient();
+            var httpClient = this._httpClientFactory.CreateClient();
 
             var requestUri = $"{scheme ?? "http"}://{host}:{port}/vapix/doorcontrol";
 
@@ -73,13 +73,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
 
-            this.logger.Information("sendOpenAsync to {url} with {body}", requestUri, jsonContent);
+            this._logger.Information("SendOpenAsync to {url} with {body}", requestUri, jsonContent);
 
             var httpResponse = await httpClient.SendAsync(httpRequest);
 
             httpResponse.EnsureSuccessStatusCode();
 
-            this.logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            this._logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
         }
     }
 }
