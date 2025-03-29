@@ -1,12 +1,16 @@
 ﻿using System;
 using System.IO;
+using System.Net.Http;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 using Serilog;
-using System.Net.Http;
+
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
+using Innovatrics.SmartFace.Integrations.AeosSync.Clients;
 
 namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
@@ -15,9 +19,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         public const string LOG_FILE_NAME = "SmartFace.Integrations.AeosSync.log";
         public const string JSON_CONFIG_FILE_NAME = "appsettings.json";
 
-        private static readonly HttpClient httpClientSoap = new HttpClient();
-
-           private static void Main(string[] args)
+        private static void Main(string[] args)
         {
             try
             {
@@ -49,29 +51,21 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             // ReSharper disable once StringLiteralTypo
             var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace2AeosSync"));
-            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
+            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
-            var logger = LoggingSetup.SetupBasicLogging(logFilePath);
+            var logger = LoggingSetup.SetupBasicLogging(logFilePath, configuration);
 
             return logger;
         }
 
+
         private static IServiceCollection ConfigureServices(IServiceCollection services, ILogger logger, IConfiguration configuration)
         {
             services.AddHttpClient();
-            services.AddSmartFaceGraphQLClient()
-                        .ConfigureHttpClient((serviceProvider, httpClient) =>
-                        {
-                            var url = configuration.GetValue<string>("aeossync:SmartFace:GraphQL:ServerUrl");
-
-                            if(url == null)
-                            {
-                                throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
-                            }
-                            httpClient.BaseAddress = new Uri(url);
-                        });
             services.AddSingleton<ILogger>(logger);
+            services.AddSingleton<IConfiguration>(configuration);
+            services.AddSingleton<SmartFaceGraphQLClient>();
             services.AddSingleton<ISmartFaceDataAdapter, SmartFaceDataAdapter>();
             services.AddSingleton<IAeosDataAdapter, AeosDataAdapter>();
             services.AddSingleton<IDataOrchestrator, DataOrchestrator>();
@@ -101,9 +95,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    ConfigureServices(services, logger,configurationRoot);
+                    ConfigureServices(services, logger, configurationRoot);
                 })
-                .UseSerilog()
+                .UseSerilog(logger)
                 .UseSystemd()
                 .UseWindowsService()
             ;

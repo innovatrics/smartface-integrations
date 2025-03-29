@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using Microsoft.Extensions.Configuration;
+using Serilog;
 using Serilog.Events;
 using ILogger = Serilog.ILogger;
 
@@ -6,9 +7,10 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
 {
     public static class LoggingSetup
     {
-        private static LoggerConfiguration CreateConfiguration(string logFileName)
+        private static LoggerConfiguration CreateConfiguration(string logFileName, IConfiguration configuration)
         {
             return new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
                 .WriteTo.Console()
                 .WriteTo.File(
                             path: logFileName,
@@ -22,9 +24,9 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
                         );
         }
 
-        public static ILogger SetupBasicLogging(string logFileName = "app.log")
+        public static ILogger SetupBasicLogging(string logFileName = "app.log", IConfiguration configuration = null)
         {
-            var logger = CreateConfiguration(logFileName).CreateLogger();
+            var logger = CreateConfiguration(logFileName, configuration).CreateLogger();
 
             Log.Logger = logger;
 
