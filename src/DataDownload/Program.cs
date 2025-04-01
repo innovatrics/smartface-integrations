@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -11,6 +12,8 @@ using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.Newtonsoft;
 
 using Serilog;
+using Minio;
+using Minio.DataModel.Args;
 
 namespace Innovatrics.SmartFace.DataDownload
 {
@@ -18,11 +21,12 @@ namespace Innovatrics.SmartFace.DataDownload
     {
         private static IConfiguration _configuration;
         private static HttpClient _httpClient;
-        
+        private static IMinioClient _minioClient;
+
         private static async Task Main(string[] args)
         {
             _configuration = ConfigureBuilder(args);
-            
+
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(_configuration)
                 .WriteTo.Console()
@@ -31,6 +35,8 @@ namespace Innovatrics.SmartFace.DataDownload
             Log.Information("Starting up");
 
             _httpClient = new HttpClient();
+
+            _minioClient = CreateMinioClient();
 
             var palms = await GetPalmsAllAsync();
 
@@ -161,23 +167,30 @@ namespace Innovatrics.SmartFace.DataDownload
 
                     Log.Information("Frame image data length: {Length}", frameImageData.Length);
 
-                    await UploadToMinioAsync(frameImageData, $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM}/{palm.ProcessedAt:dd-HH-mm-ss}--frame.jpg");
+                    await UploadToMinioAsync(frameImageData, $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:hh}/{palm.ProcessedAt:HH-mm-ss}--full-frame.jpg");
                 }
-                
-                
+
+                if (palm.ImageDataId != null)
+                {
+                    var palmImageData = await GetImageDataAsync(palm.ImageDataId.Value);
+
+                    Log.Information("Palm image data length: {Length}", palmImageData.Length);
+
+                    await UploadToMinioAsync(palmImageData, $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:hh}/{palm.ProcessedAt:HH-mm-ss}--palm.jpg");
+                }
             }
         }
 
         private static async Task<byte[]> GetImageDataAsync(Guid imageDataId)
         {
             var schema = _configuration.GetValue<string>("Source:GraphQL:Schema", "http");
-            var host = _configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL"); 
+            var host = _configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL");
             var port = _configuration.GetValue<int>("Source:GraphQL:Port", 8097);
 
             var url = $"{schema}://{host}:{port}/image/{imageDataId}";
-            
+
             var response = await _httpClient.GetAsync(url);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"Failed to download image {imageDataId}. Status code: {response.StatusCode}");
@@ -188,11 +201,39 @@ namespace Innovatrics.SmartFace.DataDownload
 
         private static async Task UploadToMinioAsync(byte[] imageData, string fileName)
         {
-            var minioEndpoint = _configuration.GetValue<string>("Minio:Endpoint");
-            var minioAccessKey = _configuration.GetValue<string>("Minio:AccessKey");
-            var minioSecretKey = _configuration.GetValue<string>("Minio:SecretKey");
+            var bucketName = _configuration.GetValue<string>("Minio:BucketName");
+            var targetFolder = _configuration.GetValue<string>("Minio:TargetFolder");
 
-            var minioClient = new MinioClient(minioEndpoint, minioAccessKey, minioSecretKey);
+            var putObjectArgs = new PutObjectArgs()
+                            .WithBucket(bucketName)
+                            .WithObject(fileName)
+                            .WithStreamData(new MemoryStream(imageData))
+                            .WithObjectSize(imageData.Length)
+                            .WithContentType("image/jpeg");
+
+            Log.Information("Uploading object: {objectName}, Size: {size} bytes", fileName, imageData.Length);
+
+            // Upload the file
+            var putObjectResponse = await _minioClient.PutObjectAsync(putObjectArgs);
+
+            Log.Information("Upload finished with status {status} for {objectName}", putObjectResponse?.ResponseStatusCode, putObjectResponse?.ObjectName);
+        }
+
+        private static IMinioClient CreateMinioClient()
+        {
+            var endpoint = _configuration.GetValue<string>("Minio:Endpoint");
+            var port = _configuration.GetValue<int>("Minio:Port", 9000);
+            var accessKey = _configuration.GetValue<string>("Minio:AccessKey");
+            var secretKey = _configuration.GetValue<string>("Minio:SecretKey");
+            var useSsl = _configuration.GetValue<bool>("Minio:UseSsl", false);
+
+            var minioClient = new MinioClient()
+                                    .WithEndpoint(endpoint, port)
+                                    .WithCredentials(accessKey, secretKey)
+                                    .WithSSL(useSsl)
+                                    .Build();
+
+            return minioClient;
         }
     }
 }
