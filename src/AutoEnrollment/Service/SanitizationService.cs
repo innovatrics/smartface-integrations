@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 
 using Serilog;
+using SmartFace.AutoEnrollment.Service.Clients;
 
 namespace SmartFace.AutoEnrollment.Service
 {
@@ -95,6 +96,10 @@ namespace SmartFace.AutoEnrollment.Service
             foreach (var watchlistId in watchlistIds)
             {
                 _logger.Information($"Sanitizing watchlist {watchlistId}...");
+
+                var smartFaceGraphQLClient = new SmartFaceGraphQLClient(_logger, _configuration);
+
+                var watchlistMembers = await smartFaceGraphQLClient.GetWatchlistMembersPerWatchlistAsync(0, 100, watchlistId);
 
                 await Task.Delay(2000, stoppingToken);
             }
