@@ -6,11 +6,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Shared\AccessController\AccessController.csproj" />
-        <ProjectReference Include="..\Shared\SmartFaceRestApiClient\SmartFaceRestApiClient.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="Grpc" Version="2.46.6" />
         <PackageReference Include="GraphQL.Client" Version="6.1.0" />
         <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.1.0" />
