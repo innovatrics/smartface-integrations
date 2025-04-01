@@ -1,70 +1,76 @@
 ﻿using System;
-using System.IO;
-using Innovatrics.SmartFace.DataDownload.Services;
-using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
-using Innovatrics.SmartFace.Integrations.Shared.Extensions;
-using Innovatrics.SmartFace.Integrations.Shared.Logging;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+
+using GraphQL;
+using GraphQL.Client.Http;
+using GraphQL.Client.Serializer.Newtonsoft;
+
 using Serilog;
-using Innovatrics.SmartFace.DataDownload.Services;
 
 namespace Innovatrics.SmartFace.DataDownload
 {
     public class Program
     {
-        private static void Main(string[] args)
+        private static IConfiguration _configuration;
+        private static HttpClient _httpClient;
+        
+        private static async Task Main(string[] args)
         {
-            var configurationRoot = ConfigureBuilder(args);
-
-            var logger = ConfigureLogger(configurationRoot);
+            _configuration = ConfigureBuilder(args);
+            
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(_configuration)
+                .WriteTo.Console()
+                .CreateLogger();
 
             Log.Information("Starting up");
 
-            var data =
+            _httpClient = new HttpClient();
+
+            var palms = await GetPalmsAllAsync();
+
+            await UploadPalmsAsync(palms);
 
             Log.Information("Program exited successfully");
             Log.CloseAndFlush();
         }
 
-        private static ILogger ConfigureLogger(IConfiguration configuration)
-        {
-            var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
-
-            var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace"));
-            logDir = configuration.GetValue("Serilog:LogDirectory", logDir);
-            var logFilePath = Path.Combine(logDir, LogFileName);
-
-            var logger = LoggingSetup.SetupBasicLogging(logFilePath);
-
-            return logger;
-        }
-
         private static IConfigurationRoot ConfigureBuilder(string[] args)
         {
             return new ConfigurationBuilder()
-                    .SetMainModuleBasePath()
-                    .AddJsonFile(JsonConfigFileName, optional: false)
+                    .AddJsonFile("appSettings.json", optional: false)
                     .AddEnvironmentVariables()
                     .AddCommandLine(args)
                     .Build();
         }
 
-        private static async Task<List<WatchlistMember>> GetPalmsAllAsync()
+        private static async Task<List<GenericObject>> GetPalmsAllAsync()
         {
-            var palms = new List<dynamic>();
+            var palms = new List<GenericObject>();
 
-            do {
-                var palmsPage = await GetPalmsAsync(skip, 1000);
-                palms.AddRange(palmsPage.items);
+            var skip = 0;
+
+            PalmsResponse palmPage;
+
+            do
+            {
+                palmPage = await GetPalmsAsync(skip, 1000);
+                palms.AddRange(palmPage.GenericObjects.Items);
+
+                Log.Information("Fetched {Count} palms", palmPage.GenericObjects.Items.Length);
+
                 skip += 1000;
-            } while (palmsPage.Length == 1000);
+            } while (palmPage.GenericObjects.PageInfo.HasNextPage);
 
             return palms;
         }
 
-        private async Task<dynamic[]> GetPalmsAsync(int skipValue, int smartFaceSetPageSize)
+        private static async Task<PalmsResponse> GetPalmsAsync(int skipValue, int smartFaceSetPageSize)
         {
             var graphQlClient = CreateGraphQlClient();
 
@@ -79,19 +85,21 @@ namespace Innovatrics.SmartFace.DataDownload
                         order: { processedAt: ASC }
                     ) {
                         items {
-                        id
-                        createdAt
-                        processedAt
-                        streamId
-                        objectType
-                        frame {
                             id
-                            imageDataId
+                            createdAt
+                            processedAt
+                            streamId
+                            objectType
+                            frame {
+                                id
+                                imageDataId
+                            }
                         }
-                        }
+                        
                         totalCount
+
                         pageInfo {
-                        hasNextPage
+                            hasNextPage
                         }
                     }
                 }",
@@ -105,8 +113,86 @@ namespace Innovatrics.SmartFace.DataDownload
                 }
             };
 
-            var response = await graphQlClient.SendQueryAsync<dynamic>(graphQLRequest);
+            var response = await graphQlClient.SendQueryAsync<PalmsResponse>(graphQLRequest);
+
+            if (response.Errors != null)
+            {
+                foreach (var error in response.Errors)
+                {
+                    Log.Error("Error: {Error}", error);
+                }
+
+                throw new Exception("Error fetching palms");
+            }
+
             return response.Data;
+        }
+
+        private static GraphQLHttpClient CreateGraphQlClient()
+        {
+            var schema = _configuration.GetValue<string>("Source:GraphQL:Schema", "http");
+            var host = _configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL");
+            var port = _configuration.GetValue<int>("Source:GraphQL:Port", 8097);
+            var path = _configuration.GetValue<string>("Source:GraphQL:Path");
+
+            var graphQlHttpClientOptions = new GraphQLHttpClientOptions
+            {
+                EndPoint = new Uri($"{schema}://{host}:{port}/{path}")
+            };
+
+            Log.Information("Subscription EndPoint {Endpoint}", graphQlHttpClientOptions.EndPoint);
+
+            var client = new GraphQLHttpClient(graphQlHttpClientOptions, new NewtonsoftJsonSerializer());
+
+            return client;
+        }
+
+        private static async Task UploadPalmsAsync(List<GenericObject> palms)
+        {
+            Log.Information("Uploading {Count} palms", palms.Count);
+
+            foreach (var palm in palms)
+            {
+                Log.Information("Uploading palm {Id}", palm.Id);
+
+                if (palm.Frame.ImageDataId != null)
+                {
+                    var frameImageData = await GetImageDataAsync(palm.Frame.ImageDataId.Value);
+
+                    Log.Information("Frame image data length: {Length}", frameImageData.Length);
+
+                    await UploadToMinioAsync(frameImageData, $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM}/{palm.ProcessedAt:dd-HH-mm-ss}--frame.jpg");
+                }
+                
+                
+            }
+        }
+
+        private static async Task<byte[]> GetImageDataAsync(Guid imageDataId)
+        {
+            var schema = _configuration.GetValue<string>("Source:GraphQL:Schema", "http");
+            var host = _configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL"); 
+            var port = _configuration.GetValue<int>("Source:GraphQL:Port", 8097);
+
+            var url = $"{schema}://{host}:{port}/image/{imageDataId}";
+            
+            var response = await _httpClient.GetAsync(url);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Failed to download image {imageDataId}. Status code: {response.StatusCode}");
+            }
+
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+
+        private static async Task UploadToMinioAsync(byte[] imageData, string fileName)
+        {
+            var minioEndpoint = _configuration.GetValue<string>("Minio:Endpoint");
+            var minioAccessKey = _configuration.GetValue<string>("Minio:AccessKey");
+            var minioSecretKey = _configuration.GetValue<string>("Minio:SecretKey");
+
+            var minioClient = new MinioClient(minioEndpoint, minioAccessKey, minioSecretKey);
         }
     }
 }
