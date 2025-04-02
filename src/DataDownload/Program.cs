@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Configuration;
@@ -96,10 +97,13 @@ namespace Innovatrics.SmartFace.DataDownload
                             processedAt
                             streamId
                             objectType
+                            quality
+                            size
                             frame {
                                 id
                                 imageDataId
                             }
+                            imageDataId
                         }
                         
                         totalCount
@@ -161,13 +165,18 @@ namespace Innovatrics.SmartFace.DataDownload
             {
                 Log.Information("Uploading palm {Id}", palm.Id);
 
+                var palmFileName = $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:HH}/{palm.ProcessedAt:HH-mm-ss}--{palm.Quality}-metadata.json";
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(palm);
+
+                await UploadToMinioAsync("application/json", Encoding.UTF8.GetBytes(json), palmFileName);
+
                 if (palm.Frame.ImageDataId != null)
                 {
                     var frameImageData = await GetImageDataAsync(palm.Frame.ImageDataId.Value);
 
                     Log.Information("Frame image data length: {Length}", frameImageData.Length);
 
-                    await UploadToMinioAsync(frameImageData, $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:hh}/{palm.ProcessedAt:HH-mm-ss}--full-frame.jpg");
+                    await UploadToMinioAsync("image/jpeg", frameImageData, $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:HH}/{palm.ProcessedAt:HH-mm-ss}--{palm.Quality}-full-frame.jpg");
                 }
 
                 if (palm.ImageDataId != null)
@@ -176,18 +185,18 @@ namespace Innovatrics.SmartFace.DataDownload
 
                     Log.Information("Palm image data length: {Length}", palmImageData.Length);
 
-                    await UploadToMinioAsync(palmImageData, $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:hh}/{palm.ProcessedAt:HH-mm-ss}--palm.jpg");
+                    await UploadToMinioAsync("image/jpeg", palmImageData, $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:HH}/{palm.ProcessedAt:HH-mm-ss}--{palm.Quality}-palm.jpg");
                 }
             }
         }
 
         private static async Task<byte[]> GetImageDataAsync(Guid imageDataId)
         {
-            var schema = _configuration.GetValue<string>("Source:GraphQL:Schema", "http");
-            var host = _configuration.GetValue<string>("Source:GraphQL:Host", "SFGraphQL");
-            var port = _configuration.GetValue<int>("Source:GraphQL:Port", 8097);
+            var schema = _configuration.GetValue<string>("Source:API:Schema", "http");
+            var host = _configuration.GetValue<string>("Source:API:Host", "SFAPI");
+            var port = _configuration.GetValue<int>("Source:API:Port", 8098);
 
-            var url = $"{schema}://{host}:{port}/image/{imageDataId}";
+            var url = $"{schema}://{host}:{port}/api/v1/images/{imageDataId}";
 
             var response = await _httpClient.GetAsync(url);
 
@@ -199,19 +208,21 @@ namespace Innovatrics.SmartFace.DataDownload
             return await response.Content.ReadAsByteArrayAsync();
         }
 
-        private static async Task UploadToMinioAsync(byte[] imageData, string fileName)
+        private static async Task UploadToMinioAsync(string contentType, byte[] imageData, string fileName)
         {
             var bucketName = _configuration.GetValue<string>("Minio:BucketName");
             var targetFolder = _configuration.GetValue<string>("Minio:TargetFolder");
 
+            var objectName = $"{targetFolder}/{fileName}";
+
             var putObjectArgs = new PutObjectArgs()
                             .WithBucket(bucketName)
-                            .WithObject(fileName)
+                            .WithObject(objectName)
                             .WithStreamData(new MemoryStream(imageData))
                             .WithObjectSize(imageData.Length)
-                            .WithContentType("image/jpeg");
+                            .WithContentType(contentType);
 
-            Log.Information("Uploading object: {objectName}, Size: {size} bytes", fileName, imageData.Length);
+            Log.Information("Uploading object: {objectName}, Size: {size} bytes", objectName, imageData.Length);
 
             // Upload the file
             var putObjectResponse = await _minioClient.PutObjectAsync(putObjectArgs);

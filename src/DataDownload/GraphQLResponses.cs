@@ -23,6 +23,8 @@ namespace Innovatrics.SmartFace.DataDownload
         public DateTime? ProcessedAt { get; set; }
         public string StreamId { get; set; }
         public int ObjectType { get; set; }
+        public int Quality { get; set; }
+        public int Size { get; set; }
         public Frame Frame { get; set; }
         public Guid? ImageDataId { get; set; }
     }
