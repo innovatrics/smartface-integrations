@@ -8,25 +8,24 @@ using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.Newtonsoft;
 
 using Serilog;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace SmartFace.AutoEnrollment.Service.Clients
 {
     public class SmartFaceGraphQLClient(
         ILogger logger,
         IConfiguration configuration,
+        IHttpClientFactory httpClientFactory,
         OAuthService oAuthService
     )
     {
         private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         private readonly OAuthService _oAuthService = oAuthService ?? throw new ArgumentNullException(nameof(oAuthService));
 
-        private readonly string _schema = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:Schema") ?? throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
-        private readonly string _host = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:ServerUrl") ?? throw new InvalidOperationException("The SmartFace GraphQL URL is not read.");
-        private readonly int _port = configuration.GetValue<int>("AeosSync:SmartFace:GraphQL:Port");
-        private readonly string _path = configuration.GetValue<string>("AeosSync:SmartFace:GraphQL:Path");
-
-        public async Task<WatchlistMembersResponse> GetWatchlistMembersPerWatchlistAsync(string watchlistId, int skipValue, int smartFaceSetPageSize)
+        public async Task<WatchlistMembersResponse> GetWatchlistMembersPerWatchlistAsync(string watchlistId, int skipValue, int smartFaceSetPageSize, DateTime olderThan)
         {
             var graphQlClient = await CreateGraphQlClient();
 
@@ -51,6 +50,9 @@ namespace SmartFace.AutoEnrollment.Service.Clients
                                 fullName
                             }
                         }
+                        pageInfo {
+                            hasNextPage
+                        }
                     }
                 }
                 ",
@@ -60,7 +62,7 @@ namespace SmartFace.AutoEnrollment.Service.Clients
                     skip = skipValue,
                     take = smartFaceSetPageSize,
                     watchlistId = watchlistId,
-                    olderThan = DateTime.UtcNow.AddDays(-1)
+                    olderThan = olderThan
                 }
             };
 
@@ -71,83 +73,7 @@ namespace SmartFace.AutoEnrollment.Service.Clients
             return response.Data;
         }
 
-        public async Task<WatchlistMembersResponse> GetWatchlistMembersPerWatchlistAsync(int skipValue, int smartFaceSetPageSize, string watchlistId)
-        {
-            var graphQlClient = CreateGraphQlClient();
-
-            var graphQLRequest = new GraphQLRequest
-            {
-                Query = @"
-                query GetWatchlistMembersPerWatchlist($skip: Int, $take: Int, $watchlistId: String) {
-                    watchlistMembers(
-                        skip: $skip,
-                        take: $take,
-                        order: { id: ASC },
-                        where: { watchlists: { all: { id: { eq: $watchlistId } } } }
-                    ) {
-                        items {
-                            id
-                            fullName
-                            displayName
-                            note
-                            tracklet {
-                                faces(where: { faceType: { eq: REGULAR } }) {
-                                    createdAt
-                                    faceType
-                                    imageDataId
-                                }
-                            }
-                        }
-                        pageInfo {
-                            hasNextPage
-                        }
-                    }
-                }",
-
-                Variables = new
-                {
-                    skip = skipValue,
-                    take = smartFaceSetPageSize,
-                    watchlistId = watchlistId
-                }
-            };
-
-            var response = await graphQlClient.SendQueryAsync<WatchlistMembersResponse>(graphQLRequest);
-
-            _logger.Information("Watchlist members: {WatchlistMembers}", response.Data.WatchlistMembers);
-
-            return response.Data;
-        }
-
-        public async Task<FacesResponse> GetFaceByImageDataIdAsync(Guid guid)
-        {
-            var graphQlClient = CreateGraphQlClient();
-
-            var graphQLRequest = new GraphQLRequest
-            {
-                Query = @"
-                query GetFaceByImageDataId($imageDataId: UUID) {
-                    faces(where: { imageDataId: { eq: $imageDataId } }) {
-                        items {
-                            id
-                            imageDataId
-                        }
-                    }
-                }",
-
-                Variables = new
-                {
-                    imageDataId = guid
-                }
-            };
-
-            var response = await graphQlClient.SendQueryAsync<FacesResponse>(graphQLRequest);
-
-            _logger.Information("Faces: {faces}", response.Data.Faces?.Items.Length);
-
-            return response.Data;
-        }
-
+        
         private async Task<GraphQLHttpClient> CreateGraphQlClient()
         {
             var schema = _configuration.GetValue<string>("Source:GraphQL:Schema", "http");
@@ -160,19 +86,18 @@ namespace SmartFace.AutoEnrollment.Service.Clients
                 EndPoint = new Uri($"{schema}://{host}:{port}{NormalizePath(path)}")
             };
 
+            var httpClient = _httpClientFactory.CreateClient();
+
             if (_oAuthService.IsEnabled)
             {
                 var authToken = await _oAuthService.GetTokenAsync();
 
-                graphQlHttpClientOptions.ConfigureWebSocketConnectionInitPayload = _ => new
-                {
-                    authorization = $"Bearer {authToken}",
-                };
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
             }
 
             _logger.Information("Subscription EndPoint {Endpoint}", graphQlHttpClientOptions.EndPoint);
 
-            var client = new GraphQLHttpClient(graphQlHttpClientOptions, new NewtonsoftJsonSerializer());
+            var client = new GraphQLHttpClient(graphQlHttpClientOptions, new NewtonsoftJsonSerializer(), httpClient);
 
             return client;
         }
