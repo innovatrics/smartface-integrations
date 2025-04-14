@@ -38,7 +38,7 @@ Add following pattern to existing docker compose:
     env_file: .env.sfstation
 
   access-control-connector:
-    image: ${REGISTRY}integrations-access-control-connector
+    image: ${REGISTRY}integrations-access-control-connector:latest
     container_name: SFAccessControlConnector
     restart: unless-stopped
     environment:
@@ -56,4 +56,36 @@ networks:
     external:
       name: sf-network
 
+```
+
+
+### To define MYQ Connector this is a sample configuration of the Access Control Controller
+
+```
+ access-control-connector:
+    image: ${REGISTRY}integrations-access-control-connector:latest
+    container_name: SFAccessControlConnector
+    restart: unless-stopped
+    environment:
+      - AccessController__Host=SFAccessController
+      - AccessController__Port=80
+      - AccessControlMapping__0__Type=MYQ_CONNECTOR
+      - AccessControlMapping__0__StreamId=a7206eec-46f1-498a-9a4e-c15983a129d1
+      - AccessControlMapping__0__myqPrinter=CSJP42700
+      - AccessControlMapping__0__UserResolver=WATCHLIST_MEMBER_LABEL_EMAIL
+     # MYQ Printer #1
+      - AccessControlMapping__0__Type=MYQ_CONNECTOR
+      - AccessControlMapping__0__StreamId=a7206eec-46f1-498a-9a4e-c15983a129d1
+      - AccessControlMapping__0__myqPrinter=CSJP42700
+      - AccessControlMapping__0__UserResolver=WATCHLIST_MEMBER_LABEL_EMAIL
+     # General MyQ Configuration
+     - MyQConfiguration__clientId=<id your client ID>
+     - MyQConfiguration__clientSecret=<add your client secret>
+     - MyQConfiguration__scope=users printers
+     - MyQConfiguration__loginInfoType=1
+     - MyQConfiguration__myQSchema=https
+     - MyQConfiguration__MyQHostname=<add your hostname or IP>
+     - MyQConfiguration__MyQPort=443
+     - MyQConfiguration__SmartFaceURL=http://<SmartFace URL or hostname>:8098
+     - MyQConfiguration__BypassSslValidation=true
 ```
