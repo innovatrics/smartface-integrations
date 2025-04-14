@@ -83,7 +83,7 @@ networks:
      - MyQConfiguration__clientSecret=<add your client secret>
      - MyQConfiguration__scope=users printers
      - MyQConfiguration__loginInfoType=1
-     - MyQConfiguration__myQSchema="https"
+     - MyQConfiguration__myQSchema=https
      - MyQConfiguration__MyQHostname=<add your hostname or IP>
      - MyQConfiguration__MyQPort=443
      - MyQConfiguration__SmartFaceURL=http://<SmartFace URL or hostname>:8098
