@@ -98,9 +98,11 @@ namespace SmartFace.AutoEnrollment.Service
 
         private async Task SanitizeWatchlistsAsync(CancellationToken stoppingToken)
         {
-            _logger.Information($"Sanitizing watchlist at {DateTime.UtcNow} UTC...");
+            _logger.Information($"Sanitizing watchlists at {DateTime.UtcNow} UTC...");
 
             var watchlistIds = _configuration.GetValue<string[]>("Sanitization:WatchlistIds", Array.Empty<string>());
+
+            _logger.Information($"Watchlists to sanitize: {string.Join(", ", watchlistIds)}");
 
             var smartFaceGraphQLClient = new SmartFaceGraphQLClient(_logger, _configuration, _httpClientFactory, _oAuthService);
 
@@ -110,9 +112,9 @@ namespace SmartFace.AutoEnrollment.Service
             {
                 _logger.Information($"Sanitizing watchlist {watchlistId}...");
 
-                var skip = 0;
-                var take = 1000;
-                var hasNextPage = true;
+                int skip = 0;
+                int take = 1000;
+                bool hasNextPage;
 
                 var watchlistMembers = new List<WatchlistMember>();
 
@@ -140,6 +142,8 @@ namespace SmartFace.AutoEnrollment.Service
 
         private async Task DeleteWatchlistMembersAsync(List<WatchlistMember> watchlistMembers)
         {
+            _logger.Information($"Deleting {watchlistMembers.Count} watchlist members...");
+
             var schema = _configuration.GetValue("Target:Schema", "http");
             var host = _configuration.GetValue("Target:Host", "SFApi");
             var port = _configuration.GetValue("Target:Port", 8098);
