@@ -55,7 +55,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
 
-            this.logger.Information($"MyQ Printer: {accessControlMapping.MyqPrinter} Initiating OpenAsync using email: ({accessControlUserId}), using stream mapping: {accessControlMapping.StreamId}");
+            this.logger.Information($"MyQ Printer: {accessControlMapping.TargetId} Initiating OpenAsync using email: ({accessControlUserId}), using stream mapping: {accessControlMapping.StreamId}");
             if(accessControlUserId == null)
             {
                 return;
@@ -66,7 +66,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 string token = await AuthenticateWithMyQAPI();
                 string userInfo = await GetUserInfo(accessControlUserId, token);
                 string userToken = await AuthenticateUserWithMyQAPI(userInfo);
-                await UnlockPrinter(accessControlMapping.MyqPrinter, accessControlMapping.StreamId, userToken);
+                await UnlockPrinter(accessControlMapping.TargetId, accessControlMapping.StreamId, userToken);
             }
             catch (Exception ex)
             {
