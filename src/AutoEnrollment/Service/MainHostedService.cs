@@ -31,6 +31,9 @@ namespace SmartFace.AutoEnrollment.Service
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
+            await Task.Delay(1000);
+            return;
+
             _logger.Information($"{nameof(MainHostedService)} is starting");
 
             var notificationSourceType = _configuration.GetValue("Source:Type", "GraphQL");

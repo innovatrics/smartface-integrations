@@ -118,7 +118,7 @@ namespace Innovatrics.SmartFace.DataDownload
                 {
                     skip = skipValue,
                     take = smartFaceSetPageSize,
-                    from = new DateTime(2025, 03, 25, 0, 0, 0, DateTimeKind.Utc),
+                    from = new DateTime(2025, 01, 01, 0, 0, 0, DateTimeKind.Utc),
                     to = new DateTime(2025, 03, 25, 23, 59, 59, DateTimeKind.Utc)
                 }
             };
@@ -165,7 +165,9 @@ namespace Innovatrics.SmartFace.DataDownload
             {
                 Log.Information("Uploading palm {Id}", palm.Id);
 
-                var palmFileName = $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:HH}/{palm.ProcessedAt:HH-mm-ss}--{palm.Quality}-metadata.json";
+                var palmStreamId = palm.StreamId ?? "unknown";
+
+                var palmFileName = $"{palmStreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:HH}/{palm.ProcessedAt:HH-mm-ss}--{palm.Quality}-metadata.json";
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(palm);
 
                 await UploadToMinioAsync("application/json", Encoding.UTF8.GetBytes(json), palmFileName);
@@ -176,7 +178,7 @@ namespace Innovatrics.SmartFace.DataDownload
 
                     Log.Information("Frame image data length: {Length}", frameImageData.Length);
 
-                    await UploadToMinioAsync("image/jpeg", frameImageData, $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:HH}/{palm.ProcessedAt:HH-mm-ss}--{palm.Quality}-full-frame.jpg");
+                    await UploadToMinioAsync("image/jpeg", frameImageData, $"{palmStreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:HH}/{palm.ProcessedAt:HH-mm-ss}--{palm.Quality}-full-frame.jpg");
                 }
 
                 if (palm.ImageDataId != null)
@@ -185,7 +187,7 @@ namespace Innovatrics.SmartFace.DataDownload
 
                     Log.Information("Palm image data length: {Length}", palmImageData.Length);
 
-                    await UploadToMinioAsync("image/jpeg", palmImageData, $"{palm.StreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:HH}/{palm.ProcessedAt:HH-mm-ss}--{palm.Quality}-palm.jpg");
+                    await UploadToMinioAsync("image/jpeg", palmImageData, $"{palmStreamId}/{palm.ProcessedAt:yyyy-MM-dd}/{palm.ProcessedAt:HH}/{palm.ProcessedAt:HH-mm-ss}--{palm.Quality}-palm.jpg");
                 }
             }
         }

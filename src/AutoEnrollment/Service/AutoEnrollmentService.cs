@@ -31,7 +31,8 @@ namespace SmartFace.AutoEnrollment.Service
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
-            OAuthService oAuthService)
+            OAuthService oAuthService
+        )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));

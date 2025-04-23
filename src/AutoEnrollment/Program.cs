@@ -77,6 +77,7 @@ namespace SmartFace.AutoEnrollment
             services.AddSingleton<QueueProcessingService>();
 
             services.AddHostedService<MainHostedService>();
+            services.AddHostedService<SanitizationService>();
         }
 
         private static IConfigurationRoot ConfigureBuilder(string[] args)
