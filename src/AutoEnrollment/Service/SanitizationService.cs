@@ -100,7 +100,7 @@ namespace SmartFace.AutoEnrollment.Service
         {
             _logger.Information($"Sanitizing watchlists at {DateTime.UtcNow} UTC...");
 
-            var watchlistIds = _configuration.GetValue<string[]>("Sanitization:WatchlistIds", Array.Empty<string>());
+            var watchlistIds = _configuration.GetSection("Sanitization:WatchlistIds").Get<string[]>();
 
             _logger.Information($"Watchlists to sanitize: {string.Join(", ", watchlistIds)}");
 
