@@ -89,3 +89,28 @@ networks:
      - MyQConfiguration__SmartFaceURL=http://<SmartFace URL or hostname>:8098
      - MyQConfiguration__BypassSslValidation=true
 ```
+
+
+### To define VillaPro Connector this is a sample configuration of the Access Control Controller
+```
+ access-control-connector:
+    image: ${REGISTRY}integrations-access-control-connector:latest
+    container_name: SFAccessControlConnector
+    restart: unless-stopped
+    environment:
+      - AccessController__Host=SFAccessController
+      - AccessController__Port=80
+     # VillaPro Gate #1 
+      - AccessControlMapping__0__Type=VILLA_PRO_CONNECTOR
+      - AccessControlMapping__0__StreamId=a7206eec-46f1-498a-9a4e-c15983a129d1
+      - AccessControlMapping__0__TargetId=000-001
+      - AccessControlMapping__0__UserResolver=WATCHLIST_MEMBER_LABEL_TOKEN_VILLAPRO
+     # VillaPro Gate #2 
+      - AccessControlMapping__0__Type=VILLA_PRO_CONNECTOR
+      - AccessControlMapping__0__StreamId=a7206eec-46f1-498a-9a4e-c15983a129d1
+      - AccessControlMapping__0__TargetId=001-575
+      - AccessControlMapping__0__UserResolver=WATCHLIST_MEMBER_LABEL_TOKEN_VILLAPRO
+     # General MyQ Configuration
+     - VillaProConfiguration_authToken=
+     - VillaProConfiguration_systToken=
+     - VillaProConfiguration_baseUrl=
