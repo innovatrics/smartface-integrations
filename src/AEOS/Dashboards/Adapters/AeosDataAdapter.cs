@@ -40,7 +40,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-            this.logger.Debug("AeosDataAdapter Initiated");
+            this.logger.Information("AeosDataAdapter Initiated");
 
             //var s = ((IConfigurationRoot)configuration).GetDebugView();
             DataSource = configuration.GetValue<string>("AeosDashboards:DataSource");
@@ -89,36 +89,48 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             while (allLockers == false)
             {
+                
                 LockersPageNumber += 1;
-                var lockerSearchInfo = new LockerSearchInfo();
+                this.logger.Information($"Receiving Lockers from AEOS: Page {LockersPageNumber}");
+                var lockerSearch = new LockerSearchInfo();
                 
                 // Create LockerSearch object first
-                lockerSearchInfo.LockerSearch = new LockerSearch();
+                lockerSearch.LockerSearch = new LockerSearch();
                 
                 // Then create SearchRange
-                lockerSearchInfo.SearchRange = new SearchRange();
-                lockerSearchInfo.SearchRange.startRecordNo = (LockersPageNumber - 1) * LockersPageSize;
-                lockerSearchInfo.SearchRange.nrOfRecords = LockersPageSize;
-                lockerSearchInfo.SearchRange.nrOfRecordsSpecified = true;
+                lockerSearch.SearchRange = new SearchRange();
 
-                var lockers = await client.findLockerAsync(lockerSearchInfo);
-
-                if (lockers?.LockerList?.Locker == null || !lockers.LockerList.Locker.Any())
+                if (LockersPageNumber == 1)
                 {
-                    allLockers = true;
-                    continue;
+                    lockerSearch.SearchRange.startRecordNo = 0;
                 }
+                else
+                {
+                    lockerSearch.SearchRange.startRecordNo = (((LockersPageNumber) * (LockersPageSize)) - LockersPageSize);
+                }
+
+                lockerSearch.SearchRange.startRecordNo = (LockersPageNumber - 1) * LockersPageSize;
+                lockerSearch.SearchRange.nrOfRecords = LockersPageSize;
+                lockerSearch.SearchRange.nrOfRecordsSpecified = true;
+
+                var lockers = await client.findLockerAsync(lockerSearch);
 
                 foreach (var locker in lockers.LockerList.Locker)
                 {
-                    this.logger.Debug($"{locker.Id}, {locker.Name}, {locker.LastUsed}, {locker.AssignedTo} ");
+                    this.logger.Information($"{locker.Id}, {locker.Name}, {locker.LastUsed}, {locker.AssignedTo}");
                     AeosAllLockers.Add(new AeosLockers(locker.Id, locker.Name, locker.LastUsed, locker.AssignedTo));
+                    
                 }
 
-                // If we received fewer records than requested, we've reached the end
-                if (lockers.LockerList.Locker.Length < LockersPageSize)
+                if (lockers.LockerList.Locker.Length == AeosServerPageSize)
+                {
+                    this.logger.Information($"End of page {LockersPageNumber}. Amount of Lockers found: {lockers.LockerList.Locker.Length}. Number of results match the pagination limit. Another page will be checked.");
+                }
+                else
                 {
                     allLockers = true;
+                    this.logger.Debug($"End of last page {LockersPageNumber}. Amount of Employees found: {lockers.LockerList.Locker.Length}.");
+                    break;
                 }
             }
 
