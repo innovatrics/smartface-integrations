@@ -6,16 +6,14 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 
-namespace Innovatrics.SmartFace.Integrations.AeosSync
+namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {
     public class MainHostedService : BackgroundService
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IDataOrchestrator bridge;
-        private System.Timers.Timer timerPing;
 
-        private DateTime timerStartSync = new DateTime();
         private int SyncPeriodMs = new int();
         private DateTime lastSync;
 
@@ -29,7 +27,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
 
-            SyncPeriodMs = configuration.GetValue<int>("AeosDashboards:RefreshPeriodMs");
+            SyncPeriodMs = configuration.GetValue<int>("AeosDashboards:Aeos:RefreshPeriodMs");
             if(SyncPeriodMs == 0)
             {
                 throw new InvalidOperationException($"The RefreshPeriodMs needs to be greater than 0. Current value: {SyncPeriodMs}");

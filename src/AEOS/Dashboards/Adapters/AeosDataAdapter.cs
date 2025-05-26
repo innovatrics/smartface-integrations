@@ -43,10 +43,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             this.logger.Debug("AeosDataAdapter Initiated");
 
             //var s = ((IConfigurationRoot)configuration).GetDebugView();
-            DataSource = configuration.GetValue<string>("AeosSync:DataSource");
-            AeosEndpoint = configuration.GetValue<string>("AeosSync:Aeos:Server:Wsdl") ?? throw new InvalidOperationException("The AEOS SOAP API URL is not read.");
-            AeosUsername = configuration.GetValue<string>("AeosSync:Aeos:Server:User") ?? throw new InvalidOperationException("The AEOS username is not read.");
-            AeosPassword = configuration.GetValue<string>("Aeossync:Aeos:Server:Pass") ?? throw new InvalidOperationException("The AEOS password is not read.");
+            DataSource = configuration.GetValue<string>("AeosDashboards:DataSource");
+            AeosEndpoint = configuration.GetValue<string>("AeosDashboards:Aeos:Server:Wsdl") ?? throw new InvalidOperationException("The AEOS SOAP API URL is not read.");
+            AeosUsername = configuration.GetValue<string>("AeosDashboards:Aeos:Server:User") ?? throw new InvalidOperationException("The AEOS username is not read.");
+            AeosPassword = configuration.GetValue<string>("AeosDashboards:Aeos:Server:Pass") ?? throw new InvalidOperationException("The AEOS password is not read.");
             
             var endpoint = new Uri(AeosEndpoint);
             var endpointBinding = new BasicHttpBinding()
@@ -79,7 +79,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
         public async Task<IList<AeosLockers>> GetLockers()
         {
-            this.logger.Debug("Receiving Lockers from AEOS");
+            this.logger.Information("Receiving Lockers from AEOS");
 
             List<AeosLockers> AeosAllLockers = new List<AeosLockers>();
 
@@ -90,29 +90,35 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             while (allLockers == false)
             {
                 LockersPageNumber += 1;
-                var lockerSearch = new LockerSearchInfo();
-                lockerSearch.SearchRange = new SearchRange();
-                lockerSearch.SearchRange.startRecordNo = 0;
-                lockerSearch.SearchRange.nrOfRecords = LockersPageSize;
+                var lockerSearchInfo = new LockerSearchInfo();
+                
+                // Create LockerSearch object first
+                lockerSearchInfo.LockerSearch = new LockerSearch();
+                
+                // Then create SearchRange
+                lockerSearchInfo.SearchRange = new SearchRange();
+                lockerSearchInfo.SearchRange.startRecordNo = (LockersPageNumber - 1) * LockersPageSize;
+                lockerSearchInfo.SearchRange.nrOfRecords = LockersPageSize;
+                lockerSearchInfo.SearchRange.nrOfRecordsSpecified = true;
 
-                if (LockersPageNumber == 1)
+                var lockers = await client.findLockerAsync(lockerSearchInfo);
+
+                if (lockers?.LockerList?.Locker == null || !lockers.LockerList.Locker.Any())
                 {
-                    lockerSearch.SearchRange.startRecordNo = 0;
+                    allLockers = true;
+                    continue;
                 }
-                else
-                {
-                    lockerSearch.SearchRange.startRecordNo = (LockersPageNumber * LockersPageSize) - LockersPageSize;
-                }
-
-                lockerSearch.SearchRange.nrOfRecords = LockersPageSize;
-                lockerSearch.SearchRange.nrOfRecordsSpecified = true;
-
-                var lockers = await client.findLockerAsync(lockerSearch);
 
                 foreach (var locker in lockers.LockerList.Locker)
                 {
-                    this.logger.Information($"{locker.Id}, {locker.Name}, {locker.LastUsed}, {locker.AssignedTo} ");
+                    this.logger.Debug($"{locker.Id}, {locker.Name}, {locker.LastUsed}, {locker.AssignedTo} ");
                     AeosAllLockers.Add(new AeosLockers(locker.Id, locker.Name, locker.LastUsed, locker.AssignedTo));
+                }
+
+                // If we received fewer records than requested, we've reached the end
+                if (lockers.LockerList.Locker.Length < LockersPageSize)
+                {
+                    allLockers = true;
                 }
             }
 

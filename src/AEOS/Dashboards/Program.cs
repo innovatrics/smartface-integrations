@@ -64,7 +64,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                             .ConfigureHttpClient((serviceProvider, httpClient) =>
                             {});
             services.AddSingleton<ILogger>(logger);
-            services.AddSingleton<ISmartFaceDataAdapter, SmartFaceDataAdapter>();
             services.AddSingleton<IAeosDataAdapter, AeosDataAdapter>();
             services.AddSingleton<IDataOrchestrator, DataOrchestrator>();
             services.AddHostedService<MainHostedService>();
