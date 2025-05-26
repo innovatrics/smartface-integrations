@@ -71,12 +71,12 @@ networks:
       - AccessController__Port=80
       - AccessControlMapping__0__Type=MYQ_CONNECTOR
       - AccessControlMapping__0__StreamId=a7206eec-46f1-498a-9a4e-c15983a129d1
-      - AccessControlMapping__0__myqPrinter=CSJP42700
+      - AccessControlMapping__0__TargetId=CSJP42700
       - AccessControlMapping__0__UserResolver=WATCHLIST_MEMBER_LABEL_EMAIL
      # MYQ Printer #1
       - AccessControlMapping__0__Type=MYQ_CONNECTOR
       - AccessControlMapping__0__StreamId=a7206eec-46f1-498a-9a4e-c15983a129d1
-      - AccessControlMapping__0__myqPrinter=CSJP42700
+      - AccessControlMapping__0__TargetId=CSJP42700
       - AccessControlMapping__0__UserResolver=WATCHLIST_MEMBER_LABEL_EMAIL
      # General MyQ Configuration
      - MyQConfiguration__clientId=<id your client ID>
