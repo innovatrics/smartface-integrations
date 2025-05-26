@@ -33,6 +33,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             authToken = configuration.GetValue<string>("VillaProConfiguration:authToken") ?? throw new InvalidOperationException("authToken is required");
             systToken = configuration.GetValue<string>("VillaProConfiguration:systToken") ?? throw new InvalidOperationException("systToken is required");
             baseUrl = configuration.GetValue<string>("VillaProConfiguration:baseUrl") ?? throw new InvalidOperationException("baseUrl is required");
+
+            this.logger.Information($"VillaProConnector: {authToken} - {systToken} - {baseUrl}");
+            
+            if (string.IsNullOrEmpty(authToken) || string.IsNullOrEmpty(systToken) || string.IsNullOrEmpty(baseUrl))
+            {
+                this.logger.Error("VillaProConnector: Missing required configuration values");
+                throw new InvalidOperationException("Missing required configuration values");
+            }
         }
         
         public Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
@@ -72,7 +80,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 
                 if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
-                    this.logger.Information($"VillaProConnector: Ticket pass successful for device {deviceId} with ticket {ticketId}");
+                    this.logger.Information($"VillaProConnector: {response.StatusCode} - Ticket pass sent successfully for device {deviceId} with ticket {ticketId}");
+                }
+                else if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    this.logger.Error($"VillaProConnector: Ticket pass failed with server error {response.StatusCode} for device {deviceId} with ticket {ticketId}. Error: {errorContent}");
+                    throw new Exception($"Ticket pass failed with server error {response.StatusCode}: {errorContent}");
                 }
                 else
                 {
@@ -84,46 +98,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             catch (Exception ex)
             {
                 this.logger.Error(ex, $"VillaProConnector: Error during ticket pass for device {deviceId} with ticket {ticketId}");
-                throw;
-            }
-        }
-
-        public async Task TicketIssueAndPassAsync(string deviceId, string ticketId, string authToken, string systToken)
-        {
-            try
-            {
-                this.logger.Information($"VillaProConnector: Initiating ticket issue and pass for device {deviceId} with ticket {ticketId}");
-                
-                var client = CreateHttpClient();
-                var url = $"{baseUrl}/devices/{deviceId}/ticket_issue_and_pass/";
-                
-                var request = new HttpRequestMessage(HttpMethod.Put, url);
-                request.Headers.Add("auth-token", authToken);
-                request.Headers.Add("syst-token", systToken);
-                
-                var content = new StringContent(
-                    JsonConvert.SerializeObject(new { ticket_id = ticketId }),
-                    Encoding.UTF8,
-                    "application/json");
-                
-                request.Content = content;
-                
-                var response = await client.SendAsync(request);
-                
-                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
-                {
-                    this.logger.Information($"VillaProConnector: Ticket issue and pass successful for device {deviceId} with ticket {ticketId}");
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    this.logger.Error($"VillaProConnector: Ticket issue and pass failed for device {deviceId} with ticket {ticketId}. Status: {response.StatusCode}, Error: {errorContent}");
-                    throw new Exception($"Ticket issue and pass failed with status code {response.StatusCode}: {errorContent}");
-                }
-            }
-            catch (Exception ex)
-            {
-                this.logger.Error(ex, $"VillaProConnector: Error during ticket issue and pass for device {deviceId} with ticket {ticketId}");
                 throw;
             }
         }
