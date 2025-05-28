@@ -7,6 +7,12 @@ using Serilog;
 using System.Net.Http;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Server.IIS;
+using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {
@@ -17,7 +23,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
         private static readonly HttpClient httpClientSoap = new HttpClient();
 
-           private static void Main(string[] args)
+        private static void Main(string[] args)
         {
             try
             {
@@ -43,7 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             Log.CloseAndFlush();
         }
 
-        private static ILogger ConfigureLogger(string[] args, IConfiguration configuration)
+        private static Serilog.ILogger ConfigureLogger(string[] args, IConfiguration configuration)
         {
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
@@ -57,16 +63,22 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             return logger;
         }
 
-        private static IServiceCollection ConfigureServices(IServiceCollection services, ILogger logger, IConfiguration configuration)
+        private static IServiceCollection ConfigureServices(IServiceCollection services, Serilog.ILogger logger, IConfiguration configuration)
         {
             services.AddHttpClient();
             services.AddSmartFaceGraphQLClient()
                             .ConfigureHttpClient((serviceProvider, httpClient) =>
                             {});
-            services.AddSingleton<ILogger>(logger);
+            services.AddSingleton<Serilog.ILogger>(logger);
             services.AddSingleton<IAeosDataAdapter, AeosDataAdapter>();
             services.AddSingleton<IDataOrchestrator, DataOrchestrator>();
             services.AddHostedService<MainHostedService>();
+            
+            // Add MVC services
+            services.AddControllersWithViews();
+
+            // Add logging services
+            services.AddLogging();
 
             return services;
         }
@@ -82,7 +94,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     .Build();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args, ILogger logger, IConfigurationRoot configurationRoot)
+        public static IHostBuilder CreateHostBuilder(string[] args, Serilog.ILogger logger, IConfigurationRoot configurationRoot)
         {
             return Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration(builder =>
@@ -92,13 +104,58 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    ConfigureServices(services, logger,configurationRoot);
+                    ConfigureServices(services, logger, configurationRoot);
+                })
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                    webBuilder.UseUrls("http://localhost:5000");
+                    webBuilder.ConfigureKestrel(options =>
+                    {
+                        options.ListenLocalhost(5000);
+                    });
                 })
                 .UseSerilog()
                 .UseSystemd()
-                .UseWindowsService()
-            ;
+                .UseWindowsService();
+        }
+    }
+
+    public class Startup
+    {
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
+            app.UseStaticFiles();
+            app.UseRouting();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=LockerAnalytics}/{action=Index}/{id?}");
+            });
         }
 
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.Configure<KestrelServerOptions>(options =>
+            {
+                options.ListenLocalhost(5000);
+            });
+
+            services.AddControllersWithViews()
+                .AddRazorOptions(options =>
+                {
+                    // Add explicit view locations
+                    options.ViewLocationFormats.Clear();
+                    options.ViewLocationFormats.Add("/Views/{1}/{0}.cshtml");
+                    options.ViewLocationFormats.Add("/Views/Shared/{0}.cshtml");
+                });
+        }
     }
 }

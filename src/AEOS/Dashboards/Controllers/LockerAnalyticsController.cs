@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {
-    [Route("[controller]")]
     public class LockerAnalyticsController : Controller
     {
         private readonly IDataOrchestrator dataOrchestrator;
@@ -13,8 +12,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             this.dataOrchestrator = dataOrchestrator;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Index()
         {
             var analytics = await dataOrchestrator.GetLockerAnalytics();
             return View(analytics);
