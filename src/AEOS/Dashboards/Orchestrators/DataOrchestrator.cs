@@ -107,15 +107,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 currentAnalytics.Groups.Add(groupAnalytics);
 
                 // Log the information as before
-                this.logger.Information($"Locker Group: {lockerGroup.Name} (ID: {lockerGroup.Id})");
-                this.logger.Information($"Description: {lockerGroup.Description}");
-                this.logger.Information($"Function: {lockerGroup.LockerFunction}");
-                this.logger.Information($"Template: {lockerGroup.LockerBehaviourTemplate}");
+                this.logger.Debug($"Locker Group: {lockerGroup.Name} (ID: {lockerGroup.Id})");
+                this.logger.Debug($"Description: {lockerGroup.Description}");
+                this.logger.Debug($"Function: {lockerGroup.LockerFunction}");
+                this.logger.Debug($"Template: {lockerGroup.LockerBehaviourTemplate}");
                 
-                this.logger.Information($"Locker Assignment Statistics:");
-                this.logger.Information($"  - Total Lockers: {groupAnalytics.TotalLockers}");
-                this.logger.Information($"  - Assigned Lockers: {groupAnalytics.AssignedLockers} ({groupAnalytics.AssignmentPercentage:F1}%)");
-                this.logger.Information($"  - Unassigned Lockers: {groupAnalytics.UnassignedLockers} ({100 - groupAnalytics.AssignmentPercentage:F1}%)");
+                this.logger.Debug($"Locker Assignment Statistics:");
+                this.logger.Debug($"  - Total Lockers: {groupAnalytics.TotalLockers}");
+                this.logger.Debug($"  - Assigned Lockers: {groupAnalytics.AssignedLockers} ({groupAnalytics.AssignmentPercentage:F1}%)");
+                this.logger.Debug($"  - Unassigned Lockers: {groupAnalytics.UnassignedLockers} ({100 - groupAnalytics.AssignmentPercentage:F1}%)");
 
                 foreach (var locker in sortedLockers)
                 {
@@ -131,7 +131,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                         lastUsedInfo = " - Never used";
                     }
 
-                    this.logger.Information($"  - Locker {locker.Name} (ID: {locker.Id})" + 
+                    this.logger.Debug($"  - Locker {locker.Name} (ID: {locker.Id})" + 
                         (assignedEmployee != null ? 
                             $" - Assigned to: {assignedEmployee.FirstName} {assignedEmployee.LastName} (ID: {assignedEmployee.Id})" : 
                             " - Not assigned") +
@@ -140,10 +140,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
                 if (groupAnalytics.LeastUsedLockers.Any())
                 {
-                    this.logger.Information($"Top 10 least recently used lockers in this group:");
+                    this.logger.Debug($"Top 10 least recently used lockers in this group:");
                     foreach (var locker in groupAnalytics.LeastUsedLockers)
                     {
-                        this.logger.Information($"  - Locker {locker.Name} (ID: {locker.Id})" +
+                        this.logger.Debug($"  - Locker {locker.Name} (ID: {locker.Id})" +
                             (locker.AssignedTo.HasValue ?
                                 $" - Assigned to: {locker.AssignedEmployeeName}" :
                                 " - Not assigned") +
@@ -151,7 +151,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     }
                 }
 
-                this.logger.Information("----------------------------------------");
+                this.logger.Debug("----------------------------------------");
             }
 
             // Calculate global least used lockers
@@ -160,10 +160,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             // Log global least used lockers
             if (currentAnalytics.GlobalLeastUsedLockers.Any())
             {
-                this.logger.Information("Global Top 10 least recently used lockers:");
+                this.logger.Debug("Global Top 10 least recently used lockers:");
                 foreach (var locker in currentAnalytics.GlobalLeastUsedLockers)
                 {
-                    this.logger.Information($"  - Locker {locker.Name} (ID: {locker.Id})" +
+                    this.logger.Debug($"  - Locker {locker.Name} (ID: {locker.Id})" +
                         (locker.AssignedTo.HasValue ?
                             $" - Assigned to: {locker.AssignedEmployeeName}" :
                             " - Not assigned") +

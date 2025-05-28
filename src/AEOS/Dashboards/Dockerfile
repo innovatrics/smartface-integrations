@@ -5,10 +5,10 @@ ARG VERSION
 WORKDIR /source
 
 COPY . .
-RUN dotnet restore src/AEOS/Dashboards/AeosDashboard.csproj
-RUN dotnet publish -c Release -o /build_output -p:Version=$VERSION src/AEOS/Dashboards/AeosDashboard.csproj
+RUN dotnet restore src/AEOS/Dashboards/AeosDashboards.csproj
+RUN dotnet publish -c Release -o /build_output -p:Version=$VERSION src/AEOS/Dashboards/AeosDashboards.csproj
 
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS tool
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS tool
 WORKDIR /App
 COPY --from=build /build_output .
 ENTRYPOINT ["dotnet", "AeosDashboard.dll"]

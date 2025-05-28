@@ -139,6 +139,7 @@
 
     <script>
         let lastKnownUpdate = '@Model.LastUpdated.ToString("o")';
+        let refreshPeriod = @ViewBag.WebRefreshPeriodMs;
         setInterval(function() {
             fetch('/LockerAnalytics/LastUpdated')
                 .then(response => response.json())
@@ -147,7 +148,7 @@
                         location.reload();
                     }
                 });
-        }, 10000); // check every 10 seconds
+        }, refreshPeriod); // use the value from config
     </script>
 </body>
 </html> 
