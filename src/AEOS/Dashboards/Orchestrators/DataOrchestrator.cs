@@ -153,6 +153,23 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
                 this.logger.Information("----------------------------------------");
             }
+
+            // Calculate global least used lockers
+            currentAnalytics.UpdateGlobalLeastUsedLockers();
+
+            // Log global least used lockers
+            if (currentAnalytics.GlobalLeastUsedLockers.Any())
+            {
+                this.logger.Information("Global Top 10 least recently used lockers:");
+                foreach (var locker in currentAnalytics.GlobalLeastUsedLockers)
+                {
+                    this.logger.Information($"  - Locker {locker.Name} (ID: {locker.Id})" +
+                        (locker.AssignedTo.HasValue ?
+                            $" - Assigned to: {locker.AssignedEmployeeName}" :
+                            " - Not assigned") +
+                        $" - Last used: {locker.LastUsed:yyyy-MM-dd HH:mm:ss} ({locker.DaysSinceLastUse:F1} days ago)");
+                }
+            }
         }
     }
 }

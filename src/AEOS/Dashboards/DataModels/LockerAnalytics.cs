@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {
@@ -7,6 +8,24 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
     {
         public DateTime LastUpdated { get; set; }
         public List<LockerGroupAnalytics> Groups { get; set; } = new List<LockerGroupAnalytics>();
+        public List<LockerInfo> GlobalLeastUsedLockers { get; set; } = new List<LockerInfo>();
+
+        public LockerAnalytics()
+        {
+            LastUpdated = DateTime.Now;
+        }
+
+        public void UpdateGlobalLeastUsedLockers()
+        {
+            // Get all lockers from all groups and sort by last used date
+            var allLockers = Groups
+                .SelectMany(g => g.AllLockers)
+                .OrderBy(l => l.LastUsed ?? DateTime.MaxValue)
+                .Take(10)
+                .ToList();
+
+            GlobalLeastUsedLockers = allLockers;
+        }
     }
 
     public class LockerGroupAnalytics

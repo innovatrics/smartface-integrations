@@ -17,5 +17,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             var analytics = await dataOrchestrator.GetLockerAnalytics();
             return View(analytics);
         }
+
+        public async Task<IActionResult> LastUpdated()
+        {
+            var analytics = await dataOrchestrator.GetLockerAnalytics();
+            return Json(new { lastUpdated = analytics.LastUpdated });
+        }
     }
 } 

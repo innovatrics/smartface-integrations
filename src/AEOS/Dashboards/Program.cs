@@ -74,11 +74,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             services.AddSingleton<IDataOrchestrator, DataOrchestrator>();
             services.AddHostedService<MainHostedService>();
             
-            // Add MVC services
-            services.AddControllersWithViews();
-
-            // Add logging services
-            services.AddLogging();
+            // Add MVC services with proper configuration
+            services.AddControllersWithViews()
+                .AddRazorOptions(options =>
+                {
+                    options.ViewLocationFormats.Clear();
+                    options.ViewLocationFormats.Add("/Views/{1}/{0}.cshtml");
+                    options.ViewLocationFormats.Add("/Views/Shared/{0}.cshtml");
+                })
+                .AddApplicationPart(typeof(Program).Assembly);
 
             return services;
         }
@@ -109,11 +113,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                    webBuilder.UseUrls("http://localhost:5000");
-                    webBuilder.ConfigureKestrel(options =>
-                    {
-                        options.ListenLocalhost(5000);
-                    });
+                    webBuilder.UseWebRoot("wwwroot");
                 })
                 .UseSerilog()
                 .UseSystemd()
@@ -138,6 +138,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=LockerAnalytics}/{action=Index}/{id?}");
+                
+                // Add a fallback route for the root URL
+                endpoints.MapGet("/", async context =>
+                {
+                    context.Response.Redirect("/LockerAnalytics");
+                });
             });
         }
 
@@ -145,17 +151,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         {
             services.Configure<KestrelServerOptions>(options =>
             {
-                options.ListenLocalhost(5000);
+                options.ListenLocalhost(9000);
             });
-
-            services.AddControllersWithViews()
-                .AddRazorOptions(options =>
-                {
-                    // Add explicit view locations
-                    options.ViewLocationFormats.Clear();
-                    options.ViewLocationFormats.Add("/Views/{1}/{0}.cshtml");
-                    options.ViewLocationFormats.Add("/Views/Shared/{0}.cshtml");
-                });
         }
     }
 }

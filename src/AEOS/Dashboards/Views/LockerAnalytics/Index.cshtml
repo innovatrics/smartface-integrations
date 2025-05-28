@@ -63,6 +63,28 @@
             border-radius: 4px;
             margin-top: 15px;
         }
+        .group-cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-top: 24px;
+        }
+        .group-card {
+            max-width: 350px;
+            min-width: 280px;
+            flex: 1 1 320px;
+        }
+        .dashboard-main {
+            display: flex;
+            align-items: flex-start;
+            gap: 32px;
+            margin-top: 24px;
+        }
+        .global-least-used {
+            width: 400px;
+            min-width: 320px;
+            flex-shrink: 0;
+        }
     </style>
     <meta http-equiv="refresh" content="300">
 </head>
@@ -70,65 +92,62 @@
     <h1>AEOS Locker Analytics</h1>
     <div class="last-updated">Last updated: @Model.LastUpdated.ToString("yyyy-MM-dd HH:mm:ss")</div>
 
-    @foreach (var group in Model.Groups)
-    {
-        <div class="group-card">
-            <h2>@group.Name</h2>
-            <p>@group.Description</p>
-            <p>Function: @group.Function | Template: @group.Template</p>
-
-            <div class="stats">
-                <div class="stat-box">
-                    <strong>Total Lockers:</strong> @group.TotalLockers
-                </div>
-                <div class="stat-box">
-                    <strong>Assigned:</strong> @group.AssignedLockers (@group.AssignmentPercentage.ToString("F1")%)
-                </div>
-                <div class="stat-box">
-                    <strong>Unassigned:</strong> @group.UnassignedLockers (@((100 - group.AssignmentPercentage).ToString("F1"))%)
-                </div>
-            </div>
-
+    <div class="dashboard-main">
+        <div class="global-least-used">
+            <h2>Global Top 10 Least Recently Used Lockers</h2>
             <div class="least-used">
-                <h3>Top 10 Least Recently Used Lockers</h3>
-                @foreach (var locker in group.LeastUsedLockers)
+                @foreach (var locker in Model.GlobalLeastUsedLockers)
                 {
                     <div class="locker-item">
-                        <strong>@locker.Name</strong> (ID: @locker.Id)
+                        <strong>@locker.Name</strong>
                         @if (locker.AssignedTo.HasValue)
                         {
-                            <span class="assigned">- Assigned to: @locker.AssignedEmployeeName</span>
+                            <span class="assigned"> @locker.AssignedEmployeeName</span>
                         }
                         else
                         {
-                            <span class="unassigned">- Not assigned</span>
+                            <span class="unassigned"> Not assigned</span>
                         }
-                        - Last used: @(locker.LastUsed?.ToString("yyyy-MM-dd HH:mm:ss") ?? "Never") 
-                        (@locker.DaysSinceLastUse.ToString("F1") days ago)
-                    </div>
-                }
-            </div>
-
-            <div class="locker-list">
-                <h3>All Lockers</h3>
-                @foreach (var locker in group.AllLockers)
-                {
-                    <div class="locker-item">
-                        <strong>@locker.Name</strong> (ID: @locker.Id)
-                        @if (locker.AssignedTo.HasValue)
-                        {
-                            <span class="assigned">- Assigned to: @locker.AssignedEmployeeName</span>
-                        }
-                        else
-                        {
-                            <span class="unassigned">- Not assigned</span>
-                        }
-                        - Last used: @(locker.LastUsed?.ToString("yyyy-MM-dd HH:mm:ss") ?? "Never")
-                        (@locker.DaysSinceLastUse.ToString("F1") days ago)
+                        - @locker.DaysSinceLastUse.ToString("F1") days ago
                     </div>
                 }
             </div>
         </div>
-    }
+
+        <div class="group-cards-grid">
+        @foreach (var group in Model.Groups)
+        {
+            <div class="group-card">
+                <h2>@group.Name (@group.Function)</h2>
+                <div class="stats">
+                    <div class="stat-box" style="width: 100%; margin-bottom: 10px;">
+                        <strong>Total:</strong><br/> @group.TotalLockers
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="stat-box" style="flex: 1;">
+                            <strong>Assigned:</strong><br/> @group.AssignedLockers (@group.AssignmentPercentage.ToString("F1")%)
+                        </div>
+                        <div class="stat-box" style="flex: 1;">
+                            <strong>Unassigned:</strong><br/> @group.UnassignedLockers (@((100 - group.AssignmentPercentage).ToString("F1"))%)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        </div>
+    </div>
+
+    <script>
+        let lastKnownUpdate = '@Model.LastUpdated.ToString("o")';
+        setInterval(function() {
+            fetch('/LockerAnalytics/LastUpdated')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.lastUpdated !== lastKnownUpdate) {
+                        location.reload();
+                    }
+                });
+        }, 10000); // check every 10 seconds
+    </script>
 </body>
 </html> 
