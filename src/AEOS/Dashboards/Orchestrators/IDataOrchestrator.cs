@@ -6,6 +6,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
     public interface IDataOrchestrator
     {
         Task GetLockersData();
-
+        Task<LockerAnalytics> GetLockerAnalytics();
     }
 }
