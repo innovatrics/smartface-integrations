@@ -36,10 +36,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-            clientId = configuration.GetValue<string>("MyQConfiguration:clientId") ?? throw new InvalidOperationException("clientId is required");
-            clientSecret = configuration.GetValue<string>("MyQConfiguration:clientSecret") ?? throw new InvalidOperationException("clientSecret is required");
-            scope = configuration.GetValue<string>("MyQConfiguration:scope") ?? throw new InvalidOperationException("scope is required");
-            loginInfoType = configuration.GetValue<int>("MyQConfiguration:loginInfoType");
+            clientId = configuration.GetValue<string>("MyQConfiguration:ClientId") ?? throw new InvalidOperationException("clientId is required");
+            clientSecret = configuration.GetValue<string>("MyQConfiguration:ClientSecret") ?? throw new InvalidOperationException("clientSecret is required");
+            scope = configuration.GetValue<string>("MyQConfiguration:Scope") ?? throw new InvalidOperationException("scope is required");
+            loginInfoType = configuration.GetValue<int>("MyQConfiguration:LoginInfoType");
             myQHostname = configuration.GetValue<string>("MyQConfiguration:MyQHostname") ?? throw new InvalidOperationException("MyQHostname is required");
             myQSchema = configuration.GetValue<string>("MyQConfiguration:MyQSchema") ?? throw new InvalidOperationException("MyQSchema is required");
             myQPort = configuration.GetValue<int>("MyQConfiguration:MyQPort");

@@ -16,9 +16,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 {
     public class VillaProConnector : IAccessControlConnector
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         private string authToken;
         private string systToken;
@@ -26,19 +26,19 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
         public VillaProConnector(ILogger logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         
-            authToken = configuration.GetValue<string>("VillaProConfiguration:authToken") ?? throw new InvalidOperationException("authToken is required");
-            systToken = configuration.GetValue<string>("VillaProConfiguration:systToken") ?? throw new InvalidOperationException("systToken is required");
-            baseUrl = configuration.GetValue<string>("VillaProConfiguration:baseUrl") ?? throw new InvalidOperationException("baseUrl is required");
+            authToken = configuration.GetValue<string>("VillaProConfiguration:AuthToken") ?? throw new InvalidOperationException("authToken is required");
+            systToken = configuration.GetValue<string>("VillaProConfiguration:SystToken") ?? throw new InvalidOperationException("systToken is required");
+            baseUrl = configuration.GetValue<string>("VillaProConfiguration:BaseUrl") ?? throw new InvalidOperationException("baseUrl is required");
 
-            this.logger.Information($"VillaProConnector: {authToken} - {systToken} - {baseUrl}");
+            _logger.Information($"VillaProConnector: {authToken} - {systToken} - {baseUrl}");
             
             if (string.IsNullOrEmpty(authToken) || string.IsNullOrEmpty(systToken) || string.IsNullOrEmpty(baseUrl))
             {
-                this.logger.Error("VillaProConnector: Missing required configuration values");
+                _logger.Error("VillaProConnector: Missing required configuration values");
                 throw new InvalidOperationException("Missing required configuration values");
             }
         }
@@ -50,7 +50,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         
         public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            this.logger.Information($"Initiating OpenAsync: VillaProConnector: {accessControlMapping.Username}({accessControlUserId}), using stream mapping: {accessControlMapping.StreamId}, for the gate: {accessControlMapping.TargetId}");
+            _logger.Information($"Initiating OpenAsync: VillaProConnector: {accessControlMapping.Username}({accessControlUserId}), using stream mapping: {accessControlMapping.StreamId}, for the gate: {accessControlMapping.TargetId}");
             
             // Implementation for opening the gate
             await TicketPassAsync(accessControlMapping.TargetId, accessControlUserId, authToken, systToken);
@@ -60,7 +60,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         {
             try
             {
-                this.logger.Information($"VillaProConnector: Initiating ticket pass for device {deviceId} with ticket {ticketId}");
+                _logger.Information($"VillaProConnector: Initiating ticket pass for device {deviceId} with ticket {ticketId}");
                 
                 var client = CreateHttpClient();
                 var url = $"{baseUrl}/devices/{deviceId}/ticket_pass/";
@@ -80,24 +80,24 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 
                 if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
-                    this.logger.Information($"VillaProConnector: {response.StatusCode} - Ticket pass sent successfully for device {deviceId} with ticket {ticketId}");
+                    _logger.Information($"VillaProConnector: {response.StatusCode} - Ticket pass sent successfully for device {deviceId} with ticket {ticketId}");
                 }
                 else if (response.StatusCode == System.Net.HttpStatusCode.InternalServerError)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    this.logger.Error($"VillaProConnector: Ticket pass failed with server error {response.StatusCode} for device {deviceId} with ticket {ticketId}. Error: {errorContent}");
+                    _logger.Error($"VillaProConnector: Ticket pass failed with server error {response.StatusCode} for device {deviceId} with ticket {ticketId}. Error: {errorContent}");
                     throw new Exception($"Ticket pass failed with server error {response.StatusCode}: {errorContent}");
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    this.logger.Error($"VillaProConnector: Ticket pass failed for device {deviceId} with ticket {ticketId}. Status: {response.StatusCode}, Error: {errorContent}");
+                    _logger.Error($"VillaProConnector: Ticket pass failed for device {deviceId} with ticket {ticketId}. Status: {response.StatusCode}, Error: {errorContent}");
                     throw new Exception($"Ticket pass failed with status code {response.StatusCode}: {errorContent}");
                 }
             }
             catch (Exception ex)
             {
-                this.logger.Error(ex, $"VillaProConnector: Error during ticket pass for device {deviceId} with ticket {ticketId}");
+                _logger.Error(ex, $"VillaProConnector: Error during ticket pass for device {deviceId} with ticket {ticketId}");
                 throw;
             }
         }
