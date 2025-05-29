@@ -84,6 +84,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 })
                 .AddApplicationPart(typeof(Program).Assembly);
 
+            services.AddSwaggerGen(c =>
+            {
+                var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+            });
+
             return services;
         }
 
@@ -133,6 +140,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             app.UseStaticFiles();
             app.UseRouting();
 
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Locker Analytics API V1");
+                c.RoutePrefix = "swagger";
+            });
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
@@ -152,6 +166,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             services.Configure<KestrelServerOptions>(options =>
             {
                 options.ListenLocalhost(9000);
+            });
+            services.AddSwaggerGen(c =>
+            {
+                var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
         }
     }
