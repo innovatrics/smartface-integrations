@@ -56,5 +56,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             };
             return Ok(summary);
         }
+
+        /// <summary>
+        /// Returns a list of all employees.
+        /// </summary>
+        /// <returns>List of employees.</returns>
+        [HttpGet("employees")]
+        public async Task<IActionResult> GetEmployees()
+        {
+            var employees = await dataOrchestrator.GetEmployees();
+            return Ok(employees);
+        }
     }
 } 

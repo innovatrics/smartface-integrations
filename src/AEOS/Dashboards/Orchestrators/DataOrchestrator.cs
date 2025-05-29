@@ -171,5 +171,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 }
             }
         }
+
+        public async Task<IList<AeosMember>> GetEmployees()
+        {
+            return await aeosDataAdapter.GetEmployees();
+        }
     }
 }
