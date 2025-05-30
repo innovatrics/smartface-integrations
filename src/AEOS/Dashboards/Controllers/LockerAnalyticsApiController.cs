@@ -29,6 +29,21 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             return Ok(analytics.Groups);
         }
 
+         /// <summary>
+        /// Returns information for a specific locker group by group ID.
+        /// </summary>
+        /// <param name="groupId">The ID of the locker group.</param>
+        /// <returns>Locker group information, or 404 if not found.</returns>
+        [HttpGet("groups/{groupId}")]
+        public async Task<IActionResult> GetGroupById(long groupId)
+        {
+            var analytics = await dataOrchestrator.GetLockerAnalytics();
+            var group = analytics.Groups.FirstOrDefault(g => g.Id == groupId);
+            if (group == null)
+                return NotFound(new { message = $"Locker group with ID {groupId} not found." });
+            return Ok(group);
+        }
+
         /// <summary>
         /// Returns the global top 10 least recently used lockers.
         /// </summary>
@@ -67,5 +82,25 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             var employees = await dataOrchestrator.GetEmployees();
             return Ok(employees);
         }
+
+        /// <summary>
+        /// Returns an employee identified by the SmartFace identifier.
+        /// </summary>
+        /// <returns>Employee data.</returns>
+        [HttpGet("employees/{identifier}")]
+        public async Task<IActionResult> GetEmployeesByIdentifier(string identifier)
+        {
+            //var employees = await dataOrchestrator.GetEmployees();
+            var identifierTypes = await dataOrchestrator.GetEmployeesByIdentifier(identifier);
+                
+//            var employee = identifierTypes.FirstOrDefault(e => e.Id == identifier);
+
+            //var employee = employees.FirstOrDefault(employee => employee.Id == 1);
+            //var employee = employees.FirstOrDefault(e => e.Id == identifier);
+           // if (employee == null)
+           //     return NotFound(new { message = $"Employee with identifier {identifier} not found." });
+            return Ok(identifierTypes);
+        }
+       
     }
 } 

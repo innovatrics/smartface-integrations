@@ -21,7 +21,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private readonly IConfiguration configuration;
         private readonly IAeosDataAdapter aeosDataAdapter;
         private LockerAnalytics currentAnalytics = new LockerAnalytics();
-        
+        private string AeosIntegrationIdentifierType;
+
         public DataOrchestrator(
             ILogger logger,
             IConfiguration configuration,
@@ -31,6 +32,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.aeosDataAdapter = aeosDataAdapter ?? throw new ArgumentNullException(nameof(aeosDataAdapter));
+
+            AeosIntegrationIdentifierType = configuration.GetValue<string>("AeosDashboards:Aeos:Integration:SmartFace:IdentifierType") ?? throw new InvalidOperationException("The AEOS integration identifier type is not read.");
         }
 
         public async Task<LockerAnalytics> GetLockerAnalytics()
@@ -45,6 +48,20 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             var lockers = await this.aeosDataAdapter.GetLockers();
             var employees = await this.aeosDataAdapter.GetEmployees();
             var lockerGroups = await this.aeosDataAdapter.GetLockerGroups();
+            var identifierTypes = await this.aeosDataAdapter.GetIdentifierTypes();
+            var identifiers = (await this.aeosDataAdapter.GetIdentifiersPerType(
+                identifierTypes.FirstOrDefault(t => t.Name == AeosIntegrationIdentifierType)?.Id ?? 0))
+                .Where(e => e.CarrierId != 0)
+                .ToList();
+
+            this.logger.Information($"Lockers data retrieved");
+
+            // ---------------------------
+
+            foreach (var identifier in identifiers)
+            {
+                this.logger.Debug($"Identifier: {identifier.Id}, BadgeNumber: {identifier.BadgeNumber}, Blocked: {identifier.Blocked}, CarrierId: {identifier.CarrierId}");
+            }
 
             currentAnalytics = new LockerAnalytics
             {
@@ -175,6 +192,24 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         public async Task<IList<AeosMember>> GetEmployees()
         {
             return await aeosDataAdapter.GetEmployees();
+        }
+
+        public async Task<IList<AeosIdentifierType>> GetIdentifierTypes()
+        {
+            return await aeosDataAdapter.GetIdentifierTypes();
+        }
+
+        public async Task<IList<AeosMember>> GetEmployeesByIdentifier(string identifier)
+        {
+            this.logger.Information("Retrieving employees by identifier from AEOS.");
+            var employees = await aeosDataAdapter.GetEmployeesByIdentifier(identifier);
+            this.logger.Information("Employees retrieved: {count}", employees.Count);
+            return employees;
+        }
+
+        public async Task<IList<AeosIdentifier>> GetIdentifiersPerType(long identifierType)
+        {
+            return await aeosDataAdapter.GetIdentifiersPerType(identifierType);
         }
     }
 }

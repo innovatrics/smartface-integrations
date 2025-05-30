@@ -26,6 +26,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private int AeosServerPageSize;
         private string AeosUsername;
         private string AeosPassword;
+        private string AeosIntegrationIdentifierType;
         private Dictionary<string, bool> DefaultTemplates = new();
 
         private AeosWebServiceTypeClient client;
@@ -40,7 +41,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-            this.logger.Information("AeosDataAdapter Initiated");
+            this.logger.Information("Aeos Dashboard DataAdapter Initiated");
 
             //var s = ((IConfigurationRoot)configuration).GetDebugView();
             DataSource = configuration.GetValue<string>("AeosDashboards:DataSource");
@@ -48,6 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             AeosUsername = configuration.GetValue<string>("AeosDashboards:Aeos:Server:User") ?? throw new InvalidOperationException("The AEOS username is not read.");
             AeosPassword = configuration.GetValue<string>("AeosDashboards:Aeos:Server:Pass") ?? throw new InvalidOperationException("The AEOS password is not read.");
             AeosServerPageSize = configuration.GetValue<int>("AeosDashboards:Aeos:Server:PageSize", 100); // Default to 100 if not specified
+            AeosIntegrationIdentifierType = configuration.GetValue<string>("AeosDashboards:Aeos:Integration:SmartFace:IdentifierType") ?? throw new InvalidOperationException("The AEOS integration identifier type is not read.");
             
             var endpoint = new Uri(AeosEndpoint);
             var endpointBinding = new BasicHttpBinding()
@@ -289,5 +291,141 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             return AeosAllMembersReturn;
         }
 
+        public async Task<IList<AeosIdentifierType>> GetIdentifierTypes()
+        {
+            this.logger.Debug("Receiving Identifier Types from AEOS");
+
+            List<AeosIdentifierType> AeosAllIdentifierTypes = new List<AeosIdentifierType>();
+
+            
+            var identifierTypeSearchInfo = new IdentifierTypeInfo();
+            var identifierType = await client.findIdentifierTypeAsync(identifierTypeSearchInfo);
+
+            if (identifierType == null)
+            {
+                this.logger.Error("No identifier types found in the response");
+                return AeosAllIdentifierTypes;
+            }
+
+            if (identifierType.IdentifierTypeList == null)
+            {
+                this.logger.Error("IdentifierTypeList is null in the response");
+                return AeosAllIdentifierTypes;
+            }
+
+            foreach (var type in identifierType.IdentifierTypeList)
+            {
+                this.logger.Debug($"identifierType.Id: {type.Id}, identifierType.Name: {type.Name}");
+                AeosAllIdentifierTypes.Add(new AeosIdentifierType(type.Id, type.Name));
+            }
+            this.logger.Information($"Amount of Identifier Types found: {AeosAllIdentifierTypes.Count}");
+            return AeosAllIdentifierTypes;
+
     }
+
+    public async Task<IList<AeosIdentifier>> GetIdentifiersPerType(long identifierType)
+    {
+        this.logger.Debug($"Receiving Identifiers per Type from AEOS");
+
+         List<AeosIdentifier> AeosAllIdentifiers = new List<AeosIdentifier>();
+
+        var identifierTypeSearchInfo = new IdentifierSearchInfo();
+        identifierTypeSearchInfo.IdentifierSearch = new IdentifierSearch();
+        identifierTypeSearchInfo.IdentifierSearch.IdentifierType = identifierType;
+        identifierTypeSearchInfo.IdentifierSearch.IdentifierTypeSpecified = true;
+        var identifiers = await client.findTokenAsync(identifierTypeSearchInfo);
+
+        if (identifiers?.IdentifierAndCarrierIdList?.IdentifierAndCarrierId == null)
+        {
+            this.logger.Error("No identifiers found in the response");
+            return AeosAllIdentifiers;
+        }
+
+        foreach (var identifier in identifiers.IdentifierAndCarrierIdList.IdentifierAndCarrierId)
+        {
+            this.logger.Debug($"identifier.Id: {identifier.Identifier.Id}, IdentifierType: {identifier.Identifier.IdentifierType}, identifier.BadgeNumber: {identifier.Identifier.BadgeNumber}, identifier.Blocked: {identifier.Identifier.Blocked}, identifier.CarrierId: {identifier.CarrierId}");
+            AeosAllIdentifiers.Add(new AeosIdentifier(identifier.Identifier.Id, identifier.Identifier.BadgeNumber, identifier.Identifier.Blocked, identifier.CarrierId, identifier.Identifier.IdentifierType));
+            
+        }
+        this.logger.Information($"Amount of Identifiers found: {AeosAllIdentifiers.Count}");
+        return AeosAllIdentifiers;
+    }
+
+    public async Task<IList<AeosMember>> GetEmployeesByIdentifier(string identifier)
+    {
+        this.logger.Debug($"Searching for employees with identifier: {identifier}");
+        
+        // Get all identifier types first
+        var identifierTypes = await GetIdentifierTypes();
+        var identifierTypeId = identifierTypes.FirstOrDefault(type => type.Name == AeosIntegrationIdentifierType)?.Id;
+        
+        if (identifierTypeId == null)
+        {
+            this.logger.Error($"Identifier type not found: {identifier}");
+            return new List<AeosMember>();
+        }
+        this.logger.Information($"Identifier type found: {identifierTypeId}");
+
+        // Create search criteria for tokens
+        var tokenSearch = new IdentifierSearchInfo();
+        tokenSearch.IdentifierSearch = new IdentifierSearch();
+        tokenSearch.IdentifierSearch.IdentifierType = identifierTypeId.Value;
+        tokenSearch.IdentifierSearch.IdentifierTypeSpecified = true;
+
+        // Set up pagination
+        tokenSearch.SearchRange = new SearchRange();
+        tokenSearch.SearchRange.startRecordNo = 0;
+        tokenSearch.SearchRange.nrOfRecords = AeosServerPageSize;
+        tokenSearch.SearchRange.nrOfRecordsSpecified = true;
+
+        var tokens = await client.findTokenAsync(tokenSearch);
+        
+        if (tokens?.IdentifierAndCarrierIdList?.IdentifierAndCarrierId == null)
+        {
+            this.logger.Error("No tokens found in the response");
+            return new List<AeosMember>();
+        }
+
+        var result = new List<AeosMember>();
+        foreach (var token in tokens.IdentifierAndCarrierIdList.IdentifierAndCarrierId)
+        {
+            if (token?.CarrierId == null)
+            {
+                this.logger.Error("Null carrier ID found in token response");
+                continue;
+            }
+
+            // Get employee info for this carrier ID
+            var employeeSearch = new EmployeeSearchInfo();
+            employeeSearch.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
+            employeeSearch.EmployeeInfo.Id = token.CarrierId;
+            employeeSearch.EmployeeInfo.IdSpecified = true;
+
+            var employees = await client.findEmployeeAsync(employeeSearch);
+            
+            if (employees?.EmployeeList?.Employee == null || employees.EmployeeList.Employee.Length == 0)
+            {
+                this.logger.Error($"No employee found for carrier ID {token.CarrierId}");
+                continue;
+            }
+
+            var employee = employees.EmployeeList.Employee[0];
+            if (employee?.EmployeeInfo == null)
+            {
+                this.logger.Error($"Null employee info found for carrier ID {token.CarrierId}");
+                continue;
+            }
+
+            this.logger.Debug($"Found employee - Id: {employee.EmployeeInfo.Id}, Name: {employee.EmployeeInfo.FirstName} {employee.EmployeeInfo.LastName}");
+            result.Add(new AeosMember(
+                employee.EmployeeInfo.Id,
+                employee.EmployeeInfo.FirstName,
+                employee.EmployeeInfo.LastName
+            ));
+        }
+
+        this.logger.Information($"Found {result.Count} employees with identifier {identifier}");
+        return result;
+    }
+}
 }

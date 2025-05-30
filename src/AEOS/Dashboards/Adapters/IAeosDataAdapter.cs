@@ -11,5 +11,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         Task<IList<AeosLockers>> GetLockers();
         Task<IList<AeosLockerGroups>> GetLockerGroups();
         Task<IList<AeosMember>> GetEmployees();
+        Task<IList<AeosIdentifierType>> GetIdentifierTypes();
+        Task<IList<AeosIdentifier>> GetIdentifiersPerType(long identifierType);
+        Task<IList<AeosMember>> GetEmployeesByIdentifier(string identifier);
     }
 }
