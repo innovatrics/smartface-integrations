@@ -115,7 +115,7 @@
         </div>
 
         <div class="group-cards-grid">
-        @foreach (var group in Model.Groups)
+        @foreach (var group in Model.Groups.Where(g => g.TotalLockers > 0))
         {
             <div class="group-card">
                 <h2>@group.Name (@group.Function)</h2>

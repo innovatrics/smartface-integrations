@@ -1,14 +1,18 @@
+using System.Collections.Generic;
+
 public class AeosMember
 {
     public long Id { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
+    public IList<AeosLockers> AssignedLockers { get; set; }
 
     public AeosMember(long id, string firstName, string lastName)
     {
         this.Id = id;
         this.FirstName = firstName;
         this.LastName = lastName;
+        this.AssignedLockers = new List<AeosLockers>();
 
         if (lastName == "")
         {

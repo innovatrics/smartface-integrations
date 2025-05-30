@@ -199,6 +199,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
         public async Task<IList<AeosMember>> GetEmployees()
         {
+            // Add assigned lockers to each employee using current data
+            foreach (var employee in _AeosAllEmployees)
+            {
+                var assignedLockers = _AeosAllLockers.Where(l => l.AssignedTo == employee.Id).ToList();
+                employee.AssignedLockers = assignedLockers;
+                this.logger.Debug($"Employee {employee.FirstName} {employee.LastName} (ID: {employee.Id}) has {assignedLockers.Count} assigned lockers");
+            }
+
             return _AeosAllEmployees;
         }
 
@@ -236,7 +244,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 return null;
             }
 
-            this.logger.Information($"Found employee: {employee.FirstName} {employee.LastName} (ID: {employee.Id}) for identifier: {identifier}");
+            // Find all lockers assigned to this employee
+            var assignedLockers = _AeosAllLockers.Where(l => l.AssignedTo == employee.Id).ToList();
+            employee.AssignedLockers = assignedLockers;
+
+            this.logger.Information($"Found employee: {employee.FirstName} {employee.LastName} (ID: {employee.Id}) for identifier: {identifier} with {assignedLockers.Count} assigned lockers");
             return employee;
         }
     }
