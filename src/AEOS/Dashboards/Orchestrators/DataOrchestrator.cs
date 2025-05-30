@@ -23,6 +23,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private LockerAnalytics currentAnalytics = new LockerAnalytics();
         private string AeosIntegrationIdentifierType;
 
+        
+        private IList<AeosMember> _AeosAllEmployees = new List<AeosMember>();
+        private IList<AeosLockers> _AeosAllLockers = new List<AeosLockers>();
+        private IList<AeosLockerGroups> _AeosAllLockerGroups = new List<AeosLockerGroups>();
+        private IList<AeosIdentifierType> _AeosAllIdentifierTypes = new List<AeosIdentifierType>();
+        private IList<AeosIdentifier> _AeosAllIdentifiers = new List<AeosIdentifier>();
+
         public DataOrchestrator(
             ILogger logger,
             IConfiguration configuration,
@@ -45,12 +52,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         {
             this.logger.Information("Retrieving lockers data from AEOS.");
 
-            var lockers = await this.aeosDataAdapter.GetLockers();
-            var employees = await this.aeosDataAdapter.GetEmployees();
-            var lockerGroups = await this.aeosDataAdapter.GetLockerGroups();
-            var identifierTypes = await this.aeosDataAdapter.GetIdentifierTypes();
-            var identifiers = (await this.aeosDataAdapter.GetIdentifiersPerType(
-                identifierTypes.FirstOrDefault(t => t.Name == AeosIntegrationIdentifierType)?.Id ?? 0))
+            _AeosAllLockers = await this.aeosDataAdapter.GetLockers();
+            _AeosAllEmployees = await this.aeosDataAdapter.GetEmployees();
+            _AeosAllLockerGroups = await this.aeosDataAdapter.GetLockerGroups();
+            _AeosAllIdentifierTypes = await this.aeosDataAdapter.GetIdentifierTypes();
+            _AeosAllIdentifiers = (await this.aeosDataAdapter.GetIdentifiersPerType(
+                _AeosAllIdentifierTypes.FirstOrDefault(t => t.Name == AeosIntegrationIdentifierType)?.Id ?? 0))
                 .Where(e => e.CarrierId != 0)
                 .ToList();
 
@@ -58,7 +65,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             // ---------------------------
 
-            foreach (var identifier in identifiers)
+            foreach (var identifier in _AeosAllIdentifiers)
             {
                 this.logger.Debug($"Identifier: {identifier.Id}, BadgeNumber: {identifier.BadgeNumber}, Blocked: {identifier.Blocked}, CarrierId: {identifier.CarrierId}");
             }
@@ -69,7 +76,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 Groups = new List<LockerGroupAnalytics>()
             };
 
-            foreach (var lockerGroup in lockerGroups)
+            foreach (var lockerGroup in _AeosAllLockerGroups)
             {
                 var groupAnalytics = new LockerGroupAnalytics
                 {
@@ -81,7 +88,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 };
 
                 var sortedLockers = lockerGroup.LockerIds
-                    .Select(lockerId => lockers.FirstOrDefault(l => l.Id == lockerId))
+                    .Select(lockerId => _AeosAllLockers.FirstOrDefault(l => l.Id == lockerId))
                     .Where(l => l != null)
                     .OrderBy(l => l.Name)
                     .ToList();
@@ -97,7 +104,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 // Process all lockers
                 foreach (var locker in sortedLockers)
                 {
-                    var assignedEmployee = employees.FirstOrDefault(e => e.Id == locker.AssignedTo);
+                    var assignedEmployee = _AeosAllEmployees.FirstOrDefault(e => e.Id == locker.AssignedTo);
                     var lockerInfo = new LockerInfo
                     {
                         Id = locker.Id,
@@ -136,7 +143,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
                 foreach (var locker in sortedLockers)
                 {
-                    var assignedEmployee = employees.FirstOrDefault(e => e.Id == locker.AssignedTo);
+                    var assignedEmployee = _AeosAllEmployees.FirstOrDefault(e => e.Id == locker.AssignedTo);
                     var lastUsedInfo = "";
                     if (locker.LastUsed != DateTime.MinValue)
                     {
@@ -191,12 +198,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
         public async Task<IList<AeosMember>> GetEmployees()
         {
-            return await aeosDataAdapter.GetEmployees();
+            return _AeosAllEmployees;
         }
 
         public async Task<IList<AeosIdentifierType>> GetIdentifierTypes()
         {
-            return await aeosDataAdapter.GetIdentifierTypes();
+            return _AeosAllIdentifierTypes;
         }
 
         public async Task<IList<AeosMember>> GetEmployeesByIdentifier(string identifier)
