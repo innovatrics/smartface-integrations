@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using System.Collections.Generic;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {
@@ -34,7 +37,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// </summary>
         /// <param name="groupId">The ID of the locker group.</param>
         /// <returns>Locker group information, or 404 if not found.</returns>
+        /// <response code="200">Returns the locker group data.</response>
+        /// <response code="404">If no locker group is found with the given ID.</response>
         [HttpGet("groups/{groupId}")]
+        [ProducesResponseType(typeof(LockerGroupAnalytics), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetGroupById(long groupId)
         {
             var analytics = await dataOrchestrator.GetLockerAnalytics();
@@ -48,7 +55,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// Returns the global top 10 least recently used lockers.
         /// </summary>
         /// <returns>List of least recently used lockers.</returns>
+        /// <response code="200">Returns the list of least recently used lockers.</response>
         [HttpGet("leastused")]
+        [ProducesResponseType(typeof(IList<LockerInfo>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetLeastUsed()
         {
             var analytics = await dataOrchestrator.GetLockerAnalytics();
@@ -59,7 +68,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// Returns a summary of all lockers (total, assigned, unassigned, etc.).
         /// </summary>
         /// <returns>Summary statistics for all lockers.</returns>
+        /// <response code="200">Returns the summary statistics.</response>
         [HttpGet("summary")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetSummary()
         {
             var analytics = await dataOrchestrator.GetLockerAnalytics();
@@ -76,7 +87,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// Returns a list of all employees.
         /// </summary>
         /// <returns>List of employees.</returns>
+        /// <response code="200">Returns the list of employees.</response>
         [HttpGet("employees")]
+        [ProducesResponseType(typeof(IList<AeosMember>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetEmployees()
         {
             var employees = await dataOrchestrator.GetEmployees();
@@ -86,20 +99,21 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// <summary>
         /// Returns an employee identified by the SmartFace identifier.
         /// </summary>
+        /// <param name="identifier">The SmartFace identifier (badge number) of the employee.</param>
         /// <returns>Employee data.</returns>
+        /// <response code="200">Returns the employee data.</response>
+        /// <response code="404">If no employee is found with the given identifier.</response>
         [HttpGet("employees/{identifier}")]
+        [ProducesResponseType(typeof(AeosMember), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetEmployeesByIdentifier(string identifier)
         {
-            //var employees = await dataOrchestrator.GetEmployees();
-            var identifierTypes = await dataOrchestrator.GetEmployeesByIdentifier(identifier);
-                
-//            var employee = identifierTypes.FirstOrDefault(e => e.Id == identifier);
+            var employee = await dataOrchestrator.GetEmployeeByIdentifier(identifier);
+            
+            if (employee == null)
+                return NotFound(new { message = $"No employee found with identifier: {identifier}" });
 
-            //var employee = employees.FirstOrDefault(employee => employee.Id == 1);
-            //var employee = employees.FirstOrDefault(e => e.Id == identifier);
-           // if (employee == null)
-           //     return NotFound(new { message = $"Employee with identifier {identifier} not found." });
-            return Ok(identifierTypes);
+            return Ok(employee);
         }
        
     }

@@ -53,13 +53,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             this.logger.Information("Retrieving lockers data from AEOS.");
 
             _AeosAllLockers = await this.aeosDataAdapter.GetLockers();
-            _AeosAllEmployees = await this.aeosDataAdapter.GetEmployees();
             _AeosAllLockerGroups = await this.aeosDataAdapter.GetLockerGroups();
             _AeosAllIdentifierTypes = await this.aeosDataAdapter.GetIdentifierTypes();
             _AeosAllIdentifiers = (await this.aeosDataAdapter.GetIdentifiersPerType(
                 _AeosAllIdentifierTypes.FirstOrDefault(t => t.Name == AeosIntegrationIdentifierType)?.Id ?? 0))
                 .Where(e => e.CarrierId != 0)
                 .ToList();
+
+            _AeosAllEmployees = await this.aeosDataAdapter.GetEmployees();
 
             this.logger.Information($"Lockers data retrieved");
 
@@ -206,17 +207,37 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             return _AeosAllIdentifierTypes;
         }
 
-        public async Task<IList<AeosMember>> GetEmployeesByIdentifier(string identifier)
-        {
-            this.logger.Information("Retrieving employees by identifier from AEOS.");
-            var employees = await aeosDataAdapter.GetEmployeesByIdentifier(identifier);
-            this.logger.Information("Employees retrieved: {count}", employees.Count);
-            return employees;
-        }
-
         public async Task<IList<AeosIdentifier>> GetIdentifiersPerType(long identifierType)
         {
             return await aeosDataAdapter.GetIdentifiersPerType(identifierType);
+        }
+
+        public async Task<AeosMember> GetEmployeeByIdentifier(string identifier)
+        {
+            this.logger.Information($"Finding employee for identifier: {identifier}");
+            
+            var matchingIdentifier = _AeosAllIdentifiers.FirstOrDefault(i => i.BadgeNumber == identifier);
+            if (matchingIdentifier == null)
+            {
+                this.logger.Warning($"No identifier found with BadgeNumber: {identifier}");
+                return null;
+            }
+
+            if (matchingIdentifier.CarrierId == 0)
+            {
+                this.logger.Warning($"Identifier {identifier} has no associated carrier (CarrierId is 0)");
+                return null;
+            }
+
+            var employee = _AeosAllEmployees.FirstOrDefault(e => e.Id == matchingIdentifier.CarrierId);
+            if (employee == null)
+            {
+                this.logger.Warning($"No employee found with Id: {matchingIdentifier.CarrierId} for identifier: {identifier}");
+                return null;
+            }
+
+            this.logger.Information($"Found employee: {employee.FirstName} {employee.LastName} (ID: {employee.Id}) for identifier: {identifier}");
+            return employee;
         }
     }
 }
