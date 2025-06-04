@@ -204,6 +204,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             {
                 var assignedLockers = _AeosAllLockers.Where(l => l.AssignedTo == employee.Id).ToList();
                 employee.AssignedLockers = assignedLockers;
+
+                // Find the identifier for this employee
+                var matchingIdentifier = _AeosAllIdentifiers.FirstOrDefault(i => i.CarrierId == employee.Id);
+                if (matchingIdentifier != null)
+                {
+                    employee.Identifier = matchingIdentifier.BadgeNumber;
+                }
+
                 this.logger.Debug($"Employee {employee.FirstName} {employee.LastName} (ID: {employee.Id}) has {assignedLockers.Count} assigned lockers");
             }
 
@@ -247,8 +255,35 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             // Find all lockers assigned to this employee
             var assignedLockers = _AeosAllLockers.Where(l => l.AssignedTo == employee.Id).ToList();
             employee.AssignedLockers = assignedLockers;
+            employee.Identifier = identifier;
 
             this.logger.Information($"Found employee: {employee.FirstName} {employee.LastName} (ID: {employee.Id}) for identifier: {identifier} with {assignedLockers.Count} assigned lockers");
+            return employee;
+        }
+
+        public async Task<AeosMember> GetEmployeeByEmail(string email)
+        {
+            this.logger.Information($"Finding employee for email: {email}");
+            
+            var employee = _AeosAllEmployees.FirstOrDefault(e => e.Email == email);
+            if (employee == null)
+            {
+                this.logger.Warning($"No employee found with email: {email}");
+                return null;
+            }
+
+            // Find all lockers assigned to this employee
+            var assignedLockers = _AeosAllLockers.Where(l => l.AssignedTo == employee.Id).ToList();
+            employee.AssignedLockers = assignedLockers;
+
+            // Find the identifier for this employee
+            var matchingIdentifier = _AeosAllIdentifiers.FirstOrDefault(i => i.CarrierId == employee.Id);
+            if (matchingIdentifier != null)
+            {
+                employee.Identifier = matchingIdentifier.BadgeNumber;
+            }
+
+            this.logger.Information($"Found employee: {employee.FirstName} {employee.LastName} (ID: {employee.Id}) for email: {email} with {assignedLockers.Count} assigned lockers");
             return employee;
         }
     }

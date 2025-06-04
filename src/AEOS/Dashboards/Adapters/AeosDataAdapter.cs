@@ -271,7 +271,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 foreach (var employee in employees.EmployeeList.Employee)
                 {
                     this.logger.Debug($"employee.EmployeeInfo.FirstName: {employee.EmployeeInfo.FirstName}, employee.EmployeeInfo.LastName: {employee.EmployeeInfo.LastName}");
-                    AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName));
+                    AeosAllMembersReturn.Add(new AeosMember(
+                        employee.EmployeeInfo.Id,
+                        employee.EmployeeInfo.FirstName,
+                        employee.EmployeeInfo.LastName,
+                        employee.EmployeeInfo.Email
+                    ));
                 }
 
                 if (employees.EmployeeList.Employee.Length == EmployeesPageSize)
@@ -420,12 +425,45 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             result.Add(new AeosMember(
                 employee.EmployeeInfo.Id,
                 employee.EmployeeInfo.FirstName,
-                employee.EmployeeInfo.LastName
+                employee.EmployeeInfo.LastName,
+                employee.EmployeeInfo.Email
             ));
         }
 
         this.logger.Information($"Found {result.Count} employees with identifier {identifier}");
         return result;
+    }
+
+    public async Task<AeosMember> GetEmployeeByEmail(string email)
+    {
+        this.logger.Debug($"Searching for employee with email: {email}");
+        
+        var employeeSearch = new EmployeeSearchInfo();
+        employeeSearch.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
+        employeeSearch.EmployeeInfo.Email = email;
+
+        var employees = await client.findEmployeeAsync(employeeSearch);
+        
+        if (employees?.EmployeeList?.Employee == null || employees.EmployeeList.Employee.Length == 0)
+        {
+            this.logger.Warning($"No employee found with email: {email}");
+            return null;
+        }
+
+        var employee = employees.EmployeeList.Employee[0];
+        if (employee?.EmployeeInfo == null)
+        {
+            this.logger.Error($"Null employee info found for email: {email}");
+            return null;
+        }
+
+        this.logger.Information($"Found employee - Id: {employee.EmployeeInfo.Id}, Name: {employee.EmployeeInfo.FirstName} {employee.EmployeeInfo.LastName}, Email: {employee.EmployeeInfo.Email}");
+        return new AeosMember(
+            employee.EmployeeInfo.Id,
+            employee.EmployeeInfo.FirstName,
+            employee.EmployeeInfo.LastName,
+            employee.EmployeeInfo.Email
+        );
     }
 }
 }

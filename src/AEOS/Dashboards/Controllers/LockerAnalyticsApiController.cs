@@ -97,13 +97,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         }
 
         /// <summary>
-        /// Returns an employee identified by the SmartFace identifier.
+        /// Returns an employee identified by the identifier.
         /// </summary>
-        /// <param name="identifier">The SmartFace identifier (badge number) of the employee.</param>
+        /// <param name="identifier">The Identifier of the employee. Chosen type is configured in the AEOS integration settings.</param>
         /// <returns>Employee data.</returns>
         /// <response code="200">Returns the employee data.</response>
         /// <response code="404">If no employee is found with the given identifier.</response>
-        [HttpGet("employees/{identifier}")]
+        [HttpGet("employees/by-identifier/{identifier}")]
         [ProducesResponseType(typeof(AeosMember), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetEmployeesByIdentifier(string identifier)
@@ -115,6 +115,25 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             return Ok(employee);
         }
-       
+
+        /// <summary>
+        /// Returns an employee identified by their email address.
+        /// </summary>
+        /// <param name="email">The email address of the employee.</param>
+        /// <returns>Employee data.</returns>
+        /// <response code="200">Returns the employee data.</response>
+        /// <response code="404">If no employee is found with the given email.</response>
+        [HttpGet("employees/by-email/{email}")]
+        [ProducesResponseType(typeof(AeosMember), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetEmployeeByEmail(string email)
+        {
+            var employee = await dataOrchestrator.GetEmployeeByEmail(email);
+            
+            if (employee == null)
+                return NotFound(new { message = $"No employee found with email: {email}" });
+
+            return Ok(employee);
+        }
     }
 } 
