@@ -16,17 +16,17 @@ To run the application locally, follow these steps
 ### Deploy to Docker
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AEOS/Dashboards/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.2 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.2 registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.2`
+ - `docker build -f src/AEOS/Dashboards/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.3 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.3 registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.3`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest`
 
 ### Deploy to Docker on Arm
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AEOS/Dashboards/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.2-arm .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.2-arm registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest-arm`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.2-arm`
+ - `docker build -f src/AEOS/Dashboards/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.3-arm .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.3-arm registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest-arm`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:0.3-arm`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest-arm`
 
 ## Usage
@@ -72,7 +72,6 @@ For appsettings.json
             "RefreshPeriodMs": 60000
         },
         "Web": {
-            "DefaultPort": 80,
             "WebRefreshPeriodMs": 10000
         }
     }
@@ -85,6 +84,5 @@ AeosDashboards__Aeos__Server__PageSize=100,
 AeosDashboards__Aeos__Server__User=
 AeosDashboards__Aeos__Server__Pass=
 AeosDashboards__Aeos__RefreshPeriodMs=60000
-AeosDashboards__Web__DefaultPort=80
 AeosDashboards__Web__WebRefreshPeriodMs=10000
 ```

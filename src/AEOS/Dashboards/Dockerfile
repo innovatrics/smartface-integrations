@@ -8,7 +8,13 @@ COPY . .
 RUN dotnet restore src/AEOS/Dashboards/AeosDashboards.csproj
 RUN dotnet publish -c Release -o /build_output -p:Version=$VERSION src/AEOS/Dashboards/AeosDashboards.csproj
 
+FROM build AS publish
+ARG VERSION
+RUN dotnet publish -c Release --no-build -o /build_output -p:Version=$VERSION src/AEOS/Dashboards/AeosDashboards.csproj
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS tool
-WORKDIR /App
-COPY --from=build /build_output .
-ENTRYPOINT ["dotnet", "AeosDashboard.dll"]
+WORKDIR /build_output
+COPY --from=publish /build_output .
+ENV ASPNETCORE_ENVIRONMENT=Production
+EXPOSE 80
+ENTRYPOINT ["dotnet", "AeosDashboards.dll"]

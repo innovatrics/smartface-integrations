@@ -121,6 +121,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 {
                     webBuilder.UseStartup<Startup>();
                     webBuilder.UseWebRoot("wwwroot");
+                    webBuilder.UseUrls("http://*:80");
                 })
                 .UseSerilog()
                 .UseSystemd()
@@ -163,10 +164,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
         public void ConfigureServices(IServiceCollection services)
         {
+            /*
             services.Configure<KestrelServerOptions>(options =>
             {
-                options.ListenLocalhost(9000);
+                options.ListenLocalhost(80);
             });
+            */
             services.AddSwaggerGen(c =>
             {
                 var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
