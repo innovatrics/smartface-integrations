@@ -12,6 +12,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
     public class UserResolverFactory : IUserResolverFactory
     {
         public const string WATCHLIST_MEMBER_LABEL_TYPE = "WATCHLIST_MEMBER_LABEL";
+        public const string AEOS_USER = "AEOS_USER";
         
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
@@ -46,6 +47,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case WATCHLIST_MEMBER_LABEL_TYPE:
                     return new WatchlistMemberLabelUserResolver(_logger, _configuration, _httpClientFactory, type);
+
+                case AEOS_USER:
+                    return new AeosUserResolver(_logger, _configuration, _httpClientFactory, type);
             }
         }
 
