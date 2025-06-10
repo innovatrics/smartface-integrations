@@ -100,9 +100,11 @@ Add following pattern to existing docker compose, depending on the integrations 
       - MyQConfiguration__SmartFaceURL=http://<SmartFace URL or hostname>:8098
       - MyQConfiguration__BypassSslValidation=true
        # VillaPro Integration Configuration (Optional)
-      - VillaProConfiguration_AuthToken=
-      - VillaProConfiguration_SystToken=
-      - VillaProConfiguration_BaseUrl=
+      - VillaProConfiguration__AuthToken=
+      - VillaProConfiguration__SystToken=
+      - VillaProConfiguration__BaseUrl=
+       # General AEOS NEDAP Configuration 
+      - AeosConfiguration__LabelName=LOCKERS
 
 networks:
   default:
