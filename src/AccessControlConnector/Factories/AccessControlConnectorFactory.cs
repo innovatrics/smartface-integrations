@@ -73,6 +73,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AccessControlConnectorTypes.VILLA_PRO_CONNECTOR:
                     return new VillaProConnector(this.logger, this.configuration, this.httpClientFactory);
+
+                case AccessControlConnectorTypes.AEOS_CONNECTOR:
+                    return new AeosConnector(this.logger, this.configuration, this.httpClientFactory);
             }
         }
     }

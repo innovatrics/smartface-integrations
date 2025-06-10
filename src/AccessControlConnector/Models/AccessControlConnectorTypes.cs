@@ -13,5 +13,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
         public const string NN_IP_INTERCOM              = "2N_IP_INTERCOM";
         public const string MYQ_CONNECTOR               = "MYQ_CONNECTOR";
         public const string VILLA_PRO_CONNECTOR         = "VILLA_PRO_CONNECTOR";
+        public const string AEOS_CONNECTOR              = "AEOS_CONNECTOR";
     }
 }

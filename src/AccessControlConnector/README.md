@@ -72,6 +72,23 @@ Add following pattern to existing docker compose, depending on the integrations 
       - AccessControlMapping__5__StreamId=2e49f358-bebb-42b6-03e9-08db6e4030a1
       - AccessControlMapping__5__TargetId=001-575
       - AccessControlMapping__5__UserResolver=WATCHLIST_MEMBER_LABEL_TOKEN_VILLAPRO
+      # NEDAP Aeos Controller #1
+      - AccessControlMapping__6__Type=AEOS_CONNECTOR 
+      - AccessControlMapping__6__StreamId=0195f6a3-aa3c-716e-8116-9c8bbbfa671e
+      - AccessControlMapping__6__Host=10.11.109.12
+      - AccessControlMapping__6__Port=11020
+      - AccessControlMapping__6__UserResolver=AEOS_USER
+          # list of allowed Watchlists for the Aeos AEpu controller (optional)
+      - AccessControlMapping__6__WatchlistExternalIds__0=2e49f358-bebb-42b6-03e9-08db6e4030a1
+      # NEDAP Aeos Controller #2
+      - AccessControlMapping__7__Type=AEOS_CONNECTOR 
+      - AccessControlMapping__7__StreamId=0195f6a3-aa3c-716e-8116-9c8bbbfa671e
+      - AccessControlMapping__7__Host=10.11.109.12
+      - AccessControlMapping__7__Port=11020
+      - AccessControlMapping__7__UserResolver=AEOS_USER
+          # list of allowed Watchlists for the Aeos AEpu controller (optional)
+      - AccessControlMapping__7__WatchlistExternalIds__0=2e49f358-bebb-42b6-03e9-08db6e4030a1
+      - AccessControlMapping__7__WatchlistExternalIds__1=2e49f358-bebb-42b6-03e9-08db6e4030a1
       # MYQ Integration Configuration (Optional)
       - MyQConfiguration__ClientId=<id your client ID>
       - MyQConfiguration__ClientSecret=<add your client secret>
