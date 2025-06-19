@@ -51,7 +51,7 @@ namespace SmartFace.AutoEnrollment
             logDir = configuration.GetValue("Serilog:LogDirectory", logDir);
             var logFilePath = Path.Combine(logDir, LogFileName);
 
-            var logger = LoggingSetup.SetupBasicLogging(logFilePath, configuration);
+            var logger = LoggingSetup.SetupBasicLogging(logFilePath);
 
             return logger;
         }
@@ -77,6 +77,7 @@ namespace SmartFace.AutoEnrollment
             services.AddSingleton<QueueProcessingService>();
 
             services.AddHostedService<MainHostedService>();
+            services.AddHostedService<SanitizationService>();
         }
 
         private static IConfigurationRoot ConfigureBuilder(string[] args)
@@ -101,7 +102,7 @@ namespace SmartFace.AutoEnrollment
                 {
                     ConfigureServices(services, logger);
                 })
-                .UseSerilog(logger)
+                .UseSerilog()
                 .UseSystemd()
                 .UseWindowsService()
             ;

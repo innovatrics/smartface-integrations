@@ -14,9 +14,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
 {
     public class Integrity22Connector : IAccessControlConnector
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public Integrity22Connector(
             ILogger logger,
@@ -24,32 +24,24 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             IHttpClientFactory httpClientFactory
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
         public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            this.logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
-
-            // var cardData = await this.getCardDataAsync(
-            //     accessControlMapping.Host, 
-            //     accessControlMapping.Port, 
-            //     accessControlMapping.Username, 
-            //     accessControlMapping.Password, 
-            //     accessControlUserId
-            // );
+            _logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
             var cardData = $"20000000000000000{accessControlUserId}";
 
             if (cardData == null)
             {
-                this.logger.Warning("No CardData found for {accessControlUserId}", accessControlUserId);
+                _logger.Warning("No CardData found for {accessControlUserId}", accessControlUserId);
                 return;
             }
 
-            await this.sendOpenAsync(
+            await SendOpenAsync(
                 accessControlMapping.Schema,
                 accessControlMapping.Host, 
                 accessControlMapping.Port, 
@@ -68,7 +60,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             return Task.CompletedTask;
         }
 
-        private async Task<string> getCardDataAsync(string schema, string host, int? port, string username, string password, string cardNumber)
+        private async Task<string> GetCardDataAsync(string schema, string host, int? port, string username, string password, string cardNumber)
         {
             var cardDirectory = Path.Combine(AppContext.BaseDirectory, "data", "cards");
 
@@ -83,12 +75,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             {
                 var cardData = await File.ReadAllTextAsync(filePath);
                 
-                this.logger.Information("Return {cardData} for {cardNumber} from cache", cardData, cardNumber);
+                _logger.Information("Return {cardData} for {cardNumber} from cache", cardData, cardNumber);
                 
                 return cardData;
             }
 
-            var httpClient = this.httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
             var requestUri = $"{schema ?? "http"}://{host}:{port}/DB/Card?CardNumber={cardNumber}";
 
@@ -122,14 +114,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             return card.CardData;
         }
 
-        private async Task sendOpenAsync(string schema, string host, int? port, string username, string password, string cardData, string readerModuleID, int readerNumber)
+        private async Task SendOpenAsync(string schema, string host, int? port, string username, string password, string cardData, string readerModuleID, int readerNumber)
         {
-            var httpClient = this.httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
             // {schema ?? "http"}://192.168.10.22:15108/CardBadge?CardData=250000000000000047D4A3D1&ReaderModuleID=77407156193722391&ReaderNumber=2 
             var requestUri = $"{schema ?? "http"}://{host}:{port}/CardBadge?CardData={cardData}&CardBitLength=32&ReaderModuleID={readerModuleID}&ReaderNumber={readerNumber}";
 
-            this.logger.Information("sendOpenAsync to {url}", requestUri);
+            _logger.Information("SendOpenAsync to {url}", requestUri);
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
@@ -145,7 +137,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             
             httpResponse.EnsureSuccessStatusCode();
 
-            this.logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            _logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
         }
     }
 }

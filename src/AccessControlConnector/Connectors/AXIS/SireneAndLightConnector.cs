@@ -32,7 +32,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
         {
             this.logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
-            await this.sendOpenAsync(
+            await this.SendOpenAsync(
                 accessControlMapping.Schema,
                 accessControlMapping.Host,
                 accessControlMapping.Port ?? 80,
@@ -49,7 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             return Task.CompletedTask;
         }
 
-        private async Task sendOpenAsync(string scheme, string host, int? port, string username, string password, string @params)
+        private async Task SendOpenAsync(string scheme, string host, int? port, string username, string password, string @params)
         {
             var httpClient = this.httpClientFactory.CreateClient();
 
@@ -79,7 +79,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
 
-            this.logger.Information("sendOpenAsync to {url} with {body}", requestUri, jsonContent);
+            this.logger.Information("SendOpenAsync to {url} with {body}", requestUri, jsonContent);
 
             var httpResponse = await httpClient.SendAsync(httpRequest);
 

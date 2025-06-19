@@ -13,23 +13,23 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
 {
     public class IOPortConnector : IAccessControlConnector
     {
-        private readonly ILogger logger;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly ILogger _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public IOPortConnector(
             ILogger logger,
             IHttpClientFactory httpClientFactory
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
         public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            this.logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
+            _logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
-            await this.sendOpenAsync(
+            await SendOpenAsync(
                 accessControlMapping.Schema,
                 accessControlMapping.Host,
                 accessControlMapping.Port ?? 80,
@@ -46,9 +46,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             return Task.CompletedTask;
         }
 
-        private async Task sendOpenAsync(string scheme, string host, int? port, string username, string password, string @params)
+        private async Task SendOpenAsync(string scheme, string host, int? port, string username, string password, string @params)
         {
-            var httpClient = this.httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
             var requestUri = $"{scheme ?? "http"}://{host}:{port}/axis-cgi/io/port.cgi?{@params}";
 
@@ -62,13 +62,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
 
-            this.logger.Information("sendOpenAsync to {url} with {body}", requestUri);
+            _logger.Information("SendOpenAsync to {url} with {body}", requestUri);
 
             var httpResponse = await httpClient.SendAsync(httpRequest);
 
             httpResponse.EnsureSuccessStatusCode();
 
-            this.logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            _logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
         }
     }
 }

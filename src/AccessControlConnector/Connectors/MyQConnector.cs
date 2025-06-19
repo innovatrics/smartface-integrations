@@ -3,14 +3,18 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Serilog;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Linq;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
+using Innovatrics.SmartFace.Models.API;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers;
 
-namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
+namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 {
-    public class Connector : IConnector
+    public class MyQConnector : IAccessControlConnector
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
@@ -20,39 +24,49 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
         private string clientSecret;
         private string scope;
         private int loginInfoType;
+        private string myQSchema;
         private string myQHostname;
         private int myQPort;
         private string smartFaceURL;
         private bool bypassSslValidation;
 
-        public Connector(ILogger logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+        public MyQConnector(ILogger logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-            clientId = configuration.GetValue<string>("MyQConfiguration:clientId") ?? throw new InvalidOperationException("clientId is required");
-            clientSecret = configuration.GetValue<string>("MyQConfiguration:clientSecret") ?? throw new InvalidOperationException("clientSecret is required");
-            scope = configuration.GetValue<string>("MyQConfiguration:scope") ?? throw new InvalidOperationException("scope is required");
-            loginInfoType = configuration.GetValue<int>("MyQConfiguration:loginInfoType");
+            clientId = configuration.GetValue<string>("MyQConfiguration:ClientId") ?? throw new InvalidOperationException("clientId is required");
+            clientSecret = configuration.GetValue<string>("MyQConfiguration:ClientSecret") ?? throw new InvalidOperationException("clientSecret is required");
+            scope = configuration.GetValue<string>("MyQConfiguration:Scope") ?? throw new InvalidOperationException("scope is required");
+            loginInfoType = configuration.GetValue<int>("MyQConfiguration:LoginInfoType");
             myQHostname = configuration.GetValue<string>("MyQConfiguration:MyQHostname") ?? throw new InvalidOperationException("MyQHostname is required");
+            myQSchema = configuration.GetValue<string>("MyQConfiguration:MyQSchema") ?? throw new InvalidOperationException("MyQSchema is required");
             myQPort = configuration.GetValue<int>("MyQConfiguration:MyQPort");
             smartFaceURL = configuration.GetValue<string>("MyQConfiguration:SmartFaceURL");
             bypassSslValidation = configuration.GetValue<bool>("MyQConfiguration:BypassSslValidation");
         }
-
-        public async Task OpenAsync(string myqPrinter, Guid myqStreamId, string watchlistMemberId)
+        
+        public Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null,string username = null, string password = null)
         {
-            this.logger.Information("MyQ Printer Unlocking");
-            this.logger.Information($"WatchlistMemberID: {watchlistMemberId}");
+            return Task.CompletedTask;
+        }
+        
+        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+
+            this.logger.Information($"MyQ Printer: {accessControlMapping.TargetId} Initiating OpenAsync using email: ({accessControlUserId}), using stream mapping: {accessControlMapping.StreamId}");
+            if(accessControlUserId == null)
+            {
+                return;
+            }            
 
             try
             {
-                string email = await GetEmailFromSmartFaceAPI(watchlistMemberId);
                 string token = await AuthenticateWithMyQAPI();
-                string userInfo = await GetUserInfo(email, token);
+                string userInfo = await GetUserInfo(accessControlUserId, token);
                 string userToken = await AuthenticateUserWithMyQAPI(userInfo);
-                await UnlockPrinter(myqPrinter, myqStreamId, userToken);
+                await UnlockPrinter(accessControlMapping.TargetId, accessControlMapping.StreamId, userToken);
             }
             catch (Exception ex)
             {
@@ -72,25 +86,10 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
             return new HttpClient(handler);
         }
 
-        private async Task<string> GetEmailFromSmartFaceAPI(string watchlistMemberId)
-        {
-            var client = CreateHttpClient();
-            var url = $"{smartFaceURL}/api/v1/WatchlistMembers/{watchlistMemberId}";
-            var response = await client.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            var content = await response.Content.ReadAsStringAsync();
-            var jsonObject = JObject.Parse(content);
-            string email = jsonObject["labels"].FirstOrDefault(l => l["key"].ToString() == "email")?["value"]?.ToString();
-
-            this.logger.Information($"Email retrieved: {email}");
-            return email;
-        }
-
         private async Task<string> AuthenticateWithMyQAPI()
         {
             var client = CreateHttpClient();
-            string tokenEndpoint = $"https://{myQHostname}:{myQPort}/api/auth/token";
+            string tokenEndpoint = $"{myQSchema}://{myQHostname}:{myQPort}/api/auth/token";
             var payload = new
             {
                 grant_type = "client_credentials",
@@ -125,7 +124,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
         private async Task<string> AuthenticateUserWithMyQAPI(string userInfo)
         {
             var client = CreateHttpClient();
-            string tokenEndpoint = $"https://{myQHostname}:{myQPort}/api/auth/token";
+            string tokenEndpoint = $"{myQSchema}://{myQHostname}:{myQPort}/api/auth/token";
             string username = ExtractUsernameFromJson(userInfo);
             if(username == null)
             {
@@ -168,7 +167,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
         {
             var client = CreateHttpClient();
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-            string url = $"https://{myQHostname}:{myQPort}/api/v3/users/find?email={email}";
+            string url = $"{myQSchema}://{myQHostname}:{myQPort}/api/v3/users/find?email={email}";
 
             var response = await client.GetAsync(url);
             response.EnsureSuccessStatusCode();
@@ -183,7 +182,7 @@ namespace Innovatrics.SmartFace.Integrations.MyQConnector.Connectors
             var client = CreateHttpClient();
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", userToken);
 
-            string apiUrl = $"https://{myQHostname}:{myQPort}/api/v3/printers/unlock";
+            string apiUrl = $"{myQSchema}://{myQHostname}:{myQPort}/api/v3/printers/unlock";
             var payload = new { sn = printer, account = userToken };
 
             var response = await client.PostAsync(apiUrl, new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));

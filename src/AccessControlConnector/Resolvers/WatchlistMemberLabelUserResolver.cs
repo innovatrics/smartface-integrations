@@ -9,15 +9,18 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Inner
 using Innovatrics.SmartFace.Models.API;
 using System.Linq;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 {
     public class WatchlistMemberLabelUserResolver : IUserResolver
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
-        private readonly string RESOLVER_KEY;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly string _normalizedLabelKey;
+
+        public string NormalizedLabelKey => _normalizedLabelKey;
 
         public WatchlistMemberLabelUserResolver(
             ILogger logger,
@@ -26,16 +29,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             string labelKey
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-            if (string.IsNullOrEmpty(labelKey))
-            {
-                throw new ArgumentNullException(nameof(labelKey));
-            }
-
-            RESOLVER_KEY = NormalizeLabelKey(labelKey);
+            _normalizedLabelKey = NormalizeLabelKey(labelKey);
         }
 
         public async Task<string> ResolveUserAsync(GrantedNotification notification)
@@ -45,12 +43,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            logger.Information("Resolving {watchlistMemberId} ({watchlistMemberName})", notification.WatchlistMemberId, notification.WatchlistMemberDisplayName);
+            _logger.Information("Resolving {watchlistMemberId} ({watchlistMemberName})", notification.WatchlistMemberId, notification.WatchlistMemberDisplayName);
 
             if (notification.WatchlistMemberLabels != null)
             {
                 return notification.WatchlistMemberLabels?
-                                        .Where(w => w.Key.ToUpper() == RESOLVER_KEY)
+                                        .Where(w => w.Key.ToUpper() == _normalizedLabelKey)
                                         .Select(s => s.Value)
                                         .SingleOrDefault();
             }
@@ -60,24 +58,40 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
         
         private string NormalizeLabelKey(string labelKey)
         {
-            var labelParts = labelKey
+            ArgumentNullException.ThrowIfNullOrEmpty(labelKey);
+
+            var normalizedLabelKey = labelKey;
+
+            if (labelKey.StartsWith("LABEL_", StringComparison.OrdinalIgnoreCase))
+            {
+                normalizedLabelKey = labelKey.Substring("LABEL_".Length);
+            }
+
+            if (labelKey.StartsWith($"{UserResolverFactory.WATCHLIST_MEMBER_LABEL_TYPE}_", StringComparison.OrdinalIgnoreCase))
+            {
+                normalizedLabelKey = labelKey.Substring($"{UserResolverFactory.WATCHLIST_MEMBER_LABEL_TYPE}_".Length);
+            }
+
+            var labelParts = normalizedLabelKey
                                 .ToUpper()
                                 .Replace('-', '_')
                                 .Split(new char[] { '_' }, StringSplitOptions.RemoveEmptyEntries)
-                                .Skip(1);
+                                //.Skip(1)
+                                .ToArray()
+                            ;
 
             return string.Join('_', labelParts);
         }
 
         private async Task<string> FetchLabelFromAPI(GrantedNotification notification)
         {
-            var apiSchema = this.configuration.GetValue<string>("API:Schema", "http");
-            var apiHost = this.configuration.GetValue<string>("API:Host", "SFApi");
-            var apiPort = this.configuration.GetValue<int?>("API:Port", 80);
+            var apiSchema = _configuration.GetValue<string>("API:Schema", "http");
+            var apiHost = _configuration.GetValue<string>("API:Host", "SFApi");
+            var apiPort = _configuration.GetValue<int?>("API:Port", 80);
 
-            this.logger.Information("API configured to {schema}://{host}:{port}", apiSchema, apiHost, apiPort);
+            _logger.Information("API configured to {schema}://{host}:{port}", apiSchema, apiHost, apiPort);
 
-            var httpClient = this.httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
             var requestUri = $"{apiSchema}://{apiHost}:{apiPort}/api/v1/WatchlistMembers/{notification.WatchlistMemberId}";
 
@@ -92,7 +106,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             var watchlistMember = Newtonsoft.Json.JsonConvert.DeserializeObject<WatchlistMember>(httpRequestStringContent);
             
             return watchlistMember.Labels?
-                                    .Where(w => w.Key.ToUpper() == RESOLVER_KEY)
+                                    .Where(w => w.Key.ToUpper() == _normalizedLabelKey)
                                     .Select(s => s.Value)
                                     .SingleOrDefault();
         }
