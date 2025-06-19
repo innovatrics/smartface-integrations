@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
