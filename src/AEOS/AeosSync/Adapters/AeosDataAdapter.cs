@@ -1,25 +1,25 @@
 using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Serilog;
-using System.Collections.Generic;
-using Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients;
-using ServiceReference;
 using System.ServiceModel;
 using System.ServiceModel.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
+
+using Microsoft.Extensions.Configuration;
+
+using Serilog;
+using System.Collections.Generic;
+
+using ServiceReference;
 
 namespace Innovatrics.SmartFace.Integrations.AeosSync
 {
     public class AeosDataAdapter : IAeosDataAdapter
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly ILogger _logger;
 
         private readonly string DataSource;
         private string AeosEndpoint;
@@ -39,17 +39,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public AeosDataAdapter(
             ILogger logger,
-            IConfiguration configuration,
-            IHttpClientFactory httpClientFactory
+            IConfiguration configuration
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            ArgumentNullException.ThrowIfNull(configuration);
 
-            this.logger.Debug("AeosDataAdapter Initiated");
-
-            //var s = ((IConfigurationRoot)configuration).GetDebugView();
             DataSource = configuration.GetValue<string>("AeosSync:DataSource");
             AeosEndpoint = configuration.GetValue<string>("AeosSync:Aeos:Server:Wsdl") ?? throw new InvalidOperationException("The AEOS SOAP API URL is not read.");
             AeosUsername = configuration.GetValue<string>("AeosSync:Aeos:Server:User") ?? throw new InvalidOperationException("The AEOS username is not read.");
@@ -115,7 +110,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<IList<AeosMember>> GetEmployees()
         {
-            this.logger.Debug("Receiving Employees from AEOS");
+            _logger.Debug("Receiving Employees from AEOS");
 
             List<AeosMember> AeosAllMembers = new List<AeosMember>();
 
@@ -154,8 +149,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 foreach (var employee in employees.EmployeeList.Employee)
                 {
-                    this.logger.Debug($"employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName");
-                    this.logger.Debug($"{employee.EmployeeInfo.FirstName}, {employee.EmployeeInfo.LastName}");
+                    _logger.Debug($"employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName");
+                    _logger.Debug($"{employee.EmployeeInfo.FirstName}, {employee.EmployeeInfo.LastName}");
                     if (employee.FirstPhoto != null)
                     {
                         AeosAllMembersReturn.Add(new AeosMember(employee.EmployeeInfo.Id, employee.EmployeeInfo.GetFreefieldValue(SmartFaceIdFreefield), employee.EmployeeInfo.FirstName, employee.EmployeeInfo.LastName, employee.FirstPhoto.Picture));
@@ -168,12 +163,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 if (employees.EmployeeList.Employee.Length == EmployeesPageSize)
                 {
-                    this.logger.Debug($"End of page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Employee.Length}. Number of results match the pagination limit. Another page will be checked.");
+                    _logger.Debug($"End of page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Employee.Length}. Number of results match the pagination limit. Another page will be checked.");
                 }
                 else
                 {
                     allEmployees = true;
-                    this.logger.Debug($"End of last page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Employee.Length}.");
+                    _logger.Debug($"End of last page {EmployeesPageNumber}. Amount of Employees found: {employees.EmployeeList.Employee.Length}.");
                     break;
                 }
             }
@@ -184,11 +179,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         {
 
             var member = aeosMember;
-            this.logger.Information($"Creating Employee {member.FirstName} {member.LastName} width id {member.SmartFaceId}");
+            _logger.Information($"Creating Employee {member.FirstName} {member.LastName} width id {member.SmartFaceId}");
             var encodedSmartFaceId = Encoding.UTF8.GetBytes(member.SmartFaceId);
             if (encodedSmartFaceId.Length > 28)
             {
-                this.logger.Warning($"The ID is longer than supported (28 bytes). {member.SmartFaceId} has {encodedSmartFaceId.Length} bytes");
+                _logger.Warning($"The ID is longer than supported (28 bytes). {member.SmartFaceId} has {encodedSmartFaceId.Length} bytes");
                 return false;
             }
 
@@ -215,7 +210,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             if (DefaultTemplates.Count > 0)
             {
-                this.logger.Debug($"DefaultTemplates[]: {string.Join(" ", DefaultTemplates.Select(i => i.Key))}");
+                _logger.Debug($"DefaultTemplates[]: {string.Join(" ", DefaultTemplates.Select(i => i.Key))}");
 
 
                 foreach (var item in DefaultTemplates)
@@ -225,11 +220,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         RegisteringTemplates.Add(new String(item.Key));
                     }
                 }
-                this.logger.Debug($"RegisteringTemplates[]: {string.Join(" ", RegisteringTemplates)}");
+                _logger.Debug($"RegisteringTemplates[]: {string.Join(" ", RegisteringTemplates)}");
             }
             else
             {
-                this.logger.Debug("DefaultTemplates is empty");
+                _logger.Debug("DefaultTemplates is empty");
             }
 
             var RegisteringTemplatesId = new List<long>();
@@ -244,21 +239,21 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 foreach (var item in findLockerTemplate.TemplateList.Template)
                 {
-                    this.logger.Debug($"Template IDs found: {item.Name} {item.Id}");
+                    _logger.Debug($"Template IDs found: {item.Name} {item.Id}");
                     if (RegisteringTemplates.Contains(item.Name))
                     {
-                        this.logger.Debug($"Template ID to be assigned: {item.Name} {item.Id}");
+                        _logger.Debug($"Template ID to be assigned: {item.Name} {item.Id}");
                         RegisteringTemplatesId.Add(item.Id);
                     }
                 }
             }
 
             var addEmployeeResponse = await client.addEmployeeAsync(addEmployee.EmployeeAdd);
-            this.logger.Debug($"Adding employee {addEmployee.EmployeeAdd.LastName} {addEmployee.EmployeeAdd.FirstName} - {addEmployee.EmployeeAdd.Freefield[0].value}");
+            _logger.Debug($"Adding employee {addEmployee.EmployeeAdd.LastName} {addEmployee.EmployeeAdd.FirstName} - {addEmployee.EmployeeAdd.Freefield[0].value}");
             if (addEmployeeResponse.EmployeeResult.Id != 0)
             {
 
-                this.logger.Information($"Added user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} with ID = {addEmployeeResponse.EmployeeResult.Id}");
+                _logger.Information($"Added user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} with ID = {addEmployeeResponse.EmployeeResult.Id}");
 
                 if (RegisteringTemplatesId.Count() > 0)
                 {
@@ -267,10 +262,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     changeCarrier.ProfileChange.CarrierId = addEmployeeResponse.EmployeeResult.Id;
                     changeCarrier.ProfileChange.AuthorisationLocker = new AuthorisationLocker();
                     changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation = new TemplateAuthorisationLocker[RegisteringTemplatesId.Count()];
-                    this.logger.Debug($"RegisteringTemplatesId.Count() = {RegisteringTemplatesId.Count()}");
+                    _logger.Debug($"RegisteringTemplatesId.Count() = {RegisteringTemplatesId.Count()}");
                     for (int x = 0; x < RegisteringTemplatesId.Count(); x++)
                     {
-                        this.logger.Information($"RegisteringTemplatesId[{x}] = {RegisteringTemplatesId[x]} for Carrier ID = {changeCarrier.ProfileChange.CarrierId} - {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)}");
+                        _logger.Information($"RegisteringTemplatesId[{x}] = {RegisteringTemplatesId[x]} for Carrier ID = {changeCarrier.ProfileChange.CarrierId} - {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)}");
                         changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x] = new TemplateAuthorisationLocker();
                         changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x].TemplateId = RegisteringTemplatesId[x];
                         changeCarrier.ProfileChange.AuthorisationLocker.TemplateAuthorisation[x].Enabled = true;
@@ -281,7 +276,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         var changeCarrierResponse = await client.changeCarrierProfileAsync(changeCarrier.ProfileChange);
                         if (changeCarrierResponse.ProfileResult.CarrierId == 0)
                         {
-                            this.logger.Error($"It was not possible to add profile templates to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - FAIL");
+                            _logger.Error($"It was not possible to add profile templates to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - FAIL");
                             return false;
                         }
                     }
@@ -300,18 +295,18 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 if (addIdentifierResponse.IdentifierResult.Id != 0)
                 {
-                    this.logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - SUCCESS");
+                    _logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - SUCCESS");
                     return true;
                 }
                 else
                 {
-                    this.logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - FAIL");
+                    _logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - FAIL");
                     return false;
                 }
             }
             else
             {
-                this.logger.Error($"No user was generated.");
+                _logger.Error($"No user was generated.");
                 throw new InvalidOperationException("No user was generated.");
             }
 
@@ -320,13 +315,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> UpdateEmployee(AeosMember member, long FreefieldDefinitionId)
         {
-            this.logger.Information($"Updating Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
+            _logger.Information($"Updating Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
 
             var returnedUser = await GetEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
 
             if (returnedUser != null)
             {
-                this.logger.Information($"Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeInfo.Id} {returnedUser.EmployeeInfo.FirstName} {returnedUser.EmployeeInfo.LastName}");
+                _logger.Information($"Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeInfo.Id} {returnedUser.EmployeeInfo.FirstName} {returnedUser.EmployeeInfo.LastName}");
                 var updateID = returnedUser.EmployeeInfo.Id;
 
                 var updateEmployee = new changeEmployee();
@@ -345,7 +340,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 if (updateEmployeeResponse.EmployeeResult.Id != 0)
                 {
-                    this.logger.Information($"Update> user with SmartFaceID {member.SmartFaceId} has been updated under {updateID} with new name {member.FirstName} {member.LastName}");
+                    _logger.Information($"Update> user with SmartFaceID {member.SmartFaceId} has been updated under {updateID} with new name {member.FirstName} {member.LastName}");
                     return true;
                 }
                 else
@@ -382,7 +377,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
                     if (updateEmployeeResponse == null)
                     {
-                        this.logger.Warning($"It was not possible to add SmartFaceId.");
+                        _logger.Warning($"It was not possible to add SmartFaceId.");
                         return false;
                     }
                     else
@@ -396,12 +391,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
                         if (addIdentifierResponse.IdentifierResult.Id != 0)
                         {
-                            this.logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - SUCCESS");
+                            _logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - SUCCESS");
                             return true;
                         }
                         else
                         {
-                            this.logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - FAIL");
+                            _logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - FAIL");
                             return false;
                         }
                     }
@@ -409,7 +404,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 }
                 else
                 {
-                    this.logger.Information("Biometry is already enabled.");
+                    _logger.Information("Biometry is already enabled.");
                     return false;
                 }
             }
@@ -456,7 +451,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> RemoveEmployee(AeosMember member, long FreefieldDefinitionId)
         {
-            this.logger.Information($"Removing Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
+            _logger.Information($"Removing Employee with ID = {member.SmartFaceId}, new name: {member.FirstName} {member.LastName}");
             var returnedUser = await GetEmployeeId(member.SmartFaceId, FreefieldDefinitionId);
             if (returnedUser == null)
             {
@@ -466,13 +461,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             foreach (var item in returnedUser.EmployeeInfo.Freefield)
             {
-                this.logger.Debug($"{item.value} {item.Name}");
+                _logger.Debug($"{item.value} {item.Name}");
             }
 
-            this.logger.Information($"DELETE> Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeInfo.Id} {returnedUser.EmployeeInfo.FirstName} {returnedUser.EmployeeInfo.LastName}");
+            _logger.Information($"DELETE> Found a user with this SmartFaceId: {member.SmartFaceId}: {returnedUser.EmployeeInfo.Id} {returnedUser.EmployeeInfo.FirstName} {returnedUser.EmployeeInfo.LastName}");
             var removeID = returnedUser.EmployeeInfo.Id;
 
-            this.logger.Information("RemoveId =" + removeID);
+            _logger.Information("RemoveId =" + removeID);
 
             if (!await RemoveAssignedLockers(removeID))
             {
@@ -484,7 +479,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             var removeUserResponse = await client.removeEmployeeAsync(removeUser.EmployeeId);
             if (removeUserResponse.RemoveResult != null)
             {
-                this.logger.Information("User was removed.");
+                _logger.Information("User was removed.");
                 return true;
             }
             else
@@ -496,7 +491,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> RemoveEmployeebyId(long employeeId)
         {
-            this.logger.Information($"Removing Employee with ID = {employeeId}");
+            _logger.Information($"Removing Employee with ID = {employeeId}");
 
             if (!await RemoveAssignedLockers(employeeId))
             {
@@ -520,7 +515,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<long> GetBadgeIdentifierType()
         {
-            this.logger.Debug("getSmartfaceBadgeIdentifierType");
+            _logger.Debug("getSmartfaceBadgeIdentifierType");
 
             var findIdentifierType = new findIdentifierType();
             findIdentifierType.IdentifierTypeSearchInfo = new IdentifierTypeInfo();
@@ -539,7 +534,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<long> GetFreefieldDefinitionId()
         {
-            this.logger.Debug("getFreefieldDefinitionId");
+            _logger.Debug("getFreefieldDefinitionId");
 
             var getFreefieldId = new findFreeFieldDefinition();
             getFreefieldId.FreeFieldDefinitionSearchInfo = new FreeFieldDefinitionSearchInfo();
@@ -589,7 +584,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             {
                 if (item.Name == KeepUserField && item.value == "true")
                 {
-                    this.logger.Debug($"User has: {item.Name} with value {item.value}.");
+                    _logger.Debug($"User has: {item.Name} with value {item.value}.");
                     return true;
                 }
 
@@ -601,20 +596,20 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         public async Task<bool> RemoveAssignedLockers(long userId)
         {
-            this.logger.Information($"Removing Assigned Lockers");
-            this.logger.Information($"userId = {userId}");
+            _logger.Information($"Removing Assigned Lockers");
+            _logger.Information($"userId = {userId}");
 
             var findLockersResponse = await client.findCarrierProfileAsync(userId);
 
             bool removalFailedTest = false;
             bool lockerRemovalInitiated = false;
 
-            this.logger.Information($"findLockersResponse.ProfileResult.ToString():{findLockersResponse.ProfileResult.ToString()}");
+            _logger.Information($"findLockersResponse.ProfileResult.ToString():{findLockersResponse.ProfileResult.ToString()}");
             if (findLockersResponse.ProfileResult.AuthorisationLocker != null)
             {
                 foreach (var item in findLockersResponse.ProfileResult.AuthorisationLocker.LockerAuthorisation)
                 {
-                    this.logger.Information($"Locker found with an ID: {item.LockerId.ToString()}");
+                    _logger.Information($"Locker found with an ID: {item.LockerId.ToString()}");
                     lockerRemovalInitiated = true;
                     var findLockerById = new findLocker();
                     findLockerById.LockerSearchInfo = new LockerSearchInfo();
@@ -629,17 +624,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                         foreach (var locker in findLockerByIdReponse.LockerList.Locker)
                         {
-                            this.logger.Information($"Removing a locker-> Id: {locker.Id}, Name: {locker.Name}, Location: {locker.Location}, HostName: {locker.HostName}");
+                            _logger.Information($"Removing a locker-> Id: {locker.Id}, Name: {locker.Name}, Location: {locker.Location}, HostName: {locker.HostName}");
 
                             var removeLockerAuthorisationResponse = await client.removeCarrierLockerAuthorizationAsync(locker.Id);
 
                             if (removeLockerAuthorisationResponse.ProfileResult != null)
                             {
-                                this.logger.Information($"The locker was successfully removed");
+                                _logger.Information($"The locker was successfully removed");
                             }
                             else
                             {
-                                this.logger.Information($"The locker removal failed");
+                                _logger.Information($"The locker removal failed");
                                 removalFailedTest = true;
                             }
 
@@ -651,12 +646,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 if (lockerRemovalInitiated)
                 {
-                    this.logger.Information("Lockers removed.");
+                    _logger.Information("Lockers removed.");
                 }
 
                 if (removalFailedTest)
                 {
-                    this.logger.Information($"Issue with locker removal occured.");
+                    _logger.Information($"Issue with locker removal occured.");
                     return false;
                 }
                 else
@@ -674,7 +669,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         public async Task<bool> UpdateBiometricStatus(long userId, string biometricStatus)
         {
 
-            this.logger.Debug($"getFreefieldDefinitionId for UpdateBiometricStatus;{userId},{biometricStatus},{BiometricEnrollmentStatus}");
+            _logger.Debug($"getFreefieldDefinitionId for UpdateBiometricStatus;{userId},{biometricStatus},{BiometricEnrollmentStatus}");
             var getFreefieldId = new findFreeFieldDefinition();
             getFreefieldId.FreeFieldDefinitionSearchInfo = new FreeFieldDefinitionSearchInfo();
             getFreefieldId.FreeFieldDefinitionSearchInfo.Name = BiometricEnrollmentStatus;
@@ -688,15 +683,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
             else
             {
-                this.logger.Debug($"BiometricStatusFreefield was not found, current value: {biometricStatusFreefield}");
+                _logger.Debug($"BiometricStatusFreefield was not found, current value: {biometricStatusFreefield}");
                 return false;
             }
-            this.logger.Debug($"biometricStatusFreefield: {biometricStatusFreefield}, userId: {userId}, BiometricEnrollmentStatus: {BiometricEnrollmentStatus}");
+            _logger.Debug($"biometricStatusFreefield: {biometricStatusFreefield}, userId: {userId}, BiometricEnrollmentStatus: {BiometricEnrollmentStatus}");
 
             var response = await this.GetEmployeeByAeosId(userId);
             if (response != null)
             {
-                this.logger.Debug($"GetEmployeeByAeosId response was NOT null");
+                _logger.Debug($"GetEmployeeByAeosId response was NOT null");
                 var updateEmployee = new changeEmployee();
                 updateEmployee.EmployeeChange = new EmployeeInfo();
                 updateEmployee.EmployeeChange.Id = response.Id;
@@ -712,18 +707,18 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
                 if (updateEmployeeResponse == null)
                 {
-                    this.logger.Warning($"It was not possible to change the Biometric Enrollment Status for {response.FirstName} {response.LastName} with id {response.SmartFaceId}.");
+                    _logger.Warning($"It was not possible to change the Biometric Enrollment Status for {response.FirstName} {response.LastName} with id {response.SmartFaceId}.");
                     return false;
                 }
                 else
                 {
-                    this.logger.Debug($"The {BiometricEnrollmentStatus} was updated to {biometricStatus}");
+                    _logger.Debug($"The {BiometricEnrollmentStatus} was updated to {biometricStatus}");
                     return true;
                 }
             }
             else
             {
-                this.logger.Debug($"GetEmployeeByAeosId response was null");
+                _logger.Debug($"GetEmployeeByAeosId response was null");
                 return false;
             }
 
@@ -734,7 +729,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             if(DataSource == "AEOS")
             {
-                this.logger.Debug($"AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix) {AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix)}");
+                _logger.Debug($"AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix) {AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix)}");
                 var updatedBiometricStatus = await UpdateBiometricStatus(long.Parse(AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix)), biometricStatus);
                 return updatedBiometricStatus;
             }
@@ -746,7 +741,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 {
                     var EmployeeById = EmployeeByIdResponse.Result.EmployeeInfo.Id;
 
-                    this.logger.Debug($"EmployeeByIdResponse: {EmployeeById}");
+                    _logger.Debug($"EmployeeByIdResponse: {EmployeeById}");
                     var updatedBiometricStatus = await UpdateBiometricStatus(EmployeeById, biometricStatus);
 
                     return updatedBiometricStatus;
