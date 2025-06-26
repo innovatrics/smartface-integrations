@@ -106,6 +106,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 foreach (var locker in sortedLockers)
                 {
                     var assignedEmployee = _AeosAllEmployees.FirstOrDefault(e => e.Id == locker.AssignedTo);
+                    var assignedEmployeeIdentifier = assignedEmployee != null 
+                        ? _AeosAllIdentifiers.FirstOrDefault(i => i.CarrierId == assignedEmployee.Id)?.BadgeNumber 
+                        : null;
+                    
                     var lockerInfo = new LockerInfo
                     {
                         Id = locker.Id,
@@ -115,6 +119,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                         AssignedEmployeeName = assignedEmployee != null 
                             ? $"{assignedEmployee.FirstName} {assignedEmployee.LastName}" 
                             : null,
+                        AssignedEmployeeIdentifier = assignedEmployeeIdentifier,
                         DaysSinceLastUse = locker.LastUsed != DateTime.MinValue 
                             ? (DateTime.Now - locker.LastUsed).TotalDays 
                             : 0
