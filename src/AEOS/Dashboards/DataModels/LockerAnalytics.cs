@@ -50,6 +50,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         public DateTime? LastUsed { get; set; }
         public long? AssignedTo { get; set; }
         public string AssignedEmployeeName { get; set; }
+        public string AssignedEmployeeIdentifier { get; set; }
         public double DaysSinceLastUse { get; set; }
     }
 } 
