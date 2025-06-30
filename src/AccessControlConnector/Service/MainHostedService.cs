@@ -13,14 +13,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 {
     public class MainHostedService : IHostedService
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly GrpcReaderFactory grpcReaderFactory;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly GrpcReaderFactory _grpcReaderFactory;
         private readonly AccessControlConnectorService _accessControlConnectorService;
-        private GrpcNotificationReader grpcNotificationReader;
-        private System.Timers.Timer accessControllerPingTimer;
-        private System.Timers.Timer keepAlivePingTimer;
-        private DateTime lastGrpcPing;
+        private GrpcNotificationReader _grpcNotificationReader;
+        private System.Timers.Timer _accessControllerPingTimer;
+        private System.Timers.Timer _keepAlivePingTimer;
+        private DateTime _lastGrpcPing;
 
         public MainHostedService(
             ILogger logger,
@@ -29,73 +29,71 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             AccessControlConnectorService accessControlConnectorService
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.grpcReaderFactory = grpcReaderFactory ?? throw new ArgumentNullException(nameof(grpcReaderFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _grpcReaderFactory = grpcReaderFactory ?? throw new ArgumentNullException(nameof(grpcReaderFactory));
             _accessControlConnectorService = accessControlConnectorService ?? throw new ArgumentNullException(nameof(accessControlConnectorService));
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            this.logger.Information($"{nameof(MainHostedService)} is starting");
-
-            this.logger.Information("Start receiving gRPC notifications");
+            _logger.Information($"{nameof(MainHostedService)} is starting");
 
             _accessControlConnectorService.Start();
 
-            this.startReceivingGrpcNotifications();
+            StartReceivingGrpcNotifications();
 
-            this.startPingTimer();
+            StartPingTimer();
 
-            this.startKeepAliveTimer();
+            StartKeepAliveTimer();
 
             return Task.CompletedTask;
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            this.logger.Information($"{nameof(MainHostedService)} is stopping");
+            _logger.Information($"{nameof(MainHostedService)} is stopping");
 
-            await this.stopReceivingGrpcNotificationsAsync();
+            await StopReceivingGrpcNotificationsAsync();
 
             await _accessControlConnectorService.StopAsync();
 
-            this.accessControllerPingTimer?.Stop();
-            this.accessControllerPingTimer?.Dispose();
-            this.keepAlivePingTimer?.Stop();
-            this.keepAlivePingTimer?.Dispose();
+            _accessControllerPingTimer?.Stop();
+            _accessControllerPingTimer?.Dispose();
+            _keepAlivePingTimer?.Stop();
+            _keepAlivePingTimer?.Dispose();
         }
 
         private GrpcNotificationReader CreateGrpcReader()
         {
-            var grpcHost = this.configuration.GetValue<string>("AccessController:Host");
-            var grpcPort = this.configuration.GetValue<int>("AccessController:Port");
+            var grpcHost = _configuration.GetValue<string>("AccessController:Host");
+            var grpcPort = _configuration.GetValue<int>("AccessController:Port");
 
-            this.logger.Information("gRPC configured to host={host}, port={port}", grpcHost, grpcPort);
+            _logger.Information("gRPC configured to host={host}, port={port}", grpcHost, grpcPort);
 
-            return this.grpcReaderFactory.Create(grpcHost, grpcPort);
+            return _grpcReaderFactory.Create(grpcHost, grpcPort);
         }
 
-        private void startReceivingGrpcNotifications()
+        private void StartReceivingGrpcNotifications()
         {
-            this.logger.Information("Start receiving gRPC notifications");
+            _logger.Information("Start receiving gRPC notifications");
 
-            grpcNotificationReader = this.CreateGrpcReader();
+            _grpcNotificationReader = CreateGrpcReader();
 
-            grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
+            _grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
 
-            grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
+            _grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
             {
-                this.logger.Information("Processing 'DENIED' notification {@notification}", new
+                _logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
                     notification.GrpcSentAt,
                     notification.StreamId
                 });
             };
 
-            grpcNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
+            _grpcNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
             {
-                this.logger.Information("Processing 'BLOCKED' notification {@notification}", new
+                _logger.Information("Processing 'BLOCKED' notification {@notification}", new
                 {
                     notification.WatchlistMemberDisplayName,
                     notification.WatchlistMemberId,
@@ -104,28 +102,28 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                 });
             };
 
-            grpcNotificationReader.OnGrpcPing += OnGrpcPing;
+            _grpcNotificationReader.OnGrpcPing += OnGrpcPing;
 
-            grpcNotificationReader.StartReceiving();
+            _grpcNotificationReader.StartReceiving();
         }
 
-        private async Task stopReceivingGrpcNotificationsAsync()
+        private async Task StopReceivingGrpcNotificationsAsync()
         {
-            this.grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
-            this.grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
-            await this.grpcNotificationReader.DisposeAsync();
+            _grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
+            _grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
+            await _grpcNotificationReader.DisposeAsync();
         }
 
         private Task OnGrpcPing(DateTime sentAt)
         {
-            this.logger.Debug("gRPC ping received");
-            this.lastGrpcPing = DateTime.UtcNow;
+            _logger.Debug("gRPC ping received");
+            _lastGrpcPing = DateTime.UtcNow;
             return Task.CompletedTask;
         }
 
         private Task OnGrpcGrantedNotification(GrantedNotification notification)
         {
-            this.logger.Information("Processing 'GRANTED' notification {@notification}", new
+            _logger.Information("Processing 'GRANTED' notification {@notification}", new
             {
                 notification.WatchlistMemberDisplayName,
                 notification.WatchlistMemberId,
@@ -133,69 +131,69 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                 notification.StreamId
             });
 
-            this.logger.Debug("Notification details {@notification}", notification);
+            _logger.Debug("Notification details {@notification}", notification);
 
-            this._accessControlConnectorService.ProcessNotification(notification);
+            _accessControlConnectorService.ProcessNotification(notification);
 
             return Task.CompletedTask;
         }
 
-        private void startPingTimer()
+        private void StartPingTimer()
         {
-            this.lastGrpcPing = DateTime.UtcNow;
-            accessControllerPingTimer = new System.Timers.Timer();
+            _lastGrpcPing = DateTime.UtcNow;
+            _accessControllerPingTimer = new System.Timers.Timer();
 
-            accessControllerPingTimer.Interval = 5000;
-            accessControllerPingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
+            _accessControllerPingTimer.Interval = 5000;
+            _accessControllerPingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
             {
-                var timeDiff = DateTime.UtcNow - lastGrpcPing;
+                var timeDiff = DateTime.UtcNow - _lastGrpcPing;
 
-                this.logger.Debug("Timer ping check: {@ms} ms", timeDiff.TotalMilliseconds);
+                _logger.Debug("Timer ping check: {@ms} ms", timeDiff.TotalMilliseconds);
 
                 if (timeDiff.TotalSeconds > 15)
                 {
-                    this.logger.Warning("gRPC ping not received, last {@ses} sec ago", timeDiff.TotalSeconds);
+                    _logger.Warning("gRPC ping not received, last {@ses} sec ago", timeDiff.TotalSeconds);
                 }
 
                 if (timeDiff.TotalSeconds > 60)
                 {
-                    this.logger.Error("gRPC ping timeout reached");
-                    this.logger.Information("gRPC restarting");
+                    _logger.Error("gRPC ping timeout reached");
+                    _logger.Information("gRPC restarting");
 
-                    accessControllerPingTimer.Stop();
+                    _accessControllerPingTimer.Stop();
 
-                    await this.stopReceivingGrpcNotificationsAsync();
-                    this.startReceivingGrpcNotifications();
+                    await StopReceivingGrpcNotificationsAsync();
+                    StartReceivingGrpcNotifications();
 
-                    accessControllerPingTimer.Start();
+                    _accessControllerPingTimer.Start();
 
-                    this.logger.Information("gRPC restarted");
+                    _logger.Information("gRPC restarted");
                 }
             };
 
-            accessControllerPingTimer.Start();
+            _accessControllerPingTimer.Start();
         }
 
-        private void startKeepAliveTimer()
+        private void StartKeepAliveTimer()
         {
-            var keepAliveEnabled = this.configuration.GetValue<bool>("KeepAlive:Enabled", true);
-            var keepAliveInterval = this.configuration.GetValue<int>("KeepAlive:Interval", 3600);
+            var keepAliveEnabled = _configuration.GetValue<bool>("KeepAlive:Enabled", true);
+            var keepAliveInterval = _configuration.GetValue<int>("KeepAlive:Interval", 3600);
 
-            this.logger.Information("KeepAlive configured enabled={enabled}, interval={interval}", keepAliveEnabled, keepAliveInterval);
+            _logger.Information("KeepAlive configured enabled={enabled}, interval={interval}", keepAliveEnabled, keepAliveInterval);
 
             if (keepAliveEnabled)
             {
-                keepAlivePingTimer = new System.Timers.Timer();
+                _keepAlivePingTimer = new System.Timers.Timer();
 
-                keepAlivePingTimer.Interval = keepAliveInterval * 1000;
-                keepAlivePingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
+                _keepAlivePingTimer.Interval = keepAliveInterval * 1000;
+                _keepAlivePingTimer.Elapsed += async (object sender, System.Timers.ElapsedEventArgs e) =>
                 {
-                    this.logger.Information("KeepAlive interval elapsed, process ping");
+                    _logger.Information("KeepAlive interval elapsed, process ping");
 
-                    await this._accessControlConnectorService.SendKeepAliveSignalAsync();
+                    await _accessControlConnectorService.SendKeepAliveSignalAsync();
                 };
 
-                keepAlivePingTimer.Start();
+                _keepAlivePingTimer.Start();
             }
         }
     }
