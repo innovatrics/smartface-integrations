@@ -38,7 +38,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
                 switch (mode)
                 {
                     case MODE_OPEN_ON_GRANT:
-                        SendOpenCommand(tsServerClient, accessControlMapping.Action);
+                        var passage = accessControlMapping.Action ?? PrtclCmfJson.Passage.passL;
+                        SendActionCommand(tsServerClient, passage: passage);
                         break;
                 }
             }
@@ -59,7 +60,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
                 switch (mode)
                 {
                     case MODE_CLOSE_ON_DENY:
-                        SendCloseCommand(tsServerClient, accessControlMapping.Action);
+                        var mode = accessControlMapping.Action ?? PrtclCmfJson.TurnstileMode.group_off;
+                        SendActionCommand(tsServerClient, mode: mode);
                         break;
                 }
             }
@@ -114,30 +116,23 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             }
         }
 
-        private void SendOpenCommand(TServerClient tsServerClient, string action = null)
+        private void SendActionCommand(TServerClient tsServerClient, string mode = null, string passage = null)
         {
             ConnectIfNeeded(tsServerClient);
 
             var device = GetDevice(accessControlMapping);
 
-            var action = new PrtclCmfJson.MsgAction(device)
+            var action = new PrtclCmfJson.MsgAction(device);
+
+            if (mode != null)
             {
-                mode = action ?? PrtclCmfJson.TurnstileMode.group_off
-            };
+                action.mode = mode;
+            }
 
-            tsServerClient.SendMessage(action);
-        }
-
-        private void SendCloseCommand(TServerClient tsServerClient, string action = null)
-        {
-            ConnectIfNeeded(tsServerClient);
-
-            var device = GetDevice(accessControlMapping);
-
-            var action = new PrtclCmfJson.MsgAction(device)
+            if (passage != null)
             {
-                mode = action ?? PrtclCmfJson.TurnstileMode.group_off
-            };
+                action.passage = passage;
+            }
 
             tsServerClient.SendMessage(action);
         }
