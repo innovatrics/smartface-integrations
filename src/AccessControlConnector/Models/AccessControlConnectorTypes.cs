@@ -14,5 +14,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
         public const string MYQ_CONNECTOR               = "MYQ_CONNECTOR";
         public const string VILLA_PRO_CONNECTOR         = "VILLA_PRO_CONNECTOR";
         public const string AEOS_CONNECTOR              = "AEOS_CONNECTOR";
+        public const string COMINFO_TCOM_SERVER         = "COMINFO_TCOM_SERVER";
     }
 }

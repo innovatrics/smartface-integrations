@@ -8,15 +8,19 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.AXIS;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.NN;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Cominfo;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 {
     public class AccessControlConnectorFactory : IAccessControlConnectorFactory
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        private TComServerConnector _tComServerConnector;
+
 
         public AccessControlConnectorFactory(
             ILogger logger,
@@ -24,9 +28,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
             IHttpClientFactory httpClientFactory
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
         public IAccessControlConnector Create(string type)
@@ -36,7 +40,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 throw new ArgumentNullException(nameof(type));
             }
 
-            this.logger.Information("Creating IAccessControlConnector for type {type}", type);
+            _logger.Information("Creating IAccessControlConnector for type {type}", type);
 
             type = type
                     .ReplaceAll(new string[] { "-", " ", "." }, new string[] { "_", "_", "_" })
@@ -48,34 +52,41 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                     throw new NotImplementedException($"AccessControl of type {type} not supported");
 
                 case AccessControlConnectorTypes.ADVANTECH_WISE_4000:
-                    return new AdvantechWISE4000Connector(this.logger, this.configuration, this.httpClientFactory);
+                    return new AdvantechWISE4000Connector(_logger, _configuration, _httpClientFactory);
 
                 case AccessControlConnectorTypes.INNERRANGE_INTEGRITY_22:
-                    return new Integrity22Connector(this.logger, this.configuration, this.httpClientFactory);
+                    return new Integrity22Connector(_logger, _configuration, _httpClientFactory);
 
                 case AccessControlConnectorTypes.TRAFFICLIGHT:
-                    return new TrafficLightConnector(this.logger, this.configuration, this.httpClientFactory);
+                    return new TrafficLightConnector(_logger, _configuration, _httpClientFactory);
 
                 case AccessControlConnectorTypes.AXIS_A1001:
-                    return new A1001Connector(this.logger, this.configuration, this.httpClientFactory);
+                    return new A1001Connector(_logger, _configuration, _httpClientFactory);
 
                 case AccessControlConnectorTypes.AXIS_SIRENE:
-                    return new SireneAndLightConnector(this.logger, this.configuration, this.httpClientFactory);
+                    return new SireneAndLightConnector(_logger, _configuration, _httpClientFactory);
 
                 case AccessControlConnectorTypes.AXIS_IO_PORT:
-                    return new IOPortConnector(this.logger, this.httpClientFactory);
+                    return new IOPortConnector(_logger, _httpClientFactory);
                 
                 case AccessControlConnectorTypes.NN_IP_INTERCOM:
-                    return new IpIntercomConnector(this.logger, this.httpClientFactory);
+                    return new IpIntercomConnector(_logger, _httpClientFactory);
 
                 case AccessControlConnectorTypes.MYQ_CONNECTOR:
-                    return new MyQConnector(this.logger, this.configuration, this.httpClientFactory);
+                    return new MyQConnector(_logger, _configuration, _httpClientFactory);
 
                 case AccessControlConnectorTypes.VILLA_PRO_CONNECTOR:
-                    return new VillaProConnector(this.logger, this.configuration, this.httpClientFactory);
+                    return new VillaProConnector(_logger, _configuration, _httpClientFactory);
 
                 case AccessControlConnectorTypes.AEOS_CONNECTOR:
-                    return new AeosConnector(this.logger, this.configuration, this.httpClientFactory);
+                    return new AeosConnector(_logger, _configuration, _httpClientFactory);
+
+                case AccessControlConnectorTypes.COMINFO_TCOM_SERVER:
+                    if (_tComServerConnector == null)
+                    {
+                        _tComServerConnector = new TComServerConnector(_logger, _httpClientFactory);
+                    }
+                    return _tComServerConnector;
             }
         }
     }

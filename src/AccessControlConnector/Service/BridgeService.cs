@@ -33,10 +33,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
         {
-            if (notification == null)
-            {
-                throw new ArgumentNullException(nameof(notification));
-            }
+            ArgumentNullException.ThrowIfNull(notification);
 
             var cameraToAccessControlMappings = GetCameraMappings(notification.StreamId);
 
@@ -76,10 +73,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                         return;
                     }
                 }
-                
+
                 await accessControlConnector.OpenAsync(cameraToAccessControlMapping, accessControlUser);
 
-                if (cameraToAccessControlMapping.NextCallDelayMs != null && 
+                if (cameraToAccessControlMapping.NextCallDelayMs != null &&
                     cameraToAccessControlMapping.NextCallDelayMs > 0)
                 {
                     _logger.Information("Delay next call for {nextCallDelayMs} ms", cameraToAccessControlMapping.NextCallDelayMs);
