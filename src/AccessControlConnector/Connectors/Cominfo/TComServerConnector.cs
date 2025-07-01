@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -11,68 +13,60 @@ using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Cominfo
 {
-    public class TComServerConnector : IAccessControlConnector
+    public class TComServerConnector(
+        ILogger logger,
+        IHttpClientFactory httpClientFactory
+        ) : IAccessControlConnector
     {
-        private readonly ILogger _logger;
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly TServerClient _tServerClient;
+        private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        private readonly ConcurrentDictionary<string, TServerClient> _tServerClients = new();
 
-        public TComServerConnector(
-            ILogger logger,
-            IHttpClientFactory httpClientFactory
-        )
+        public const string MODE_CLOSE_ON_DENY = "CLOSE_ON_DENY";
+
+        public Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
-            _tServerClient = new TServerClient();
+            _logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
+
+            var tsServerClient = GetClient(accessControlMapping.Host, accessControlMapping.Port);
+
+            ConnectIfNeeded(tsServerClient);
+
+            return Task.CompletedTask;
         }
 
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public Task DenyAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            // _logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
+            _logger.Information("DenyAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
-            // if (!string.IsNullOrEmpty(accessControlUserId) && accessControlMapping.Channel != null)
-            // {
-            //     await SendOpenToAccessPointAsync(
-            //         accessControlMapping.Schema,
-            //         accessControlMapping.Host,
-            //         accessControlMapping.Port ?? 80,
-            //         accessControlMapping.Username,
-            //         accessControlMapping.Password,
-            //         accessControlMapping.Channel,
-            //         accessControlUserId
-            //     );
+            var tsServerClient = GetClient(accessControlMapping.Host, accessControlMapping.Port);
 
-            //     return;
-            // }
+            switch (accessControlMapping.Mode)
+            {
+                case MODE_CLOSE_ON_DENY:
 
-            // if (accessControlMapping.Switch != null && accessControlMapping.Action != null && accessControlMapping.Reader == null)
-            // {
-            //     await SendOpenToSwitchAsync(
-            //         accessControlMapping.Schema,
-            //         accessControlMapping.Host,
-            //         accessControlMapping.Port ?? 80,
-            //         accessControlMapping.Username,
-            //         accessControlMapping.Password,
-            //         accessControlMapping.Switch,
-            //         accessControlMapping.Action,
-            //         accessControlMapping.Params
-            //     );
+                    ConnectIfNeeded(tsServerClient);
 
-            //     return;
-            // }
+                    var device = GetDevice(accessControlMapping);
 
-            // await SendOpenToControlAsync(
-            //     accessControlMapping.Schema,
-            //     accessControlMapping.Host,
-            //     accessControlMapping.Port ?? 80,
-            //     accessControlMapping.Username,
-            //     accessControlMapping.Password,
-            //     accessControlMapping.Reader,
-            //     accessControlMapping.Action
-            // );
+                    var action = new PrtclCmfJson.MsgAction(device)
+                    {
+                        mode = PrtclCmfJson.TurnstileMode.group_off
+                    };
+                    
+                    tsServerClient.SendMessage(action);
 
-            return;
+                    break;
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Task BlockAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            _logger.Information("BlockAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
+
+            return Task.CompletedTask;
         }
 
         public Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null, string username = null, string password = null)
@@ -80,89 +74,43 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             return Task.CompletedTask;
         }
 
-        public Task DenyAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        private TServerClient GetClient(string host, int? port)
         {
-            return Task.CompletedTask;
-        }
-
-        public Task BlockAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
-        {
-            return Task.CompletedTask;
-        }
-
-        private async Task SendOpenToAccessPointAsync(string scheme, string host, int? port, string username, string password, int? channel, string userId)
-        {
-            var httpClient = _httpClientFactory.CreateClient();
-
-            var requestUri = $"{scheme ?? "http"}://{host}:{port}/api/accesspoint/grantaccess?id={channel}&user={userId}";
-
-            var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+            if (port == null)
             {
-                var authenticationString = $"{username}:{password}";
-                var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
-
-                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+                port = 2500;
             }
 
-            _logger.Information($"{nameof(SendOpenToAccessPointAsync)} to {requestUri}");
+            var ip = IPAddress.Parse(host);
+            var key = $"{ip}:{port}";
 
-            var httpResponse = await httpClient.SendAsync(httpRequest);
-
-            httpResponse.EnsureSuccessStatusCode();
-
-            _logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
-        }
-
-        private async Task SendOpenToSwitchAsync(string scheme, string host, int? port, string username, string password, string @switch, string action, string @params)
-        {
-            var httpClient = _httpClientFactory.CreateClient();
-
-            var requestUri = $"{scheme ?? "http"}://{host}:{port}/api/switch/ctrl?switch={@switch}&action={action}&response={@params}";
-
-            var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+            if (!_tServerClients.TryGetValue(key, out var tsServerClient))
             {
-                var authenticationString = $"{username}:{password}";
-                var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
-
-                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+                tsServerClient = new TServerClient(ip, port.Value);
+                _tServerClients.TryAdd(key, tsServerClient);
             }
 
-            _logger.Information($"{nameof(SendOpenToSwitchAsync)} to {requestUri}");
-
-            var httpResponse = await httpClient.SendAsync(httpRequest);
-
-            httpResponse.EnsureSuccessStatusCode();
-
-            _logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            return tsServerClient;
         }
 
-        private async Task SendOpenToControlAsync(string scheme, string host, int? port, string username, string password, string reader, string action)
+        private static PrtclCmfJson.Device GetDevice(AccessControlMapping accessControlMapping)
         {
-            var httpClient = _httpClientFactory.CreateClient();
+            string line = accessControlMapping.Reader;
+            ushort address = (ushort)accessControlMapping.Channel;
 
-            var requestUri = $"{scheme ?? "http"}://{host}:{port}/api/io/ctrl?port={reader}&action={action}";
+            return new PrtclCmfJson.Device(line, address);
+        }
 
-            var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
-
-            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
+        private static void ConnectIfNeeded(TServerClient tsServerClient)
+        {
+            if (tsServerClient.IsConnected)
             {
-                var authenticationString = $"{username}:{password}";
-                var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
-
-                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
+                tsServerClient.Close();
             }
-
-            _logger.Information($"{nameof(SendOpenToControlAsync)} to {requestUri}");
-
-            var httpResponse = await httpClient.SendAsync(httpRequest);
-
-            httpResponse.EnsureSuccessStatusCode();
-
-            _logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            else
+            {
+                tsServerClient.Open();
+            }
         }
     }
 }
