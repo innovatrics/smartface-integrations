@@ -1,4 +1,6 @@
-﻿namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
+﻿using System.Collections.Generic;
+
+namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
 {
     public class BlockedNotification : Notification, IIdentifiedNotification
     {

@@ -52,7 +52,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 WatchlistMemberId = accessNotificationBlocked.WatchlistMemberId,
                 WatchlistMemberDisplayName = accessNotificationBlocked.WatchlistMemberDisplayName,
                 WatchlistDisplayName = accessNotificationBlocked.WatchlistDisplayName,
-                WatchlistMemberLabels = accessNotificationBlocked.WatchlistMemberLabels.ToArray(),
+                // WatchlistMemberLabels = accessNotificationBlocked.WatchlistMemberLabels.ToArray(),
                 WatchlistId = accessNotificationBlocked.WatchlistId,
                 MatchResultScore = accessNotificationBlocked.MatchResultScore,
                 CropImage = accessNotificationBlocked.CropImage.ToByteArray(),

@@ -122,5 +122,15 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
         }
 
+        public Task DenyAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task BlockAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
+
     }
 }

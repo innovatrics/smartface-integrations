@@ -86,5 +86,15 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 this.logger.Error("Fail with {statusCode}", result.StatusCode);
             }
         }
+
+        public Task DenyAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task BlockAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
     }
 }
