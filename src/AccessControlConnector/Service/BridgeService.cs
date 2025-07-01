@@ -52,7 +52,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                     if (cameraToAccessControlMapping.WatchlistExternalIds.Length > 0 && !cameraToAccessControlMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
                     {
                         _logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.", notification.WatchlistExternalId, notification.StreamId);
-                        return;
+                        continue;
                     }
                 }
 
@@ -70,7 +70,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
                     if (accessControlUser == null)
                     {
-                        return;
+                        continue;
                     }
                 }
 
