@@ -23,6 +23,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
         private readonly ConcurrentDictionary<string, TServerClient> _tServerClients = new();
 
         public const string MODE_CLOSE_ON_DENY = "CLOSE_ON_DENY";
+        public const string MODE_OPEN_ON_GRANT = "OPEN_ON_GRANT";
 
         public Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
@@ -30,7 +31,17 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
 
             var tsServerClient = GetClient(accessControlMapping.Host, accessControlMapping.Port);
 
-            ConnectIfNeeded(tsServerClient);
+            var modes = ParseModes(accessControlMapping.Mode);
+
+            foreach (var mode in modes)
+            {
+                switch (mode)
+                {
+                    case MODE_OPEN_ON_GRANT:
+                        SendOpenCommand(tsServerClient, accessControlMapping.Action);
+                        break;
+                }
+            }
 
             return Task.CompletedTask;
         }
@@ -41,22 +52,16 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
 
             var tsServerClient = GetClient(accessControlMapping.Host, accessControlMapping.Port);
 
-            switch (accessControlMapping.Mode)
+            var modes = ParseModes(accessControlMapping.Mode);
+
+            foreach (var mode in modes)
             {
-                case MODE_CLOSE_ON_DENY:
-
-                    ConnectIfNeeded(tsServerClient);
-
-                    var device = GetDevice(accessControlMapping);
-
-                    var action = new PrtclCmfJson.MsgAction(device)
-                    {
-                        mode = PrtclCmfJson.TurnstileMode.group_off
-                    };
-                    
-                    tsServerClient.SendMessage(action);
-
-                    break;
+                switch (mode)
+                {
+                    case MODE_CLOSE_ON_DENY:
+                        SendCloseCommand(tsServerClient, accessControlMapping.Action);
+                        break;
+                }
             }
 
             return Task.CompletedTask;
@@ -103,14 +108,52 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
 
         private static void ConnectIfNeeded(TServerClient tsServerClient)
         {
-            if (tsServerClient.IsConnected)
-            {
-                tsServerClient.Close();
-            }
-            else
+            if (!tsServerClient.IsConnected)
             {
                 tsServerClient.Open();
             }
+        }
+
+        private void SendOpenCommand(TServerClient tsServerClient, string action = null)
+        {
+            ConnectIfNeeded(tsServerClient);
+
+            var device = GetDevice(accessControlMapping);
+
+            var action = new PrtclCmfJson.MsgAction(device)
+            {
+                mode = action ?? PrtclCmfJson.TurnstileMode.group_off
+            };
+
+            tsServerClient.SendMessage(action);
+        }
+
+        private void SendCloseCommand(TServerClient tsServerClient, string action = null)
+        {
+            ConnectIfNeeded(tsServerClient);
+
+            var device = GetDevice(accessControlMapping);
+
+            var action = new PrtclCmfJson.MsgAction(device)
+            {
+                mode = action ?? PrtclCmfJson.TurnstileMode.group_off
+            };
+
+            tsServerClient.SendMessage(action);
+        }
+
+        private string[] ParseModes(string modes)
+        {
+            if (string.IsNullOrEmpty(modes))
+            {
+                return new string[] { };
+            }
+
+            return modes
+                    .Split(new char[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(mode => mode.Trim())
+                    .Where(mode => !string.IsNullOrEmpty(mode))
+                    .ToArray();
         }
     }
 }
