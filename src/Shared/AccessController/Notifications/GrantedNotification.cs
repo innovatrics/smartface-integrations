@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
 {
-    public class GrantedNotification : Notification
+    public class GrantedNotification : Notification, IIdentifiedNotification
     {
         public string WatchlistMemberExternalId  { get; set; }
         public string WatchlistExternalId { get; set; }

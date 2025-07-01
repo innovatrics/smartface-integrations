@@ -86,6 +86,91 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
+        public async Task ProcessBlockedNotificationAsync(BlockedNotification notification)
+        {
+            ArgumentNullException.ThrowIfNull(notification);
+
+            var cameraToAccessControlMappings = GetCameraMappings(notification.StreamId);
+
+            if (cameraToAccessControlMappings.Length == 0)
+            {
+                _logger.Warning("Stream {streamId} has not any mapping to AccessControl", notification.StreamId);
+                return;
+            }
+
+            foreach (var cameraToAccessControlMapping in cameraToAccessControlMappings)
+            {
+                _logger.Warning("Handling mapping {type}", cameraToAccessControlMapping.Type);
+
+                if (cameraToAccessControlMapping.WatchlistExternalIds != null)
+                {
+                    if (cameraToAccessControlMapping.WatchlistExternalIds.Length > 0 && !cameraToAccessControlMapping.WatchlistExternalIds.Contains(notification.WatchlistId))
+                    {
+                        _logger.Warning("Watchlist {watchlistId} has no right to enter through this gate {streamId}.", notification.WatchlistId, notification.StreamId);
+                        continue;
+                    }
+                }
+
+                string accessControlUser = null;
+
+                var accessControlConnector = _accessControlConnectorFactory.Create(cameraToAccessControlMapping.Type);
+
+                if (cameraToAccessControlMapping.UserResolver != null)
+                {
+                    var userResolver = _userResolverFactory.Create(cameraToAccessControlMapping.UserResolver);
+
+                    accessControlUser = await userResolver.ResolveUserAsync(notification);
+
+                    _logger.Information("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
+
+                    if (accessControlUser == null)
+                    {
+                        continue;
+                    }
+                }
+
+                await accessControlConnector.BlockAsync(cameraToAccessControlMapping, accessControlUser);
+
+                if (cameraToAccessControlMapping.NextCallDelayMs != null &&
+                    cameraToAccessControlMapping.NextCallDelayMs > 0)
+                {
+                    _logger.Information("Delay next call for {nextCallDelayMs} ms", cameraToAccessControlMapping.NextCallDelayMs);
+
+                    await Task.Delay(cameraToAccessControlMapping.NextCallDelayMs.Value);
+                }
+            }
+        }
+
+        public async Task ProcessDeniedNotificationAsync(DeniedNotification notification)
+        {
+            ArgumentNullException.ThrowIfNull(notification);
+
+            var cameraToAccessControlMappings = GetCameraMappings(notification.StreamId);
+
+            if (cameraToAccessControlMappings.Length == 0)
+            {
+                _logger.Warning("Stream {streamId} has not any mapping to AccessControl", notification.StreamId);
+                return;
+            }
+
+            foreach (var cameraToAccessControlMapping in cameraToAccessControlMappings)
+            {
+                _logger.Warning("Handling mapping {type}", cameraToAccessControlMapping.Type);
+
+                var accessControlConnector = _accessControlConnectorFactory.Create(cameraToAccessControlMapping.Type);
+
+                await accessControlConnector.DenyAsync(cameraToAccessControlMapping);
+
+                if (cameraToAccessControlMapping.NextCallDelayMs != null &&
+                    cameraToAccessControlMapping.NextCallDelayMs > 0)
+                {
+                    _logger.Information("Delay next call for {nextCallDelayMs} ms", cameraToAccessControlMapping.NextCallDelayMs);
+
+                    await Task.Delay(cameraToAccessControlMapping.NextCallDelayMs.Value);
+                }
+            }
+        }
+
         public async Task SendKeepAliveSignalAsync()
         {
             var cameraToAccessControlMapping = getAllCameraMappings();

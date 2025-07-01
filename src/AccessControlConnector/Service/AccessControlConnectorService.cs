@@ -16,7 +16,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IBridgeService _bridgeService;
-        private ActionBlock<GrantedNotification> _actionBlock;
+        private ActionBlock<GrantedNotification> _grantedNotificationsActionBlock;
+        private ActionBlock<DeniedNotification> _deniedNotificationsActionBlock;
+        private ActionBlock<BlockedNotification> _blockedNotificationsActionBlock;
 
         public AccessControlConnectorService(
             ILogger logger,
@@ -35,7 +37,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
         public void Start()
         {
-            _actionBlock = new ActionBlock<GrantedNotification>(async notification =>
+            _grantedNotificationsActionBlock = new ActionBlock<GrantedNotification>(async notification =>
             {
                 try
                 {
@@ -50,22 +52,65 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             {
                 MaxDegreeOfParallelism = MaxParallelBlocks
             });
+
+            _deniedNotificationsActionBlock = new ActionBlock<DeniedNotification>(async notification =>
+            {
+                try
+                {
+                    await _bridgeService.ProcessDeniedNotificationAsync(notification);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Failed to process message");
+                }
+            },
+            new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = MaxParallelBlocks
+            });
+
+            _blockedNotificationsActionBlock = new ActionBlock<BlockedNotification>(async notification =>
+            {
+                try
+                {
+                    await _bridgeService.ProcessBlockedNotificationAsync(notification);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Failed to process message");
+                }
+            },
+            new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = MaxParallelBlocks
+            });
         }
 
         public async Task StopAsync()
         {
-            _actionBlock.Complete();
-            await _actionBlock.Completion;
+            _grantedNotificationsActionBlock.Complete();
+            await _grantedNotificationsActionBlock.Completion;
         }
 
         public void ProcessNotification(GrantedNotification notification)
         {
-            if (notification == null)
-            {
-                throw new ArgumentNullException(nameof(notification));
-            }
+            ArgumentNullException.ThrowIfNull(notification);
 
-            _actionBlock.Post(notification);
+            _grantedNotificationsActionBlock.Post(notification);
+        }
+
+        public void ProcessNotification(DeniedNotification notification)
+        {
+            ArgumentNullException.ThrowIfNull(notification);
+
+            _deniedNotificationsActionBlock.Post(notification);
+        }
+
+        public void ProcessNotification(BlockedNotification notification)
+        {
+            ArgumentNullException.ThrowIfNull(notification);
+
+            _blockedNotificationsActionBlock.Post(notification);
         }
 
         public async Task SendKeepAliveSignalAsync()

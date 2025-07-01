@@ -36,19 +36,17 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             _normalizedLabelKey = NormalizeLabelKey(labelKey);
         }
 
-        public async Task<string> ResolveUserAsync(GrantedNotification notification)
+        public async Task<string> ResolveUserAsync(IIdentifiedNotification notification)
         {
-            if (notification == null)
-            {
-                throw new ArgumentNullException(nameof(notification));
-            }
+            ArgumentNullException.ThrowIfNull(notification);
 
             _logger.Information("Resolving {watchlistMemberId} ({watchlistMemberName})", notification.WatchlistMemberId, notification.WatchlistMemberDisplayName);
 
             if (notification.WatchlistMemberLabels != null)
             {
                 return notification.WatchlistMemberLabels?
-                                        .Where(w => w.Key.ToUpper() == _normalizedLabelKey)
+                                        .Where(w => w.Key != null)
+                                        .Where(w => w.Key.Equals(_normalizedLabelKey, StringComparison.InvariantCultureIgnoreCase))
                                         .Select(s => s.Value)
                                         .SingleOrDefault();
             }
@@ -83,7 +81,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             return string.Join('_', labelParts);
         }
 
-        private async Task<string> FetchLabelFromAPI(GrantedNotification notification)
+        private async Task<string> FetchLabelFromAPI(IIdentifiedNotification notification)
         {
             var apiSchema = _configuration.GetValue<string>("API:Schema", "http");
             var apiHost = _configuration.GetValue<string>("API:Host", "SFApi");
@@ -106,7 +104,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             var watchlistMember = Newtonsoft.Json.JsonConvert.DeserializeObject<WatchlistMember>(httpRequestStringContent);
             
             return watchlistMember.Labels?
-                                    .Where(w => w.Key.ToUpper() == _normalizedLabelKey)
+                                    .Where(w => w.Key != null)
+                                    .Where(w => w.Key.Equals(_normalizedLabelKey, StringComparison.CurrentCultureIgnoreCase))
                                     .Select(s => s.Value)
                                     .SingleOrDefault();
         }
