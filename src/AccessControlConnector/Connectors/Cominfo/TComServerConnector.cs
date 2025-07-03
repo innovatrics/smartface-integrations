@@ -17,13 +17,9 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Cominfo
 {
-    public class TComServerConnector(
-        ILogger logger,
-        IHttpClientFactory httpClientFactory
-        ) : IAccessControlConnector, IDisposable
+    public class TComServerConnector(ILogger logger) : IAccessControlConnector, IDisposable
     {
         private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         private readonly ConcurrentDictionary<string, TServerClient> _tServerClients = new();
         private readonly ConcurrentDictionary<string, Timer> _timers = new();
         private readonly ConcurrentDictionary<string, CancellationTokenSource> _cancellationTokenSources = new();

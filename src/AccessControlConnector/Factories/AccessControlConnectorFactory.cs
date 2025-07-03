@@ -84,7 +84,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 case AccessControlConnectorTypes.COMINFO_TCOM_SERVER:
                     if (_tComServerConnector == null)
                     {
-                        _tComServerConnector = new TComServerConnector(_logger, _httpClientFactory);
+                        _tComServerConnector = new TComServerConnector(_logger);
                     }
                     return _tComServerConnector;
             }

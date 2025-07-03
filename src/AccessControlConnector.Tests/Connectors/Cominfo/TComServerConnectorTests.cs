@@ -4,27 +4,25 @@ using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Cominfo;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Microsoft.Extensions.Logging;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests
 {
-    public class TComServerConnector
+    public class TComServerConnectorTests
     {
-        private readonly Mock<ILogger> _mockLogger;
-        private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+        private readonly ILogger _logger;
 
-        public TComServerConnector()
+        public TComServerConnectorTests()
         {
-            _mockLogger = new Mock<ILogger>();
-            _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            _logger = Substitute.For<ILogger>();
         }
 
         [Fact]
         public void Constructor_WithValidParameters_ShouldNotThrow()
         {
             // Act & Assert
-            var exception = Record.Exception(() => new TComServerConnector(_mockLogger.Object, _mockHttpClientFactory.Object));
+            var exception = Record.Exception(() => new TComServerConnector(_logger));
             Assert.Null(exception);
         }
 
@@ -32,21 +30,21 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests
         public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
         {
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new TComServerConnector(null, _mockHttpClientFactory.Object));
+            Assert.Throws<ArgumentNullException>(() => new TComServerConnector(null));
         }
 
         [Fact]
         public void Constructor_WithNullHttpClientFactory_ShouldThrowArgumentNullException()
         {
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new TComServerConnector(_mockLogger.Object, null));
+            Assert.Throws<ArgumentNullException>(() => new TComServerConnector(_logger, null));
         }
 
         [Fact]
         public async Task DenyAsync_WithTimeoutConfigured_ShouldStartTimer()
         {
             // Arrange
-            var connector = new TComServerConnector(_mockLogger.Object, _mockHttpClientFactory.Object);
+            var connector = new TComServerConnector(_logger, _httpClientFactory);
             var accessControlMapping = new AccessControlMapping
             {
                 Name = "TestMapping",
@@ -71,7 +69,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests
         public async Task DenyAsync_WithNoTimeoutConfigured_ShouldNotStartTimer()
         {
             // Arrange
-            var connector = new TComServerConnector(_mockLogger.Object, _mockHttpClientFactory.Object);
+            var connector = new TComServerConnector(_logger, _httpClientFactory);
             var accessControlMapping = new AccessControlMapping
             {
                 Name = "TestMapping",
@@ -95,7 +93,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests
         public async Task DenyAsync_WithZeroTimeout_ShouldNotStartTimer()
         {
             // Arrange
-            var connector = new TComServerConnector(_mockLogger.Object, _mockHttpClientFactory.Object);
+            var connector = new TComServerConnector(_logger, _httpClientFactory);
             var accessControlMapping = new AccessControlMapping
             {
                 Name = "TestMapping",
@@ -119,7 +117,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests
         public async Task DenyAsync_WithNegativeTimeout_ShouldNotStartTimer()
         {
             // Arrange
-            var connector = new TComServerConnector(_mockLogger.Object, _mockHttpClientFactory.Object);
+            var connector = new TComServerConnector(_logger, _httpClientFactory);
             var accessControlMapping = new AccessControlMapping
             {
                 Name = "TestMapping",
@@ -143,7 +141,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests
         public void Dispose_ShouldNotThrowException()
         {
             // Arrange
-            var connector = new TComServerConnector(_mockLogger.Object, _mockHttpClientFactory.Object);
+            var connector = new TComServerConnector(_logger, _httpClientFactory);
 
             // Act & Assert
             var exception = Record.Exception(() => connector.Dispose());
@@ -154,7 +152,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests
         public void Dispose_CanBeCalledMultipleTimes_ShouldNotThrowException()
         {
             // Arrange
-            var connector = new TComServerConnector(_mockLogger.Object, _mockHttpClientFactory.Object);
+            var connector = new TComServerConnector(_logger, _httpClientFactory);
 
             // Act & Assert
             connector.Dispose();
