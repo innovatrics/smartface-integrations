@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Microsoft.Extensions.Configuration;
@@ -16,11 +17,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
     public class TComServerConnector(
         ILogger logger,
         IHttpClientFactory httpClientFactory
-        ) : IAccessControlConnector
+        ) : IAccessControlConnector, IDisposable
     {
         private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         private readonly IHttpClientFactory _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         private readonly ConcurrentDictionary<string, TServerClient> _tServerClients = new();
+        private readonly ConcurrentDictionary<string, Timer> _timers = new();
+        private readonly ConcurrentDictionary<string, CancellationTokenSource> _cancellationTokenSources = new();
+        
 
         public const string MODE_CLOSE_ON_DENY = "CLOSE_ON_DENY";
         public const string MODE_OPEN_ON_GRANT = "OPEN_ON_GRANT";
@@ -39,7 +43,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
                 {
                     case MODE_OPEN_ON_GRANT:
                         var passage = accessControlMapping.Action ?? PrtclCmfJson.Passage.passL;
-                        SendActionCommand(tsServerClient, passage: passage);
+                        SendActionCommand(tsServerClient, accessControlMapping, passage: passage);
                         break;
                 }
             }
@@ -61,10 +65,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
                 {
                     case MODE_CLOSE_ON_DENY:
                         var mode = accessControlMapping.Action ?? PrtclCmfJson.TurnstileMode.group_off;
-                        SendActionCommand(tsServerClient, mode: mode);
+                        SendActionCommand(tsServerClient, accessControlMapping, mode: mode);
                         break;
                 }
             }
+
+            // Start or reset timer for this access control mapping
+            StartOrResetTimer(accessControlMapping);
 
             return Task.CompletedTask;
         }
@@ -79,6 +86,80 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
         public Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null, string username = null, string password = null)
         {
             return Task.CompletedTask;
+        }
+
+
+
+        private void StartOrResetTimer(AccessControlMapping accessControlMapping)
+        {
+            if (accessControlMapping.TimeoutMs == null || accessControlMapping.TimeoutMs <= 0)
+            {
+                _logger.Debug("No timeout configured for access control mapping {name}", accessControlMapping.Name);
+                return;
+            }
+
+            var mappingName = accessControlMapping.Name;
+            
+            // Cancel existing timer if it exists
+            if (_cancellationTokenSources.TryGetValue(mappingName, out var existingCts))
+            {
+                existingCts.Cancel();
+                _cancellationTokenSources.TryRemove(mappingName, out _);
+            }
+
+            // Dispose existing timer if it exists
+            if (_timers.TryGetValue(mappingName, out var existingTimer))
+            {
+                existingTimer.Dispose();
+                _timers.TryRemove(mappingName, out _);
+            }
+
+            // Create new cancellation token source
+            var cts = new CancellationTokenSource();
+            _cancellationTokenSources.TryAdd(mappingName, cts);
+
+            _logger.Information("Starting timer for access control mapping {name} with timeout {timeout}ms", mappingName, accessControlMapping.TimeoutMs);
+
+            // Create new timer
+            var timer = new Timer(async _ => await OnTimeoutExpired(accessControlMapping, cts.Token), null, accessControlMapping.TimeoutMs.Value, Timeout.Infinite);
+            _timers.TryAdd(mappingName, timer);
+        }
+
+        private async Task OnTimeoutExpired(AccessControlMapping accessControlMapping, CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _logger.Debug("Timer for access control mapping {name} was cancelled", accessControlMapping.Name);
+                return;
+            }
+
+            _logger.Information("Timeout expired for access control mapping {name}. Opening gates permanently.", accessControlMapping.Name);
+
+            try
+            {
+                var tsServerClient = GetClient(accessControlMapping.Host, accessControlMapping.Port);
+                
+                // Open gates permanently by sending appropriate command
+                // You may need to adjust this based on your specific protocol requirements
+                SendActionCommand(tsServerClient, accessControlMapping, passage: PrtclCmfJson.Passage.passL, mode: PrtclCmfJson.TurnstileMode.group_on);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error occurred while opening gates permanently for access control mapping {name}", accessControlMapping.Name);
+            }
+            finally
+            {
+                // Clean up timer and cancellation token source
+                var mappingName = accessControlMapping.Name;
+                if (_timers.TryRemove(mappingName, out var timer))
+                {
+                    timer.Dispose();
+                }
+                if (_cancellationTokenSources.TryRemove(mappingName, out var cts))
+                {
+                    cts.Dispose();
+                }
+            }
         }
 
         private TServerClient GetClient(string host, int? port)
@@ -116,7 +197,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             }
         }
 
-        private void SendActionCommand(TServerClient tsServerClient, string mode = null, string passage = null)
+        private void SendActionCommand(TServerClient tsServerClient, AccessControlMapping accessControlMapping, string mode = null, string passage = null)
         {
             ConnectIfNeeded(tsServerClient);
 
@@ -149,6 +230,23 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
                     .Select(mode => mode.Trim())
                     .Where(mode => !string.IsNullOrEmpty(mode))
                     .ToArray();
+        }
+
+        public void Dispose()
+        {
+            // Dispose all timers
+            foreach (var timer in _timers.Values)
+            {
+                timer.Dispose();
+            }
+            _timers.Clear();
+
+            // Dispose all cancellation token sources
+            foreach (var cts in _cancellationTokenSources.Values)
+            {
+                cts.Dispose();
+            }
+            _cancellationTokenSources.Clear();
         }
     }
 }
