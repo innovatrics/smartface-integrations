@@ -38,7 +38,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 
         }
 
-        public async Task<string> ResolveUserAsync(GrantedNotification notification)
+        public async Task<string> ResolveUserAsync(IIdentifiedNotification notification)
         {
             _returnedValue = null;
             if (notification == null)

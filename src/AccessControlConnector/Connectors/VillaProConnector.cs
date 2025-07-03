@@ -108,5 +108,15 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
             return new HttpClient(handler);
         }
+
+        public Task DenyAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task BlockAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
     }
 }
