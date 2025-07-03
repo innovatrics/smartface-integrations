@@ -9,12 +9,12 @@ using Xunit;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests
 {
-    public class TimerFunctionalityTests
+    public class TComServerConnector
     {
         private readonly Mock<ILogger> _mockLogger;
         private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
 
-        public TimerFunctionalityTests()
+        public TComServerConnector()
         {
             _mockLogger = new Mock<ILogger>();
             _mockHttpClientFactory = new Mock<IHttpClientFactory>();
@@ -162,4 +162,4 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests
             Assert.Null(exception);
         }
     }
-} 
+}
