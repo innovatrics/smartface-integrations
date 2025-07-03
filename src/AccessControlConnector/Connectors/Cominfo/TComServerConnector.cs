@@ -17,10 +17,11 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Cominfo
 {
-    public class TComServerConnector(ILogger logger) : IAccessControlConnector, IDisposable
+    public class TComServerConnector(ILogger logger, ITServerClientFactory tServerClientFactory) : IAccessControlConnector, IDisposable
     {
         private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        private readonly ConcurrentDictionary<string, TServerClient> _tServerClients = new();
+        private readonly ITServerClientFactory _tServerClientFactory = tServerClientFactory ?? throw new ArgumentNullException(nameof(tServerClientFactory));
+        private readonly ConcurrentDictionary<string, ITServerClient> _tServerClients = new();
         private readonly ConcurrentDictionary<string, Timer> _timers = new();
         private readonly ConcurrentDictionary<string, CancellationTokenSource> _cancellationTokenSources = new();
 
@@ -156,7 +157,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             }
         }
 
-        private TServerClient GetClient(string host, int? port)
+        private ITServerClient GetClient(string host, int? port)
         {
             if (port == null)
             {
@@ -168,7 +169,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
 
             if (!_tServerClients.TryGetValue(key, out var tsServerClient))
             {
-                tsServerClient = new TServerClient(ip, port.Value);
+                tsServerClient = _tServerClientFactory.Create(ip, port.Value);
                 _tServerClients.TryAdd(key, tsServerClient);
             }
 
@@ -183,7 +184,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             return new PrtclCmfJson.Device(line, address);
         }
 
-        private static void ConnectIfNeeded(TServerClient tsServerClient)
+        private static void ConnectIfNeeded(ITServerClient tsServerClient)
         {
             if (!tsServerClient.IsConnected)
             {
@@ -191,7 +192,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             }
         }
 
-        private void SendActionCommand(TServerClient tsServerClient, AccessControlMapping accessControlMapping, PrtclCmfJson.TurnstileMode? mode = null, PrtclCmfJson.PassageAction? passage = null)
+        private void SendActionCommand(ITServerClient tsServerClient, AccessControlMapping accessControlMapping, PrtclCmfJson.TurnstileMode? mode = null, PrtclCmfJson.PassageAction? passage = null)
         {
             _logger.Information("Sending action command to {host}:{port} for {reader} and channel {channel} with mode {mode} and passage {passage}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel, mode, passage);
 

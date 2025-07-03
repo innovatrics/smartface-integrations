@@ -11,13 +11,8 @@ using System.Threading.Tasks;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Cominfo
 {
-    public class TServerClient
+    public class TServerClient : ITServerClient
     {
-
-        public delegate void ConnectionStateChange(bool connected);
-        public delegate void DeviceListCallback(PrtclCmfJson.MsgDevlistResp devList);
-        public delegate void DevEventCallback(PrtclCmfJson.MsgDevEvent devEvent);
-        public delegate void ActionRespCallback(PrtclCmfJson.MsgActionResp actionResp);
 
         TcpClient tcpClient;
         const int buffer_size = 65535;

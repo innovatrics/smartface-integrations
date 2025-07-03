@@ -18,6 +18,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ITServerClientFactory _tServerClientFactory;
 
         private TComServerConnector _tComServerConnector;
 
@@ -25,12 +26,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
         public AccessControlConnectorFactory(
             ILogger logger,
             IConfiguration configuration,
-            IHttpClientFactory httpClientFactory
+            IHttpClientFactory httpClientFactory,
+            ITServerClientFactory tServerClientFactory
         )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _tServerClientFactory = tServerClientFactory ?? throw new ArgumentNullException(nameof(tServerClientFactory));
         }
 
         public IAccessControlConnector Create(string type)
@@ -84,7 +87,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 case AccessControlConnectorTypes.COMINFO_TCOM_SERVER:
                     if (_tComServerConnector == null)
                     {
-                        _tComServerConnector = new TComServerConnector(_logger);
+                        _tComServerConnector = new TComServerConnector(_logger, _tServerClientFactory);
                     }
                     return _tComServerConnector;
             }
