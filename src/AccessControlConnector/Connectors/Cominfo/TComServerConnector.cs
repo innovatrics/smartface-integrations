@@ -90,8 +90,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             return Task.CompletedTask;
         }
 
-
-
         private void StartOrResetTimer(AccessControlMapping accessControlMapping)
         {
             if (accessControlMapping.TimeoutMs == null || accessControlMapping.TimeoutMs <= 0)
