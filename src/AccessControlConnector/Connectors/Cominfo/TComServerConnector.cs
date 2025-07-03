@@ -8,9 +8,12 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+
 using Microsoft.Extensions.Configuration;
+
 using Serilog;
+
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Cominfo
 {
@@ -24,7 +27,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
         private readonly ConcurrentDictionary<string, TServerClient> _tServerClients = new();
         private readonly ConcurrentDictionary<string, Timer> _timers = new();
         private readonly ConcurrentDictionary<string, CancellationTokenSource> _cancellationTokenSources = new();
-        
+
 
         public const string MODE_CLOSE_ON_DENY = "CLOSE_ON_DENY";
         public const string MODE_OPEN_ON_GRANT = "OPEN_ON_GRANT";
@@ -42,7 +45,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
                 switch (mode)
                 {
                     case MODE_OPEN_ON_GRANT:
-                        var passage = accessControlMapping.Action ?? PrtclCmfJson.Passage.passL;
+                        var passage = accessControlMapping.Action != null ? ParsePassageAction(accessControlMapping.Action) : PrtclCmfJson.PassageAction.passL;
                         SendActionCommand(tsServerClient, accessControlMapping, passage: passage);
                         break;
                 }
@@ -64,8 +67,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
                 switch (mode)
                 {
                     case MODE_CLOSE_ON_DENY:
-                        var mode = accessControlMapping.Action ?? PrtclCmfJson.TurnstileMode.group_off;
-                        SendActionCommand(tsServerClient, accessControlMapping, mode: mode);
+                        var turnstileMode = accessControlMapping.Action != null ? ParseTurnstileMode(accessControlMapping.Action) : PrtclCmfJson.TurnstileMode.group_off;
+                        SendActionCommand(tsServerClient, accessControlMapping, mode: turnstileMode);
                         break;
                 }
             }
@@ -98,7 +101,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             }
 
             var mappingName = accessControlMapping.Name;
-            
+
             if (_cancellationTokenSources.TryGetValue(mappingName, out var existingCts))
             {
                 existingCts.Cancel();
@@ -116,7 +119,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
 
             _logger.Information("Starting timer for access control mapping {name} with timeout {timeout}ms", mappingName, accessControlMapping.TimeoutMs);
 
-            var timer = new Timer(async _ => await OnTimeoutExpired(accessControlMapping, cts.Token), null, accessControlMapping.TimeoutMs.Value, Timeout.Infinite);
+            var timer = new Timer(async _ =>
+                                {
+                                    await OnTimeoutExpired(accessControlMapping, cts.Token);
+                                },
+                                null, accessControlMapping.TimeoutMs.Value, Timeout.Infinite);
+
             _timers.TryAdd(mappingName, timer);
         }
 
@@ -133,8 +141,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             try
             {
                 var tsServerClient = GetClient(accessControlMapping.Host, accessControlMapping.Port);
-                
-                SendActionCommand(tsServerClient, accessControlMapping, passage: PrtclCmfJson.Passage.passL, mode: PrtclCmfJson.TurnstileMode.group_on);
+
+                SendActionCommand(tsServerClient, accessControlMapping, mode: PrtclCmfJson.TurnstileMode.group_on, passage: PrtclCmfJson.PassageAction.passL);
             }
             catch (Exception ex)
             {
@@ -189,22 +197,24 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             }
         }
 
-        private void SendActionCommand(TServerClient tsServerClient, AccessControlMapping accessControlMapping, string mode = null, string passage = null)
+        private void SendActionCommand(TServerClient tsServerClient, AccessControlMapping accessControlMapping, PrtclCmfJson.TurnstileMode? mode = null, PrtclCmfJson.PassageAction? passage = null)
         {
+            _logger.Information("Sending action command to {host}:{port} for {reader} and channel {channel} with mode {mode} and passage {passage}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel, mode, passage);
+
             ConnectIfNeeded(tsServerClient);
 
             var device = GetDevice(accessControlMapping);
 
             var action = new PrtclCmfJson.MsgAction(device);
 
-            if (mode != null)
+            if (mode.HasValue)
             {
-                action.mode = mode;
+                action.mode = mode.Value;
             }
 
-            if (passage != null)
+            if (passage.HasValue)
             {
-                action.passage = passage;
+                action.passage = passage.Value;
             }
 
             tsServerClient.SendMessage(action);
@@ -222,6 +232,39 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
                     .Select(mode => mode.Trim())
                     .Where(mode => !string.IsNullOrEmpty(mode))
                     .ToArray();
+        }
+
+        private static PrtclCmfJson.PassageAction ParsePassageAction(string action)
+        {
+            return action?.ToLowerInvariant() switch
+            {
+                "passl" => PrtclCmfJson.PassageAction.passL,
+                "passr" => PrtclCmfJson.PassageAction.passR,
+                "partpassl" => PrtclCmfJson.PassageAction.partpassL,
+                "partpassr" => PrtclCmfJson.PassageAction.partpassR,
+                "passl_verify" => PrtclCmfJson.PassageAction.passL_verify,
+                "passr_verify" => PrtclCmfJson.PassageAction.passR_verify,
+                _ => PrtclCmfJson.PassageAction.passL
+            };
+        }
+
+        private static PrtclCmfJson.TurnstileMode ParseTurnstileMode(string action)
+        {
+            return action?.ToLowerInvariant() switch
+            {
+                "all_modes_off" => PrtclCmfJson.TurnstileMode.all_modes_off,
+                "free_off" => PrtclCmfJson.TurnstileMode.free_off,
+                "free_on" => PrtclCmfJson.TurnstileMode.free_on,
+                "lockdown_off" => PrtclCmfJson.TurnstileMode.lockdown_off,
+                "lockdown_on" => PrtclCmfJson.TurnstileMode.lockdown_on,
+                "optical_off" => PrtclCmfJson.TurnstileMode.optical_off,
+                "optical_on" => PrtclCmfJson.TurnstileMode.optical_on,
+                "group_off" => PrtclCmfJson.TurnstileMode.group_off,
+                "group_on" => PrtclCmfJson.TurnstileMode.group_on,
+                "cflow_off" => PrtclCmfJson.TurnstileMode.cflow_off,
+                "cflow_on" => PrtclCmfJson.TurnstileMode.cflow_on,
+                _ => PrtclCmfJson.TurnstileMode.group_off
+            };
         }
 
         public void Dispose()
