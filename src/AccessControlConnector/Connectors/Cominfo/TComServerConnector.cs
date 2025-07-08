@@ -244,7 +244,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
                     .ToArray();
         }
 
-        private static PrtclCmfJson.PassageAction ParsePassageAction(string action)
+        private PrtclCmfJson.PassageAction ParsePassageAction(string action)
         {
             try
             {
@@ -257,7 +257,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             }
         }
 
-        private static PrtclCmfJson.TurnstileMode ParseTurnstileMode(string action)
+        private PrtclCmfJson.TurnstileMode ParseTurnstileMode(string action)
         {
             try
             {
