@@ -25,7 +25,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
         private readonly ConcurrentDictionary<string, Timer> _timers = new();
         private readonly ConcurrentDictionary<string, CancellationTokenSource> _cancellationTokenSources = new();
 
-
         public const string MODE_CLOSE_ON_DENY = "CLOSE_ON_DENY";
         public const string MODE_OPEN_ON_GRANT = "OPEN_ON_GRANT";
 
@@ -114,11 +113,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
 
             _logger.Information("Starting timer for access control mapping {name} with timeout {timeout}ms", mappingName, accessControlMapping.TimeoutMs);
 
-            var timer = new Timer(async _ =>
-                                {
-                                    await OnTimeoutExpired(accessControlMapping, cts.Token);
-                                },
-                                null, accessControlMapping.TimeoutMs.Value, Timeout.Infinite);
+            var timer = new Timer(async _ => await OnTimeoutExpired(accessControlMapping, cts.Token), null, accessControlMapping.TimeoutMs.Value, Timeout.Infinite);
 
             _timers.TryAdd(mappingName, timer);
         }
@@ -132,6 +127,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             }
 
             _logger.Information("Timeout expired for access control mapping {name}. Opening gates permanently.", accessControlMapping.Name);
+
+            var mappings = 
 
             try
             {
