@@ -40,4 +40,7 @@ Output/
 [Oo]utput/
 [Pp]ublish/
 
+**/credentials.json
+**/token.json
+
 src/GrpcCamera/stream-out/*
