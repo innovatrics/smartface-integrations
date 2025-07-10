@@ -13,7 +13,7 @@ using GraphQL.Client.Serializer.Newtonsoft;
 using GraphQL;
 using Newtonsoft.Json.Linq;
 
-namespace SmartFace.GoogleCalendarsConnector.Service
+namespace SmartFace.GoogleCalendarsConnector.Services
 {
     public class GraphQlNotificationsService : IGraphQLSubscriptionService
     {

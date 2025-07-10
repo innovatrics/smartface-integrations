@@ -5,9 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using SmartFace.GoogleCalendarsConnector.Models;
-using SmartFace.GoogleCalendarsConnector.Service;
+using SmartFace.GoogleCalendarsConnector.Services;
 
-namespace SmartFace.GoogleCalendarsConnector.Service
+namespace SmartFace.GoogleCalendarsConnector.Services
 {
     public class MainHostedService : IHostedService
     {

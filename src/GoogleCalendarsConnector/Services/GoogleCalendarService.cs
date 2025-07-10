@@ -13,7 +13,9 @@ using Google.Apis.Util.Store;
 
 using Serilog;
 
-namespace SmartFace.GoogleCalendarsConnector.Service
+using SmartFace.GoogleCalendarsConnector.Models;
+
+namespace SmartFace.GoogleCalendarsConnector.Services
 {
     public class GoogleCalendarService
     {
@@ -56,7 +58,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             await CreateMeetingAsync(summary, description, location, start, end, attendees);
         }
 
-        public async Task<bool> HasOverlappingEventAsync(string calendarId, DateTime start, DateTime end)
+        public async Task<GoogleCalendarEvent[]> GetOverlappingEventsAsync(string calendarId, DateTime start, DateTime end)
         {
             EnsureCalendarIsInitialized();
 
@@ -70,16 +72,20 @@ namespace SmartFace.GoogleCalendarsConnector.Service
 
             var events = await eventsListRequest.ExecuteAsync();
 
-            var eventsInRange = events.Items.Any(e => e.Start.DateTimeDateTimeOffset >= start && e.End.DateTimeDateTimeOffset <= end);
+            var eventsInRange = events.Items
+                                        .Where(e => e.Start.DateTimeDateTimeOffset >= start && e.End.DateTimeDateTimeOffset <= end)
+                                        .Select(s => new GoogleCalendarEvent
+                                        {
+                                            Start = s.Start.DateTimeDateTimeOffset,
+                                            End = s.End.DateTimeDateTimeOffset,
+                                            Summary = s.Summary,
+                                            Description = s.Description,
+                                            Location = s.Location,
+                                            Attendees = s.Attendees.Select(a => a.Email).ToArray()
+                                        })
+                                        .ToArray();
 
             return eventsInRange;
-        }
-
-        public async Task<bool> HasOverlappingEventAsync(string calendarId, DateTime now)
-        {
-            var start = now;
-            var end = now.AddMinutes(_meetingDurationMin);
-            return await HasOverlappingEventAsync(calendarId, start, end);
         }
 
         private void EnsureCalendarIsInitialized()
@@ -105,7 +111,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
                 ApplicationName = "Google Calendar API Wrapper"
             });
         }
-                
+
         private async Task<GoogleCredential> Authenticate(string credentialsPath, string tokenPath)
         {
             _logger.Information("Authenticating with credentials path: {CredentialsPath} and token path: {TokenPath}", credentialsPath, tokenPath);

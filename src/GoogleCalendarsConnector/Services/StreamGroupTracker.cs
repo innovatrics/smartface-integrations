@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using SmartFace.GoogleCalendarsConnector.Models;
 using Serilog;
 
-namespace SmartFace.GoogleCalendarsConnector.Service
+namespace SmartFace.GoogleCalendarsConnector.Services
 {
     public class StreamGroupTracker
     {

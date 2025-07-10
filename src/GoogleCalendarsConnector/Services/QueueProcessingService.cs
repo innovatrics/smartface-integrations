@@ -8,9 +8,9 @@ using Innovatrics.SmartFace.Integrations.Shared.SmartFaceRestApiClient;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using SmartFace.GoogleCalendarsConnector.Models;
-using SmartFace.GoogleCalendarsConnector.Service;
+using SmartFace.GoogleCalendarsConnector.Services;
 
-namespace SmartFace.GoogleCalendarsConnector.Service
+namespace SmartFace.GoogleCalendarsConnector.Services
 {
     public class QueueProcessingService
     {
@@ -85,12 +85,8 @@ namespace SmartFace.GoogleCalendarsConnector.Service
 
                 // Use cache to check for overlapping events
                 _logger.Debug("Checking for overlapping events in cache for group {GroupName} with calendar {CalendarId}", groupName, calendarId);
-                
-                var hasOverlappingEvent = await _calendarCacheService.HasOverlappingEventAsync(
-                    calendarId, 
-                    start, 
-                    end, 
-                    async (calId, startTime, endTime) => await _googleCalendarService.HasOverlappingEventAsync(calId, startTime, endTime));
+
+                var hasOverlappingEvent = await _calendarCacheService.HasOverlappingEventAsync(calendarId, start, end);
 
                 if (hasOverlappingEvent)
                 {
@@ -100,7 +96,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
 
                 _logger.Debug("No overlapping events found, creating new event for group {GroupName} in calendar {CalendarId}", groupName, calendarId);
 
-                await _googleCalendarService.CreateEventAsync(groupName, calendarId);                
+                await _googleCalendarService.CreateEventAsync(groupName, calendarId);
 
                 _logger.Information("Trigger finished for group {GroupName}", groupName);
             };

@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using SmartFace.GoogleCalendarsConnector.Models;
 
-namespace SmartFace.GoogleCalendarsConnector.Service
+namespace SmartFace.GoogleCalendarsConnector.Services
 {
     public interface IGraphQLSubscriptionService
     {

@@ -5,30 +5,39 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.Linq;
 
-namespace SmartFace.GoogleCalendarsConnector.Service
+using SmartFace.GoogleCalendarsConnector.Models;
+
+namespace SmartFace.GoogleCalendarsConnector.Services
 {
     public class CalendarCacheService
     {
-        private readonly ConcurrentDictionary<string, CalendarCacheEntry> _cache;
+        private readonly ConcurrentDictionary<string, GoogleCalendarEvent> _cache;
         private readonly ILogger _logger;
         private readonly TimeSpan _defaultCacheExpiration;
         private readonly int _maxCacheSize;
+        private readonly GoogleCalendarService _googleCalendarService;
 
-        public CalendarCacheService(ILogger logger, IConfiguration configuration)
+        public CalendarCacheService(
+            ILogger logger,
+            IConfiguration configuration,
+            GoogleCalendarService googleCalendarService
+        )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _cache = new ConcurrentDictionary<string, CalendarCacheEntry>();
-            
+            _cache = new ConcurrentDictionary<string, GoogleCalendarEvent>();
+
             // Get cache configuration from appsettings
             _defaultCacheExpiration = TimeSpan.FromMinutes(
                 configuration.GetValue("CalendarCache:ExpirationMinutes", 30));
             _maxCacheSize = configuration.GetValue("CalendarCache:MaxSize", 1000);
+
+            _googleCalendarService = googleCalendarService ?? throw new ArgumentNullException(nameof(googleCalendarService));
         }
 
-        public async Task<bool> HasOverlappingEventAsync(string calendarId, DateTime start, DateTime end, Func<string, DateTime, DateTime, Task<bool>> checkFunction)
+        public async Task<bool> HasOverlappingEventAsync(string calendarId, DateTime start, DateTime end)
         {
             var cacheKey = GenerateCacheKey(calendarId, start, end);
-            
+
             // Try to get from cache first
             if (_cache.TryGetValue(cacheKey, out var cachedEntry))
             {
@@ -48,7 +57,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             if (_cache.Count >= _maxCacheSize)
             {
                 CleanupExpiredEntries();
-                
+
                 // If still full, remove oldest entries
                 if (_cache.Count >= _maxCacheSize)
                 {
@@ -58,18 +67,18 @@ namespace SmartFace.GoogleCalendarsConnector.Service
 
             // Perform the actual check
             _logger.Debug("Cache miss for calendar {CalendarId} at {Start}, checking API", calendarId, start);
-            var hasOverlappingEvent = await checkFunction(calendarId, start, end);
-            
+            var overlappingEvents = await _googleCalendarService.GetOverlappingEventsAsync(calendarId, start, end);
+
             // Cache the result
-            var newEntry = new CalendarCacheEntry
+            var newEntry = new GoogleCalendarEvent
             {
-                HasOverlappingEvent = hasOverlappingEvent,
+                HasOverlappingEvent = overlappingEvents,
                 ExpiresAt = DateTime.UtcNow.Add(_defaultCacheExpiration)
             };
-            
+
             _cache.TryAdd(cacheKey, newEntry);
-            
-            return hasOverlappingEvent;
+
+            return overlappingEvents;
         }
 
         private string GenerateCacheKey(string calendarId, DateTime start, DateTime end)
@@ -78,7 +87,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             // Round to nearest minute to group similar time ranges
             var roundedStart = start.AddSeconds(-start.Second).AddMilliseconds(-start.Millisecond);
             var roundedEnd = end.AddSeconds(-end.Second).AddMilliseconds(-end.Millisecond);
-            
+
             return $"{calendarId}_{roundedStart:yyyyMMddHHmm}_{roundedEnd:yyyyMMddHHmm}";
         }
 
@@ -126,17 +135,5 @@ namespace SmartFace.GoogleCalendarsConnector.Service
         {
             return _cache.Count;
         }
-
-        private class CalendarCacheEntry
-        {
-            public bool HasOverlappingEvent { get; set; }
-            public DateTime ExpiresAt { get; set; }
-            public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-            public bool IsExpired()
-            {
-                return DateTime.UtcNow > ExpiresAt;
-            }
-        }
     }
-} 
+}
