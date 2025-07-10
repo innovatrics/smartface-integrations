@@ -6,8 +6,10 @@ using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Serilog;
 using SmartFace.GoogleCalendarsConnector.Service;
+using SmartFace.GoogleCalendarsConnector.Models;
 
 namespace SmartFace.GoogleCalendarsConnector
 {
@@ -50,7 +52,7 @@ namespace SmartFace.GoogleCalendarsConnector
             logDir = configuration.GetValue("Serilog:LogDirectory", logDir);
             var logFilePath = Path.Combine(logDir, LogFileName);
 
-            var logger = LoggingSetup.SetupBasicLogging(logFilePath);
+            var logger = LoggingSetup.SetupBasicLogging(logFilePath, configuration);
 
             return logger;
         }
@@ -60,20 +62,7 @@ namespace SmartFace.GoogleCalendarsConnector
             services.AddHttpClient();
             services.AddSingleton(logger);
 
-            // Add StreamGroupTracker with configuration
-            services.AddSingleton<StreamGroupTracker>(provider =>
-            {
-                var config = provider.GetRequiredService<IConfiguration>();
-                var window = TimeSpan.FromMinutes(config.GetValue("StreamGroupTracker:WindowMinutes", 5));
-                var minPedestrians = config.GetValue("StreamGroupTracker:MinPedestrians", 3);
-                var minFaces = config.GetValue("StreamGroupTracker:MinFaces", 2);
-                
-                return new StreamGroupTracker(window, minPedestrians, minFaces, groupName => 
-                {
-                    // This will be set up in QueueProcessingService
-                });
-            });
-
+            services.AddSingleton<StreamGroupTracker>();
             services.AddSingleton<GoogleCalendarService>();
             services.AddSingleton<GraphQlNotificationsService>();
             services.AddSingleton<QueueProcessingService>();
