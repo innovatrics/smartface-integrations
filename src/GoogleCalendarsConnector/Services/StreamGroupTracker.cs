@@ -1,41 +1,48 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SmartFace.GoogleCalendarsConnector.Models;
 
-namespace SmartFace.GoogleCalendarsConnector.Services
+namespace SmartFace.GoogleCalendarsConnector.Service
 {
     public class StreamGroupTracker
     {
         private readonly TimeSpan _window;
         private readonly int _minPedestrians;
         private readonly int _minFaces;
-        private readonly Action<string> _onTrigger;
 
         private readonly Dictionary<string, List<AggregationSnapshot>> _history = new();
         private readonly object _lock = new();
 
-        public StreamGroupTracker(TimeSpan window, int minPedestrians, int minFaces, Action<string> onTrigger)
+        public event Action<string> OnTrigger;
+
+        public StreamGroupTracker(TimeSpan window, int minPedestrians, int minFaces, Action<string> onTrigger = null)
         {
             _window = window;
             _minPedestrians = minPedestrians;
             _minFaces = minFaces;
-            _onTrigger = onTrigger;
+            if (onTrigger != null)
+            {
+                OnTrigger += onTrigger;
+            }
         }
 
-        public void OnDataReceived(string groupName, int avgPedestrians, int avgFaces)
+        public void OnDataReceived(string groupName, double avgPedestrians, double avgFaces)
         {
             var now = DateTime.UtcNow;
 
             lock (_lock)
             {
                 if (!_history.ContainsKey(groupName))
+                {
                     _history[groupName] = new List<AggregationSnapshot>();
+                }
 
                 _history[groupName].Add(new AggregationSnapshot
                 {
                     Timestamp = now,
-                    AveragePedestrians = avgPedestrians,
-                    AverageFaces = avgFaces
+                    AveragePedestrians = (int)avgPedestrians,
+                    AverageFaces = (int)avgFaces
                 });
 
                 _history[groupName].RemoveAll(snap => now - snap.Timestamp > _window);
@@ -57,7 +64,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
             if (avgPedestrians >= _minPedestrians || avgFaces >= _minFaces)
             {
-                _onTrigger(groupName);
+                OnTrigger?.Invoke(groupName);
                 _history[groupName].Clear();
             }
         }

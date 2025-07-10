@@ -10,64 +10,80 @@ using System.Threading.Tasks;
 
 namespace SmartFace.GoogleCalendarsConnector.Service
 {
-    private readonly CalendarService _calendarService;
-
-    public GoogleCalendarService(string credentialsPath = "credentials.json", string tokenPath = "token.json")
+    public class GoogleCalendarService
     {
-        var credential = Authenticate(credentialsPath, tokenPath).Result;
+        private readonly CalendarService _calendarService;
 
-        _calendarService = new CalendarService(new BaseClientService.Initializer()
+        public GoogleCalendarService(string credentialsPath = "credentials.json", string tokenPath = "token.json")
         {
-            HttpClientInitializer = credential,
-            ApplicationName = "Google Calendar API Wrapper"
-        });
-    }
+            var credential = Authenticate(credentialsPath, tokenPath).Result;
 
-    private async Task<UserCredential> Authenticate(string credentialsPath, string tokenPath)
-    {
-        using var stream = new FileStream(credentialsPath, FileMode.Open, FileAccess.Read);
+            _calendarService = new CalendarService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = "Google Calendar API Wrapper"
+            });
+        }
 
-        return await GoogleWebAuthorizationBroker.AuthorizeAsync(
-            GoogleClientSecrets.Load(stream).Secrets,
-            new[] { CalendarService.Scope.Calendar },
-            "user",
-            CancellationToken.None,
-            new FileDataStore(tokenPath, true)
-        );
-    }
-
-    public async Task<string> CreateMeetingAsync(string summary, string description, string location, DateTime start, DateTime end, string[] attendeesEmails)
-    {
-        var newEvent = new Event
+        private async Task<UserCredential> Authenticate(string credentialsPath, string tokenPath)
         {
-            Summary = summary,
-            Description = description,
-            Location = location,
-            Start = new EventDateTime
-            {
-                DateTime = start,
-                TimeZone = "Europe/Bratislava"
-            },
-            End = new EventDateTime
-            {
-                DateTime = end,
-                TimeZone = "Europe/Bratislava"
-            },
-            Attendees = Array.ConvertAll(attendeesEmails, email => new EventAttendee { Email = email }),
-            Reminders = new Event.RemindersData
-            {
-                UseDefault = true
-            }
-        };
+            using var stream = new FileStream(credentialsPath, FileMode.Open, FileAccess.Read);
 
-        var request = _calendarService.Events.Insert(newEvent, "primary");
-        var createdEvent = await request.ExecuteAsync();
+            return await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                GoogleClientSecrets.FromStream(stream).Secrets,
+                new[] { CalendarService.Scope.Calendar },
+                "user",
+                CancellationToken.None,
+                new FileDataStore(tokenPath, true)
+            );
+        }
 
-        return createdEvent.Id; // or return createdEvent.HtmlLink for the calendar URL
-    }
+        public async Task<string> CreateMeetingAsync(string summary, string description, string location, DateTime start, DateTime end, string[] attendeesEmails)
+        {
+            var newEvent = new Event
+            {
+                Summary = summary,
+                Description = description,
+                Location = location,
+                Start = new EventDateTime
+                {
+                    DateTimeDateTimeOffset = start,
+                    TimeZone = "Europe/Bratislava"
+                },
+                End = new EventDateTime
+                {
+                    DateTimeDateTimeOffset = end,
+                    TimeZone = "Europe/Bratislava"
+                },
+                Attendees = Array.ConvertAll(attendeesEmails, email => new EventAttendee { Email = email }),
+                Reminders = new Event.RemindersData
+                {
+                    UseDefault = true
+                }
+            };
 
-    public async Task DeleteMeetingAsync(string eventId)
-    {
-        await _calendarService.Events.Delete("primary", eventId).ExecuteAsync();
+            var request = _calendarService.Events.Insert(newEvent, "primary");
+            var createdEvent = await request.ExecuteAsync();
+
+            return createdEvent.Id; // or return createdEvent.HtmlLink for the calendar URL
+        }
+
+        public async Task DeleteMeetingAsync(string eventId)
+        {
+            await _calendarService.Events.Delete("primary", eventId).ExecuteAsync();
+        }
+
+        public async Task CreateEventAsync(string groupName)
+        {
+            // Create a simple event for the stream group
+            var summary = $"Stream Group Activity: {groupName}";
+            var description = $"Activity detected in stream group {groupName}";
+            var location = "SmartFace System";
+            var start = DateTime.UtcNow;
+            var end = start.AddHours(1);
+            var attendees = new string[] { }; // No attendees for now
+
+            await CreateMeetingAsync(summary, description, location, start, end, attendees);
+        }
     }
 }

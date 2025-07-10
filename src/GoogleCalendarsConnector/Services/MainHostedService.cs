@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using SmartFace.GoogleCalendarsConnector.Models;
-using SmartFace.GoogleCalendarsConnector.NotificationReceivers;
+using SmartFace.GoogleCalendarsConnector.Service;
 
 namespace SmartFace.GoogleCalendarsConnector.Service
 {
@@ -20,11 +20,11 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             ILogger logger,
             IConfiguration configuration,
             GraphQlNotificationsService graphQlNotificationsService,
-            QueueProcessingService QueueProcessingService)
+            QueueProcessingService queueProcessingService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _queueProcessingService = QueueProcessingService ?? throw new ArgumentNullException(nameof(QueueProcessingService));
+            _queueProcessingService = queueProcessingService ?? throw new ArgumentNullException(nameof(queueProcessingService));
             _graphQlNotificationsService = graphQlNotificationsService ?? throw new ArgumentNullException(nameof(graphQlNotificationsService));
         }
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SmartFace.GoogleCalendarsConnector.Models
 {
-    public class StreamGroupAggregation
+    public class FrameProcessedNotification
     {
         public StreamInformation StreamInformation { get; set; }
         public FrameInformation FrameInformation { get; set; }

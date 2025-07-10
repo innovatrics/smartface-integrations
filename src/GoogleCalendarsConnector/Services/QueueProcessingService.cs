@@ -7,6 +7,7 @@ using Innovatrics.SmartFace.Integrations.Shared.SmartFaceRestApiClient;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using SmartFace.GoogleCalendarsConnector.Models;
+using SmartFace.GoogleCalendarsConnector.Service;
 
 namespace SmartFace.GoogleCalendarsConnector.Service
 {
@@ -15,7 +16,8 @@ namespace SmartFace.GoogleCalendarsConnector.Service
         private readonly int MAX_PARALLEL_BLOCKS = 4;
 
         private readonly ILogger _logger;
-        private readonly GoogleCalendarService _autoEnrollmentService;
+        private readonly GoogleCalendarService _googleCalendarService;
+        private readonly StreamGroupTracker _streamGroupTracker;
 
         private ActionBlock<StreamGroupAggregation> _actionBlock;
 
@@ -23,11 +25,11 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             ILogger logger,
             IConfiguration configuration,
             StreamGroupTracker streamGroupTracker,
-            GoogleCalendarService restGoogleCalendarConnector)
+            GoogleCalendarService googleCalendarService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _streamGroupTracker = streamGroupTracker ?? throw new ArgumentNullException(nameof(streamGroupTracker));
-            _googleCalendarConnector = restGoogleCalendarConnector ?? throw new ArgumentNullException(nameof(restGoogleCalendarConnector));
+            _googleCalendarService = googleCalendarService ?? throw new ArgumentNullException(nameof(googleCalendarService));
 
             var config = configuration.GetSection("Config").Get<Config>();
 
@@ -39,9 +41,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
 
         public void Start()
         {
-            _mappings = _streamMappingService.CreateMappings();
-
-            _actionBlock = new ActionBlock<Notification>(async notification =>
+            _actionBlock = new ActionBlock<StreamGroupAggregation>(async notification =>
             {
                 try
                 {
@@ -61,7 +61,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             {
                 _logger.Information("Action triggered for group {GroupName}", groupName);
 
-                await _googleCalendarConnector.CreateEventAsync(groupName);
+                await _googleCalendarService.CreateEventAsync(groupName);
             };
         }
 
@@ -71,7 +71,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             await _actionBlock.Completion;
         }
 
-        public void ProcessNotification(Notification notification)
+        public void ProcessNotification(StreamGroupAggregation notification)
         {
             ArgumentNullException.ThrowIfNull(notification);
 

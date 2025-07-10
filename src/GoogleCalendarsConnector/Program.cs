@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using SmartFace.GoogleCalendarsConnector.NotificationReceivers;
+using SmartFace.GoogleCalendarsConnector.Service;
 using SmartFace.GoogleCalendarsConnector.Service;
 
 namespace SmartFace.GoogleCalendarsConnector
@@ -61,23 +61,26 @@ namespace SmartFace.GoogleCalendarsConnector
             services.AddHttpClient();
             services.AddSingleton(logger);
 
-            services.AddSingleton<IGrpcStreamSubscriber, GrpcStreamSubscriber>();
-            services.AddSingleton<GrpcStreamSubscriberFactory>();
-            services.AddSingleton<GrpcReaderFactory>();
+            // Add StreamGroupTracker with configuration
+            services.AddSingleton<StreamGroupTracker>(provider =>
+            {
+                var config = provider.GetRequiredService<IConfiguration>();
+                var window = TimeSpan.FromMinutes(config.GetValue("StreamGroupTracker:WindowMinutes", 5));
+                var minPedestrians = config.GetValue("StreamGroupTracker:MinPedestrians", 3);
+                var minFaces = config.GetValue("StreamGroupTracker:MinFaces", 2);
+                
+                return new StreamGroupTracker(window, minPedestrians, minFaces, groupName => 
+                {
+                    // This will be set up in QueueProcessingService
+                });
+            });
 
-            services.AddSingleton<OAuthService>();
-            services.AddSingleton<ExclusiveMemoryCache>();
-            services.AddSingleton<DebouncingService>();
-            services.AddSingleton<TrackletDebounceService>();
-            services.AddSingleton<ValidationService>();
-            services.AddSingleton<CropCoordinatesValidator>();
-            services.AddSingleton<StreamConfigurationService>();
             services.AddSingleton<GoogleCalendarService>();
             services.AddSingleton<GraphQlNotificationsService>();
             services.AddSingleton<QueueProcessingService>();
+            services.AddSingleton<MainHostedService>();
 
             services.AddHostedService<MainHostedService>();
-            services.AddHostedService<SanitizationService>();
         }
 
         private static IConfigurationRoot ConfigureBuilder(string[] args)

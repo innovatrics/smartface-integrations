@@ -13,15 +13,19 @@ using GraphQL.Client.Serializer.Newtonsoft;
 using GraphQL;
 using Newtonsoft.Json.Linq;
 
-namespace SmartFace.GoogleCalendarsConnector.Services
+namespace SmartFace.GoogleCalendarsConnector.Service
 {
-    public class GraphQLSubscriptionService(
-        ILogger logger,
-        IConfiguration configuration) : IGraphQLSubscriptionService
+    public class GraphQlNotificationsService : IGraphQLSubscriptionService
     {
-        private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
         private GraphQLHttpClient _graphQLClient;
+
+        public GraphQlNotificationsService(ILogger logger, IConfiguration configuration)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        }
 
         public event Func<StreamGroupAggregation, Task> OnStreamGroupAggregation;
 
@@ -96,12 +100,17 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                     return;
                 }
 
-                await OnFrameProcessed?.Invoke(streamGroupAggregation);
+                await OnStreamGroupAggregation?.Invoke(streamGroupAggregation);
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Error handling subscription data");
             }
         }
+    }
+
+    public class StreamGroupAggregationResponse
+    {
+        public StreamGroupAggregation StreamGroupAggregation { get; set; }
     }
 }
