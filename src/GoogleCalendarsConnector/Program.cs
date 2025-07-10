@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using SmartFace.GoogleCalendarsConnector.Service;
-using SmartFace.GoogleCalendarsConnector.Service;
 
 namespace SmartFace.GoogleCalendarsConnector
 {

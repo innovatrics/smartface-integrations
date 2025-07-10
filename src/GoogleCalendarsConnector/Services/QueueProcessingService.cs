@@ -41,7 +41,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
 
         public void Start()
         {
-            _actionBlock = new ActionBlock<StreamGroupAggregation>(async notification =>
+            _actionBlock = new ActionBlock<StreamGroupAggregation>(notification =>
             {
                 try
                 {
