@@ -61,18 +61,25 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             EnsureCalendarIsInitialized();
 
             var eventsListRequest = _calendarService.Events.List(calendarId);
-            // eventsListRequest.TimeMin = start;
-            // eventsListRequest.TimeMax = end;
-            // eventsListRequest.ShowDeleted = false;
-            // eventsListRequest.SingleEvents = true;
-            // eventsListRequest.MaxResults = 10;
-            // eventsListRequest.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
+            eventsListRequest.TimeMin = start.AddHours(-24);
+            eventsListRequest.TimeMax = end.AddHours(24);
+            eventsListRequest.ShowDeleted = false;
+            eventsListRequest.SingleEvents = true;
+            eventsListRequest.MaxResults = 100;
+            eventsListRequest.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
 
             var events = await eventsListRequest.ExecuteAsync();
 
             var eventsInRange = events.Items.Any(e => e.Start.DateTimeDateTimeOffset >= start && e.End.DateTimeDateTimeOffset <= end);
 
             return eventsInRange;
+        }
+
+        public async Task<bool> HasOverlappingEventAsync(string calendarId, DateTime now)
+        {
+            var start = now;
+            var end = now.AddMinutes(_meetingDurationMin);
+            return await HasOverlappingEventAsync(calendarId, start, end);
         }
 
         private void EnsureCalendarIsInitialized()
