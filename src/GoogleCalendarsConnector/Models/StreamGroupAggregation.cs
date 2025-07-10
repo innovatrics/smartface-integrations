@@ -26,5 +26,35 @@ namespace SmartFace.GoogleCalendarsConnector.Models
 
         public double AverageIdentifications { get; set; }
         public int MaxIdentifications { get; set; }
+
+        public List<IdentificationResult> Identifications { get; set; } = new();
+    }
+
+    public class IdentificationResult
+    {
+        public string IdentificationEventType { get; set; }
+        public string Modality { get; set; }
+        public MemberDetails MemberDetails { get; set; }
+    }
+
+    public class MemberDetails
+    {
+        public string Id { get; set; }
+        public string DisplayName { get; set; }
+        public string FullName { get; set; }
+        public List<Label> Labels { get; set; } = new();
+        public List<MatchedWatchlist> MatchedWatchlists { get; set; } = new();
+    }
+
+    public class Label
+    {
+        public string Key { get; set; }
+        public string Value { get; set; }
+    }
+
+    public class MatchedWatchlist
+    {
+        public string Id { get; set; }
+        public string FullName { get; set; }
     }
 }

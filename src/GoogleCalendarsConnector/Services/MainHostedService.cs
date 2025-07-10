@@ -48,7 +48,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
 
         private Task HandleNotificationAsync(StreamGroupAggregation notification)
         {
-            _logger.Information("Processing HandleNotificationAsync {notification}", new { notification.StreamGroupName, notification.Timestamp });
+            _logger.Information("Processing HandleNotificationAsync {notification}", new { notification.StreamGroupName, notification.MaxPedestrians, notification.MaxIdentifications, notification.AveragePedestrians, notification.AverageIdentifications });
 
             _queueProcessingService.ProcessNotification(notification);
 

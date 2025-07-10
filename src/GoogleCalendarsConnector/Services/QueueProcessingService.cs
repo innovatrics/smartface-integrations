@@ -18,6 +18,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
         private readonly ILogger _logger;
         private readonly GoogleCalendarService _googleCalendarService;
         private readonly StreamGroupTracker _streamGroupTracker;
+        private readonly StreamGroupMapping[] _streamGroupsMapping;
 
         private ActionBlock<StreamGroupAggregation> _actionBlock;
 
@@ -37,6 +38,8 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             {
                 MAX_PARALLEL_BLOCKS = config.MaxParallelActionBlocks;
             }
+
+            //_streamGroupsMapping = GetMappingFromConfig();
         }
 
         public void Start()
@@ -45,7 +48,7 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             {
                 try
                 {
-                    _streamGroupTracker.OnDataReceived(notification.StreamGroupName, notification.AveragePedestrians, notification.AverageFaces);
+                    _streamGroupTracker.OnDataReceived(notification);
                 }
                 catch (Exception ex)
                 {
@@ -61,7 +64,28 @@ namespace SmartFace.GoogleCalendarsConnector.Service
             {
                 _logger.Information("Action triggered for group {GroupName}", groupName);
 
-                await _googleCalendarService.CreateEventAsync(groupName);
+                var calendarId = _streamGroupsMapping
+                                        .Where(x => x.GroupName == groupName)?
+                                        .FirstOrDefault()?
+                                        .CalendarId;
+
+                if (calendarId == null)
+                {
+                    _logger.Warning("Calendar ID not found for group {GroupName}", groupName);
+                    return;
+                }
+
+                var hasOverlappingEvent = await _googleCalendarService.HasOverlappingEventAsync(calendarId, DateTime.Now);
+
+                if (hasOverlappingEvent)
+                {
+                    _logger.Warning("Overlapping event found for group {GroupName}", groupName);
+                    return;
+                }
+
+                await _googleCalendarService.CreateEventAsync(groupName, calendarId);                
+
+                _logger.Information("Trigger finished for group {GroupName}", groupName);
             };
         }
 
@@ -77,5 +101,11 @@ namespace SmartFace.GoogleCalendarsConnector.Service
 
             _actionBlock.Post(notification);
         }
+
+        // private Dictionary<StreamGroupMapping, string> GetMappingFromConfig()
+        // {
+        //     var config = _configuration.GetSection("StreamGroupMapping").Get<StreamGroupMapping[]>();
+        //     return config;
+        // }
     }
 }

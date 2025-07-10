@@ -1,6 +1,7 @@
 subscription {
   streamGroupAggregation {
     streamGroupName
+    timestamp
 
     maxPedestrians
     averagePedestrians
