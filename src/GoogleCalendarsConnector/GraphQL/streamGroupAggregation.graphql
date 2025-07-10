@@ -1,0 +1,14 @@
+subscription {
+  streamGroupAggregation {
+    streamGroupName
+
+    maxPedestrians
+    averagePedestrians
+
+    maxFaces
+    averageFaces
+
+    maxIdentifications
+    averageIdentifications
+  }
+}
