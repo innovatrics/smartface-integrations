@@ -46,6 +46,16 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             return Task.CompletedTask;
         }
 
+        public Task DenyAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task BlockAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
+
         private async Task SendOpenAsync(string scheme, string host, int? port, string username, string password, string @params)
         {
             var httpClient = _httpClientFactory.CreateClient();

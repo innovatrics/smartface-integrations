@@ -106,7 +106,7 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
 
             _graphQlClient = await CreateGraphQlClient();
 
-            var _graphQLRequest = new GraphQLRequest
+            var graphQLRequest = new GraphQLRequest
             {
                 Query = @"
                 subscription {
@@ -158,14 +158,14 @@ namespace SmartFace.AutoEnrollment.NotificationReceivers
                 }"
             };
 
-            var _subscriptionStream = _graphQlClient.CreateSubscriptionStream<IdentificationEventResponse>(
-                _graphQLRequest,
+            var subscriptionStream = _graphQlClient.CreateSubscriptionStream<IdentificationEventResponse>(
+                graphQLRequest,
                 ex =>
                 {
                     _logger.Error(ex, "GraphQL subscription init error");
                 });
 
-            _subscription = _subscriptionStream.Subscribe(
+            _subscription = subscriptionStream.Subscribe(
                     onNext: response =>
                     {
                         if (response.Data != null)

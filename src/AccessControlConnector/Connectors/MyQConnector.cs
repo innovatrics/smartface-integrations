@@ -195,5 +195,15 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 this.logger.Warning($"Unlocking failed for printer {printer}. Status: {response.StatusCode}, Message: {await response.Content.ReadAsStringAsync()}");
             }
         }
+
+        public Task DenyAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task BlockAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

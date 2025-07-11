@@ -23,14 +23,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             IHttpClientFactory httpClientFactory
         )
         {
-            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this._configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this._httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
         public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            this._logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
+            _logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
             await this.SendOpenAsync(
                 accessControlMapping.Schema,
@@ -49,9 +49,19 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             return Task.CompletedTask;
         }
 
+        public Task DenyAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task BlockAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        {
+            return Task.CompletedTask;
+        }
+
         private async Task SendOpenAsync(string scheme, string host, int? port, string username, string password, string token)
         {
-            var httpClient = this._httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
             var requestUri = $"{scheme ?? "http"}://{host}:{port}/vapix/doorcontrol";
 
@@ -73,13 +83,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
 
-            this._logger.Information("SendOpenAsync to {url} with {body}", requestUri, jsonContent);
+            _logger.Information("SendOpenAsync to {url} with {body}", requestUri, jsonContent);
 
             var httpResponse = await httpClient.SendAsync(httpRequest);
 
             httpResponse.EnsureSuccessStatusCode();
 
-            this._logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            _logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
         }
     }
 }
