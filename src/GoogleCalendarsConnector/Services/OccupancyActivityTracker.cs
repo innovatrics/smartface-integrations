@@ -1,12 +1,14 @@
-using Google.Apis.Calendar.v3.Data;
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
+using Serilog;
+using Google.Apis.Calendar.v3.Data;
+
 namespace SmartFace.GoogleCalendarsConnector.Services
 {
 
-    public class StreamActivityTracker
+    public class OccupancyActivityTracker
     {
         private class StreamState
         {
@@ -17,13 +19,14 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 DateTime.UtcNow - LastEventTime < window;
         }
 
+        private readonly ILogger _logger;
         private readonly TimeSpan _debounceWindow = TimeSpan.FromMinutes(30);
         private readonly ConcurrentDictionary<string, StreamState> _states = new();
 
         private readonly Func<string, Task<Event?>> _findExistingEvent;
         private readonly Func<string, DateTime, DateTime, Task<string>> _createEvent;
 
-        public StreamActivityTracker(
+        public OccupancyActivityTracker(
             ILogger logger,
             Func<string, Task<Event?>> findExistingEvent,
             Func<string, DateTime, DateTime, Task<string>> createEvent)

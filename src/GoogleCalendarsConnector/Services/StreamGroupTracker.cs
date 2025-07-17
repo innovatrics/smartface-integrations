@@ -17,25 +17,25 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly int _minIdentifications;
 
         private readonly Dictionary<string, List<AggregationSnapshot>> _history = new();
+        private readonly Dictionary<string, bool> _occupancyStates = new();
         private readonly object _lock = new();
 
-        public event Action<string> OnTrigger;
+        public event Action<string, bool>? OnOccupancyChanged;
 
         public StreamGroupTracker(ILogger logger, IConfiguration configuration)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             if (configuration == null)
-            {
                 throw new ArgumentNullException(nameof(configuration));
-            }
 
             _interval = TimeSpan.FromSeconds(configuration.GetValue("StreamGroupTracker:IntervalSec", 15));
             _minPedestrians = configuration.GetValue("StreamGroupTracker:MinPedestrians", 1);
             _minFaces = configuration.GetValue("StreamGroupTracker:MinFaces", 0);
             _minIdentifications = configuration.GetValue("StreamGroupTracker:MinIdentifications", 0);
 
-            _logger?.Information("StreamGroupTracker initialized with interval: {Interval}, MinPedestrians: {MinPedestrians}, MinFaces: {MinFaces}", _interval, _minPedestrians, _minFaces);
+            _logger.Information("StreamGroupTracker initialized with interval: {Interval}, MinPedestrians: {MinPedestrians}, MinFaces: {MinFaces}, MinIdentifications: {MinIdentifications}",
+                _interval, _minPedestrians, _minFaces, _minIdentifications);
         }
 
         public void OnDataReceived(StreamGroupAggregation aggregation)
@@ -54,7 +54,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
                 var historyForGroup = _history[groupName];
 
-                var aggregationSnapshot = new AggregationSnapshot
+                var snapshot = new AggregationSnapshot
                 {
                     Timestamp = now,
                     AveragePedestrians = aggregation.AveragePedestrians,
@@ -62,52 +62,44 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                     AverageIdentifications = aggregation.AverageIdentifications
                 };
 
-                historyForGroup.Add(aggregationSnapshot);
+                historyForGroup.Add(snapshot);
+                _logger.Debug("Added snapshot for {GroupName}: {@Snapshot}", groupName, snapshot);
 
-                _logger?.Debug("Added new snapshot for group {GroupName}: {@Snapshot}", groupName, aggregationSnapshot);
-
-                var removedCount = historyForGroup.RemoveAll(snap => now - snap.Timestamp > _interval);
-                if (removedCount > 0)
+                int removed = historyForGroup.RemoveAll(snap => now - snap.Timestamp > _interval);
+                if (removed > 0)
                 {
-                    _logger?.Debug("Removed {RemovedCount} old snapshots for group {GroupName}", removedCount, groupName);
+                    _logger.Debug("Removed {Count} old snapshots for group {GroupName}", removed, groupName);
                 }
 
-                EvaluateAndRaiseEvent(groupName);
+                EvaluateOccupancy(groupName);
             }
         }
 
-        private void EvaluateAndRaiseEvent(string groupName)
+        private void EvaluateOccupancy(string groupName)
         {
             var entries = _history[groupName];
             if (!entries.Any())
-            {
                 return;
-            }
-
-            _logger?.Information("Evaluating group {GroupName}", groupName);
-            _logger?.Information("Entries: {@Entries}", entries.Select(s => s.AveragePedestrians));
 
             double avgPedestrians = entries.Average(e => e.AveragePedestrians);
             double avgFaces = entries.Average(e => e.AverageFaces);
             double avgIdentifications = entries.Average(e => e.AverageIdentifications);
 
-            _logger?.Information(
-                "Evaluating group {GroupName}: AvgPedestrians={AvgPedestrians}, AvgFaces={AvgFaces}, AvgIdentifications={AvgIdentifications}",
-                groupName, avgPedestrians, avgFaces, avgIdentifications
-            );
+            _logger.Information("Evaluating group {GroupName}: AvgPedestrians={AvgPedestrians}, AvgFaces={AvgFaces}, AvgIdentifications={AvgIdentifications}",
+                groupName, avgPedestrians, avgFaces, avgIdentifications);
 
-            if (
+            bool isOccupied =
                 (avgPedestrians >= _minPedestrians && avgPedestrians > 0) ||
                 (avgFaces >= _minFaces && avgFaces > 0) ||
-                (avgIdentifications >= _minIdentifications && avgIdentifications > 0)
-            )
+                (avgIdentifications >= _minIdentifications && avgIdentifications > 0);
+
+            _occupancyStates.TryGetValue(groupName, out bool wasOccupied);
+
+            if (wasOccupied != isOccupied)
             {
-                _logger?.Information("Triggering event for group {GroupName}", groupName
-                );
-
-                OnTrigger?.Invoke(groupName);
-
-                _history[groupName].Clear();
+                _occupancyStates[groupName] = isOccupied;
+                _logger.Information("Occupancy changed for group {GroupName} → {State}", groupName, isOccupied ? "OCCUPIED" : "EMPTY");
+                OnOccupancyChanged?.Invoke(groupName, isOccupied);
             }
         }
     }

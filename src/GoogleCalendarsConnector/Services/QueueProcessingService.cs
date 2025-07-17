@@ -22,7 +22,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly StreamGroupMapping[] _streamGroupsMapping;
         // Remove CalendarCacheService
         // private readonly CalendarCacheService _calendarCacheService;
-        private readonly StreamActivityTracker _streamActivityTracker;
+        private readonly OccupancyActivityTracker _occupancyActivityTracker;
 
         private ActionBlock<StreamGroupAggregation> _actionBlock;
 
@@ -32,14 +32,14 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             StreamGroupTracker streamGroupTracker,
             GoogleCalendarService googleCalendarService,
             // CalendarCacheService calendarCacheService,
-            StreamActivityTracker streamActivityTracker
+            OccupancyActivityTracker occupancyActivityTracker
         )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _streamGroupTracker = streamGroupTracker ?? throw new ArgumentNullException(nameof(streamGroupTracker));
             _googleCalendarService = googleCalendarService ?? throw new ArgumentNullException(nameof(googleCalendarService));
             // _calendarCacheService = calendarCacheService ?? throw new ArgumentNullException(nameof(calendarCacheService));
-            _streamActivityTracker = streamActivityTracker ?? throw new ArgumentNullException(nameof(streamActivityTracker));
+            _occupancyActivityTracker = occupancyActivityTracker ?? throw new ArgumentNullException(nameof(occupancyActivityTracker));
 
             var config = configuration.GetSection("Config").Get<Config>();
 
@@ -67,9 +67,9 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 MaxDegreeOfParallelism = _maxParallelBlocks
             });
 
-            _streamGroupTracker.OnTrigger += async (groupName) =>
+            _streamGroupTracker.OnOccupancyChanged += async (groupName, isOccupied) =>
             {
-                _logger.Information("Action triggered for group {GroupName}", groupName);
+                _logger.Information("Occupancy changed for group {GroupName} to {IsOccupied}", groupName, isOccupied);
 
                 try
                 {
@@ -84,7 +84,16 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                         return;
                     }
 
-                    await _streamActivityTracker.OnActivityAsync(groupName, true, calendarId);
+                    switch (isOccupied)
+                    {
+                        case true:
+                            await _occupancyActivityTracker.HandleGraphQLUpdateAsync(groupName, true);
+                            break;
+
+                        // case false:
+                        //     await _occupancyActivityTracker.OnActivityAsync(groupName, false, calendarId);
+                        //     break;
+                    }
                 }
                 catch (Exception ex)
                 {
