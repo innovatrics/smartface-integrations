@@ -46,17 +46,55 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             await _calendarService.Events.Delete("primary", eventId).ExecuteAsync();
         }
 
-        public async Task CreateEventAsync(string groupName, string calendarId, string[] attendeesEmails)
+        public async Task UpdateMeetingEndTimeAsync(string calendarId, string eventId, DateTime newEnd)
         {
-            // Create a simple event for the stream group
-            var summary = $"Stream Group Activity: {groupName}";
-            var description = $"Activity detected in stream group {groupName}";
-            var location = "SmartFace System";
-            var start = DateTime.UtcNow;
-            var end = start.AddMinutes(_meetingDurationMin);
-            var attendees = attendeesEmails ?? new string[] { };
+            EnsureCalendarIsInitialized();
 
-            await CreateMeetingAsync(calendarId, summary, description, location, start, end, attendees);
+            var existing = await _calendarService.Events.Get(calendarId, eventId).ExecuteAsync();
+            existing.End = new EventDateTime
+            {
+                DateTimeDateTimeOffset = newEnd,
+                TimeZone = "Europe/Bratislava"
+            };
+
+            await _calendarService.Events.Update(existing, calendarId, eventId).ExecuteAsync();
+        }
+
+
+        public async Task<string> CreateMeetingAsync(string calendarId, string summary, string description, string location, DateTime start, DateTime end, string[] attendeesEmails)
+        {
+            EnsureCalendarIsInitialized();
+
+            var newEvent = new Event
+            {
+                Summary = summary,
+                Description = description,
+                Location = location,
+                Start = new EventDateTime
+                {
+                    DateTimeDateTimeOffset = start,
+                    TimeZone = "Europe/Bratislava"
+                },
+                End = new EventDateTime
+                {
+                    DateTimeDateTimeOffset = end,
+                    TimeZone = "Europe/Bratislava"
+                },
+                Attendees = Array.ConvertAll(attendeesEmails, email => new EventAttendee { Email = email }),
+                Reminders = new Event.RemindersData
+                {
+                    UseDefault = true
+                }
+            };
+
+            _logger.Information("Creating meeting: {Summary}, {Description}, {Location}, {Start}, {End}, {@Attendees}", summary, description, location, start, end, attendeesEmails);
+
+            var request = _calendarService.Events.Insert(newEvent, calendarId);
+            var createdEvent = await request.ExecuteAsync();
+
+            _logger.Information("Meeting created: {Id}", createdEvent.Id);
+
+            return createdEvent.Id; // or return createdEvent.HtmlLink for the calendar URL
         }
 
         public async Task<GoogleCalendarEvent[]> GetOverlappingEventsAsync(string calendarId, DateTime start, DateTime end)
@@ -129,42 +167,6 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             }
 
             return credential;
-        }
-
-        public async Task<string> CreateMeetingAsync(string calendarId, string summary, string description, string location, DateTime start, DateTime end, string[] attendeesEmails)
-        {
-            EnsureCalendarIsInitialized();
-
-            var newEvent = new Event
-            {
-                Summary = summary,
-                Description = description,
-                Location = location,
-                Start = new EventDateTime
-                {
-                    DateTimeDateTimeOffset = start,
-                    TimeZone = "Europe/Bratislava"
-                },
-                End = new EventDateTime
-                {
-                    DateTimeDateTimeOffset = end,
-                    TimeZone = "Europe/Bratislava"
-                },
-                Attendees = Array.ConvertAll(attendeesEmails, email => new EventAttendee { Email = email }),
-                Reminders = new Event.RemindersData
-                {
-                    UseDefault = true
-                }
-            };
-
-            _logger.Information("Creating meeting: {Summary}, {Description}, {Location}, {Start}, {End}, {@Attendees}", summary, description, location, start, end, attendeesEmails);
-
-            var request = _calendarService.Events.Insert(newEvent, calendarId);
-            var createdEvent = await request.ExecuteAsync();
-
-            _logger.Information("Meeting created: {Id}", createdEvent.Id);
-
-            return createdEvent.Id; // or return createdEvent.HtmlLink for the calendar URL
         }
     }
 }
