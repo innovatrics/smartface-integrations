@@ -16,6 +16,8 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             public DateTime LastEventTime { get; set; }
             public string? LastEventId { get; set; }
             public DateTime LastEventEndTime { get; set; }
+            public DateTime LastSeenOccupied { get; set; }
+            public DateTime? LastSeenUnoccupied { get; set; }
 
             public bool IsInDebounceWindow(TimeSpan window) =>
                 DateTime.UtcNow - LastEventTime < window;
@@ -24,6 +26,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly ILogger _logger;
         private readonly GoogleCalendarService _calendarService;
         private readonly TimeSpan _eventWindow = TimeSpan.FromMinutes(30);
+        private readonly TimeSpan _cooldownPeriod = TimeSpan.FromMinutes(5);
         private readonly ConcurrentDictionary<string, StreamState> _states = new();
 
         public OccupancyActivityTracker(
@@ -40,9 +43,11 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             var now = DateTime.UtcNow;
             var state = _states.GetOrAdd(streamGroupName, _ => new StreamState());
 
-            // Step 1: Occupancy DETECTED
             if (isOccupied)
             {
+                state.LastSeenOccupied = now;
+                state.LastSeenUnoccupied = null;
+
                 var overlappingEvents = await _calendarService.GetOverlappingEventsAsync(
                     calendarId,
                     now.AddMinutes(-2),
@@ -55,7 +60,6 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
                 if (matching != null)
                 {
-                    // Optionally: extend the event if ending soon
                     var buffer = now.AddMinutes(5);
                     if (matching.End < buffer)
                     {
@@ -106,22 +110,32 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
                 _logger.Information("Created event for {Group} at {Start}, ID: {EventId}", streamGroupName, start.ToString("HH:mm"), eventId);
             }
-
-            // Step 2: Occupancy CLEARED
             else
             {
+                // Occupancy OFF
+                state.LastSeenUnoccupied ??= now;
+
+                var timeSinceUnoccupied = now - state.LastSeenUnoccupied.Value;
+
+                if (timeSinceUnoccupied < _cooldownPeriod)
+                {
+                    _logger.Information("Unoccupied for {Duration} of {Cooldown}, waiting before deleting for {Group}.", timeSinceUnoccupied, _cooldownPeriod, streamGroupName);
+                    return;
+                }
+
                 if (!string.IsNullOrEmpty(state.LastEventId))
                 {
-                    _logger.Information("Ending event for {Group} (ID: {EventId}) due to cleared occupancy", streamGroupName, state.LastEventId);
+                    _logger.Information("Deleting event for {Group} (ID: {EventId}) after cooldown.", streamGroupName, state.LastEventId);
                     await _calendarService.DeleteMeetingAsync(state.LastEventId);
 
                     state.LastEventId = null;
                     state.LastEventTime = DateTime.MinValue;
                     state.LastEventEndTime = DateTime.MinValue;
+                    state.LastSeenUnoccupied = null;
                 }
                 else
                 {
-                    _logger.Information("No active event for {Group} to end on occupancy cleared", streamGroupName);
+                    _logger.Information("No active event to delete for {Group} after cooldown.", streamGroupName);
                 }
             }
         }

@@ -1,18 +1,14 @@
 using System;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Linq;
-
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Serilog;
 
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
-using Google.Apis.Util.Store;
-
-using Serilog;
 
 using SmartFace.GoogleCalendarsConnector.Models;
 
@@ -24,17 +20,23 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly IConfiguration _configuration;
         private CalendarService _calendarService;
 
-        private readonly int _meetingDurationMin = 30;
+        private readonly int _meetingDurationMin;
+        private readonly string _timeZone;
+        private readonly int _lookbackHours;
+        private readonly int _lookaheadHours;
+        private readonly string _applicationName;
 
-        public GoogleCalendarService(
-            ILogger logger,
-            IConfiguration configuration
-        )
+        public GoogleCalendarService(ILogger logger, IConfiguration configuration)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
             _meetingDurationMin = configuration.GetValue("GoogleCalendar:MeetingDurationMin", 30);
+            _timeZone = configuration.GetValue("GoogleCalendar:TimeZone", "Europe/Bratislava");
+            _applicationName = configuration.GetValue("GoogleCalendar:ApplicationName", "Google Calendar API");
+
+            _lookbackHours = configuration.GetValue("GoogleCalendar:EventsLookbackHours", 24);
+            _lookaheadHours = configuration.GetValue("GoogleCalendar:EventsLookaheadHours", 24);
 
             InitializeCalendarService();
         }
@@ -42,7 +44,6 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         public async Task DeleteMeetingAsync(string eventId)
         {
             EnsureCalendarIsInitialized();
-
             await _calendarService.Events.Delete("primary", eventId).ExecuteAsync();
         }
 
@@ -54,12 +55,11 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             existing.End = new EventDateTime
             {
                 DateTimeDateTimeOffset = newEnd,
-                TimeZone = "Europe/Bratislava"
+                TimeZone = _timeZone
             };
 
             await _calendarService.Events.Update(existing, calendarId, eventId).ExecuteAsync();
         }
-
 
         public async Task<string> CreateMeetingAsync(string calendarId, string summary, string description, string location, DateTime start, DateTime end, string[] attendeesEmails)
         {
@@ -73,12 +73,12 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 Start = new EventDateTime
                 {
                     DateTimeDateTimeOffset = start,
-                    TimeZone = "Europe/Bratislava"
+                    TimeZone = _timeZone
                 },
                 End = new EventDateTime
                 {
                     DateTimeDateTimeOffset = end,
-                    TimeZone = "Europe/Bratislava"
+                    TimeZone = _timeZone
                 },
                 Attendees = Array.ConvertAll(attendeesEmails, email => new EventAttendee { Email = email }),
                 Reminders = new Event.RemindersData
@@ -94,7 +94,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
             _logger.Information("Meeting created: {Id}", createdEvent.Id);
 
-            return createdEvent.Id; // or return createdEvent.HtmlLink for the calendar URL
+            return createdEvent.Id;
         }
 
         public async Task<GoogleCalendarEvent[]> GetOverlappingEventsAsync(string calendarId, DateTime start, DateTime end)
@@ -102,8 +102,8 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             EnsureCalendarIsInitialized();
 
             var eventsListRequest = _calendarService.Events.List(calendarId);
-            eventsListRequest.TimeMinDateTimeOffset = start.AddHours(-24);
-            eventsListRequest.TimeMaxDateTimeOffset = end.AddHours(24);
+            eventsListRequest.TimeMinDateTimeOffset = start.AddHours(-_lookbackHours);
+            eventsListRequest.TimeMaxDateTimeOffset = end.AddHours(_lookaheadHours);
             eventsListRequest.ShowDeleted = false;
             eventsListRequest.SingleEvents = true;
             eventsListRequest.MaxResults = 100;
@@ -112,17 +112,18 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             var events = await eventsListRequest.ExecuteAsync();
 
             var eventsInRange = events.Items
-                                        .Where(e => e.Start.DateTimeDateTimeOffset >= start && e.End.DateTimeDateTimeOffset <= end)
-                                        .Select(s => new GoogleCalendarEvent
-                                        {
-                                            Start = s.Start.DateTimeDateTimeOffset?.DateTime ?? DateTime.MinValue,
-                                            End = s.End.DateTimeDateTimeOffset?.DateTime ?? DateTime.MinValue,
-                                            Summary = s.Summary,
-                                            Description = s.Description,
-                                            Location = s.Location,
-                                            Attendees = s.Attendees?.Select(a => a.Email).ToArray() ?? new string[0]
-                                        })
-                                        .ToArray();
+                .Where(e => e.Start.DateTimeDateTimeOffset >= start && e.End.DateTimeDateTimeOffset <= end)
+                .Select(e => new GoogleCalendarEvent
+                {
+                    Start = e.Start.DateTimeDateTimeOffset?.DateTime ?? DateTime.MinValue,
+                    End = e.End.DateTimeDateTimeOffset?.DateTime ?? DateTime.MinValue,
+                    Summary = e.Summary,
+                    Description = e.Description,
+                    Location = e.Location,
+                    Attendees = e.Attendees?.Select(a => a.Email).ToArray() ?? Array.Empty<string>(),
+                    EventId = e.Id
+                })
+                .ToArray();
 
             return eventsInRange;
         }
@@ -130,24 +131,22 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private void EnsureCalendarIsInitialized()
         {
             if (_calendarService == null)
-            {
                 InitializeCalendarService();
-            }
         }
 
         private void InitializeCalendarService()
         {
             _logger.Information("Initializing calendar service");
 
-            var credentialsPath = _configuration.GetValue<string>("GoogleCalendar:CredentialsPath", "credentials.json");
-            var tokenPath = _configuration.GetValue<string>("GoogleCalendar:TokenPath", "token.json");
+            var credentialsPath = _configuration.GetValue("GoogleCalendar:CredentialsPath", "credentials.json");
+            var tokenPath = _configuration.GetValue("GoogleCalendar:TokenPath", "token.json");
 
             var credential = Authenticate(credentialsPath, tokenPath);
 
-            _calendarService = new CalendarService(new BaseClientService.Initializer()
+            _calendarService = new CalendarService(new BaseClientService.Initializer
             {
                 HttpClientInitializer = credential,
-                ApplicationName = "Google Calendar API Wrapper"
+                ApplicationName = _applicationName
             });
         }
 
