@@ -21,6 +21,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly StreamGroupTracker _streamGroupTracker;
         private readonly StreamGroupMapping[] _streamGroupsMapping;
         private readonly CalendarCacheService _calendarCacheService;
+        private readonly StreamActivityTracker _streamActivityTracker;
 
         private ActionBlock<StreamGroupAggregation> _actionBlock;
 
@@ -29,12 +30,14 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             IConfiguration configuration,
             StreamGroupTracker streamGroupTracker,
             GoogleCalendarService googleCalendarService,
-            CalendarCacheService calendarCacheService)
+            CalendarCacheService calendarCacheService,
+            StreamActivityTracker streamActivityTracker)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _streamGroupTracker = streamGroupTracker ?? throw new ArgumentNullException(nameof(streamGroupTracker));
             _googleCalendarService = googleCalendarService ?? throw new ArgumentNullException(nameof(googleCalendarService));
             _calendarCacheService = calendarCacheService ?? throw new ArgumentNullException(nameof(calendarCacheService));
+            _streamActivityTracker = streamActivityTracker ?? throw new ArgumentNullException(nameof(streamActivityTracker));
 
             var config = configuration.GetSection("Config").Get<Config>();
 
@@ -79,26 +82,11 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                     return;
                 }
 
-                var now = DateTime.Now;
-                var start = now;
-                var end = now.AddMinutes(30); // Assuming 30-minute meeting duration
+                // Use StreamActivityTracker for debounced event creation
+                await _streamActivityTracker.OnActivityAsync(groupName, true, calendarId);
 
-                // Use cache to check for overlapping events
-                _logger.Debug("Checking for overlapping events in cache for group {GroupName} with calendar {CalendarId}", groupName, calendarId);
-
-                var hasOverlappingEvent = await _calendarCacheService.HasOverlappingEventAsync(calendarId, start, end);
-
-                if (hasOverlappingEvent)
-                {
-                    _logger.Warning("Overlapping event found for group {GroupName} in calendar {CalendarId}", groupName, calendarId);
-                    return;
-                }
-
-                _logger.Debug("No overlapping events found, creating new event for group {GroupName} in calendar {CalendarId}", groupName, calendarId);
-
-                await _googleCalendarService.CreateEventAsync(groupName, calendarId, new string[] { });
-
-                _logger.Information("Trigger finished for group {GroupName}", groupName);
+                // If you want to handle negative/inactivity, call:
+                // await _streamActivityTracker.OnActivityAsync(groupName, false, calendarId);
             };
         }
 
