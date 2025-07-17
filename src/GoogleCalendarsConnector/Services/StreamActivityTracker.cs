@@ -4,6 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
 using SmartFace.GoogleCalendarsConnector.Models;
+using System.Collections.Concurrent;
+using System.Linq;
 
 namespace SmartFace.GoogleCalendarsConnector.Services
 {
@@ -14,19 +16,22 @@ namespace SmartFace.GoogleCalendarsConnector.Services
     {
         private readonly ILogger _logger;
         private readonly GoogleCalendarService _calendarService;
-        private readonly CalendarCacheService _cacheService;
         private readonly Dictionary<string, ActivityState> _groupStates = new();
         private readonly TimeSpan _debounceDuration;
         private readonly object _lock = new();
 
+        // In-memory event cache (calendarId + time window as key)
+        private readonly ConcurrentDictionary<string, GoogleCalendarEvent> _eventCache = new();
+        private readonly TimeSpan _defaultCacheExpiration = TimeSpan.FromMinutes(30);
+        private readonly int _maxCacheSize = 1000;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="StreamActivityTracker"/> class.
         /// </summary>
-        public StreamActivityTracker(ILogger logger, GoogleCalendarService calendarService, CalendarCacheService cacheService, TimeSpan? debounceDuration = null)
+        public StreamActivityTracker(ILogger logger, GoogleCalendarService calendarService, TimeSpan? debounceDuration = null)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _calendarService = calendarService ?? throw new ArgumentNullException(nameof(calendarService));
-            _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
             _debounceDuration = debounceDuration ?? TimeSpan.FromMinutes(30);
         }
 
@@ -83,7 +88,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 var now = DateTime.UtcNow;
                 var end = now.Add(_debounceDuration);
 
-                var hasEvent = await _cacheService.HasOverlappingEventAsync(calendarId, now, end);
+                var hasEvent = await HasOverlappingEventAsync(calendarId, now, end);
                 if (!hasEvent)
                 {
                     // Create event
@@ -118,6 +123,69 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             {
                 _logger.Error(ex, "Error in HandleDebouncedEventAsync for {GroupName}", groupName);
             }
+        }
+
+        // Cache logic
+        private async Task<bool> HasOverlappingEventAsync(string calendarId, DateTime start, DateTime end)
+        {
+            CleanupExpiredEntries();
+            var overlappingInCache = _eventCache.Values.Any(e => !e.IsExpired() && e.Start < end && e.End > start);
+            if (overlappingInCache)
+            {
+                _logger.Debug("Cache hit for overlapping event in calendar {CalendarId} at {Start}", calendarId, start);
+                return true;
+            }
+
+            if (_eventCache.Count >= _maxCacheSize)
+            {
+                RemoveOldestEntries(_maxCacheSize / 4);
+            }
+
+            _logger.Debug("Cache miss for overlapping event in calendar {CalendarId} at {Start}, checking API", calendarId, start);
+            var overlappingEvents = await _calendarService.GetOverlappingEventsAsync(calendarId, start, end);
+            foreach (var evt in overlappingEvents)
+            {
+                evt.ExpiresAt = DateTime.UtcNow.Add(_defaultCacheExpiration);
+                _eventCache.TryAdd(GenerateCacheKey(calendarId, evt.Start, evt.End), evt);
+            }
+            return overlappingEvents.Any();
+        }
+
+        private string GenerateCacheKey(string calendarId, DateTime start, DateTime end)
+        {
+            var roundedStart = start.AddSeconds(-start.Second).AddMilliseconds(-start.Millisecond);
+            var roundedEnd = end.AddSeconds(-end.Second).AddMilliseconds(-end.Millisecond);
+            return $"{calendarId}_{roundedStart:yyyyMMddHHmm}_{roundedEnd:yyyyMMddHHmm}";
+        }
+
+        private void CleanupExpiredEntries()
+        {
+            var expiredKeys = _eventCache
+                .Where(kvp => kvp.Value.IsExpired())
+                .Select(kvp => kvp.Key)
+                .ToList();
+            foreach (var key in expiredKeys)
+            {
+                _eventCache.TryRemove(key, out _);
+            }
+            if (expiredKeys.Count > 0)
+            {
+                _logger.Debug("Cleaned up {Count} expired cache entries", expiredKeys.Count);
+            }
+        }
+
+        private void RemoveOldestEntries(int count)
+        {
+            var oldestEntries = _eventCache
+                .OrderBy(kvp => kvp.Value.CreatedAt)
+                .Take(count)
+                .Select(kvp => kvp.Key)
+                .ToList();
+            foreach (var key in oldestEntries)
+            {
+                _eventCache.TryRemove(key, out _);
+            }
+            _logger.Debug("Removed {Count} oldest cache entries", oldestEntries.Count);
         }
 
         /// <summary>

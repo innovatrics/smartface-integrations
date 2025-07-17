@@ -20,7 +20,8 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly GoogleCalendarService _googleCalendarService;
         private readonly StreamGroupTracker _streamGroupTracker;
         private readonly StreamGroupMapping[] _streamGroupsMapping;
-        private readonly CalendarCacheService _calendarCacheService;
+        // Remove CalendarCacheService
+        // private readonly CalendarCacheService _calendarCacheService;
         private readonly StreamActivityTracker _streamActivityTracker;
 
         private ActionBlock<StreamGroupAggregation> _actionBlock;
@@ -30,13 +31,13 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             IConfiguration configuration,
             StreamGroupTracker streamGroupTracker,
             GoogleCalendarService googleCalendarService,
-            CalendarCacheService calendarCacheService,
+            // CalendarCacheService calendarCacheService,
             StreamActivityTracker streamActivityTracker)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _streamGroupTracker = streamGroupTracker ?? throw new ArgumentNullException(nameof(streamGroupTracker));
             _googleCalendarService = googleCalendarService ?? throw new ArgumentNullException(nameof(googleCalendarService));
-            _calendarCacheService = calendarCacheService ?? throw new ArgumentNullException(nameof(calendarCacheService));
+            // _calendarCacheService = calendarCacheService ?? throw new ArgumentNullException(nameof(calendarCacheService));
             _streamActivityTracker = streamActivityTracker ?? throw new ArgumentNullException(nameof(streamActivityTracker));
 
             var config = configuration.GetSection("Config").Get<Config>();
