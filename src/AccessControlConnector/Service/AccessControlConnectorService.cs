@@ -16,6 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IBridgeService _bridgeService;
+        private readonly IDebouncedNotificationService _debouncedNotificationService;
         private ActionBlock<GrantedNotification> _grantedNotificationsActionBlock;
         private ActionBlock<DeniedNotification> _deniedNotificationsActionBlock;
         private ActionBlock<BlockedNotification> _blockedNotificationsActionBlock;
@@ -24,19 +25,25 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
-            IBridgeService bridgeService
+            IBridgeService bridgeService,
+            IDebouncedNotificationService debouncedNotificationService
         )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             _bridgeService = bridgeService ?? throw new ArgumentNullException(nameof(bridgeService));
+            _debouncedNotificationService = debouncedNotificationService ?? throw new ArgumentNullException(nameof(debouncedNotificationService));
 
             MaxParallelBlocks = configuration.GetValue<int>("Config:MaxParallelActionBlocks", 4);
         }
 
         public void Start()
         {
+
+            _debouncedNotificationService
+
+            
             _grantedNotificationsActionBlock = new ActionBlock<GrantedNotification>(async notification =>
             {
                 try

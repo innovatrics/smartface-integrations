@@ -41,3 +41,5 @@ Output/
 [Pp]ublish/
 
 src/GrpcCamera/stream-out/*
+
+**/credentials.json

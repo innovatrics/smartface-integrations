@@ -17,13 +17,14 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Cominfo
 {
-    public class TComServerConnector(ILogger logger, ITServerClientFactory tServerClientFactory) : IAccessControlConnector, IDisposable
+    public class TComServerConnector(ILogger logger, ITServerClientFactory tServerClientFactory, DebouncedNotificationService debouncedNotificationService) : IAccessControlConnector, IDisposable
     {
         private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         private readonly ITServerClientFactory _tServerClientFactory = tServerClientFactory ?? throw new ArgumentNullException(nameof(tServerClientFactory));
         private readonly ConcurrentDictionary<string, ITServerClient> _tServerClients = new();
         private readonly ConcurrentDictionary<string, Timer> _timers = new();
         private readonly ConcurrentDictionary<string, CancellationTokenSource> _cancellationTokenSources = new();
+        private readonly DebouncedNotificationService _debouncedNotificationService = debouncedNotificationService ?? throw new ArgumentNullException(nameof(debouncedNotificationService));
 
         public const string MODE_CLOSE_ON_DENY = "CLOSE_ON_DENY";
         public const string MODE_OPEN_ON_GRANT = "OPEN_ON_GRANT";
