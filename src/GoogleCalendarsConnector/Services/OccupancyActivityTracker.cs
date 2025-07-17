@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading.Tasks;
-
+using Microsoft.Extensions.Configuration;
 using Serilog;
-using Google.Apis.Calendar.v3.Data;
 
 namespace SmartFace.GoogleCalendarsConnector.Services
 {
-
     public class OccupancyActivityTracker
     {
         private class StreamState
@@ -20,26 +19,26 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         }
 
         private readonly ILogger _logger;
+        private readonly GoogleCalendarService _calendarService;
+        private readonly string _calendarId;
         private readonly TimeSpan _debounceWindow = TimeSpan.FromMinutes(30);
         private readonly ConcurrentDictionary<string, StreamState> _states = new();
 
-        private readonly Func<string, Task<Event?>> _findExistingEvent;
-        private readonly Func<string, DateTime, DateTime, Task<string>> _createEvent;
-
         public OccupancyActivityTracker(
             ILogger logger,
-            Func<string, Task<Event?>> findExistingEvent,
-            Func<string, DateTime, DateTime, Task<string>> createEvent)
+            GoogleCalendarService calendarService,
+            IConfiguration configuration)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _findExistingEvent = findExistingEvent ?? throw new ArgumentNullException(nameof(findExistingEvent));
-            _createEvent = createEvent ?? throw new ArgumentNullException(nameof(createEvent));
+            _calendarService = calendarService ?? throw new ArgumentNullException(nameof(calendarService));
+            _calendarId = configuration.GetValue<string>("GoogleCalendar:CalendarId") ?? "primary";
         }
 
-        public async Task HandleGraphQLUpdateAsync(string streamGroupName, bool activityDetected)
+        public async Task HandleOccupancyChangeAsync(string streamGroupName, bool isOccupied)
         {
-            if (!activityDetected)
+            if (!isOccupied)
             {
+                _logger.Information("Occupancy ended in group {Group}, no calendar action needed.", streamGroupName);
                 return;
             }
 
@@ -48,30 +47,43 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
             if (state.IsInDebounceWindow(_debounceWindow))
             {
-                _logger.Information("{streamGroupName} is still in debounce window, skipping...", streamGroupName);
+                _logger.Information("{Group} is in debounce window (until {Until}), skipping calendar event.", streamGroupName, state.LastEventTime.Add(_debounceWindow));
                 return;
             }
 
-            var existing = await _findExistingEvent(streamGroupName);
-            
-            if (existing != null)
-            {
-                _logger.Information("Existing event found for {streamGroupName}, skipping creation.", streamGroupName);
+            var overlappingEvents = await _calendarService.GetOverlappingEventsAsync(
+                _calendarId,
+                now.AddMinutes(-2),
+                now.AddMinutes(2)
+            );
 
+            var matching = overlappingEvents.FirstOrDefault(e =>
+                !string.IsNullOrEmpty(e.Summary) &&
+                e.Summary.Contains(streamGroupName, StringComparison.OrdinalIgnoreCase));
+
+            if (matching != null)
+            {
+                _logger.Information("Existing calendar event found for {Group}, skipping creation.", streamGroupName);
                 state.LastEventTime = now;
-                state.LastEventId = existing.Id;
                 return;
             }
 
             var start = now;
             var end = start.Add(_debounceWindow);
-            var eventId = await _createEvent(streamGroupName, start, end);
+            var eventId = await _calendarService.CreateMeetingAsync(
+                _calendarId,
+                $"Stream Group Activity: {streamGroupName}",
+                $"Activity detected in stream group {streamGroupName}",
+                "SmartFace System",
+                start,
+                end,
+                Array.Empty<string>()
+            );
 
             state.LastEventTime = now;
             state.LastEventId = eventId;
 
-            _logger.Information("Created event for {streamGroupName} at {start:HH:mm}, ID: {eventId}", streamGroupName, start, eventId);
+            _logger.Information("Created event for {Group} at {Start}, ID: {EventId}", streamGroupName, start.ToString("HH:mm"), eventId);
         }
     }
-
 }

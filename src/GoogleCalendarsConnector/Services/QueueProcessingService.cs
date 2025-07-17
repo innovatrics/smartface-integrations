@@ -51,6 +51,8 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
         public void Start()
         {
+            _streamGroupsMapping = GetMappingFromConfig();
+
             _actionBlock = new ActionBlock<StreamGroupAggregation>(notification =>
             {
                 try
@@ -115,10 +117,10 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             _actionBlock.Post(notification);
         }
 
-        // private Dictionary<StreamGroupMapping, string> GetMappingFromConfig()
-        // {
-        //     var config = _configuration.GetSection("StreamGroupMapping").Get<StreamGroupMapping[]>();
-        //     return config;
-        // }
+        private Dictionary<StreamGroupMapping, string> GetMappingFromConfig()
+        {
+            var config = _configuration.GetSection("StreamGroupMapping").Get<StreamGroupMapping[]>();
+            return config;
+        }
     }
 }
