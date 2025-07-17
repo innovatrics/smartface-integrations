@@ -64,7 +64,6 @@ namespace SmartFace.GoogleCalendarsConnector
 
             services.AddSingleton<StreamGroupTracker>();
             services.AddSingleton<GoogleCalendarService>();
-            services.AddSingleton<CalendarCacheService>();
             services.AddSingleton<OccupancyActivityTracker>();
             services.AddSingleton<GraphQlNotificationsService>();
             services.AddSingleton<QueueProcessingService>();

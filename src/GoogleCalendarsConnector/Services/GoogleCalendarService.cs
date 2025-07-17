@@ -41,10 +41,11 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             InitializeCalendarService();
         }
 
-        public async Task DeleteMeetingAsync(string eventId)
+        public async Task DeleteMeetingAsync(string calendarId, string eventId)
         {
             EnsureCalendarIsInitialized();
-            await _calendarService.Events.Delete("primary", eventId).ExecuteAsync();
+
+            await _calendarService.Events.Delete(calendarId, eventId).ExecuteAsync();
         }
 
         public async Task UpdateMeetingEndTimeAsync(string calendarId, string eventId, DateTime newEnd)
@@ -97,22 +98,27 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             return createdEvent.Id;
         }
 
-        public async Task<GoogleCalendarEvent[]> GetOverlappingEventsAsync(string calendarId, DateTime start, DateTime end)
+        public async Task<GoogleCalendarEvent[]> GetOverlappingEventsAsync(string calendarId, DateTimeOffset start, DateTimeOffset end)
         {
             EnsureCalendarIsInitialized();
 
             var eventsListRequest = _calendarService.Events.List(calendarId);
             eventsListRequest.TimeMinDateTimeOffset = start.AddHours(-_lookbackHours);
             eventsListRequest.TimeMaxDateTimeOffset = end.AddHours(_lookaheadHours);
-            eventsListRequest.ShowDeleted = false;
+            eventsListRequest.ShowDeleted = true;
             eventsListRequest.SingleEvents = true;
             eventsListRequest.MaxResults = 100;
             eventsListRequest.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
 
             var events = await eventsListRequest.ExecuteAsync();
 
+            _logger.Information("Events: {@Events}", events.Items.Select(e => new { e.Summary, e.Start, e.End }));
+
             var eventsInRange = events.Items
-                .Where(e => e.Start.DateTimeDateTimeOffset >= start && e.End.DateTimeDateTimeOffset <= end)
+                .Where(e =>
+                    e.Start.DateTimeDateTimeOffset != null && e.End.DateTimeDateTimeOffset != null &&
+                    e.Start.DateTimeDateTimeOffset < end && e.End.DateTimeDateTimeOffset > start
+                )
                 .Select(e => new GoogleCalendarEvent
                 {
                     Start = e.Start.DateTimeDateTimeOffset?.DateTime ?? DateTime.MinValue,

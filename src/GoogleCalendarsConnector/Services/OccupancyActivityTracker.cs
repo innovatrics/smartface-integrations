@@ -48,15 +48,23 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 state.LastSeenOccupied = now;
                 state.LastSeenUnoccupied = null;
 
+                var start = now;
+                var end = start.Add(_eventWindow);
+
                 var overlappingEvents = await _calendarService.GetOverlappingEventsAsync(
                     calendarId,
-                    now.AddMinutes(-2),
-                    now.AddMinutes(2)
+                    start,
+                    end
                 );
 
-                var matching = overlappingEvents.FirstOrDefault(e =>
-                    !string.IsNullOrEmpty(e.Summary) &&
-                    e.Summary.Contains(streamGroupName, StringComparison.OrdinalIgnoreCase));
+                _logger.Information("Overlapping events found for {Group}: {@OverlappingEvents}", streamGroupName, overlappingEvents?.Select(e => e.Summary));
+
+                var matching = overlappingEvents
+                                    .Where(e =>
+                                        !string.IsNullOrEmpty(e.Summary) &&
+                                        e.Summary.Contains(streamGroupName, StringComparison.OrdinalIgnoreCase)
+                                    )
+                                    .FirstOrDefault();
 
                 if (matching != null)
                 {
@@ -79,9 +87,6 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                     return;
                 }
 
-                // Create new event
-                var start = now;
-                var end = start.Add(_eventWindow);
                 var attendees = new List<string>();
 
                 if (identifications != null)
@@ -126,7 +131,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 if (!string.IsNullOrEmpty(state.LastEventId))
                 {
                     _logger.Information("Deleting event for {Group} (ID: {EventId}) after cooldown.", streamGroupName, state.LastEventId);
-                    await _calendarService.DeleteMeetingAsync(state.LastEventId);
+                    await _calendarService.DeleteMeetingAsync(calendarId, state.LastEventId);
 
                     state.LastEventId = null;
                     state.LastEventTime = DateTime.MinValue;

@@ -10,6 +10,7 @@ namespace SmartFace.GoogleCalendarsConnector.Models
         public string Description { get; set; }
         public string Location { get; set; }
         public string[] Attendees { get; set; }
+        public string EventId { get; set; }
         
         // Cache-related properties
         public DateTime ExpiresAt { get; set; }
