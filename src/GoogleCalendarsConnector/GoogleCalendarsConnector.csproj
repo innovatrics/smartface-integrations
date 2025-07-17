@@ -6,12 +6,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Shared\AccessController\AccessController.csproj" />
-        <ProjectReference Include="..\Shared\SmartFaceRestApiClient\SmartFaceRestApiClient.csproj" />
-        <ProjectReference Include="..\Shared\Shared\Shared.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="Google.Apis.Auth" Version="1.70.0" />
         <PackageReference Include="Google.Apis.Calendar.v3" Version="1.69.0.3746" />
         <PackageReference Include="Grpc" Version="2.46.6" />
@@ -29,6 +23,10 @@
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <PackageReference Include="System.Threading.Tasks.Dataflow" Version="9.0.7" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Shared\AccessController\AccessController.csproj" />
     </ItemGroup>
 
     <ItemGroup>

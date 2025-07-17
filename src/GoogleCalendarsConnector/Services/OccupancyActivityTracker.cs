@@ -20,7 +20,6 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
         private readonly ILogger _logger;
         private readonly GoogleCalendarService _calendarService;
-        private readonly string _calendarId;
         private readonly TimeSpan _debounceWindow = TimeSpan.FromMinutes(30);
         private readonly ConcurrentDictionary<string, StreamState> _states = new();
 
@@ -31,10 +30,9 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _calendarService = calendarService ?? throw new ArgumentNullException(nameof(calendarService));
-            _calendarId = configuration.GetValue<string>("GoogleCalendar:CalendarId") ?? "primary";
         }
 
-        public async Task HandleOccupancyChangeAsync(string streamGroupName, bool isOccupied)
+        public async Task HandleOccupancyChangeAsync(string streamGroupName, string calendarId, bool isOccupied)
         {
             if (!isOccupied)
             {
@@ -52,7 +50,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             }
 
             var overlappingEvents = await _calendarService.GetOverlappingEventsAsync(
-                _calendarId,
+                calendarId,
                 now.AddMinutes(-2),
                 now.AddMinutes(2)
             );
@@ -70,8 +68,9 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
             var start = now;
             var end = start.Add(_debounceWindow);
+            
             var eventId = await _calendarService.CreateMeetingAsync(
-                _calendarId,
+                calendarId,
                 $"Stream Group Activity: {streamGroupName}",
                 $"Activity detected in stream group {streamGroupName}",
                 "SmartFace System",

@@ -12,9 +12,9 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly ILogger _logger;
 
         private readonly TimeSpan _interval;
-        private readonly int _minPedestrians;
-        private readonly int _minFaces;
-        private readonly int _minIdentifications;
+        private readonly double _minPedestrians;
+        private readonly double _minFaces;
+        private readonly double _minIdentifications;
 
         private readonly Dictionary<string, List<AggregationSnapshot>> _history = new();
         private readonly Dictionary<string, bool> _occupancyStates = new();
@@ -29,10 +29,10 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
 
-            _interval = TimeSpan.FromSeconds(configuration.GetValue("StreamGroupTracker:IntervalSec", 15));
-            _minPedestrians = configuration.GetValue("StreamGroupTracker:MinPedestrians", 1);
-            _minFaces = configuration.GetValue("StreamGroupTracker:MinFaces", 0);
-            _minIdentifications = configuration.GetValue("StreamGroupTracker:MinIdentifications", 0);
+            _interval = TimeSpan.FromSeconds(configuration.GetValue("StreamGroupTracker:IntervalSec", 15.0));
+            _minPedestrians = configuration.GetValue("StreamGroupTracker:MinPedestrians", 1.0);
+            _minFaces = configuration.GetValue("StreamGroupTracker:MinFaces", 0.0);
+            _minIdentifications = configuration.GetValue("StreamGroupTracker:MinIdentifications", 0.0);
 
             _logger.Information("StreamGroupTracker initialized with interval: {Interval}, MinPedestrians: {MinPedestrians}, MinFaces: {MinFaces}, MinIdentifications: {MinIdentifications}",
                 _interval, _minPedestrians, _minFaces, _minIdentifications);
@@ -98,7 +98,9 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             if (wasOccupied != isOccupied)
             {
                 _occupancyStates[groupName] = isOccupied;
+                
                 _logger.Information("Occupancy changed for group {GroupName} → {State}", groupName, isOccupied ? "OCCUPIED" : "EMPTY");
+                
                 OnOccupancyChanged?.Invoke(groupName, isOccupied);
             }
         }

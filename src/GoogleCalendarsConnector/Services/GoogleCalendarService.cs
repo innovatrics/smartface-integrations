@@ -131,7 +131,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             return credential;
         }
 
-        private async Task<string> CreateMeetingAsync(string calendarId, string summary, string description, string location, DateTime start, DateTime end, string[] attendeesEmails)
+        public async Task<string> CreateMeetingAsync(string calendarId, string summary, string description, string location, DateTime start, DateTime end, string[] attendeesEmails)
         {
             EnsureCalendarIsInitialized();
 

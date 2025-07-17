@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Innovatrics.SmartFace.Integrations.Shared.SmartFaceRestApiClient;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using SmartFace.GoogleCalendarsConnector.Models;
@@ -47,12 +46,19 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             {
                 _maxParallelBlocks = config.MaxParallelActionBlocks;
             }
+
+            _streamGroupsMapping = configuration.GetSection("StreamGroupsMapping").Get<StreamGroupMapping[]>();
+
+            if (_streamGroupsMapping == null)
+            {
+                _streamGroupsMapping = new StreamGroupMapping[] { };
+            }
+
+            _logger.Information("Stream groups mapping: {@StreamGroupsMapping}", _streamGroupsMapping);
         }
 
         public void Start()
         {
-            _streamGroupsMapping = GetMappingFromConfig();
-
             _actionBlock = new ActionBlock<StreamGroupAggregation>(notification =>
             {
                 try
@@ -89,7 +95,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                     switch (isOccupied)
                     {
                         case true:
-                            await _occupancyActivityTracker.HandleGraphQLUpdateAsync(groupName, true);
+                            await _occupancyActivityTracker.HandleOccupancyChangeAsync(groupName, calendarId, true);
                             break;
 
                         // case false:
@@ -115,12 +121,6 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             ArgumentNullException.ThrowIfNull(notification);
 
             _actionBlock.Post(notification);
-        }
-
-        private Dictionary<StreamGroupMapping, string> GetMappingFromConfig()
-        {
-            var config = _configuration.GetSection("StreamGroupMapping").Get<StreamGroupMapping[]>();
-            return config;
         }
     }
 }
