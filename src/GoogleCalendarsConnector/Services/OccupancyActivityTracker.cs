@@ -57,7 +57,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                     end
                 );
 
-                _logger.Information("Overlapping events found for {Group}: {@OverlappingEvents}", streamGroupName, overlappingEvents?.Select(e => e.Summary));
+                _logger.Information("{Count} overlapping events found for {Group}: {@OverlappingEvents}", overlappingEvents?.Count(), streamGroupName, overlappingEvents?.Select(e => e.Summary));
 
                 var matching = overlappingEvents
                                     .Where(e =>

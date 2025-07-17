@@ -112,7 +112,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
             var events = await eventsListRequest.ExecuteAsync();
 
-            _logger.Information("Events: {@Events}", events.Items.Select(e => new { e.Summary, e.Start, e.End }));
+            _logger.Debug("Events: {@Events}", events.Items.Select(e => new { e.Summary, e.Start, e.End }));
 
             var eventsInRange = events.Items
                 .Where(e =>
