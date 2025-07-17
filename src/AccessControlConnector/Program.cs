@@ -9,6 +9,7 @@ using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Services;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Cominfo;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 {
@@ -70,6 +71,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             services.AddSingleton<IAccessControlConnectorFactory, AccessControlConnectorFactory>();
             services.AddSingleton<IUserResolverFactory, UserResolverFactory>();
             services.AddSingleton<IBridgeService, BridgeService>();
+            services.AddSingleton<ITServerClientFactory, TServerClientFactory>();
 
             services.AddSingleton<AccessControlConnectorService>();
 

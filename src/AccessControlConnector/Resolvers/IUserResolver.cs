@@ -5,6 +5,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 {
     public interface  IUserResolver
     {
-        Task<string> ResolveUserAsync(GrantedNotification notification);
+        Task<string> ResolveUserAsync(IIdentifiedNotification notification);
     }
 }
