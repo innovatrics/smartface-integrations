@@ -122,7 +122,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
-
         public async Task ProcessDeniedNotificationAsync(AccessControlMapping mapping, DeniedNotification notification)
         {
             ArgumentNullException.ThrowIfNull(notification);

@@ -18,7 +18,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly ILogger _logger;
         private readonly IConfiguration _config;
         private readonly IUserResolverFactory _userResolverFactory;
-        private readonly AccessControlMapping[] _mappings;
+        private readonly AccessControlMapping[] _allMappings;
         private readonly TimeSpan _throttleDuration;
 
         private readonly ConcurrentDictionary<string, DateTime> _lastExecuted = new();
@@ -37,7 +37,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _userResolverFactory = userResolverFactory;
 
             _throttleDuration = TimeSpan.FromMilliseconds(config.GetValue<int>("Config:ThrottleWindow", 300));
-            _mappings = config.GetSection("AccessControlMapping").Get<AccessControlMapping[]>() ?? Array.Empty<AccessControlMapping>();
+            _allMappings = config.GetSection("AccessControlMapping").Get<AccessControlMapping[]>() ?? Array.Empty<AccessControlMapping>();
         }
 
         public async Task HandleGrantedAsync(GrantedNotification notification)
@@ -63,15 +63,15 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 return;
             }
 
-            var mappings = _mappings.Where(m => m.StreamId == streamGuid).ToArray();
-            
-            if (mappings.Length == 0)
+            var mappingsPerStream = _allMappings.Where(m => m.StreamId == streamGuid).ToArray();
+
+            if (mappingsPerStream.Length == 0)
             {
                 _logger.Warning("No mappings found for stream {streamId}", streamId);
                 return;
             }
 
-            foreach (var mapping in mappings)
+            foreach (var mapping in mappingsPerStream)
             {
                 if (mapping.WatchlistExternalIds?.Length > 0 &&
                     !string.IsNullOrEmpty(watchlistExternalId) &&
@@ -83,16 +83,26 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
                 var key = mapping.Group ?? $"{mapping?.StreamId}";
 
-                if (string.IsNullOrEmpty(key)) continue;
-
-                var now = DateTime.UtcNow;
-                if (_lastExecuted.TryGetValue(key, out var lastTime) && (now - lastTime) < _throttleDuration)
+                if (string.IsNullOrEmpty(key))
                 {
-                    _logger.Debug("Throttling key {key}", key);
                     continue;
                 }
 
-                _lastExecuted[key] = now;
+                if (_throttleDuration > TimeSpan.Zero)
+                {
+                    var now = DateTime.UtcNow;
+                    if (_lastExecuted.TryGetValue(key, out var lastTime))
+                    {
+                        var timeDiff = now - lastTime;
+                        if (timeDiff < _throttleDuration)
+                        {
+                            _logger.Debug("Throttling key {key} for {timeDiff}ms", key, timeDiff.TotalMilliseconds);
+                            continue;
+                        }
+                    }
+
+                    _lastExecuted[key] = now;
+                }
 
                 _logger.Information("Emitting {eventType} event for {key}", eventType, key);
                 await RaiseEventAsync(eventType, mapping, notification);

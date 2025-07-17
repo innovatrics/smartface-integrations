@@ -50,7 +50,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 
             // ReSharper disable once StringLiteralTypo
             var logDir = Path.Combine(Path.Combine(commonAppDataDirPath, "Innovatrics", "SmartFace"));
-            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
+            logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
             var logger = LoggingSetup.SetupBasicLogging(logFilePath, configuration);
@@ -69,6 +69,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             services.AddSingleton<GrpcReaderFactory>();
 
             services.AddSingleton<IAccessControlConnectorFactory, AccessControlConnectorFactory>();
+            services.AddSingleton<AccessNotificationThrottler>();
             services.AddSingleton<IUserResolverFactory, UserResolverFactory>();
             services.AddSingleton<IBridgeService, BridgeService>();
             services.AddSingleton<ITServerClientFactory, TServerClientFactory>();
