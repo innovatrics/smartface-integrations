@@ -17,14 +17,13 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Cominfo
 {
-    public class TComServerConnector(ILogger logger, ITServerClientFactory tServerClientFactory, DebouncedNotificationService debouncedNotificationService) : IAccessControlConnector, IDisposable
+    public class TComServerConnector(ILogger logger, ITServerClientFactory tServerClientFactory) : IAccessControlConnector, IDisposable
     {
         private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         private readonly ITServerClientFactory _tServerClientFactory = tServerClientFactory ?? throw new ArgumentNullException(nameof(tServerClientFactory));
         private readonly ConcurrentDictionary<string, ITServerClient> _tServerClients = new();
         private readonly ConcurrentDictionary<string, Timer> _timers = new();
         private readonly ConcurrentDictionary<string, CancellationTokenSource> _cancellationTokenSources = new();
-        private readonly DebouncedNotificationService _debouncedNotificationService = debouncedNotificationService ?? throw new ArgumentNullException(nameof(debouncedNotificationService));
 
         public const string MODE_CLOSE_ON_DENY = "CLOSE_ON_DENY";
         public const string MODE_OPEN_ON_GRANT = "OPEN_ON_GRANT";
@@ -91,11 +90,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
         {
             if (accessControlMapping.TimeoutMs == null || accessControlMapping.TimeoutMs <= 0)
             {
-                _logger.Debug("No timeout configured for access control mapping {name}", accessControlMapping.Name);
+                _logger.Debug("No timeout configured for access control mapping {name}", accessControlMapping.Group);
                 return;
             }
 
-            var mappingName = accessControlMapping.Name;
+            var mappingName = accessControlMapping.Group;
 
             if (_cancellationTokenSources.TryGetValue(mappingName, out var existingCts))
             {
@@ -112,7 +111,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             var cts = new CancellationTokenSource();
             _cancellationTokenSources.TryAdd(mappingName, cts);
 
-            _logger.Information("Starting timer for access control mapping {name} with timeout {timeout}ms", mappingName, accessControlMapping.TimeoutMs);
+            _logger.Information("Starting timer for access control mapping {group} with timeout {timeout}ms", mappingName, accessControlMapping.TimeoutMs);
 
             var timer = new Timer(async _ => await OnTimeoutExpired(accessControlMapping, cts.Token), null, accessControlMapping.TimeoutMs.Value, Timeout.Infinite);
 
@@ -123,13 +122,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                _logger.Debug("Timer for access control mapping {name} was cancelled", accessControlMapping.Name);
+                _logger.Debug("Timer for access control mapping {group} was cancelled", accessControlMapping.Group);
                 return;
             }
 
-            _logger.Information("Timeout expired for access control mapping {name}. Opening gates permanently.", accessControlMapping.Name);
-
-            var mappings = 
+            _logger.Information("Timeout expired for access control mapping {group}. Opening gates permanently.", accessControlMapping.Group);
 
             try
             {
@@ -139,11 +136,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.C
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error occurred while opening gates permanently for access control mapping {name}", accessControlMapping.Name);
+                _logger.Error(ex, "Error occurred while opening gates permanently for access control mapping {group}", accessControlMapping.Group);
             }
             finally
             {
-                var mappingName = accessControlMapping.Name;
+                var mappingName = accessControlMapping.Group;
                 if (_timers.TryRemove(mappingName, out var timer))
                 {
                     timer.Dispose();

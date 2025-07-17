@@ -16,7 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IBridgeService _bridgeService;
-        private readonly IDebouncedNotificationService _debouncedNotificationService;
+        private readonly AccessNotificationThrottler _accessNotificationThrottler;
         private ActionBlock<GrantedNotification> _grantedNotificationsActionBlock;
         private ActionBlock<DeniedNotification> _deniedNotificationsActionBlock;
         private ActionBlock<BlockedNotification> _blockedNotificationsActionBlock;
@@ -26,29 +26,40 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
             IBridgeService bridgeService,
-            IDebouncedNotificationService debouncedNotificationService
+            AccessNotificationThrottler accessNotificationThrottler
         )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             _bridgeService = bridgeService ?? throw new ArgumentNullException(nameof(bridgeService));
-            _debouncedNotificationService = debouncedNotificationService ?? throw new ArgumentNullException(nameof(debouncedNotificationService));
+            _accessNotificationThrottler = accessNotificationThrottler ?? throw new ArgumentNullException(nameof(accessNotificationThrottler));
 
             MaxParallelBlocks = configuration.GetValue<int>("Config:MaxParallelActionBlocks", 4);
         }
 
         public void Start()
         {
+            _accessNotificationThrottler.OnGranted += async (mapping, notification) =>
+            {
+                await _bridgeService.ProcessGrantedNotificationAsync(mapping, notification);
+            };
 
-            _debouncedNotificationService
+            _accessNotificationThrottler.OnDenied += async (mapping, notification) =>
+            {
+                await _bridgeService.ProcessDeniedNotificationAsync(mapping, notification);
+            };
 
-            
+            _accessNotificationThrottler.OnBlocked += async (mapping, notification) =>
+            {
+                await _bridgeService.ProcessBlockedNotificationAsync(mapping, notification);
+            };
+
             _grantedNotificationsActionBlock = new ActionBlock<GrantedNotification>(async notification =>
             {
                 try
                 {
-                    await _bridgeService.ProcessGrantedNotificationAsync(notification);
+                    await _accessNotificationThrottler.HandleGrantedAsync(notification);
                 }
                 catch (Exception ex)
                 {
@@ -64,7 +75,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             {
                 try
                 {
-                    await _bridgeService.ProcessDeniedNotificationAsync(notification);
+                    await _accessNotificationThrottler.HandleDeniedAsync(notification);
                 }
                 catch (Exception ex)
                 {
@@ -80,7 +91,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             {
                 try
                 {
-                    await _bridgeService.ProcessBlockedNotificationAsync(notification);
+                    await _accessNotificationThrottler.HandleBlockedAsync(notification);
                 }
                 catch (Exception ex)
                 {

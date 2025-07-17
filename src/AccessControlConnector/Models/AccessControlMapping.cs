@@ -4,7 +4,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
 {
     public class AccessControlMapping
     {
-        public string Name                              { get; set; } = $"{Guid.NewGuid()}";
+        public string Group                             { get; set; } = $"{Guid.NewGuid()}";
         
         public string Type                              { get; set; } = "Advantech WISE-4000";
         public Guid StreamId                            { get; set; }
