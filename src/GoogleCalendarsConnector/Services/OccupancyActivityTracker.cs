@@ -49,10 +49,13 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 return;
             }
 
+            var start = now;
+            var end = start.Add(_debounceWindow);
+
             var overlappingEvents = await _calendarService.GetOverlappingEventsAsync(
                 calendarId,
-                now.AddMinutes(-2),
-                now.AddMinutes(2)
+                start.AddMinutes(-2),
+                end.AddMinutes(2)
             );
 
             var matching = overlappingEvents.FirstOrDefault(e =>
@@ -66,9 +69,13 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 return;
             }
 
-            var start = now;
-            var end = start.Add(_debounceWindow);
-            
+            var attendees = new List<string>();
+
+            foreach (var identification in identifications)
+            {
+                attendees.Add(identification.Person.Email);
+            }
+
             var eventId = await _calendarService.CreateMeetingAsync(
                 calendarId,
                 $"Stream Group Activity: {streamGroupName}",
@@ -76,7 +83,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 "SmartFace System",
                 start,
                 end,
-                Array.Empty<string>()
+                attendees.ToArray()
             );
 
             state.LastEventTime = now;
