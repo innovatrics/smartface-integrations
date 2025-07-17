@@ -36,49 +36,42 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
         public async Task<bool> HasOverlappingEventAsync(string calendarId, DateTime start, DateTime end)
         {
-            var cacheKey = GenerateCacheKey(calendarId, start, end);
-
-            // Try to get from cache first
-            if (_cache.TryGetValue(cacheKey, out var cachedEntry))
+            // Check for any overlapping event in the cache for the given time range
+            var overlappingInCache = _cache.Values.Any(e =>
+                !e.IsExpired() &&
+                e.Start < end && e.End > start // overlap condition
+            );
+            
+            if (overlappingInCache)
             {
-                if (!cachedEntry.IsExpired())
-                {
-                    _logger.Debug("Cache hit for calendar {CalendarId} at {Start}", calendarId, start);
-                    return cachedEntry.HasOverlappingEvent;
-                }
-                else
-                {
-                    // Remove expired entry
-                    _cache.TryRemove(cacheKey, out _);
-                }
+                _logger.Debug("Cache hit for overlapping event in calendar {CalendarId} at {Start}", calendarId, start);
+                return true;
             }
 
             // Check if cache is full and remove oldest entries if necessary
             if (_cache.Count >= _maxCacheSize)
             {
                 CleanupExpiredEntries();
-
-                // If still full, remove oldest entries
                 if (_cache.Count >= _maxCacheSize)
                 {
                     RemoveOldestEntries(_maxCacheSize / 4); // Remove 25% of entries
                 }
             }
 
-            // Perform the actual check
-            _logger.Debug("Cache miss for calendar {CalendarId} at {Start}, checking API", calendarId, start);
+            // Fetch from API
+            _logger.Debug("Cache miss for overlapping event in calendar {CalendarId} at {Start}, checking API", calendarId, start);
             var overlappingEvents = await _googleCalendarService.GetOverlappingEventsAsync(calendarId, start, end);
 
-            // Cache the result
-            var newEntry = new GoogleCalendarEvent
+            // Cache the fetched events
+            foreach (var evt in overlappingEvents)
             {
-                HasOverlappingEvent = overlappingEvents,
-                ExpiresAt = DateTime.UtcNow.Add(_defaultCacheExpiration)
-            };
+                evt.ExpiresAt = DateTime.UtcNow.Add(_defaultCacheExpiration);
+                _cache.TryAdd(GenerateCacheKey(calendarId, evt.Start, evt.End), evt);
+            }
 
-            _cache.TryAdd(cacheKey, newEntry);
-
-            return overlappingEvents;
+            // Re-check cache for overlap
+            var foundAfterFetch = overlappingEvents.Any();
+            return foundAfterFetch;
         }
 
         private string GenerateCacheKey(string calendarId, DateTime start, DateTime end)

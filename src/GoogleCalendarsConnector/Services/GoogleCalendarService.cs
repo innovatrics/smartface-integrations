@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 using Microsoft.Extensions.Configuration;
 
@@ -45,7 +46,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             await _calendarService.Events.Delete("primary", eventId).ExecuteAsync();
         }
 
-        public async Task CreateEventAsync(string groupName, string[] attendeesEmails)
+        public async Task CreateEventAsync(string groupName, string calendarId, string[] attendeesEmails)
         {
             // Create a simple event for the stream group
             var summary = $"Stream Group Activity: {groupName}";
@@ -55,7 +56,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             var end = start.AddMinutes(_meetingDurationMin);
             var attendees = attendeesEmails ?? new string[] { };
 
-            await CreateMeetingAsync(summary, description, location, start, end, attendees);
+            await CreateMeetingAsync(calendarId, summary, description, location, start, end, attendees);
         }
 
         public async Task<GoogleCalendarEvent[]> GetOverlappingEventsAsync(string calendarId, DateTime start, DateTime end)
@@ -63,8 +64,8 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             EnsureCalendarIsInitialized();
 
             var eventsListRequest = _calendarService.Events.List(calendarId);
-            eventsListRequest.TimeMin = start.AddHours(-24);
-            eventsListRequest.TimeMax = end.AddHours(24);
+            eventsListRequest.TimeMinDateTimeOffset = start.AddHours(-24);
+            eventsListRequest.TimeMaxDateTimeOffset = end.AddHours(24);
             eventsListRequest.ShowDeleted = false;
             eventsListRequest.SingleEvents = true;
             eventsListRequest.MaxResults = 100;
@@ -76,12 +77,12 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                                         .Where(e => e.Start.DateTimeDateTimeOffset >= start && e.End.DateTimeDateTimeOffset <= end)
                                         .Select(s => new GoogleCalendarEvent
                                         {
-                                            Start = s.Start.DateTimeDateTimeOffset,
-                                            End = s.End.DateTimeDateTimeOffset,
+                                            Start = s.Start.DateTimeDateTimeOffset?.DateTime ?? DateTime.MinValue,
+                                            End = s.End.DateTimeDateTimeOffset?.DateTime ?? DateTime.MinValue,
                                             Summary = s.Summary,
                                             Description = s.Description,
                                             Location = s.Location,
-                                            Attendees = s.Attendees.Select(a => a.Email).ToArray()
+                                            Attendees = s.Attendees?.Select(a => a.Email).ToArray() ?? new string[0]
                                         })
                                         .ToArray();
 
@@ -103,7 +104,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             var credentialsPath = _configuration.GetValue<string>("GoogleCalendar:CredentialsPath", "credentials.json");
             var tokenPath = _configuration.GetValue<string>("GoogleCalendar:TokenPath", "token.json");
 
-            var credential = Authenticate(credentialsPath, tokenPath).Result;
+            var credential = Authenticate(credentialsPath, tokenPath);
 
             _calendarService = new CalendarService(new BaseClientService.Initializer()
             {
@@ -112,13 +113,20 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             });
         }
 
-        private async Task<GoogleCredential> Authenticate(string credentialsPath, string tokenPath)
+        private GoogleCredential Authenticate(string credentialsPath, string tokenPath)
         {
             _logger.Information("Authenticating with credentials path: {CredentialsPath} and token path: {TokenPath}", credentialsPath, tokenPath);
 
             var credential = GoogleCredential
                                 .FromFile(credentialsPath)
                                 .CreateScoped(CalendarService.Scope.Calendar);
+
+            var serviceUser = _configuration.GetValue<string>("GoogleCalendar:ServiceUser");
+
+            if (!string.IsNullOrEmpty(serviceUser))
+            {
+                credential = credential.CreateWithUser(serviceUser);
+            }
 
             return credential;
         }

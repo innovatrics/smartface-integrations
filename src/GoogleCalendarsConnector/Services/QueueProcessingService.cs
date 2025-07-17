@@ -96,7 +96,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
                 _logger.Debug("No overlapping events found, creating new event for group {GroupName} in calendar {CalendarId}", groupName, calendarId);
 
-                await _googleCalendarService.CreateEventAsync(groupName, calendarId);
+                await _googleCalendarService.CreateEventAsync(groupName, calendarId, new string[] { });
 
                 _logger.Information("Trigger finished for group {GroupName}", groupName);
             };
