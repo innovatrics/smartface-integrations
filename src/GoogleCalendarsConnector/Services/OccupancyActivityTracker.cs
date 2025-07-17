@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -32,13 +33,8 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             _calendarService = calendarService ?? throw new ArgumentNullException(nameof(calendarService));
         }
 
-        public async Task HandleOccupancyChangeAsync(string streamGroupName, string calendarId, bool isOccupied)
+        public async Task HandleOccupancyChangeAsync(string streamGroupName, string calendarId, bool isOccupied, SmartFace.GoogleCalendarsConnector.Models.IdentificationResult[] identifications)
         {
-            if (!isOccupied)
-            {
-                _logger.Information("Occupancy ended in group {Group}, no calendar action needed.", streamGroupName);
-                return;
-            }
 
             var now = DateTime.UtcNow;
             var state = _states.GetOrAdd(streamGroupName, _ => new StreamState());
@@ -49,47 +45,60 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 return;
             }
 
-            var start = now;
-            var end = start.Add(_debounceWindow);
-
             var overlappingEvents = await _calendarService.GetOverlappingEventsAsync(
                 calendarId,
-                start.AddMinutes(-2),
-                end.AddMinutes(2)
+                now.AddMinutes(-2),
+                now.AddMinutes(2)
             );
 
             var matching = overlappingEvents.FirstOrDefault(e =>
                 !string.IsNullOrEmpty(e.Summary) &&
                 e.Summary.Contains(streamGroupName, StringComparison.OrdinalIgnoreCase));
 
-            if (matching != null)
+            if (isOccupied)
             {
-                _logger.Information("Existing calendar event found for {Group}, skipping creation.", streamGroupName);
+                if (matching != null)
+                {
+                    _logger.Information("Existing calendar event found for {Group}, skipping creation.", streamGroupName);
+                    state.LastEventTime = now;
+                    return;
+                }
+
+                var start = now;
+                var end = start.Add(_debounceWindow);
+
+                var attendees = new List<string>();
+
+                if (identifications != null)
+                {
+                    foreach (var identification in identifications)
+                    {
+                        if (identification?.MemberDetails != null && !string.IsNullOrEmpty(identification.MemberDetails.Id))
+                        {
+                            attendees.Add(identification.MemberDetails.Id);
+                        }
+                    }
+                }
+
+                var eventId = await _calendarService.CreateMeetingAsync(
+                    calendarId,
+                    $"Stream Group Activity: {streamGroupName}",
+                    $"Activity detected in stream group {streamGroupName}",
+                    "SmartFace System",
+                    start,
+                    end,
+                    attendees.ToArray()
+                );
+
                 state.LastEventTime = now;
-                return;
+                state.LastEventId = eventId;
+
+                _logger.Information("Created event for {Group} at {Start}, ID: {EventId}", streamGroupName, start.ToString("HH:mm"), eventId);
             }
-
-            var attendees = new List<string>();
-
-            foreach (var identification in identifications)
+            else
             {
-                attendees.Add(identification.Person.Email);
+
             }
-
-            var eventId = await _calendarService.CreateMeetingAsync(
-                calendarId,
-                $"Stream Group Activity: {streamGroupName}",
-                $"Activity detected in stream group {streamGroupName}",
-                "SmartFace System",
-                start,
-                end,
-                attendees.ToArray()
-            );
-
-            state.LastEventTime = now;
-            state.LastEventId = eventId;
-
-            _logger.Information("Created event for {Group} at {Start}, ID: {EventId}", streamGroupName, start.ToString("HH:mm"), eventId);
         }
     }
 }

@@ -71,7 +71,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 MaxDegreeOfParallelism = _maxParallelBlocks
             });
 
-            _streamGroupTracker.OnOccupancyChanged += async (groupName, isOccupied) =>
+            _streamGroupTracker.OnOccupancyChanged += async (groupName, isOccupied, identifications) =>
             {
                 _logger.Information("Occupancy changed for group {GroupName} to {IsOccupied}", groupName, isOccupied);
 
@@ -88,16 +88,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                         return;
                     }
 
-                    switch (isOccupied)
-                    {
-                        case true:
-                            await _occupancyActivityTracker.HandleOccupancyChangeAsync(groupName, calendarId, true);
-                            break;
-
-                        // case false:
-                        //     await _occupancyActivityTracker.OnActivityAsync(groupName, false, calendarId);
-                        //     break;
-                    }
+                    await _occupancyActivityTracker.HandleOccupancyChangeAsync(groupName, calendarId, isOccupied,identifications);
                 }
                 catch (Exception ex)
                 {

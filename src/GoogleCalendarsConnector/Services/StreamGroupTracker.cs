@@ -19,8 +19,9 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly Dictionary<string, List<AggregationSnapshot>> _history = new();
         private readonly Dictionary<string, bool> _occupancyStates = new();
         private readonly object _lock = new();
+        private readonly Dictionary<string, StreamGroupAggregation> _latestAggregations = new();
 
-        public event Action<string, bool>? OnOccupancyChanged;
+        public event Action<string, bool, IdentificationResult[]?>? OnOccupancyChanged;
 
         public StreamGroupTracker(ILogger logger, IConfiguration configuration)
         {
@@ -71,6 +72,9 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                     _logger.Debug("Removed {Count} old snapshots for group {GroupName}", removed, groupName);
                 }
 
+                // Store the latest aggregation for identifications
+                _latestAggregations[groupName] = aggregation;
+
                 EvaluateOccupancy(groupName);
             }
         }
@@ -98,10 +102,9 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             if (wasOccupied != isOccupied)
             {
                 _occupancyStates[groupName] = isOccupied;
-                
                 _logger.Information("Occupancy changed for group {GroupName} → {State}", groupName, isOccupied ? "OCCUPIED" : "EMPTY");
-                
-                OnOccupancyChanged?.Invoke(groupName, isOccupied);
+                var identifications = _latestAggregations.TryGetValue(groupName, out var agg) ? agg.Identifications?.ToArray() : Array.Empty<IdentificationResult>();
+                OnOccupancyChanged?.Invoke(groupName, isOccupied, identifications);
             }
         }
     }
