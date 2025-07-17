@@ -17,6 +17,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly IConfiguration _configuration;
         private readonly IAccessControlConnectorFactory _accessControlConnectorFactory;
         private readonly IUserResolverFactory _userResolverFactory;
+        private readonly AccessControlMapping[] _allCamerasMappings;
 
         public BridgeService(
             ILogger logger,
@@ -30,7 +31,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _accessControlConnectorFactory = accessControlConnectorFactory ?? throw new ArgumentNullException(nameof(accessControlConnectorFactory));
             _userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
 
-            _allCameraMappings = GetAllCameraMappings();
+            _allCamerasMappings = GetAllCameraMappings();
         }
 
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
@@ -217,7 +218,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 throw new InvalidOperationException($"{nameof(streamId)} is expected as GUID");
             }
 
-            return _allCameraMappings
+            return _allCamerasMappings
                         .Where(w => w.StreamId == streamGuid)
                         .ToArray();
         }
