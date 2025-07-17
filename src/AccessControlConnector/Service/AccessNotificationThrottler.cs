@@ -71,41 +71,47 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 return;
             }
 
-            foreach (var mapping in mappingsPerStream)
+            // Group mappings by GroupName or StreamId fallback
+            var mappingsByGroup = mappingsPerStream
+                .GroupBy(m => m.Group ?? m.StreamId.ToString())
+                .ToList();
+
+            foreach (var group in mappingsByGroup)
             {
-                if (mapping.WatchlistExternalIds?.Length > 0 &&
-                    !string.IsNullOrEmpty(watchlistExternalId) &&
-                    !mapping.WatchlistExternalIds.Contains(watchlistExternalId))
+                var key = group.Key;
+                var now = DateTime.UtcNow;
+
+                if (_throttleDuration > TimeSpan.Zero &&
+                    _lastExecuted.TryGetValue(key, out var lastTime) &&
+                    (now - lastTime) < _throttleDuration)
                 {
-                    _logger.Information("Skipping mapping: {watchlistExternalId} is not allowed for {streamId}", watchlistExternalId, streamId);
+                    _logger.Debug("Throttling key {key} for {ms}ms", key, (now - lastTime).TotalMilliseconds);
                     continue;
                 }
 
-                var key = mapping.Group ?? $"{mapping?.StreamId}";
+                var relevantMappings = group
+                    .Where(m =>
+                        m.WatchlistExternalIds == null ||
+                        m.WatchlistExternalIds.Length == 0 ||
+                        string.IsNullOrEmpty(watchlistExternalId) ||
+                        m.WatchlistExternalIds.Contains(watchlistExternalId))
+                    .ToList();
 
-                if (string.IsNullOrEmpty(key))
+                if (relevantMappings.Count == 0)
                 {
+                    _logger.Debug("No relevant mappings remain for key {key}", key);
                     continue;
                 }
 
-                if (_throttleDuration > TimeSpan.Zero)
-                {
-                    var now = DateTime.UtcNow;
-                    if (_lastExecuted.TryGetValue(key, out var lastTime))
-                    {
-                        var timeDiff = now - lastTime;
-                        if (timeDiff < _throttleDuration)
-                        {
-                            _logger.Debug("Throttling key {key} for {timeDiff}ms", key, timeDiff.TotalMilliseconds);
-                            continue;
-                        }
-                    }
+                _logger.Information("Executing {count} mapping(s) for key {key} and event {eventType}", relevantMappings.Count, key, eventType);
 
-                    _lastExecuted[key] = now;
+                foreach (var mapping in relevantMappings)
+                {
+                    await RaiseEventAsync(eventType, mapping, notification);
                 }
 
-                _logger.Information("Emitting {eventType} event for {key}", eventType, key);
-                await RaiseEventAsync(eventType, mapping, notification);
+                // Record execution after full group is handled
+                _lastExecuted[key] = now;
             }
         }
 
