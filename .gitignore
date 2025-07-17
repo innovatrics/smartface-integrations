@@ -36,6 +36,8 @@ Output/*
 */.vscode/*
 /NuGetFiles/*
 
+**/credentials.json
+
 Output/
 [Oo]utput/
 [Pp]ublish/
