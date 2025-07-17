@@ -14,7 +14,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 {
     public class QueueProcessingService
     {
-        private readonly int MAX_PARALLEL_BLOCKS = 4;
+        private readonly int _maxParallelBlocks = 4;
 
         private readonly ILogger _logger;
         private readonly GoogleCalendarService _googleCalendarService;
@@ -32,7 +32,8 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             StreamGroupTracker streamGroupTracker,
             GoogleCalendarService googleCalendarService,
             // CalendarCacheService calendarCacheService,
-            StreamActivityTracker streamActivityTracker)
+            StreamActivityTracker streamActivityTracker
+        )
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _streamGroupTracker = streamGroupTracker ?? throw new ArgumentNullException(nameof(streamGroupTracker));
@@ -44,10 +45,8 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
             if (config?.MaxParallelActionBlocks > 0)
             {
-                MAX_PARALLEL_BLOCKS = config.MaxParallelActionBlocks;
+                _maxParallelBlocks = config.MaxParallelActionBlocks;
             }
-
-            //_streamGroupsMapping = GetMappingFromConfig();
         }
 
         public void Start()
@@ -65,29 +64,32 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             },
             new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = MAX_PARALLEL_BLOCKS
+                MaxDegreeOfParallelism = _maxParallelBlocks
             });
 
             _streamGroupTracker.OnTrigger += async (groupName) =>
             {
                 _logger.Information("Action triggered for group {GroupName}", groupName);
 
-                var calendarId = _streamGroupsMapping
-                                        .Where(x => x.GroupName == groupName)
-                                        .Select(x => x.CalendarId)
-                                        .FirstOrDefault();
-
-                if (calendarId == null)
+                try
                 {
-                    _logger.Warning("Calendar ID not found for group {GroupName}", groupName);
-                    return;
+                    var calendarId = _streamGroupsMapping
+                                            .Where(x => x.GroupName == groupName)
+                                            .Select(x => x.CalendarId)
+                                            .FirstOrDefault();
+
+                    if (calendarId == null)
+                    {
+                        _logger.Warning("Calendar ID not found for group {GroupName}", groupName);
+                        return;
+                    }
+
+                    await _streamActivityTracker.OnActivityAsync(groupName, true, calendarId);
                 }
-
-                // Use StreamActivityTracker for debounced event creation
-                await _streamActivityTracker.OnActivityAsync(groupName, true, calendarId);
-
-                // If you want to handle negative/inactivity, call:
-                // await _streamActivityTracker.OnActivityAsync(groupName, false, calendarId);
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Failed to process message");
+                }
             };
         }
 

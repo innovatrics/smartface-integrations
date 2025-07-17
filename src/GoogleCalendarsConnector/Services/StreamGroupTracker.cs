@@ -72,11 +72,11 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                     _logger?.Debug("Removed {RemovedCount} old snapshots for group {GroupName}", removedCount, groupName);
                 }
 
-                Evaluate(groupName);
+                EvaluateAndRaiseEvent(groupName);
             }
         }
 
-        private void Evaluate(string groupName)
+        private void EvaluateAndRaiseEvent(string groupName)
         {
             var entries = _history[groupName];
             if (!entries.Any())
