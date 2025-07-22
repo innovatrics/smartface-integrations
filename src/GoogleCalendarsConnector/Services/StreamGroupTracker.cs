@@ -21,6 +21,9 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly object _lock = new();
         private readonly Dictionary<string, StreamGroupAggregation> _latestAggregations = new();
         private readonly StreamGroupMapping[] _streamGroupsMapping;
+        // Remove _debounceInterval, use _interval for debounce as well
+        private readonly Dictionary<string, DateTime?> _potentialStateChangeTimestamps = new();
+        private readonly Dictionary<string, bool> _potentialStates = new();
 
         public event Action<string, bool, IdentificationResult[]?>? OnOccupancyChanged;
 
@@ -102,13 +105,27 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 (avgFaces >= _minFaces && avgFaces > 0) ||
                 (avgIdentifications >= _minIdentifications && avgIdentifications > 0);
 
-
             _occupancyStates.TryGetValue(groupName, out bool wasOccupied);
 
-            if (wasOccupied != isOccupied)
+            // Debounce logic using _interval
+            var now = DateTime.UtcNow;
+            _potentialStates.TryGetValue(groupName, out bool lastPotentialState);
+            _potentialStateChangeTimestamps.TryGetValue(groupName, out DateTime? lastChangeTime);
+
+            if (lastChangeTime == null || isOccupied != lastPotentialState)
+            {
+                // State changed, start debounce timer
+                _potentialStates[groupName] = isOccupied;
+                _potentialStateChangeTimestamps[groupName] = now;
+                _logger.Debug("Potential occupancy state changed for group {GroupName} to {State}, starting debounce timer (interval: {Interval}).", groupName, isOccupied, _interval);
+                return;
+            }
+
+            // State is the same as last potential, check if interval has passed
+            if (wasOccupied != isOccupied && lastChangeTime.HasValue && (now - lastChangeTime.Value) >= _interval)
             {
                 _occupancyStates[groupName] = isOccupied;
-                _logger.Information("Occupancy changed for group {GroupName} → {State}", groupName, isOccupied ? "OCCUPIED" : "EMPTY");
+                _logger.Information("Occupancy changed for group {GroupName} → {State} (debounced, interval: {Interval})", groupName, isOccupied, _interval);
                 var identifications = _latestAggregations.TryGetValue(groupName, out var agg) ? agg.Identifications?.ToArray() : Array.Empty<IdentificationResult>();
                 OnOccupancyChanged?.Invoke(groupName, isOccupied, identifications);
             }
