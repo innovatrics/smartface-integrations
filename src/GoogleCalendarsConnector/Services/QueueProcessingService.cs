@@ -43,12 +43,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 _maxParallelBlocks = config.MaxParallelActionBlocks;
             }
 
-            _streamGroupsMapping = configuration.GetSection("StreamGroupsMapping").Get<StreamGroupMapping[]>();
-
-            if (_streamGroupsMapping == null)
-            {
-                _streamGroupsMapping = new StreamGroupMapping[] { };
-            }
+            _streamGroupsMapping = configuration.GetStreamGroupsMapping();
 
             _logger.Information("Stream groups mapping: {@StreamGroupsMapping}", _streamGroupsMapping);
         }

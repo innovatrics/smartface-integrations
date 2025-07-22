@@ -20,6 +20,7 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly Dictionary<string, bool> _occupancyStates = new();
         private readonly object _lock = new();
         private readonly Dictionary<string, StreamGroupAggregation> _latestAggregations = new();
+        private readonly StreamGroupMapping[] _streamGroupsMapping;
 
         public event Action<string, bool, IdentificationResult[]?>? OnOccupancyChanged;
 
@@ -37,6 +38,8 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
             _logger.Information("StreamGroupTracker initialized with interval: {Interval}, MinPedestrians: {MinPedestrians}, MinFaces: {MinFaces}, MinIdentifications: {MinIdentifications}",
                 _interval, _minPedestrians, _minFaces, _minIdentifications);
+
+            _streamGroupsMapping = configuration.GetStreamGroupsMapping();
         }
 
         public void OnDataReceived(StreamGroupAggregation aggregation)
@@ -81,21 +84,24 @@ namespace SmartFace.GoogleCalendarsConnector.Services
 
         private void EvaluateOccupancy(string groupName)
         {
-            var entries = _history[groupName];
-            if (!entries.Any())
+            var streamGroupMapping = _streamGroupsMapping.FirstOrDefault(e => e.GroupName == groupName);
+
+            var historyForGroup = _history[groupName];
+            if (!historyForGroup.Any())
                 return;
 
-            double avgPedestrians = entries.Average(e => e.AveragePedestrians);
-            double avgFaces = entries.Average(e => e.AverageFaces);
-            double avgIdentifications = entries.Average(e => e.AverageIdentifications);
+            double avgPedestrians = historyForGroup.Average(e => e.AveragePedestrians);
+            double avgFaces = historyForGroup.Average(e => e.AverageFaces);
+            double avgIdentifications = historyForGroup.Average(e => e.AverageIdentifications);
 
             _logger.Information("Evaluating group {GroupName}: AvgPedestrians={AvgPedestrians}, AvgFaces={AvgFaces}, AvgIdentifications={AvgIdentifications}",
                 groupName, avgPedestrians, avgFaces, avgIdentifications);
 
             bool isOccupied =
-                (avgPedestrians >= _minPedestrians && avgPedestrians > 0) ||
+                (avgPedestrians >= (streamGroupMapping?.AveragePedestriansThreshold ?? _minPedestrians) && avgPedestrians > 0) ||
                 (avgFaces >= _minFaces && avgFaces > 0) ||
                 (avgIdentifications >= _minIdentifications && avgIdentifications > 0);
+
 
             _occupancyStates.TryGetValue(groupName, out bool wasOccupied);
 
