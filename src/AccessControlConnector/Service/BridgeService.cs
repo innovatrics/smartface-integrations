@@ -34,110 +34,143 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _allCamerasMappings = GetAllCameraMappings();
         }
 
-        public async Task ProcessGrantedNotificationAsync(AccessControlMapping mapping, GrantedNotification notification)
+        public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
         {
             ArgumentNullException.ThrowIfNull(notification);
 
-            _logger.Information("Handling mapping {type}", mapping.Type);
+            var cameraToAccessControlMappings = GetCameraMappings(notification.StreamId);
 
-            if (mapping.WatchlistExternalIds != null)
+            if (cameraToAccessControlMappings.Length == 0)
             {
-                if (mapping.WatchlistExternalIds.Length > 0 && !mapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
-                {
-                    _logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.", notification.WatchlistExternalId, notification.StreamId);
-                    return;
-                }
+                _logger.Warning("Stream {streamId} has not any cameraToAccessControlMapping to AccessControl", notification.StreamId);
+                return;
             }
 
-            string accessControlUser = null;
-
-            var accessControlConnector = _accessControlConnectorFactory.Create(mapping.Type);
-
-            if (mapping.UserResolver != null)
+            foreach (var cameraToAccessControlMapping in cameraToAccessControlMappings)
             {
-                var userResolver = _userResolverFactory.Create(mapping.UserResolver);
+                _logger.Information("Handling cameraToAccessControlMapping {type}", cameraToAccessControlMapping.Type);
 
-                accessControlUser = await userResolver.ResolveUserAsync(notification);
-
-                _logger.Information("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
-
-                if (accessControlUser == null)
+                if (cameraToAccessControlMapping.WatchlistExternalIds != null)
                 {
-                    return;
+                    if (cameraToAccessControlMapping.WatchlistExternalIds.Length > 0 && !cameraToAccessControlMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
+                    {
+                        _logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.", notification.WatchlistExternalId, notification.StreamId);
+                        return;
+                    }
                 }
-            }
 
-            await accessControlConnector.OpenAsync(mapping, accessControlUser);
+                string accessControlUser = null;
 
-            if (mapping.NextCallDelayMs != null &&
-                mapping.NextCallDelayMs > 0)
-            {
-                _logger.Information("Delay next call for {nextCallDelayMs} ms", mapping.NextCallDelayMs);
+                var accessControlConnector = _accessControlConnectorFactory.Create(cameraToAccessControlMapping.Type);
 
-                await Task.Delay(mapping.NextCallDelayMs.Value);
+                if (cameraToAccessControlMapping.UserResolver != null)
+                {
+                    var userResolver = _userResolverFactory.Create(cameraToAccessControlMapping.UserResolver);
+
+                    accessControlUser = await userResolver.ResolveUserAsync(notification);
+
+                    _logger.Information("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
+
+                    if (accessControlUser == null)
+                    {
+                        return;
+                    }
+                }
+
+                await accessControlConnector.OpenAsync(cameraToAccessControlMapping, accessControlUser);
+
+                if (cameraToAccessControlMapping.NextCallDelayMs != null &&
+                    cameraToAccessControlMapping.NextCallDelayMs > 0)
+                {
+                    _logger.Information("Delay next call for {nextCallDelayMs} ms", cameraToAccessControlMapping.NextCallDelayMs);
+
+                    await Task.Delay(cameraToAccessControlMapping.NextCallDelayMs.Value);
+                }
             }
         }
 
-        public async Task ProcessBlockedNotificationAsync(AccessControlMapping mapping, BlockedNotification notification)
+        public async Task ProcessBlockedNotificationAsync(BlockedNotification notification)
         {
             ArgumentNullException.ThrowIfNull(notification);
 
-            _logger.Information("Handling mapping {type}", mapping.Type);
+            var cameraToAccessControlMappings = GetCameraMappings(notification.StreamId);
 
-            if (mapping.WatchlistExternalIds != null)
+            if (cameraToAccessControlMappings.Length == 0)
             {
-                if (mapping.WatchlistExternalIds.Length > 0 && !mapping.WatchlistExternalIds.Contains(notification.WatchlistId))
-                {
-                    _logger.Warning("Watchlist {watchlistId} has no right to enter through this gate {streamId}.", notification.WatchlistId, notification.StreamId);
-                    return;
-                }
+                _logger.Warning("Stream {streamId} has not any cameraToAccessControlMapping to AccessControl", notification.StreamId);
+                return;
             }
 
-            string accessControlUser = null;
-
-            var accessControlConnector = _accessControlConnectorFactory.Create(mapping.Type);
-
-            if (mapping.UserResolver != null)
+            foreach (var cameraToAccessControlMapping in cameraToAccessControlMappings)
             {
-                var userResolver = _userResolverFactory.Create(mapping.UserResolver);
+                _logger.Information("Handling cameraToAccessControlMapping {type}", cameraToAccessControlMapping.Type);
 
-                accessControlUser = await userResolver.ResolveUserAsync(notification);
-
-                _logger.Information("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
-
-                if (accessControlUser == null)
+                if (cameraToAccessControlMapping.WatchlistExternalIds != null)
                 {
-                    return;
+                    if (cameraToAccessControlMapping.WatchlistExternalIds.Length > 0 && !cameraToAccessControlMapping.WatchlistExternalIds.Contains(notification.WatchlistId))
+                    {
+                        _logger.Warning("Watchlist {watchlistId} has no right to enter through this gate {streamId}.", notification.WatchlistId, notification.StreamId);
+                        return;
+                    }
                 }
-            }
 
-            await accessControlConnector.BlockAsync(mapping, accessControlUser);
+                string accessControlUser = null;
 
-            if (mapping.NextCallDelayMs != null &&
-                mapping.NextCallDelayMs > 0)
-            {
-                _logger.Information("Delay next call for {nextCallDelayMs} ms", mapping.NextCallDelayMs);
+                var accessControlConnector = _accessControlConnectorFactory.Create(cameraToAccessControlMapping.Type);
 
-                await Task.Delay(mapping.NextCallDelayMs.Value);
+                if (cameraToAccessControlMapping.UserResolver != null)
+                {
+                    var userResolver = _userResolverFactory.Create(cameraToAccessControlMapping.UserResolver);
+
+                    accessControlUser = await userResolver.ResolveUserAsync(notification);
+
+                    _logger.Information("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
+
+                    if (accessControlUser == null)
+                    {
+                        return;
+                    }
+                }
+
+                await accessControlConnector.BlockAsync(cameraToAccessControlMapping, accessControlUser);
+
+                if (cameraToAccessControlMapping.NextCallDelayMs != null &&
+                    cameraToAccessControlMapping.NextCallDelayMs > 0)
+                {
+                    _logger.Information("Delay next call for {nextCallDelayMs} ms", cameraToAccessControlMapping.NextCallDelayMs);
+
+                    await Task.Delay(cameraToAccessControlMapping.NextCallDelayMs.Value);
+                }
             }
         }
 
-        public async Task ProcessDeniedNotificationAsync(AccessControlMapping mapping, DeniedNotification notification)
+        public async Task ProcessDeniedNotificationAsync(DeniedNotification notification)
         {
             ArgumentNullException.ThrowIfNull(notification);
 
-            _logger.Information("Handling mapping {type}", mapping.Type);
+            var cameraToAccessControlMappings = GetCameraMappings(notification.StreamId);
 
-            var accessControlConnector = _accessControlConnectorFactory.Create(mapping.Type);
-
-            await accessControlConnector.DenyAsync(mapping);
-
-            if (mapping.NextCallDelayMs != null &&
-                mapping.NextCallDelayMs > 0)
+            if (cameraToAccessControlMappings.Length == 0)
             {
-                _logger.Information("Delay next call for {nextCallDelayMs} ms", mapping.NextCallDelayMs);
+                _logger.Warning("Stream {streamId} has not any cameraToAccessControlMapping to AccessControl", notification.StreamId);
+                return;
+            }
 
-                await Task.Delay(mapping.NextCallDelayMs.Value);
+            foreach (var cameraToAccessControlMapping in cameraToAccessControlMappings)
+            {
+                _logger.Information("Handling cameraToAccessControlMapping {type}", cameraToAccessControlMapping.Type);
+
+                var accessControlConnector = _accessControlConnectorFactory.Create(cameraToAccessControlMapping.Type);
+
+                await accessControlConnector.DenyAsync(cameraToAccessControlMapping);
+
+                if (cameraToAccessControlMapping.NextCallDelayMs != null &&
+                    cameraToAccessControlMapping.NextCallDelayMs > 0)
+                {
+                    _logger.Information("Delay next call for {nextCallDelayMs} ms", cameraToAccessControlMapping.NextCallDelayMs);
+
+                    await Task.Delay(cameraToAccessControlMapping.NextCallDelayMs.Value);
+                }
             }
         }
 
@@ -147,7 +180,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             if (cameraToAccessControlMapping == null)
             {
-                _logger.Warning("No mapping to AccessControl configured");
+                _logger.Warning("No cameraToAccessControlMapping to AccessControl configured");
                 return;
             }
 
@@ -205,3 +238,4 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         }
     }
 }
+
