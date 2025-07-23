@@ -6,7 +6,6 @@ using System.Threading.Tasks.Dataflow;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using System.Linq;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
@@ -17,9 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IBridgeService _bridgeService;
-        private ActionBlock<GrantedNotification> _grantedNotificationsActionBlock;
-        private ActionBlock<DeniedNotification> _deniedNotificationsActionBlock;
-        private ActionBlock<BlockedNotification> _blockedNotificationsActionBlock;
+        private ActionBlock<GrantedNotification> _actionBlock;
 
         public AccessControlConnectorService(
             ILogger logger,
@@ -38,43 +35,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
         public void Start()
         {
-            _grantedNotificationsActionBlock = new ActionBlock<GrantedNotification>(async notification =>
+            _actionBlock = new ActionBlock<GrantedNotification>(async notification =>
             {
                 try
                 {
-                    await ProcessGrantedNotificationAsync(notification);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "Failed to process message");
-                }
-            },
-            new ExecutionDataflowBlockOptions
-            {
-                MaxDegreeOfParallelism = MaxParallelBlocks
-            });
-
-            _deniedNotificationsActionBlock = new ActionBlock<DeniedNotification>(async notification =>
-            {
-                try
-                {
-                    await ProcessDeniedNotificationAsync(notification);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "Failed to process message");
-                }
-            },
-            new ExecutionDataflowBlockOptions
-            {
-                MaxDegreeOfParallelism = MaxParallelBlocks
-            });
-
-            _blockedNotificationsActionBlock = new ActionBlock<BlockedNotification>(async notification =>
-            {
-                try
-                {
-                    await ProcessBlockedNotificationAsync(notification);
+                    await _bridgeService.ProcessGrantedNotificationAsync(notification);
                 }
                 catch (Exception ex)
                 {
@@ -89,64 +54,18 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
         public async Task StopAsync()
         {
-            _grantedNotificationsActionBlock.Complete();
-            await _grantedNotificationsActionBlock.Completion;
+            _actionBlock.Complete();
+            await _actionBlock.Completion;
         }
 
         public void ProcessNotification(GrantedNotification notification)
         {
-            ArgumentNullException.ThrowIfNull(notification);
-            _grantedNotificationsActionBlock.Post(notification);
-        }
-
-        public void ProcessNotification(DeniedNotification notification)
-        {
-            ArgumentNullException.ThrowIfNull(notification);
-            _deniedNotificationsActionBlock.Post(notification);
-        }
-
-        public void ProcessNotification(BlockedNotification notification)
-        {
-            ArgumentNullException.ThrowIfNull(notification);
-            _blockedNotificationsActionBlock.Post(notification);
-        }
-
-        private async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
-        {
-            var mappings = GetMappingsForNotification(notification.StreamId);
-            foreach (var mapping in mappings)
+            if (notification == null)
             {
-                await _bridgeService.ProcessGrantedNotificationAsync(mapping, notification);
+                throw new ArgumentNullException(nameof(notification));
             }
-        }
 
-        private async Task ProcessDeniedNotificationAsync(DeniedNotification notification)
-        {
-            var mappings = GetMappingsForNotification(notification.StreamId);
-            foreach (var mapping in mappings)
-            {
-                await _bridgeService.ProcessDeniedNotificationAsync(mapping, notification);
-            }
-        }
-
-        private async Task ProcessBlockedNotificationAsync(BlockedNotification notification)
-        {
-            var mappings = GetMappingsForNotification(notification.StreamId);
-            foreach (var mapping in mappings)
-            {
-                await _bridgeService.ProcessBlockedNotificationAsync(mapping, notification);
-            }
-        }
-
-        private AccessControlMapping[] GetMappingsForNotification(string streamId)
-        {
-            if (!Guid.TryParse(streamId, out var streamGuid))
-            {
-                _logger.Warning("Invalid StreamId format: {streamId}", streamId);
-                return Array.Empty<AccessControlMapping>();
-            }
-            var configMappings = _configuration.GetSection("AccessControlMapping").Get<AccessControlMapping[]>();
-            return configMappings?.Where(m => m.StreamId == streamGuid).ToArray() ?? Array.Empty<AccessControlMapping>();
+            _actionBlock.Post(notification);
         }
 
         public async Task SendKeepAliveSignalAsync()
