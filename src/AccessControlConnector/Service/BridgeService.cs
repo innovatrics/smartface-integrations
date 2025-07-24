@@ -1,13 +1,16 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
+
 using Microsoft.Extensions.Configuration;
+
 using Serilog;
+
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
-using System.Threading;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
