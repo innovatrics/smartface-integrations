@@ -21,15 +21,14 @@ namespace Innovatrics.SmartFace.Integrations.NotificationsReceiver
         {
             try
             {
-                var logger =  LoggingSetup.SetupBasicLogging();
-
                 var configurationRoot = new ConfigurationBuilder()
                     .AddJsonFile("appSettings.json", optional: false)
                     .AddEnvironmentVariables()
                     .AddCommandLine(args)
                     .Build();
 
-                
+                var logger = LoggingSetup.SetupBasicLogging(args, configurationRoot);
+
                 var hostBuilder = CreateHostBuilder(args, logger, configurationRoot);
                 using var host = hostBuilder.Build();
 
