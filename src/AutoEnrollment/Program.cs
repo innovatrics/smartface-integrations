@@ -23,7 +23,7 @@ namespace SmartFace.AutoEnrollment
             {
                 var configurationRoot = ConfigureBuilder(args);
 
-                var logger = ConfigureLogger(configurationRoot);
+                var logger = ConfigureLogger(args, configurationRoot);
 
                 Log.Information("Starting up");
 
@@ -43,7 +43,7 @@ namespace SmartFace.AutoEnrollment
             Log.CloseAndFlush();
         }
 
-        private static ILogger ConfigureLogger(IConfiguration configuration)
+        private static ILogger ConfigureLogger(string[] args, IConfiguration configuration)
         {
             var commonAppDataDirPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create);
 
@@ -51,7 +51,7 @@ namespace SmartFace.AutoEnrollment
             logDir = configuration.GetValue("Serilog:LogDirectory", logDir);
             var logFilePath = Path.Combine(logDir, LogFileName);
 
-            var logger = LoggingSetup.SetupBasicLogging(logFilePath);
+            var logger = LoggingSetup.SetupBasicLogging(logFilePath, configuration);
 
             return logger;
         }

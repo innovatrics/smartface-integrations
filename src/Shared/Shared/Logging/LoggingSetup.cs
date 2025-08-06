@@ -24,7 +24,7 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
                         );
         }
 
-        public static ILogger SetupBasicLogging(string logFileName = "app.log", IConfiguration configuration = null)
+        public static ILogger SetupBasicLogging(string logFileName, IConfiguration configuration)
         {
             var logger = CreateConfiguration(logFileName, configuration).CreateLogger();
 
