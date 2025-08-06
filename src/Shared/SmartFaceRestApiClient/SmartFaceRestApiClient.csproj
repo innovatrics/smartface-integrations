@@ -4,11 +4,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="NSwag.MSBuild" Version="14.4.0">
+        <PackageReference Include="NSwag.MSBuild" Version="14.5.0">
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="NSwag.CodeGeneration.CSharp" Version="14.4.0" />
+        <PackageReference Include="NSwag.CodeGeneration.CSharp" Version="14.5.0" />
     </ItemGroup>
 
 
