@@ -14,15 +14,12 @@ namespace SmartFace.GoogleCalendarsConnector.Services
     public class QueueProcessingService
     {
         private readonly int _maxParallelBlocks = 4;
-
         private readonly ILogger _logger;
         private readonly GoogleCalendarService _googleCalendarService;
         private readonly StreamGroupTracker _streamGroupTracker;
         private readonly StreamGroupMapping[] _streamGroupsMapping;
         private readonly OccupancyActivityTracker _occupancyActivityTracker;
-
         private ActionBlock<StreamGroupAggregation> _actionBlock;
-
         public QueueProcessingService(
             ILogger logger,
             IConfiguration configuration,
@@ -35,19 +32,14 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             _streamGroupTracker = streamGroupTracker ?? throw new ArgumentNullException(nameof(streamGroupTracker));
             _googleCalendarService = googleCalendarService ?? throw new ArgumentNullException(nameof(googleCalendarService));
             _occupancyActivityTracker = occupancyActivityTracker ?? throw new ArgumentNullException(nameof(occupancyActivityTracker));
-
             var config = configuration.GetSection("Config").Get<Config>();
-
             if (config?.MaxParallelActionBlocks > 0)
             {
                 _maxParallelBlocks = config.MaxParallelActionBlocks;
             }
-
             _streamGroupsMapping = configuration.GetStreamGroupsMapping();
-
             _logger.Information("Stream groups mapping: {@StreamGroupsMapping}", _streamGroupsMapping);
         }
-
         public void Start()
         {
             _actionBlock = new ActionBlock<StreamGroupAggregation>(notification =>
@@ -65,24 +57,20 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             {
                 MaxDegreeOfParallelism = _maxParallelBlocks
             });
-
             _streamGroupTracker.OnOccupancyChanged += async (groupName, isOccupied, identifications) =>
             {
                 _logger.Information("Occupancy changed for group {GroupName} to {IsOccupied}", groupName, isOccupied);
-
                 try
                 {
                     var calendarId = _streamGroupsMapping
                                             .Where(x => x.GroupName == groupName)
                                             .Select(x => x.CalendarId)
                                             .FirstOrDefault();
-
                     if (calendarId == null)
                     {
                         _logger.Warning("Calendar ID not found for group {GroupName}", groupName);
                         return;
                     }
-
                     await _occupancyActivityTracker.HandleOccupancyChangeAsync(groupName, calendarId, isOccupied,identifications);
                 }
                 catch (Exception ex)
@@ -91,17 +79,14 @@ namespace SmartFace.GoogleCalendarsConnector.Services
                 }
             };
         }
-
         public async Task StopAsync()
         {
             _actionBlock.Complete();
             await _actionBlock.Completion;
         }
-
         public void ProcessNotification(StreamGroupAggregation notification)
         {
             ArgumentNullException.ThrowIfNull(notification);
-
             _actionBlock.Post(notification);
         }
     }

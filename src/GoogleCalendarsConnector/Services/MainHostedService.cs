@@ -15,7 +15,6 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         private readonly IConfiguration _configuration;
         private readonly QueueProcessingService _queueProcessingService;
         private readonly GraphQlNotificationsService _graphQlNotificationsService;
-
         public MainHostedService(
             ILogger logger,
             IConfiguration configuration,
@@ -27,31 +26,23 @@ namespace SmartFace.GoogleCalendarsConnector.Services
             _queueProcessingService = queueProcessingService ?? throw new ArgumentNullException(nameof(queueProcessingService));
             _graphQlNotificationsService = graphQlNotificationsService ?? throw new ArgumentNullException(nameof(graphQlNotificationsService));
         }
-
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.Information($"{nameof(MainHostedService)} is starting");
-
             _graphQlNotificationsService.OnStreamGroupAggregation += HandleNotificationAsync;
-
             await _graphQlNotificationsService.StartAsync();
             _queueProcessingService.Start();
         }
-
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.Information($"{nameof(MainHostedService)} is stopping");
-
             await _graphQlNotificationsService.StopAsync();
             await _queueProcessingService.StopAsync();
         }
-
         private Task HandleNotificationAsync(StreamGroupAggregation notification)
         {
             _logger.Information("Processing HandleNotificationAsync {notification}", new { notification.StreamGroupName, notification.MaxPedestrians, notification.MaxIdentifications, notification.AveragePedestrians, notification.AverageIdentifications });
-
             _queueProcessingService.ProcessNotification(notification);
-
             return Task.CompletedTask;
         }
     }

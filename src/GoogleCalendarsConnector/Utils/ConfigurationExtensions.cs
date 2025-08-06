@@ -16,14 +16,11 @@ namespace SmartFace.GoogleCalendarsConnector.Services
         public static StreamGroupMapping[] GetStreamGroupsMapping(this IConfiguration configuration)
         {
             ArgumentNullException.ThrowIfNull(configuration);
-
             var streamGroupsMapping = configuration.GetSection("StreamGroupsMapping").Get<StreamGroupMapping[]>();
-
             if (streamGroupsMapping == null)
             {
                 return new StreamGroupMapping[] { };
             }
-
             return streamGroupsMapping;
         }
     }

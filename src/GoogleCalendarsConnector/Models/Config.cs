@@ -6,12 +6,10 @@ namespace SmartFace.GoogleCalendarsConnector.Models
     {
         public int MaxParallelActionBlocks { get; set; } = 1;
     }
-
     public class StreamGroupsConfiguration
     {
         public List<StreamGroup> StreamGroups { get; set; } = new List<StreamGroup>();
     }
-
     public class StreamGroup
     {
         public string Name { get; set; }

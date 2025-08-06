@@ -11,11 +11,8 @@ namespace SmartFace.GoogleCalendarsConnector.Models
         public string Location { get; set; }
         public string[] Attendees { get; set; }
         public string EventId { get; set; }
-        
-        // Cache-related properties
         public DateTime ExpiresAt { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        
         public bool IsExpired()
         {
             return DateTime.UtcNow > ExpiresAt;
