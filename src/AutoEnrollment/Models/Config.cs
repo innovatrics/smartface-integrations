@@ -2,6 +2,8 @@
 {
     public class Config
     {
+        public string[] WatchlistIds { get; set; }
+        
         public bool ApplyForAllStreams { get; set; }
         public Conditions Conditions { get; set; }
         public string DebugOutputFolder { get; set; }

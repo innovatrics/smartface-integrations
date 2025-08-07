@@ -30,13 +30,13 @@ namespace SmartFace.AutoEnrollment.Service
 
             streamMapping = streamMapping
                                 .Where(w => w.StreamId == streamGuid)
-                                .Select(s => NormalizeMappingWithDefaults(s, config.Conditions))
+                                .Select(s => NormalizeMappingWithDefaults(s, config))
                                 .ToArray();
 
             if (streamMapping.Length == 0 && config.ApplyForAllStreams)
             {
                 streamMapping = new[] {
-                    NormalizeMappingWithDefaults(new StreamConfiguration(), config.Conditions)
+                    NormalizeMappingWithDefaults(new StreamConfiguration(), config)
                 };
             }
 
@@ -78,29 +78,32 @@ namespace SmartFace.AutoEnrollment.Service
             return conditions;
         }
 
-        private static StreamConfiguration NormalizeMappingWithDefaults(StreamConfiguration mapping, Conditions config)
+        private static StreamConfiguration NormalizeMappingWithDefaults(StreamConfiguration mapping, Config config)
         {
-            mapping.FaceQuality ??= config.FaceQuality;
-            mapping.TemplateQuality ??= config.TemplateQuality;
-            mapping.FaceArea ??= config.FaceArea;
-            mapping.FaceOrder ??= config.FaceOrder;
-            mapping.FaceSize ??= config.FaceSize;
-            mapping.FacesOnFrameCount ??= config.FacesOnFrameCount;
-            mapping.Brightness ??= config.Brightness;
-            mapping.Sharpness ??= config.Sharpness;
-            mapping.KeepAutoLearn ??= config.KeepAutoLearn;
-            mapping.GroupDebounceMs ??= config.GroupDebounceMs;
-            mapping.StreamDebounceMs ??= config.StreamDebounceMs;
-            mapping.TrackletDebounceMs ??= config.TrackletDebounceMs;
-            mapping.YawAngle ??= config.YawAngle;
-            mapping.PitchAngle ??= config.PitchAngle;
-            mapping.RollAngle ??= config.RollAngle;
-            mapping.FramePaddingAbsolute ??= config.FramePaddingAbsolute;
-            mapping.FramePaddingRelative ??= config.FramePaddingRelative;
+            mapping.FaceQuality ??= config.Conditions.FaceQuality;
+            mapping.TemplateQuality ??= config.Conditions.TemplateQuality;
+            mapping.FaceArea ??= config.Conditions.FaceArea;
+            mapping.FaceOrder ??= config.Conditions.FaceOrder;
+            mapping.FaceSize ??= config.Conditions.FaceSize;
+            mapping.FacesOnFrameCount ??= config.Conditions.FacesOnFrameCount;
+            mapping.Brightness ??= config.Conditions.Brightness;
+            mapping.Sharpness ??= config.Conditions.Sharpness;
+            mapping.KeepAutoLearn ??= config.Conditions.KeepAutoLearn;
+            mapping.GroupDebounceMs ??= config.Conditions.GroupDebounceMs;
+            mapping.StreamDebounceMs ??= config.Conditions.StreamDebounceMs;
+            mapping.TrackletDebounceMs ??= config.Conditions.TrackletDebounceMs;
+            mapping.YawAngle ??= config.Conditions.YawAngle;
+            mapping.PitchAngle ??= config.Conditions.PitchAngle;
+            mapping.RollAngle ??= config.Conditions.RollAngle;
+            mapping.FramePaddingAbsolute ??= config.Conditions.FramePaddingAbsolute;
+            mapping.FramePaddingRelative ??= config.Conditions.FramePaddingRelative;
 
             if (mapping.WatchlistIds == null || mapping.WatchlistIds?.Length == 0)
             {
-                mapping.WatchlistIds = config.WatchlistIds;
+                var ids1 = config.WatchlistIds ?? Array.Empty<string>();
+                var ids2 = config.Conditions?.WatchlistIds ?? Array.Empty<string>();
+
+                mapping.WatchlistIds = ids1.Union(ids2).Distinct().ToArray();
             }
 
             return mapping;
