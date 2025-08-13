@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.IIS;
 using System.Linq;
 using Microsoft.Extensions.Logging;
+using Innovatrics.SmartFace.Integrations.AeosDashboards.Services;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {
@@ -58,7 +59,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             logDir = configuration.GetValue<string>("Serilog:LogDirectory", logDir);            
             var logFilePath = System.IO.Path.Combine(logDir, LOG_FILE_NAME);
 
-            var logger = LoggingSetup.SetupBasicLogging(logFilePath, configuration);
+            // Ensure the log directory exists
+            System.IO.Directory.CreateDirectory(logDir);
+
+            var logger = LoggingSetup.SetupBasicLogging(logFilePath);
 
             return logger;
         }
@@ -72,6 +76,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             services.AddSingleton<Serilog.ILogger>(logger);
             services.AddSingleton<IAeosDataAdapter, AeosDataAdapter>();
             services.AddSingleton<IDataOrchestrator, DataOrchestrator>();
+            services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
+            services.AddSingleton<IEmailService, EmailService>();
+            services.AddSingleton<ILockerAssignmentTracker, LockerAssignmentTracker>();
+            services.AddSingleton<IDailyReminderService, DailyReminderService>();
+            services.AddHostedService<DailyReminderHostedService>();
             services.AddHostedService<MainHostedService>();
             
             // Add MVC services with proper configuration

@@ -12,6 +12,7 @@ using System.ServiceModel.Security;
 using System.Security.Cryptography.X509Certificates;
 using Innovatrics.SmartFace.Integrations.AEOS.SmartFaceClients;
 using System.IO;
+using Innovatrics.SmartFace.Integrations.AeosDashboards.Services;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {
@@ -20,6 +21,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IAeosDataAdapter aeosDataAdapter;
+        private readonly ILockerAssignmentTracker lockerAssignmentTracker;
         private LockerAnalytics currentAnalytics = new LockerAnalytics();
         private string AeosIntegrationIdentifierType;
 
@@ -33,12 +35,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         public DataOrchestrator(
             ILogger logger,
             IConfiguration configuration,
-            IAeosDataAdapter aeosDataAdapter
+            IAeosDataAdapter aeosDataAdapter,
+            ILockerAssignmentTracker lockerAssignmentTracker
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.aeosDataAdapter = aeosDataAdapter ?? throw new ArgumentNullException(nameof(aeosDataAdapter));
+            this.lockerAssignmentTracker = lockerAssignmentTracker ?? throw new ArgumentNullException(nameof(lockerAssignmentTracker));
 
             AeosIntegrationIdentifierType = configuration.GetValue<string>("AeosDashboards:Aeos:Integration:SmartFace:IdentifierType") ?? throw new InvalidOperationException("The AEOS integration identifier type is not read.");
         }
@@ -200,6 +204,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                         $" - Last used: {locker.LastUsed:yyyy-MM-dd HH:mm:ss} ({locker.DaysSinceLastUse:F1} days ago)");
                 }
             }
+
+            // Update employee cache in the assignment tracker
+            if (lockerAssignmentTracker is LockerAssignmentTracker tracker)
+            {
+                tracker.UpdateEmployeeCache(_AeosAllEmployees);
+            }
+
+            // Process locker assignments for notifications
+            await lockerAssignmentTracker.ProcessLockerAssignmentsAsync(currentAnalytics.Groups);
         }
 
         public async Task<IList<AeosMember>> GetEmployees()

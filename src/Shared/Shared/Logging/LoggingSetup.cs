@@ -9,8 +9,7 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
     {
         private static LoggerConfiguration CreateConfiguration(string logFileName, IConfiguration configuration)
         {
-            return new LoggerConfiguration()
-                .ReadFrom.Configuration(configuration)
+            var loggerConfig = new LoggerConfiguration()
                 .WriteTo.Console()
                 .WriteTo.File(
                             path: logFileName,
@@ -22,6 +21,21 @@ namespace Innovatrics.SmartFace.Integrations.Shared.Logging
                             rollOnFileSizeLimit: true,
                             retainedFileCountLimit: 10
                         );
+
+            // Only try to read from configuration if it's not null
+            if (configuration != null)
+            {
+                try
+                {
+                    loggerConfig = loggerConfig.ReadFrom.Configuration(configuration);
+                }
+                catch
+                {
+                    // If configuration reading fails, continue with default settings
+                }
+            }
+
+            return loggerConfig;
         }
 
         public static ILogger SetupBasicLogging(string logFileName = "app.log", IConfiguration configuration = null)
