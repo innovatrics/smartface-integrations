@@ -17,10 +17,13 @@ To run application localy, follow these steps
 ### Deploy to Docker
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4`
+ - `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4.1 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4.1 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4.1`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
+
+ or run
+ - `.\src\AccessControlConnector\release.ps1 0.4.1`
 
 ## Usage
 Add following pattern to existing docker compose, depending on the integrations used:
@@ -111,4 +114,4 @@ networks:
     external:
       name: sf-network
 
-```
+
