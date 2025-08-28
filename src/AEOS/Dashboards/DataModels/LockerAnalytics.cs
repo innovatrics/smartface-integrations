@@ -53,4 +53,27 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         public string AssignedEmployeeIdentifier { get; set; }
         public double DaysSinceLastUse { get; set; }
     }
+
+    public class LockerAssignmentChange
+    {
+        public long LockerId { get; set; }
+        public string LockerName { get; set; }
+        public string GroupName { get; set; }
+        public long? PreviousAssignedTo { get; set; }
+        public string PreviousAssignedEmployeeName { get; set; }
+        public string PreviousAssignedEmployeeIdentifier { get; set; }
+        public long? NewAssignedTo { get; set; }
+        public string NewAssignedEmployeeName { get; set; }
+        public string NewAssignedEmployeeIdentifier { get; set; }
+        public DateTime ChangeTimestamp { get; set; }
+        public string ChangeType { get; set; } // "Assigned", "Unassigned" - each change is a separate event
+    }
+
+    public class AssignmentChangesResponse
+    {
+        public DateTime LastCheckTime { get; set; }
+        public DateTime CurrentCheckTime { get; set; }
+        public List<LockerAssignmentChange> Changes { get; set; } = new List<LockerAssignmentChange>();
+        public int TotalChanges { get; set; }
+    }
 } 

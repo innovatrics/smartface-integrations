@@ -30,6 +30,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private IList<AeosIdentifierType> _AeosAllIdentifierTypes = new List<AeosIdentifierType>();
         private IList<AeosIdentifier> _AeosAllIdentifiers = new List<AeosIdentifier>();
 
+        // Fields for tracking assignment changes
+        private Dictionary<long, long?> _previousLockerAssignments = new Dictionary<long, long?>();
+        private DateTime? _lastAssignmentCheckTime = null;
+        private List<LockerAssignmentChange> _assignmentChanges = new List<LockerAssignmentChange>();
+
         public DataOrchestrator(
             ILogger logger,
             IConfiguration configuration,
@@ -46,6 +51,124 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         public async Task<LockerAnalytics> GetLockerAnalytics()
         {
             return currentAnalytics;
+        }
+
+        public async Task<AssignmentChangesResponse> GetAssignmentChanges()
+        {
+            var currentCheckTime = DateTime.Now;
+            var changes = new List<LockerAssignmentChange>();
+
+            if (_lastAssignmentCheckTime.HasValue)
+            {
+                // Compare current assignments with previous assignments
+                foreach (var locker in _AeosAllLockers)
+                {
+                    var previousAssignment = _previousLockerAssignments.ContainsKey(locker.Id) 
+                        ? _previousLockerAssignments[locker.Id] 
+                        : null;
+                    
+                    var currentAssignment = locker.AssignedTo > 0 ? (long?)locker.AssignedTo : null;
+
+                    if (previousAssignment != currentAssignment)
+                    {
+                        // Create separate events for each change
+                        var changesForLocker = CreateAssignmentChanges(locker, previousAssignment, currentAssignment);
+                        changes.AddRange(changesForLocker);
+                    }
+                }
+            }
+
+            // Update the previous assignments for next comparison
+            UpdatePreviousAssignments();
+
+            var response = new AssignmentChangesResponse
+            {
+                LastCheckTime = _lastAssignmentCheckTime ?? currentCheckTime,
+                CurrentCheckTime = currentCheckTime,
+                Changes = changes,
+                TotalChanges = changes.Count
+            };
+
+            _lastAssignmentCheckTime = currentCheckTime;
+            _assignmentChanges.AddRange(changes);
+
+            return response;
+        }
+
+        private List<LockerAssignmentChange> CreateAssignmentChanges(AeosLockers locker, long? previousAssignment, long? currentAssignment)
+        {
+            var changes = new List<LockerAssignmentChange>();
+            var group = _AeosAllLockerGroups.FirstOrDefault(g => g.LockerIds.Contains(locker.Id));
+            var groupName = group?.Name ?? "Unknown Group";
+
+            // If there was a previous assignment and now there isn't, create an "Unassigned" event
+            if (previousAssignment.HasValue && !currentAssignment.HasValue)
+            {
+                var previousEmployee = _AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value);
+                var previousIdentifier = previousEmployee != null 
+                    ? _AeosAllIdentifiers.FirstOrDefault(i => i.CarrierId == previousEmployee.Id)?.BadgeNumber 
+                    : null;
+
+                changes.Add(new LockerAssignmentChange
+                {
+                    LockerId = locker.Id,
+                    LockerName = locker.Name,
+                    GroupName = groupName,
+                    PreviousAssignedTo = previousAssignment,
+                    PreviousAssignedEmployeeName = previousEmployee != null 
+                        ? $"{previousEmployee.FirstName} {previousEmployee.LastName}" 
+                        : null,
+                    PreviousAssignedEmployeeIdentifier = previousIdentifier,
+                    NewAssignedTo = null,
+                    NewAssignedEmployeeName = null,
+                    NewAssignedEmployeeIdentifier = null,
+                    ChangeTimestamp = DateTime.Now,
+                    ChangeType = "Unassigned"
+                });
+            }
+
+            // If there is a current assignment (regardless of previous), create an "Assigned" event
+            if (currentAssignment.HasValue)
+            {
+                var currentEmployee = _AeosAllEmployees.FirstOrDefault(e => e.Id == currentAssignment.Value);
+                var currentIdentifier = currentEmployee != null 
+                    ? _AeosAllIdentifiers.FirstOrDefault(i => i.CarrierId == currentEmployee.Id)?.BadgeNumber 
+                    : null;
+
+                changes.Add(new LockerAssignmentChange
+                {
+                    LockerId = locker.Id,
+                    LockerName = locker.Name,
+                    GroupName = groupName,
+                    PreviousAssignedTo = previousAssignment,
+                    PreviousAssignedEmployeeName = previousAssignment.HasValue 
+                        ? _AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value) != null 
+                            ? $"{_AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value).FirstName} {_AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value).LastName}" 
+                            : null 
+                        : null,
+                    PreviousAssignedEmployeeIdentifier = previousAssignment.HasValue 
+                        ? _AeosAllIdentifiers.FirstOrDefault(i => i.CarrierId == previousAssignment.Value)?.BadgeNumber 
+                        : null,
+                    NewAssignedTo = currentAssignment,
+                    NewAssignedEmployeeName = currentEmployee != null 
+                        ? $"{currentEmployee.FirstName} {currentEmployee.LastName}" 
+                        : null,
+                    NewAssignedEmployeeIdentifier = currentIdentifier,
+                    ChangeTimestamp = DateTime.Now,
+                    ChangeType = "Assigned"
+                });
+            }
+
+            return changes;
+        }
+
+        private void UpdatePreviousAssignments()
+        {
+            _previousLockerAssignments.Clear();
+            foreach (var locker in _AeosAllLockers)
+            {
+                _previousLockerAssignments[locker.Id] = locker.AssignedTo > 0 ? (long?)locker.AssignedTo : null;
+            }
         }
 
         public async Task GetLockersData()
