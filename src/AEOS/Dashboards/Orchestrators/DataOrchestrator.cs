@@ -58,32 +58,50 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             var currentCheckTime = DateTime.Now;
             var changes = new List<LockerAssignmentChange>();
 
-            if (_lastAssignmentCheckTime.HasValue)
-            {
-                // Compare current assignments with previous assignments
-                foreach (var locker in _AeosAllLockers)
-                {
-                    var previousAssignment = _previousLockerAssignments.ContainsKey(locker.Id) 
-                        ? _previousLockerAssignments[locker.Id] 
-                        : null;
-                    
-                    var currentAssignment = locker.AssignedTo > 0 ? (long?)locker.AssignedTo : null;
+            logger.Information($"GetAssignmentChanges called. Last check time: {_lastAssignmentCheckTime}, Total lockers: {_AeosAllLockers?.Count ?? 0}");
 
-                    if (previousAssignment != currentAssignment)
-                    {
-                        // Create separate events for each change
-                        var changesForLocker = CreateAssignmentChanges(locker, previousAssignment, currentAssignment);
-                        changes.AddRange(changesForLocker);
-                    }
+            // If this is the first call, initialize the previous assignments and return empty changes
+            if (!_lastAssignmentCheckTime.HasValue)
+            {
+                logger.Information("First call to GetAssignmentChanges - initializing previous assignments");
+                UpdatePreviousAssignments();
+                _lastAssignmentCheckTime = currentCheckTime;
+                
+                return new AssignmentChangesResponse
+                {
+                    LastCheckTime = currentCheckTime,
+                    CurrentCheckTime = currentCheckTime,
+                    Changes = changes,
+                    TotalChanges = 0
+                };
+            }
+
+            // Compare current assignments with previous assignments
+            foreach (var locker in _AeosAllLockers)
+            {
+                var previousAssignment = _previousLockerAssignments.ContainsKey(locker.Id) 
+                    ? _previousLockerAssignments[locker.Id] 
+                    : null;
+                
+                var currentAssignment = locker.AssignedTo > 0 ? (long?)locker.AssignedTo : null;
+
+                if (previousAssignment != currentAssignment)
+                {
+                    logger.Information($"Change detected for locker {locker.Id} ({locker.Name}): {previousAssignment} -> {currentAssignment}");
+                    // Create separate events for each change
+                    var changesForLocker = CreateAssignmentChanges(locker, previousAssignment, currentAssignment);
+                    changes.AddRange(changesForLocker);
                 }
             }
+
+            logger.Information($"Found {changes.Count} changes in locker assignments");
 
             // Update the previous assignments for next comparison
             UpdatePreviousAssignments();
 
             var response = new AssignmentChangesResponse
             {
-                LastCheckTime = _lastAssignmentCheckTime ?? currentCheckTime,
+                LastCheckTime = _lastAssignmentCheckTime.Value,
                 CurrentCheckTime = currentCheckTime,
                 Changes = changes,
                 TotalChanges = changes.Count
@@ -119,9 +137,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                         ? $"{previousEmployee.FirstName} {previousEmployee.LastName}" 
                         : null,
                     PreviousAssignedEmployeeIdentifier = previousIdentifier,
+                    PreviousAssignedEmployeeEmail = previousEmployee?.Email,
                     NewAssignedTo = null,
                     NewAssignedEmployeeName = null,
                     NewAssignedEmployeeIdentifier = null,
+                    NewAssignedEmployeeEmail = null,
                     ChangeTimestamp = DateTime.Now,
                     ChangeType = "Unassigned"
                 });
@@ -149,11 +169,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     PreviousAssignedEmployeeIdentifier = previousAssignment.HasValue 
                         ? _AeosAllIdentifiers.FirstOrDefault(i => i.CarrierId == previousAssignment.Value)?.BadgeNumber 
                         : null,
+                    PreviousAssignedEmployeeEmail = previousAssignment.HasValue 
+                        ? _AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value)?.Email 
+                        : null,
                     NewAssignedTo = currentAssignment,
                     NewAssignedEmployeeName = currentEmployee != null 
                         ? $"{currentEmployee.FirstName} {currentEmployee.LastName}" 
                         : null,
                     NewAssignedEmployeeIdentifier = currentIdentifier,
+                    NewAssignedEmployeeEmail = currentEmployee?.Email,
                     ChangeTimestamp = DateTime.Now,
                     ChangeType = "Assigned"
                 });

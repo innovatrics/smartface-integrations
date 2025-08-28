@@ -62,9 +62,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         public long? PreviousAssignedTo { get; set; }
         public string PreviousAssignedEmployeeName { get; set; }
         public string PreviousAssignedEmployeeIdentifier { get; set; }
+        public string PreviousAssignedEmployeeEmail { get; set; }
         public long? NewAssignedTo { get; set; }
         public string NewAssignedEmployeeName { get; set; }
         public string NewAssignedEmployeeIdentifier { get; set; }
+        public string NewAssignedEmployeeEmail { get; set; }
         public DateTime ChangeTimestamp { get; set; }
         public string ChangeType { get; set; } // "Assigned", "Unassigned" - each change is a separate event
     }
