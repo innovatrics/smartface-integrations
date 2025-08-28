@@ -51,6 +51,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         public long? AssignedTo { get; set; }
         public string AssignedEmployeeName { get; set; }
         public string AssignedEmployeeIdentifier { get; set; }
+        public string AssignedEmployeeEmail { get; set; }
         public double DaysSinceLastUse { get; set; }
     }
 
@@ -77,5 +78,33 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         public DateTime CurrentCheckTime { get; set; }
         public List<LockerAssignmentChange> Changes { get; set; } = new List<LockerAssignmentChange>();
         public int TotalChanges { get; set; }
+    }
+
+    public class SimplifiedLockerInfo
+    {
+        public long Id { get; set; }
+        public string Name { get; set; }
+        public DateTime? LastUsed { get; set; }
+        public double DaysSinceLastUse { get; set; }
+    }
+
+    public class EmployeeAssignmentSummary
+    {
+        public long EmployeeId { get; set; }
+        public string EmployeeName { get; set; }
+        public string EmployeeEmail { get; set; }
+        public string EmployeeIdentifier { get; set; }
+        public List<SimplifiedLockerInfo> AssignedLockers { get; set; } = new List<SimplifiedLockerInfo>();
+        public int TotalAssignedLockers { get; set; }
+    }
+
+    public class GroupAssignmentEmailSummary
+    {
+        public long GroupId { get; set; }
+        public string GroupName { get; set; }
+        public string GroupDescription { get; set; }
+        public List<EmployeeAssignmentSummary> EmployeeAssignments { get; set; } = new List<EmployeeAssignmentSummary>();
+        public int TotalEmployeesWithAssignments { get; set; }
+        public int TotalAssignedLockers { get; set; }
     }
 } 

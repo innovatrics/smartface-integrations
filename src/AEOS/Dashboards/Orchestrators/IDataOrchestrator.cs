@@ -14,5 +14,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         Task<AeosMember> GetEmployeeByIdentifier(string identifier);
         Task<AeosMember> GetEmployeeByEmail(string email);
         Task<AssignmentChangesResponse> GetAssignmentChanges();
+        Task<GroupAssignmentEmailSummary> GetGroupAssignmentEmailSummary(long groupId);
     }
 }

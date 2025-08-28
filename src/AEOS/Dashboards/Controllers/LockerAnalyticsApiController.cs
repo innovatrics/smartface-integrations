@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using System.Collections.Generic;
+using System;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {
@@ -140,14 +141,48 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// Returns changes in locker assignments since the last time this endpoint was called.
         /// If this is the first call since application start, no changes will be returned.
         /// </summary>
-        /// <returns>List of assignment changes with timestamps and details.</returns>
-        /// <response code="200">Returns the assignment changes since last check.</response>
-        [HttpGet("changes/assignment-changes")]
+        /// <returns>List of assignment changes with employee details including email addresses</returns>
+        [HttpGet("email-summary/assignment-changes")]
         [ProducesResponseType(typeof(AssignmentChangesResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAssignmentChanges()
+        public async Task<ActionResult<AssignmentChangesResponse>> GetAssignmentChanges()
         {
-            var changes = await dataOrchestrator.GetAssignmentChanges();
-            return Ok(changes);
+            try
+            {
+                var changes = await dataOrchestrator.GetAssignmentChanges();
+                return Ok(changes);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to retrieve assignment changes", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Returns current assignment summary for a specific group, organized by employees.
+        /// Only employees with assigned lockers in the specified group are included.
+        /// </summary>
+        /// <param name="groupId">The ID of the locker group.</param>
+        /// <returns>Current assignment summary organized by employees with their assigned lockers.</returns>
+        /// <response code="200">Returns the current assignment summary for the group.</response>
+        /// <response code="404">If no locker group is found with the given ID.</response>
+        [HttpGet("email-summary/current-assignment/{groupId}")]
+        [ProducesResponseType(typeof(GroupAssignmentEmailSummary), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<GroupAssignmentEmailSummary>> GetCurrentAssignmentEmailSummary(long groupId)
+        {
+            try
+            {
+                var summary = await dataOrchestrator.GetGroupAssignmentEmailSummary(groupId);
+                if (summary == null)
+                {
+                    return NotFound(new { message = $"Locker group with ID {groupId} not found." });
+                }
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to retrieve current assignment summary", details = ex.Message });
+            }
         }
     }
 } 

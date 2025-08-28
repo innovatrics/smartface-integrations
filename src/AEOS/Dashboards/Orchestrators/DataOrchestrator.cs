@@ -267,6 +267,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                             ? $"{assignedEmployee.FirstName} {assignedEmployee.LastName}" 
                             : null,
                         AssignedEmployeeIdentifier = assignedEmployeeIdentifier,
+                        AssignedEmployeeEmail = assignedEmployee?.Email,
                         DaysSinceLastUse = locker.LastUsed != DateTime.MinValue 
                             ? (DateTime.Now - locker.LastUsed).TotalDays 
                             : 0
@@ -437,6 +438,88 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             this.logger.Information($"Found employee: {employee.FirstName} {employee.LastName} (ID: {employee.Id}) for email: {email} with {assignedLockers.Count} assigned lockers");
             return employee;
+        }
+
+        public async Task<GroupAssignmentEmailSummary> GetGroupAssignmentEmailSummary(long groupId)
+        {
+            logger.Information($"Getting email summary for group ID: {groupId}");
+
+            // Find the requested group
+            var group = _AeosAllLockerGroups.FirstOrDefault(g => g.Id == groupId);
+            if (group == null)
+            {
+                logger.Warning($"Group with ID {groupId} not found");
+                return null;
+            }
+
+            // Get all lockers in this group
+            var groupLockers = _AeosAllLockers
+                .Where(l => group.LockerIds.Contains(l.Id))
+                .Where(l => l.AssignedTo > 0) // Only assigned lockers
+                .ToList();
+
+            // Group lockers by assigned employee
+            var employeeAssignments = new Dictionary<long, EmployeeAssignmentSummary>();
+
+            foreach (var locker in groupLockers)
+            {
+                var employee = _AeosAllEmployees.FirstOrDefault(e => e.Id == locker.AssignedTo);
+                if (employee == null) continue;
+
+                var employeeIdentifier = _AeosAllIdentifiers
+                    .FirstOrDefault(i => i.CarrierId == employee.Id)?.BadgeNumber;
+
+                var lockerInfo = new SimplifiedLockerInfo
+                {
+                    Id = locker.Id,
+                    Name = locker.Name,
+                    LastUsed = locker.LastUsed != DateTime.MinValue ? locker.LastUsed : null,
+                    DaysSinceLastUse = locker.LastUsed != DateTime.MinValue 
+                        ? (DateTime.Now - locker.LastUsed).TotalDays 
+                        : 0
+                };
+
+                if (!employeeAssignments.ContainsKey(employee.Id))
+                {
+                    employeeAssignments[employee.Id] = new EmployeeAssignmentSummary
+                    {
+                        EmployeeId = employee.Id,
+                        EmployeeName = $"{employee.FirstName} {employee.LastName}",
+                        EmployeeEmail = employee.Email,
+                        EmployeeIdentifier = employeeIdentifier,
+                        AssignedLockers = new List<SimplifiedLockerInfo>(),
+                        TotalAssignedLockers = 0
+                    };
+                }
+
+                employeeAssignments[employee.Id].AssignedLockers.Add(lockerInfo);
+                employeeAssignments[employee.Id].TotalAssignedLockers++;
+            }
+
+            // Sort employees by name and lockers by name within each employee
+            var sortedEmployeeAssignments = employeeAssignments.Values
+                .OrderBy(e => e.EmployeeName)
+                .ToList();
+
+            foreach (var employeeAssignment in sortedEmployeeAssignments)
+            {
+                employeeAssignment.AssignedLockers = employeeAssignment.AssignedLockers
+                    .OrderBy(l => l.Name)
+                    .ToList();
+            }
+
+            var summary = new GroupAssignmentEmailSummary
+            {
+                GroupId = group.Id,
+                GroupName = group.Name,
+                GroupDescription = group.Description,
+                EmployeeAssignments = sortedEmployeeAssignments,
+                TotalEmployeesWithAssignments = sortedEmployeeAssignments.Count,
+                TotalAssignedLockers = sortedEmployeeAssignments.Sum(e => e.TotalAssignedLockers)
+            };
+
+            logger.Information($"Email summary for group {group.Name}: {summary.TotalEmployeesWithAssignments} employees with {summary.TotalAssignedLockers} assigned lockers");
+            return summary;
         }
     }
 }
