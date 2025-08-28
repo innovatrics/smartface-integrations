@@ -135,5 +135,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             return Ok(employee);
         }
+
+        /// <summary>
+        /// Returns changes in locker assignments since the last time this endpoint was called.
+        /// If this is the first call since application start, no changes will be returned.
+        /// </summary>
+        /// <returns>List of assignment changes with timestamps and details.</returns>
+        /// <response code="200">Returns the assignment changes since last check.</response>
+        [HttpGet("changes/assignment-changes")]
+        [ProducesResponseType(typeof(AssignmentChangesResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAssignmentChanges()
+        {
+            var changes = await dataOrchestrator.GetAssignmentChanges();
+            return Ok(changes);
+        }
     }
 } 
