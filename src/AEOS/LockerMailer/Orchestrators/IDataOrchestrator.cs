@@ -6,8 +6,6 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
 {
     public interface IDataOrchestrator
     {
-        Task<IList<AeosIdentifierType>> GetIdentifierTypes();
-        Task<IList<AeosIdentifier>> GetIdentifiersPerType(long identifierType);
         
     }
 }

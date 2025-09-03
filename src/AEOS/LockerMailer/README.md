@@ -4,19 +4,19 @@ This application manages triggering events for the Nedap Aeos, gathers data, eva
 ## Development
 To run the application locally, follow these steps
  - open terminal
- - navigate to /src/Dashboards
+ - navigate to /src/LockerMailer
  - run `dotnet run`
 
  ## Deployment
  To deploy the application, follow these steps
  - open terminal
- - navigate to /src/Dashboards
+ - navigate to /src/LockerMailer
  - run `dotnet publish -c Release -r win10-x64 --self-contained true -p:ReadyToRun=false -p:PublishSingleFile=true -p:PublishTrimmed=false -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true`
 
 ### Deploy to Docker
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AEOS/Dashboards/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:0.1 .`
+ - `docker build -f src/AEOS/LockerMailer/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:0.1 .`
  - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:0.1 registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:latest`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:0.1`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:latest`
@@ -24,17 +24,38 @@ To run the application locally, follow these steps
 ### Deploy to Docker on Arm
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AEOS/Dashboards/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:0.1-arm .`
+ - `docker build -f src/AEOS/LockerMailer/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:0.1-arm .`
  - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:0.1-arm registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:latest-arm`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:0.1-arm`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:latest-arm`
 
 ## Usage
-Add the following pattern to an existing docker compose:
+The application configuration is stored in `appsettings.json`:
 
+```json
+{
+  "LockerMailer": {
+    "RefreshPeriodMs": 300000,
+    "Connections": {
+      "Dashboards": {
+        "Host": "http://<host>>",
+        "Port": 8020,
+        "User": "",
+        "Pass": ""
+      },
+      "Keila": {
+        "Host": "http://<host>>",
+        "Port": 4000,
+        "User": "",
+        "Pass": "",
+        "ApiKey": ""
+      }
+    }
+  }
+}
 ```
-      
-  ...
+
+### Configuration Options
 
   sf-station:
     image: ${REGISTRY}sf-station:${SFS_VERSION}
@@ -44,7 +65,7 @@ Add the following pattern to an existing docker compose:
       - 8000:8000
     env_file: .env.sfstation
 
-  aeosdashboards:
+  aeoslockermailer:
     image: ${REGISTRY}integrations-aeoslockermailer:[version]
     container_name: SFAeosDashboards
     restart: unless-stopped
@@ -59,30 +80,31 @@ networks:
 
 ```
 
-For appsettings.json
-```
-"AeosDashboards": {
-        "Aeos": {
-            "Server": {
-                "Wsdl": "",
-                "PageSize": 100,
-                "User": "",
-                "Pass": ""
-            },
-            "RefreshPeriodMs": 60000
-        },
-        "Web": {
-            "WebRefreshPeriodMs": 10000
-        }
-    }
-```
+### Response Data Structure
 
-For .env.aeosdash
-```
-AeosDashboards__Aeos__Server__Wsdl=
-AeosDashboards__Aeos__Server__PageSize=100,
-AeosDashboards__Aeos__Server__User=
-AeosDashboards__Aeos__Server__Pass=
-AeosDashboards__Aeos__RefreshPeriodMs=60000
-AeosDashboards__Web__WebRefreshPeriodMs=10000
+The API returns assignment change data in the following format:
+
+```json
+{
+  "lastCheckTime": "2025-09-02T07:05:47.430Z",
+  "currentCheckTime": "2025-09-02T07:05:47.430Z",
+  "changes": [
+    {
+      "lockerId": 0,
+      "lockerName": "string",
+      "groupName": "string",
+      "previousAssignedTo": 0,
+      "previousAssignedEmployeeName": "string",
+      "previousAssignedEmployeeIdentifier": "string",
+      "previousAssignedEmployeeEmail": "string",
+      "newAssignedTo": 0,
+      "newAssignedEmployeeName": "string",
+      "newAssignedEmployeeIdentifier": "string",
+      "newAssignedEmployeeEmail": "string",
+      "changeTimestamp": "2025-09-02T07:05:47.430Z",
+      "changeType": "string"
+    }
+  ],
+  "totalChanges": 0
+}
 ```

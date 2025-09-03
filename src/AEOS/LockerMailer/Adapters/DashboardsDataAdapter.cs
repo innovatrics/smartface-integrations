@@ -12,24 +12,27 @@ using System.ServiceModel;
 using System.ServiceModel.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Linq;
+using Innovatrics.SmartFace.Integrations.LockerMailer.DataModels;
+using System.Text.Json;
 
 namespace Innovatrics.SmartFace.Integrations.LockerMailer
 {
-    public class DashBoardsDataAdapter : IDashBoardsDataAdapter
+    public class DashBoardsDataAdapter : IDashboardsDataAdapter
     {
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
         private readonly string DataSource;
-        private string DashboardsEndpoint;
-        private int DashboardsServerPageSize;
+        private string DashboardsHost;
+        private int DashboardsPort;
         private string DashboardsUsername;
         private string DashboardsPassword;
         private string DashboardsIntegrationIdentifierType;
         private Dictionary<string, bool> DefaultTemplates = new();
 
         private AeosWebServiceTypeClient client;
+        private HttpClient httpClient;
 
         public DashBoardsDataAdapter(
             ILogger logger,
@@ -43,132 +46,95 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
 
             this.logger.Information("Aeos Dashboard DataAdapter Initiated");
 
-            DataSource = configuration.GetValue<string>("LockerMailer:Dashboards:DataSource");
-            DashboardsEndpoint = configuration.GetValue<string>("LockerMailer:Dashboards:Endpoint");
-            DashboardsUsername = configuration.GetValue<string>("LockerMailer:Dashboards:Username");
-            DashboardsPassword = configuration.GetValue<string>("LockerMailer:Dashboards:Password");
-            DashboardsServerPageSize = configuration.GetValue<int>("LockerMailer:Dashboards:ServerPageSize", 100);
-            DashboardsIntegrationIdentifierType = configuration.GetValue<string>("LockerMailer:Dashboards:IntegrationIdentifierType");
-            // add here connection to Aoes Dashboards
+            DataSource = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:DataSource");
+            DashboardsHost = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:Host");
+            DashboardsPort = configuration.GetValue<int>("LockerMailer:Connections:Dashboards:Port");
+            DashboardsUsername = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:User");
+            DashboardsPassword = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:Pass");
+            DashboardsIntegrationIdentifierType = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:IntegrationIdentifierType");
             
-            var endpoint = new Uri(DashboardsEndpoint);
-            var endpointBinding = new BasicHttpBinding()
-            {
-                MaxBufferSize = int.MaxValue,
-                ReaderQuotas = System.Xml.XmlDictionaryReaderQuotas.Max,
-                MaxReceivedMessageSize = int.MaxValue,
-                AllowCookies = true,
-                Security =
-                {
-                    Mode = (endpoint.Scheme == "https") ? BasicHttpSecurityMode.Transport : BasicHttpSecurityMode.None,
-                    Transport =
-                    {
-                        ClientCredentialType = HttpClientCredentialType.Basic
-                    }
-                }
-            };
-            var endpointAddress = new EndpointAddress(endpoint);
-
-            client = new AeosWebServiceTypeClient(endpointBinding, endpointAddress);
-            client.ClientCredentials.ServiceCertificate.SslCertificateAuthentication = new X509ServiceCertificateAuthentication()
-            {
-                CertificateValidationMode = X509CertificateValidationMode.None,
-                RevocationMode = X509RevocationMode.NoCheck
-            };
-            client.ClientCredentials.UserName.UserName = DashboardsUsername;
-            client.ClientCredentials.UserName.Password = DashboardsPassword;
-        }
-
-
-        public async Task<IList<AeosLockers>> GetLockers()
-        {
-            this.logger.Debug("Receiving Lockers from AEOS");
-
-            List<AeosLockers> AeosAllLockers = new List<AeosLockers>();
-
-            bool allLockers = false;
-            int LockersPageSize = AeosServerPageSize;
-            int LockersPageNumber = 0;
-            int LockersTotalCount = 0;
-
-            while (allLockers == false)
-            {
-                
-                LockersPageNumber += 1;
-                this.logger.Debug($"Receiving Lockers from AEOS: Page {LockersPageNumber}");
-                var lockerSearch = new LockerSearchInfo();
-                
-                // Create LockerSearch object first
-                lockerSearch.LockerSearch = new LockerSearch();
-                
-                // Then create SearchRange
-                lockerSearch.SearchRange = new SearchRange();
-
-                if (LockersPageNumber == 1)
-                {
-                    lockerSearch.SearchRange.startRecordNo = 0;
-                }
-                else
-                {
-                    lockerSearch.SearchRange.startRecordNo = (((LockersPageNumber) * (LockersPageSize)) - LockersPageSize);
-                }
-
-                lockerSearch.SearchRange.startRecordNo = (LockersPageNumber - 1) * LockersPageSize;
-                lockerSearch.SearchRange.nrOfRecords = LockersPageSize;
-                lockerSearch.SearchRange.nrOfRecordsSpecified = true;
-
-                var lockers = await client.findLockerAsync(lockerSearch);
-
-                if (lockers == null)
-                {
-                    this.logger.Error("Null response received from findLockerAsync");
-                    continue;
-                }
-
+            // Initialize HTTP client for REST API calls
+            httpClient = httpClientFactory.CreateClient();
             
-                if (lockers?.LockerList == null)
-                {
-                    this.logger.Error("LockerList is null in the response");
-                    continue;
-                }
-
-                if (lockers.LockerList.Locker == null)
-                {
-                    this.logger.Error("Locker array is null in the response");
-                    continue;
-                }
-
-                this.logger.Debug($"Processing {lockers.LockerList.Locker.Length} lockers from page {LockersPageNumber}");
-
-                foreach (var locker in lockers.LockerList.Locker)
-                {
-                    if (locker == null)
-                    {
-                        this.logger.Error("Null locker object found in the array");
-                        continue;
-                    }
-
-                    this.logger.Debug($"Processing locker - Id: {locker.Id}, Name: {locker.Name}, LastUsed: {locker.LastUsed}, AssignedTo: {locker.AssignedTo}, Location: {locker.Location}, HostName: {locker.HostName}, Online: {locker.Online}, LockerFunction: {locker.LockerFunction}, LockerGroupId: {locker.LockerGroupId}");
-                    AeosAllLockers.Add(new AeosLockers(locker.Id, locker.Name, locker.LastUsed, locker.AssignedTo, locker.Location, locker.HostName, locker.Online, locker.LockerFunction, locker.LockerGroupId));
-                }
-
-                if (lockers.LockerList.Locker.Length == AeosServerPageSize)
-                {
-                    this.logger.Debug($"End of page {LockersPageNumber}. Amount of Lockers found: {lockers.LockerList.Locker.Length}. Number of results match the pagination limit. Another page will be checked.");
-                    LockersTotalCount = LockersTotalCount + lockers.LockerList.Locker.Length;
-                }
-                else
-                {
-                    allLockers = true;
-                    this.logger.Debug($"End of last page {LockersPageNumber}. Amount of Lockers found: {lockers.LockerList.Locker.Length}.");
-                    LockersTotalCount = LockersTotalCount + lockers.LockerList.Locker.Length;
-                    break;
-                }
+            // Set up basic authentication if credentials are provided
+            if (!string.IsNullOrEmpty(DashboardsUsername) && !string.IsNullOrEmpty(DashboardsPassword))
+            {
+                var credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{DashboardsUsername}:{DashboardsPassword}"));
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
             }
+            
+            // add here connection to Aoes Dashboards
+            if (!string.IsNullOrEmpty(DashboardsHost))
+            {
+                var endpoint = new Uri($"http://{DashboardsHost}:{DashboardsPort}");
+                var endpointBinding = new BasicHttpBinding()
+                {
+                    MaxBufferSize = int.MaxValue,
+                    ReaderQuotas = System.Xml.XmlDictionaryReaderQuotas.Max,
+                    MaxReceivedMessageSize = int.MaxValue,
+                    AllowCookies = true,
+                    Security =
+                    {
+                        Mode = (endpoint.Scheme == "https") ? BasicHttpSecurityMode.Transport : BasicHttpSecurityMode.None,
+                        Transport =
+                        {
+                            ClientCredentialType = HttpClientCredentialType.Basic
+                        }
+                    }
+                };
+                var endpointAddress = new EndpointAddress(endpoint);
 
-            this.logger.Information($"Amount of Lockers found: {LockersTotalCount}");
-            return AeosAllLockers;
+                client = new AeosWebServiceTypeClient(endpointBinding, endpointAddress);
+                client.ClientCredentials.ServiceCertificate.SslCertificateAuthentication = new X509ServiceCertificateAuthentication()
+                {
+                    CertificateValidationMode = X509CertificateValidationMode.None,
+                    RevocationMode = X509RevocationMode.NoCheck
+                };
+                client.ClientCredentials.UserName.UserName = DashboardsUsername;
+                client.ClientCredentials.UserName.Password = DashboardsPassword;
+            }
         }
 
-}
+        public async Task<EmailSummaryResponse> GetEmailSummaryAssignmentChanges()
+        {
+            try
+            {
+                this.logger.Debug("Fetching email summary assignment changes from Dashboards API");
+                
+                var baseUrl = $"http://{DashboardsHost}:{DashboardsPort}";
+                var endpoint = $"{baseUrl}/api/lockeranalytics/email-summary/assignment-changes";
+                
+                this.logger.Debug($"Calling endpoint: {endpoint}");
+                
+                var response = await httpClient.GetAsync(endpoint);
+                response.EnsureSuccessStatusCode();
+                
+                var content = await response.Content.ReadAsStringAsync();
+                this.logger.Debug($"Received response: {content}");
+                
+                var result = JsonSerializer.Deserialize<EmailSummaryResponse>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                
+                this.logger.Information($"Successfully retrieved {result?.TotalChanges ?? 0} assignment changes");
+                return result ?? new EmailSummaryResponse();
+            }
+            catch (HttpRequestException ex)
+            {
+                this.logger.Error(ex, "HTTP request failed when calling Dashboards API");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                this.logger.Error(ex, "Failed to deserialize response from Dashboards API");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "Unexpected error occurred while fetching email summary assignment changes");
+                throw;
+            }
+        }
+    }
 }
