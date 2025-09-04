@@ -52,7 +52,7 @@ namespace SmartFace.AutoEnrollment.Service
 
         internal async Task EnrollAsync(Notification notification, StreamConfiguration mapping)
         {
-            if (DuplicateSearchThreshold > 0)
+            if (DuplicateSearchThreshold != null && DuplicateSearchThreshold > 0)
             {
                 var isDuplicate = await CheckDuplicateAsync(notification, mapping, DuplicateSearchThreshold.Value);
 
@@ -137,9 +137,14 @@ namespace SmartFace.AutoEnrollment.Service
 
                 _logger.Information("Successfully enrolled WatchlistMember {watchlistMemberId}", id);
             }
+            catch (ApiException<ProblemDetails> ex)
+            {
+                _logger.Error(ex, $"Response Status: {ex.StatusCode}, Detail: {ex.Result?.Detail}");
+                throw;
+            }
             catch (ApiException ae)
             {
-                _logger.Error(ae, $"Register failed. Response {ae.Response}");
+                _logger.Error(ae, $"Response Status: {ae.StatusCode}, Content: {ae.Response}");
                 throw;
             }
         }
@@ -209,7 +214,6 @@ namespace SmartFace.AutoEnrollment.Service
             });
         }
 
-        
         public async Task<bool> CheckDuplicateAsync(Notification notification, StreamConfiguration mapping, int threshold)
         {
             if (notification == null)
@@ -222,7 +226,7 @@ namespace SmartFace.AutoEnrollment.Service
                 throw new ArgumentNullException(nameof(mapping));
             }
 
-            _logger.Information("Searching for duplicate in watchlist {Watchlist}", mapping.WatchlistIds);
+            _logger.Information($"{nameof(CheckDuplicateAsync)} in watchlist {string.Join(", ", mapping.WatchlistIds)}");
 
             var schema = _configuration.GetValue("Target:Schema", "http");
             var host = _configuration.GetValue("Target:Host", "SFApi");
@@ -275,9 +279,14 @@ namespace SmartFace.AutoEnrollment.Service
                 var response = await client.SearchAllAsync(request);
                 return response.SelectMany(sm => sm.MatchResults).Any();
             }
+            catch (ApiException<ProblemDetails> ex)
+            {
+                _logger.Error(ex, $"Response Status: {ex.StatusCode}, Detail: {ex.Result?.Detail}");
+                throw;
+            }
             catch (ApiException ae)
             {
-                _logger.Error(ae, $"Register failed. Response {ae.Response}");
+                _logger.Error(ae, $"Response Status: {ae.StatusCode}, Content: {ae.Response}");
                 throw;
             }
         }
