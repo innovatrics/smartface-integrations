@@ -16,26 +16,26 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 {
     public class KoneConnector : IAccessControlConnector
     {
-        private readonly ILogger logger;
-        private readonly IConfiguration configuration;
-        private readonly IHttpClientFactory httpClientFactory;
+        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        private readonly string clientId;
-        private readonly string clientSecret;
-        private readonly string buildingId;
-        private readonly string apiHostname;
-        private readonly string webSocketEndpoint;
-        private readonly string webSocketSubprotocol;
-        private readonly string groupId;
-        private readonly int defaultTerminal;
-        private readonly int defaultArea;
-        private readonly int defaultAction;
+        private readonly string _clientId;
+        private readonly string _clientSecret;
+        private readonly string _buildingId;
+        private readonly string _apiHostname;
+        private readonly string _webSocketEndpoint;
+        private readonly string _webSocketSubprotocol;
+        private readonly string _groupId;
+        private readonly int _defaultTerminal;
+        private readonly int _defaultArea;
+        private readonly int _defaultAction;
 
         // OAuth token cache
-        private string cachedAccessToken;
-        private DateTimeOffset accessTokenExpiresAt;
-        private readonly SemaphoreSlim accessTokenLock = new SemaphoreSlim(1, 1);
-        private readonly TimeSpan accessTokenRefreshSkew = TimeSpan.FromSeconds(60);
+        private string _cachedAccessToken;
+        private DateTimeOffset _accessTokenExpiresAt;
+        private readonly SemaphoreSlim _accessTokenLock = new SemaphoreSlim(1, 1);
+        private readonly TimeSpan _accessTokenRefreshSkew = TimeSpan.FromSeconds(60);
 
         public KoneConnector(
             ILogger logger,
@@ -43,20 +43,20 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             IHttpClientFactory httpClientFactory
         )
         {
-            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
-            clientId = configuration.GetValue<string>("KoneConfiguration:ClientId") ?? throw new InvalidOperationException("KoneConfiguration:ClientId is required");
-            clientSecret = configuration.GetValue<string>("KoneConfiguration:ClientSecret") ?? throw new InvalidOperationException("KoneConfiguration:ClientSecret is required");
-            buildingId = configuration.GetValue<string>("KoneConfiguration:BuildingId") ?? throw new InvalidOperationException("KoneConfiguration:BuildingId is required");
-            apiHostname = configuration.GetValue<string>("KoneConfiguration:ApiHostname", "dev.kone.com");
-            webSocketEndpoint = configuration.GetValue<string>("KoneConfiguration:WebSocketEndpoint", $"wss://{apiHostname}/stream-v2");
-            webSocketSubprotocol = configuration.GetValue<string>("KoneConfiguration:WebSocketSubprotocol", "koneapi");
-            groupId = configuration.GetValue<string>("KoneConfiguration:GroupId", "1");
-            defaultTerminal = configuration.GetValue<int>("KoneConfiguration:Terminal", 1);
-            defaultArea = configuration.GetValue<int>("KoneConfiguration:Area", 1000);
-            defaultAction = configuration.GetValue<int>("KoneConfiguration:Action", 2001);
+            _clientId = _configuration.GetValue<string>("KoneConfiguration:ClientId") ?? throw new InvalidOperationException("KoneConfiguration:ClientId is required");
+            _clientSecret = _configuration.GetValue<string>("KoneConfiguration:ClientSecret") ?? throw new InvalidOperationException("KoneConfiguration:ClientSecret is required");
+            _buildingId = _configuration.GetValue<string>("KoneConfiguration:BuildingId") ?? throw new InvalidOperationException("KoneConfiguration:BuildingId is required");
+            _apiHostname = _configuration.GetValue<string>("KoneConfiguration:ApiHostname", "dev.kone.com");
+            _webSocketEndpoint = _configuration.GetValue<string>("KoneConfiguration:WebSocketEndpoint", $"wss://{_apiHostname}/stream-v2");
+            _webSocketSubprotocol = _configuration.GetValue<string>("KoneConfiguration:WebSocketSubprotocol", "koneapi");
+            _groupId = _configuration.GetValue<string>("KoneConfiguration:GroupId", "1");
+            _defaultTerminal = _configuration.GetValue<int>("KoneConfiguration:Terminal", 1);
+            _defaultArea = _configuration.GetValue<int>("KoneConfiguration:Area", 1000);
+            _defaultAction = _configuration.GetValue<int>("KoneConfiguration:Action", 2001);
         }
 
         public Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null, string username = null, string password = null)
@@ -68,7 +68,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         {
             try
             {
-                this.logger.Information("KoneConnector OpenAsync: triggering elevator call for stream {streamId}", accessControlMapping?.StreamId);
+                _logger.Information("KoneConnector OpenAsync: triggering elevator call for stream {streamId}", accessControlMapping?.StreamId);
 
                 using var tokenCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                 var token = await FetchAccessTokenAsync(tokenCts.Token).ConfigureAwait(false);
@@ -77,19 +77,19 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 using var ws = await OpenWebSocketConnectionAsync(token, connectCts.Token).ConfigureAwait(false);
 
                 using var recvCts = new CancellationTokenSource();
-                var receiveTask = ReceiveLoopAsync(ws, (msg) => this.logger.Information("KONE WS: {msg}", msg), recvCts.Token);
+                var receiveTask = ReceiveLoopAsync(ws, (msg) => _logger.Information("KONE WS: {msg}", msg), recvCts.Token);
 
-                var resolvedArea = accessControlMapping?.Area ?? defaultArea;
-                var resolvedTerminal = accessControlMapping?.Terminal ?? defaultTerminal;
+                var resolvedArea = accessControlMapping?.Area ?? _defaultArea;
+                var resolvedTerminal = accessControlMapping?.Terminal ?? _defaultTerminal;
                 var resolvedAction = ResolveAction(accessControlMapping?.Action);
-                var targetBuildingId = $"building:{buildingId}";
-                this.logger.Information(
+                var targetBuildingId = $"building:{_buildingId}";
+                _logger.Information(
                     "KONE call params: buildingId={buildingId}, groupId={groupId}, terminal={terminal}, area={area}, action={action}, streamId={streamId}",
-                    targetBuildingId, groupId, resolvedTerminal, resolvedArea, resolvedAction, accessControlMapping?.StreamId);
+                    targetBuildingId, _groupId, resolvedTerminal, resolvedArea, resolvedAction, accessControlMapping?.StreamId);
 
                 var payload = BuildLiftCallPayload(
-                    accessControlMapping?.Area ?? defaultArea,
-                    accessControlMapping?.Terminal ?? defaultTerminal,
+                    accessControlMapping?.Area ?? _defaultArea,
+                    accessControlMapping?.Terminal ?? _defaultTerminal,
                     ResolveAction(accessControlMapping?.Action)
                 );
                 var json = JsonSerializer.Serialize(payload);
@@ -124,7 +124,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             }
             catch (Exception ex)
             {
-                this.logger.Error(ex, "KoneConnector OpenAsync failed");
+                _logger.Error(ex, "KoneConnector OpenAsync failed");
                 throw;
             }
         }
@@ -133,34 +133,34 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         {
             // Fast path: return cached token if valid (with refresh skew)
             var now = DateTimeOffset.UtcNow;
-            var cached = cachedAccessToken;
-            if (!string.IsNullOrEmpty(cached) && now < (accessTokenExpiresAt - accessTokenRefreshSkew))
+            var cached = _cachedAccessToken;
+            if (!string.IsNullOrEmpty(cached) && now < (_accessTokenExpiresAt - _accessTokenRefreshSkew))
             {
                 return cached;
             }
 
-            await accessTokenLock.WaitAsync(ct).ConfigureAwait(false);
+            await _accessTokenLock.WaitAsync(ct).ConfigureAwait(false);
             try
             {
                 // Double-check after acquiring the lock
                 now = DateTimeOffset.UtcNow;
-                cached = cachedAccessToken;
-                if (!string.IsNullOrEmpty(cached) && now < (accessTokenExpiresAt - accessTokenRefreshSkew))
+                cached = _cachedAccessToken;
+                if (!string.IsNullOrEmpty(cached) && now < (_accessTokenExpiresAt - _accessTokenRefreshSkew))
                 {
                     return cached;
                 }
 
-            var tokenEndpointV2 = $"https://{apiHostname}/api/v2/oauth2/token";
-            var scope = $"application/inventory callgiving/group:{buildingId}:{groupId}";
+            var tokenEndpointV2 = $"https://{_apiHostname}/api/v2/oauth2/token";
+            var scope = $"application/inventory callgiving/group:{_buildingId}:{_groupId}";
 
-            var httpClient = this.httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
             using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpointV2);
             request.Content = new StringContent($"grant_type=client_credentials&scope={Uri.EscapeDataString(scope)}", Encoding.UTF8, "application/x-www-form-urlencoded");
-            var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
+            var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_clientId}:{_clientSecret}"));
             request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
 
-            this.logger.Information("Requesting KONE access token at {endpoint}", tokenEndpointV2);
+            _logger.Information("Requesting KONE access token at {endpoint}", tokenEndpointV2);
 
             using var response = await httpClient.SendAsync(request, ct).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
@@ -191,36 +191,36 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 }
             }
 
-            accessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds);
-            cachedAccessToken = token;
+            _accessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds);
+            _cachedAccessToken = token;
             return token;
             }
             finally
             {
-                accessTokenLock.Release();
+                _accessTokenLock.Release();
             }
         }
 
         private async Task<ClientWebSocket> OpenWebSocketConnectionAsync(string accessToken, CancellationToken ct = default)
         {
             var ws = new ClientWebSocket();
-            ws.Options.AddSubProtocol(webSocketSubprotocol);
-            var uri = new Uri($"{webSocketEndpoint}?accessToken={Uri.EscapeDataString(accessToken)}");
-            this.logger.Information("Connecting to KONE WS {endpoint}", new Uri(webSocketEndpoint).GetLeftPart(UriPartial.Path));
+            ws.Options.AddSubProtocol(_webSocketSubprotocol);
+            var uri = new Uri($"{_webSocketEndpoint}?accessToken={Uri.EscapeDataString(accessToken)}");
+            _logger.Information("Connecting to KONE WS {endpoint}", new Uri(_webSocketEndpoint).GetLeftPart(UriPartial.Path));
             await ws.ConnectAsync(uri, ct).ConfigureAwait(false);
             return ws;
         }
 
         private object BuildLiftCallPayload(int area, int terminal, int action)
         {
-            var targetBuildingId = $"building:{buildingId}";
+            var targetBuildingId = $"building:{_buildingId}";
             var nowIso = DateTime.UtcNow.ToString("o");
             return new
             {
                 type = "lift-call-api-v2",
                 buildingId = targetBuildingId,
                 callType = "action",
-                groupId = groupId,
+                groupId = _groupId,
                 payload = new
                 {
                     request_id = GetRequestId(),
@@ -245,7 +245,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                     return parsed;
                 }
             }
-            return defaultAction;
+            return _defaultAction;
         }
 
         
