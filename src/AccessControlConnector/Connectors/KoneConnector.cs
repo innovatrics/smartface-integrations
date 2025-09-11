@@ -68,59 +68,32 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         {
             try
             {
-                _logger.Information("KoneConnector OpenAsync: triggering elevator call for stream {streamId}", accessControlMapping?.StreamId);
+                _logger.Information("KoneConnector OpenAsync: triggering elevator call for stream {StreamId}", accessControlMapping?.StreamId);
 
                 using var tokenCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                var token = await FetchAccessTokenAsync(tokenCts.Token).ConfigureAwait(false);
+                var token = await FetchAccessTokenAsync(tokenCts.Token);
 
-                using var connectCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                using var ws = await OpenWebSocketConnectionAsync(token, connectCts.Token).ConfigureAwait(false);
-
-                using var recvCts = new CancellationTokenSource();
-                var receiveTask = ReceiveLoopAsync(ws, (msg) => _logger.Information("KONE WS: {msg}", msg), recvCts.Token);
+                using var wsCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                using var ws = await OpenWebSocketConnectionAsync(token, wsCts.Token);
 
                 var resolvedArea = accessControlMapping?.Area ?? _defaultArea;
                 var resolvedTerminal = accessControlMapping?.Terminal ?? _defaultTerminal;
-                var resolvedAction = ResolveAction(accessControlMapping?.Action);
-                var targetBuildingId = $"building:{_buildingId}";
-                _logger.Information(
-                    "KONE call params: buildingId={buildingId}, groupId={groupId}, terminal={terminal}, area={area}, action={action}, streamId={streamId}",
-                    targetBuildingId, _groupId, resolvedTerminal, resolvedArea, resolvedAction, accessControlMapping?.StreamId);
 
-                var payload = BuildLiftCallPayload(
-                    accessControlMapping?.Area ?? _defaultArea,
-                    accessControlMapping?.Terminal ?? _defaultTerminal,
-                    ResolveAction(accessControlMapping?.Action)
-                );
+                var action = ResolveAction(accessControlMapping?.Action);
+                var payload = BuildLiftCallPayload(resolvedArea, resolvedTerminal, action);
+
+                _logger.Information("Payload is {@Payload}", payload);
+
                 var json = JsonSerializer.Serialize(payload);
                 using var sendCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                await SendTextAsync(ws, json, sendCts.Token).ConfigureAwait(false);
 
-                await Task.Delay(1500).ConfigureAwait(false);
+                await SendWebsocketMessageAsync(ws, json, sendCts.Token);
 
-                // Graceful shutdown: signal close and give the receiver a brief moment to drain
-                try
-                {
-                    if (ws.State == WebSocketState.Open || ws.State == WebSocketState.CloseReceived)
-                    {
-                        using var closeCts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-                        await ws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "done", closeCts.Token).ConfigureAwait(false);
-                    }
-                }
-                catch
-                {
-                    // ignore shutdown errors
-                }
+                using var recvCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                var m1 = await ReceiveTextMessageAsync(ws, recvCts.Token);
+                var m2 = await ReceiveTextMessageAsync(ws, recvCts.Token);
 
-                try
-                {
-                    recvCts.Cancel();
-                    await Task.WhenAny(receiveTask, Task.Delay(250)).ConfigureAwait(false);
-                }
-                catch
-                {
-                    // ignore drain errors
-                }
+                _logger.Information("KONE response messages: {Message1} | {Message2}", m1, m2);
             }
             catch (Exception ex)
             {
@@ -150,50 +123,50 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                     return cached;
                 }
 
-            var tokenEndpointV2 = $"https://{_apiHostname}/api/v2/oauth2/token";
-            var scope = $"application/inventory callgiving/group:{_buildingId}:{_groupId}";
+                var tokenEndpointV2 = $"https://{_apiHostname}/api/v2/oauth2/token";
+                var scope = $"application/inventory callgiving/group:{_buildingId}:{_groupId}";
 
-            var httpClient = _httpClientFactory.CreateClient();
+                var httpClient = _httpClientFactory.CreateClient();
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpointV2);
-            request.Content = new StringContent($"grant_type=client_credentials&scope={Uri.EscapeDataString(scope)}", Encoding.UTF8, "application/x-www-form-urlencoded");
-            var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_clientId}:{_clientSecret}"));
-            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
+                using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpointV2);
+                request.Content = new StringContent($"grant_type=client_credentials&scope={Uri.EscapeDataString(scope)}", Encoding.UTF8, "application/x-www-form-urlencoded");
+                var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_clientId}:{_clientSecret}"));
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
 
-            _logger.Information("Requesting KONE access token at {endpoint}", tokenEndpointV2);
+                _logger.Information("Requesting KONE access token at {endpoint}", tokenEndpointV2);
 
-            using var response = await httpClient.SendAsync(request, ct).ConfigureAwait(false);
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-                throw new HttpRequestException($"Token request failed: {(int)response.StatusCode} {response.ReasonPhrase}. Body: {errorBody}");
-            }
-
-            var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            using var doc = JsonDocument.Parse(json);
-            if (!doc.RootElement.TryGetProperty("access_token", out var tokenEl))
-            {
-                throw new InvalidOperationException("access_token missing in response");
-            }
-            var token = tokenEl.GetString() ?? throw new InvalidOperationException("access_token is null");
-
-            // Parse expires_in if present; fallback to 5 minutes
-            var expiresInSeconds = 300;
-            if (doc.RootElement.TryGetProperty("expires_in", out var expiresEl))
-            {
-                if (expiresEl.ValueKind == JsonValueKind.Number)
+                using var response = await httpClient.SendAsync(request, ct).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode)
                 {
-                    expiresInSeconds = Math.Max(1, expiresEl.GetInt32());
+                    var errorBody = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                    throw new HttpRequestException($"Token request failed: {(int)response.StatusCode} {response.ReasonPhrase}. Body: {errorBody}");
                 }
-                else if (expiresEl.ValueKind == JsonValueKind.String && int.TryParse(expiresEl.GetString(), out var parsed))
-                {
-                    expiresInSeconds = Math.Max(1, parsed);
-                }
-            }
 
-            _accessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds);
-            _cachedAccessToken = token;
-            return token;
+                var json = await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+                using var doc = JsonDocument.Parse(json);
+                if (!doc.RootElement.TryGetProperty("access_token", out var tokenEl))
+                {
+                    throw new InvalidOperationException("access_token missing in response");
+                }
+                var token = tokenEl.GetString() ?? throw new InvalidOperationException("access_token is null");
+
+                // Parse expires_in if present; fallback to 5 minutes
+                var expiresInSeconds = 300;
+                if (doc.RootElement.TryGetProperty("expires_in", out var expiresEl))
+                {
+                    if (expiresEl.ValueKind == JsonValueKind.Number)
+                    {
+                        expiresInSeconds = Math.Max(1, expiresEl.GetInt32());
+                    }
+                    else if (expiresEl.ValueKind == JsonValueKind.String && int.TryParse(expiresEl.GetString(), out var parsed))
+                    {
+                        expiresInSeconds = Math.Max(1, parsed);
+                    }
+                }
+
+                _accessTokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds);
+                _cachedAccessToken = token;
+                return token;
             }
             finally
             {
@@ -248,54 +221,37 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             return _defaultAction;
         }
 
-        
-
-        private static async Task SendTextAsync(ClientWebSocket ws, string text, CancellationToken ct = default)
+        private static async Task SendWebsocketMessageAsync(ClientWebSocket ws, string text, CancellationToken ct)
         {
             var bytes = Encoding.UTF8.GetBytes(text);
-            await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, ct).ConfigureAwait(false);
+            await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, ct);
         }
 
-        private static async Task ReceiveLoopAsync(ClientWebSocket ws, Action<string> onMessage, CancellationToken ct = default)
+        public static async Task<string> ReceiveTextMessageAsync(ClientWebSocket ws, CancellationToken cancellationToken)
         {
             var buffer = new byte[8192];
             using var ms = new MemoryStream();
-            try
-            {
-                while (ws.State == WebSocketState.Open && !ct.IsCancellationRequested)
-                {
-                    ms.SetLength(0);
-                    WebSocketReceiveResult result;
-                    do
-                    {
-                        result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), ct).ConfigureAwait(false);
-                        if (result.MessageType == WebSocketMessageType.Close)
-                        {
-                            try { await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "closing", ct).ConfigureAwait(false); } catch { }
-                            return;
-                        }
-                        if (result.MessageType != WebSocketMessageType.Text)
-                        {
-                            continue;
-                        }
-                        ms.Write(buffer, 0, result.Count);
-                    } while (!result.EndOfMessage);
 
-                    onMessage(Encoding.UTF8.GetString(ms.ToArray()));
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+
+                if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by server", cancellationToken);
+                    throw new WebSocketException("WebSocket was closed before a full message was received.");
+                }
+
+                ms.Write(buffer, 0, result.Count);
+
+                if (result.EndOfMessage)
+                {
+                    // Decode accumulated bytes to UTF8 string
+                    return Encoding.UTF8.GetString(ms.ToArray());
                 }
             }
-            catch (OperationCanceledException)
-            {
-                // normal during shutdown
-            }
-            catch (WebSocketException)
-            {
-                // socket closed/aborted during shutdown; ignore
-            }
-            catch (ObjectDisposedException)
-            {
-                // socket disposed; ignore
-            }
+
+            throw new InvalidOperationException("No message received");
         }
 
         private static int GetRequestId()
@@ -304,5 +260,3 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         }
     }
 }
-
-
