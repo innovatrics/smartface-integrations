@@ -94,8 +94,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 var message = await messageTask;
 
                 _log.Information("KONE response messages: {Message}", message);
-
-                if ()
             }
             catch (Exception ex)
             {
@@ -233,42 +231,107 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var responseString = await ReceiveMessageAsync(ws, cancellationToken);
+                string responseString;
+                try
+                {
+                    responseString = await ReceiveMessageAsync(ws, cancellationToken);
+                }
+                catch (OperationCanceledException oce)
+                {
+                    throw new TimeoutException($"No message matching request id {requestId} received", oce);
+                }
+
                 var responseMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(responseString);
 
-                if (!responseMessage.TryGetValue("request_id", out var responseReqId))
+                using (var doc = JsonDocument.Parse(responseString))
                 {
-                    _log.Debug("Received message without matching request id {@Message}", responseMessage);
-                    continue;
+                    var root = doc.RootElement;
+
+                    if (!TryExtractRequestId(root, out var respId))
+                    {
+                        _log.Information("Received message without request id {@Message}", responseMessage);
+                        continue;
+                    }
+
+                    if (respId != requestId)
+                    {
+                        continue;
+                    }
+
+                    _log.Information("Received response message {@Message} matching request id {RequestId}", responseMessage, requestId);
+
+                    if (!TryExtractSuccess(root, out var isSuccess))
+                    {
+                        // Not a final response (e.g., initial ack). Keep waiting.
+                        continue;
+                    }
+
+                    if (isSuccess)
+                    {
+                        return responseMessage;
+                    }
+
+                    throw new InvalidOperationException($"KONE response did not signal success. Message: {responseString}");
                 }
-
-                if (responseReqId is not JsonElement { ValueKind: JsonValueKind.Number } jsonElement
-                    || !jsonElement.TryGetInt32(out var respId))
-                {
-                    throw new InvalidOperationException($"Request id is not type of int. Message: {responseString}");
-                }
-
-                if (respId != requestId)
-                {
-                    continue;
-                }
-
-                _log.Information("Received response message {@Message} matching request id {RequestId}", responseMessage, requestId);
-
-                if (!responseMessage.TryGetValue("success", out var responseSuccess))
-                {
-                    continue;
-                }
-
-                if (responseSuccess is JsonElement { ValueKind: JsonValueKind.True })
-                {
-                    return responseMessage;
-                }
-
-                throw new InvalidOperationException($"KONE response do not signalled success. Message: {responseString}");
             }
 
             throw new TimeoutException($"No message matching request id {requestId} received");
+
+            static bool TryExtractRequestId(JsonElement root, out int extractedRequestId)
+            {
+                extractedRequestId = default;
+
+                // Top-level snake_case: { "request_id": 123 }
+                if (root.TryGetProperty("request_id", out var ridSnake)
+                    && ridSnake.ValueKind == JsonValueKind.Number
+                    && ridSnake.TryGetInt32(out extractedRequestId))
+                {
+                    return true;
+                }
+
+                // Top-level camelCase: { "requestId": 123 }
+                if (root.TryGetProperty("requestId", out var ridCamel)
+                    && ridCamel.ValueKind == JsonValueKind.Number
+                    && ridCamel.TryGetInt32(out extractedRequestId))
+                {
+                    return true;
+                }
+
+                // Nested in data: { "data": { "request_id": 123, ... } }
+                if (root.TryGetProperty("data", out var data)
+                    && data.ValueKind == JsonValueKind.Object
+                    && data.TryGetProperty("request_id", out var ridData)
+                    && ridData.ValueKind == JsonValueKind.Number
+                    && ridData.TryGetInt32(out extractedRequestId))
+                {
+                    return true;
+                }
+
+                return false;
+            }
+
+            static bool TryExtractSuccess(JsonElement root, out bool success)
+            {
+                success = default;
+
+                // Top-level: { "success": true/false }
+                if (root.TryGetProperty("success", out var sTop))
+                {
+                    if (sTop.ValueKind == JsonValueKind.True) { success = true; return true; }
+                    if (sTop.ValueKind == JsonValueKind.False) { success = false; return true; }
+                }
+
+                // Nested: { "data": { "success": true/false } }
+                if (root.TryGetProperty("data", out var data)
+                    && data.ValueKind == JsonValueKind.Object
+                    && data.TryGetProperty("success", out var sNested))
+                {
+                    if (sNested.ValueKind == JsonValueKind.True) { success = true; return true; }
+                    if (sNested.ValueKind == JsonValueKind.False) { success = false; return true; }
+                }
+
+                return false;
+            }
 
             static async Task<string> ReceiveMessageAsync(ClientWebSocket ws, CancellationToken cancellationToken)
             {
