@@ -1,22 +1,23 @@
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using Microsoft.Extensions.Configuration;
+using Serilog;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
-using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
-using Microsoft.Extensions.Configuration;
-using Serilog;
-using System.Security.Cryptography;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 {
     public class KoneConnector : IAccessControlConnector
     {
-        private readonly ILogger _logger;
+        private readonly ILogger _log;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
 
@@ -43,7 +44,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             IHttpClientFactory httpClientFactory
         )
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _log = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
@@ -68,7 +69,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         {
             try
             {
-                _logger.Information("Triggering KONE elevator call for stream {StreamId}", accessControlMapping?.StreamId);
+                _log.Information("Triggering KONE elevator call for stream {StreamId}", accessControlMapping?.StreamId);
 
                 using var fetchTokenCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
                 var token = await FetchAccessTokenAsync(fetchTokenCts.Token);
@@ -78,24 +79,27 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
                 var resolvedArea = accessControlMapping?.Area ?? _defaultArea;
                 var resolvedTerminal = accessControlMapping?.Terminal ?? _defaultTerminal;
+                var resolvedAction = ResolveAction(accessControlMapping?.Action);
 
-                var action = ResolveAction(accessControlMapping?.Action);
-                var payload = BuildLiftCallPayload(resolvedArea, resolvedTerminal, action);
+                var reqId = GetRequestId();
+                var payload = BuildLiftCallPayload(resolvedArea, resolvedTerminal, resolvedAction, reqId);
 
-                _logger.Information("Payload is {@Payload}", payload);
+                _log.Information("Payload is {@Payload}", payload);
 
                 using var messageSendCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                var messageTask = ReceiveTextMessageAsync(ws, messageSendCts.Token);
+                var messageTask = ReceiveResponseMessageAsync(ws, reqId, messageSendCts.Token);
 
                 await SendWebsocketMessageAsync(ws, JsonSerializer.Serialize(payload), messageSendCts.Token);
 
                 var message = await messageTask;
 
-                _logger.Information("KONE response messages: {Message}", message);
+                _log.Information("KONE response messages: {Message}", message);
+
+                if ()
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Triggering KONE elevator call for stream {StreamId} failed", accessControlMapping?.StreamId);
+                _log.Error(ex, "Triggering KONE elevator call for stream {StreamId} failed", accessControlMapping?.StreamId);
                 throw;
             }
         }
@@ -131,7 +135,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_clientId}:{_clientSecret}"));
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", basic);
 
-                _logger.Information("Requesting KONE access token at {endpoint}", tokenEndpointV2);
+                _log.Information("Requesting KONE access token at {endpoint}", tokenEndpointV2);
 
                 using var response = await httpClient.SendAsync(request, ct).ConfigureAwait(false);
                 if (!response.IsSuccessStatusCode)
@@ -177,12 +181,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             var ws = new ClientWebSocket();
             ws.Options.AddSubProtocol(_webSocketSubprotocol);
             var uri = new Uri($"{_webSocketEndpoint}?accessToken={Uri.EscapeDataString(accessToken)}");
-            _logger.Information("Connecting to KONE WS {endpoint}", new Uri(_webSocketEndpoint).GetLeftPart(UriPartial.Path));
+            _log.Information("Connecting to KONE WS {endpoint}", new Uri(_webSocketEndpoint).GetLeftPart(UriPartial.Path));
             await ws.ConnectAsync(uri, ct).ConfigureAwait(false);
             return ws;
         }
 
-        private object BuildLiftCallPayload(int area, int terminal, int action)
+        private object BuildLiftCallPayload(int area, int terminal, int action, int requestId)
         {
             var targetBuildingId = $"building:{_buildingId}";
             var nowIso = DateTime.UtcNow.ToString("o");
@@ -194,7 +198,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 groupId = _groupId,
                 payload = new
                 {
-                    request_id = GetRequestId(),
+                    request_id = requestId,
                     area = area,
                     time = nowIso,
                     terminal = terminal,
@@ -225,31 +229,72 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, ct);
         }
 
-        public static async Task<string> ReceiveTextMessageAsync(ClientWebSocket ws, CancellationToken cancellationToken)
+        private async Task<Dictionary<string, object>> ReceiveResponseMessageAsync(ClientWebSocket ws, int requestId, CancellationToken cancellationToken)
         {
-            var buffer = new byte[8192];
-            using var ms = new MemoryStream();
-
             while (!cancellationToken.IsCancellationRequested)
             {
-                var result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+                var responseString = await ReceiveMessageAsync(ws, cancellationToken);
+                var responseMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(responseString);
 
-                if (result.MessageType == WebSocketMessageType.Close)
+                if (!responseMessage.TryGetValue("request_id", out var responseReqId))
                 {
-                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by server", cancellationToken);
-                    throw new WebSocketException("WebSocket was closed before a full message was received.");
+                    _log.Debug("Received message without matching request id {@Message}", responseMessage);
+                    continue;
                 }
 
-                ms.Write(buffer, 0, result.Count);
-
-                if (result.EndOfMessage)
+                if (responseReqId is not JsonElement { ValueKind: JsonValueKind.Number } jsonElement
+                    || !jsonElement.TryGetInt32(out var respId))
                 {
-                    // Decode accumulated bytes to UTF8 string
-                    return Encoding.UTF8.GetString(ms.ToArray());
+                    throw new InvalidOperationException($"Request id is not type of int. Message: {responseString}");
                 }
+
+                if (respId != requestId)
+                {
+                    continue;
+                }
+
+                _log.Information("Received response message {@Message} matching request id {RequestId}", responseMessage, requestId);
+
+                if (!responseMessage.TryGetValue("success", out var responseSuccess))
+                {
+                    continue;
+                }
+
+                if (responseSuccess is JsonElement { ValueKind: JsonValueKind.True })
+                {
+                    return responseMessage;
+                }
+
+                throw new InvalidOperationException($"KONE response do not signalled success. Message: {responseString}");
             }
 
-            throw new InvalidOperationException("No message received");
+            throw new TimeoutException($"No message matching request id {requestId} received");
+
+            static async Task<string> ReceiveMessageAsync(ClientWebSocket ws, CancellationToken cancellationToken)
+            {
+                var buffer = new byte[8192];
+                using var ms = new MemoryStream();
+
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    var result = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken);
+
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by server", cancellationToken);
+                        throw new WebSocketException("WebSocket was closed before a full message was received.");
+                    }
+
+                    ms.Write(buffer, 0, result.Count);
+
+                    if (result.EndOfMessage)
+                    {
+                        var responseString = Encoding.UTF8.GetString(ms.ToArray());
+                        return responseString;
+                    }
+                }
+                throw new InvalidOperationException("No message received");
+            }
         }
 
         private static int GetRequestId()
