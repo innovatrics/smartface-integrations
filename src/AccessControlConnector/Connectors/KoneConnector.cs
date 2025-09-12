@@ -68,12 +68,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         {
             try
             {
-                _logger.Information("KoneConnector OpenAsync: triggering elevator call for stream {StreamId}", accessControlMapping?.StreamId);
+                _logger.Information("Triggering KONE elevator call for stream {StreamId}", accessControlMapping?.StreamId);
 
-                using var tokenCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                var token = await FetchAccessTokenAsync(tokenCts.Token);
+                using var fetchTokenCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                var token = await FetchAccessTokenAsync(fetchTokenCts.Token);
 
-                using var wsCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                using var wsCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                 using var ws = await OpenWebSocketConnectionAsync(token, wsCts.Token);
 
                 var resolvedArea = accessControlMapping?.Area ?? _defaultArea;
@@ -84,20 +84,18 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
                 _logger.Information("Payload is {@Payload}", payload);
 
-                var json = JsonSerializer.Serialize(payload);
-                using var sendCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                using var messageSendCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                var messageTask = ReceiveTextMessageAsync(ws, messageSendCts.Token);
 
-                await SendWebsocketMessageAsync(ws, json, sendCts.Token);
+                await SendWebsocketMessageAsync(ws, JsonSerializer.Serialize(payload), messageSendCts.Token);
 
-                using var recvCts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-                var m1 = await ReceiveTextMessageAsync(ws, recvCts.Token);
-                var m2 = await ReceiveTextMessageAsync(ws, recvCts.Token);
+                var message = await messageTask;
 
-                _logger.Information("KONE response messages: {Message1} | {Message2}", m1, m2);
+                _logger.Information("KONE response messages: {Message}", message);
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "KoneConnector OpenAsync failed");
+                _logger.Error(ex, "Triggering KONE elevator call for stream {StreamId} failed", accessControlMapping?.StreamId);
                 throw;
             }
         }
