@@ -231,48 +231,38 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                string responseString;
-                try
-                {
-                    responseString = await ReceiveMessageAsync(ws, cancellationToken);
-                }
-                catch (OperationCanceledException oce)
-                {
-                    throw new TimeoutException($"No message matching request id {requestId} received", oce);
-                }
-
+                string responseString = await ReceiveMessageAsync(ws, cancellationToken);
                 var responseMessage = JsonSerializer.Deserialize<Dictionary<string, object>>(responseString);
 
-                using (var doc = JsonDocument.Parse(responseString))
+                using var doc = JsonDocument.Parse(responseString);
+                var root = doc.RootElement;
+
+                if (!TryExtractRequestId(root, out var respId))
                 {
-                    var root = doc.RootElement;
-
-                    if (!TryExtractRequestId(root, out var respId))
-                    {
-                        _log.Information("Received message without request id {@Message}", responseMessage);
-                        continue;
-                    }
-
-                    if (respId != requestId)
-                    {
-                        continue;
-                    }
-
-                    _log.Information("Received response message {@Message} matching request id {RequestId}", responseMessage, requestId);
-
-                    if (!TryExtractSuccess(root, out var isSuccess))
-                    {
-                        // Not a final response (e.g., initial ack). Keep waiting.
-                        continue;
-                    }
-
-                    if (isSuccess)
-                    {
-                        return responseMessage;
-                    }
-
-                    throw new InvalidOperationException($"KONE response did not signal success. Message: {responseString}");
+                    _log.Information("Received message {@Message} without request id ", responseMessage);
+                    continue;
                 }
+
+                if (respId != requestId)
+                {
+                    _log.Information("Received message {@Message} with different request id {ReqId}", responseMessage, respId);
+                    continue;
+                }
+
+                _log.Information("Received response message {@Message} matching request id", responseMessage);
+
+                if (!TryExtractSuccess(root, out var isSuccess))
+                {
+                    // Not a final response (e.g., initial ack). Keep waiting.
+                    continue;
+                }
+
+                if (isSuccess)
+                {
+                    return responseMessage;
+                }
+
+                throw new InvalidOperationException($"KONE response did not signal success. Message: {responseString}");
             }
 
             throw new TimeoutException($"No message matching request id {requestId} received");
