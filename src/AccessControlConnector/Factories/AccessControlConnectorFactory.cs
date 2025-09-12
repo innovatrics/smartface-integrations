@@ -76,6 +76,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AccessControlConnectorTypes.AEOS_CONNECTOR:
                     return new AeosConnector(_logger, _configuration, _httpClientFactory);
+
+                case AccessControlConnectorTypes.KONE_CONNECTOR:
+                    return new KoneConnector(_logger, _configuration, _httpClientFactory);
             }
         }
     }

@@ -29,5 +29,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
 
         public string TargetId                        { get; set; }
 
+        public int? Terminal                           { get; set; }
+        public int? Area                               { get; set; }
+        
+
     }
 }
