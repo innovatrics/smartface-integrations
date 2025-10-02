@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.Configuration;
@@ -61,6 +62,18 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync.Clients
 
             var response = await graphQlClient.SendQueryAsync<WatchlistMembersResponse>(graphQLRequest);
 
+            if (response.Errors != null && response.Errors.Any())
+            {
+                _logger.Error("GraphQL errors occurred: {Errors}", string.Join(", ", response.Errors.Select(e => e.Message)));
+                throw new InvalidOperationException($"GraphQL query failed: {string.Join(", ", response.Errors.Select(e => e.Message))}");
+            }
+
+            if (response.Data == null)
+            {
+                _logger.Warning("GraphQL response data is null");
+                return new WatchlistMembersResponse { WatchlistMembers = new WatchlistMembers { Items = new WatchlistMember[0], PageInfo = new PageInfo { HasNextPage = false } } };
+            }
+
             _logger.Information("Watchlist members: {WatchlistMembers}", response.Data.WatchlistMembers);
 
             return response.Data;
@@ -108,6 +121,18 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync.Clients
             };
 
             var response = await graphQlClient.SendQueryAsync<WatchlistMembersResponse>(graphQLRequest);
+
+            if (response.Errors != null && response.Errors.Any())
+            {
+                _logger.Error("GraphQL errors occurred: {Errors}", string.Join(", ", response.Errors.Select(e => e.Message)));
+                throw new InvalidOperationException($"GraphQL query failed: {string.Join(", ", response.Errors.Select(e => e.Message))}");
+            }
+
+            if (response.Data == null)
+            {
+                _logger.Warning("GraphQL response data is null");
+                return new WatchlistMembersResponse { WatchlistMembers = new WatchlistMembers { Items = new WatchlistMember[0], PageInfo = new PageInfo { HasNextPage = false } } };
+            }
 
             _logger.Information("Watchlist members: {WatchlistMembers}", response.Data.WatchlistMembers);
 

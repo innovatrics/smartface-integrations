@@ -14,13 +14,22 @@ To run application localy, follow these steps
  - navigate to /src/AccessControlConnector
  - run `dotnet publish -c Release -r win10-x64 --self-contained true -p:ReadyToRun=false -p:PublishSingleFile=true -p:PublishTrimmed=false -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true`
 
-### Deploy to Docker
+### Deploy to Docker (AMD64)
 - navigate to root of this repo
 - run following commands
  - `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4 .`
  - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
+
+### Deploy to Docker (ARM)
+- navigate to root of this repo
+- run following commands
+ - `docker build -f src/AccessControlConnector/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4arm2 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4arm2 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latestarm`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4arm2`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latestarm`
+
 
 ## Usage
 Add following pattern to existing docker compose, depending on the integrations used:
