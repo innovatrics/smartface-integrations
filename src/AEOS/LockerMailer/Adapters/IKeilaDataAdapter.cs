@@ -6,6 +6,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
 {
     public interface IKeilaDataAdapter
     {
-        
+        Task<KeilaCampaignsResponse> GetCampaignsAsync();
+        Task<List<KeilaCampaign>> GetCampaignsWithTemplatesAsync();
     }
 }

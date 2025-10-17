@@ -12,6 +12,8 @@ using System.ServiceModel;
 using System.ServiceModel.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Linq;
+using Innovatrics.SmartFace.Integrations.LockerMailer.DataModels;
+using Newtonsoft.Json;
 
 namespace Innovatrics.SmartFace.Integrations.LockerMailer
 {
@@ -29,10 +31,11 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         private string DashboardsIntegrationIdentifierType;
         private Dictionary<string, bool> DefaultTemplates = new();
         private string KeilaEndpoint;
+        private string KeilaHost;
+        private int KeilaPort;
         private string KeilaUsername;
         private string KeilaPassword;
-        private string KeilaServerPageSize;
-        private string KeilaIntegrationIdentifierType;
+        private string KeilaApiKey;   
         private AeosWebServiceTypeClient client;
 
         public KeilaDataAdapter(
@@ -46,16 +49,36 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
             this.logger.Information("Keila DataAdapter Initiated");
-
-            DataSource = configuration.GetValue<string>("LockerMailer:Dashboards:DataSource");
-            KeilaEndpoint = configuration.GetValue<string>("LockerMailer:Keila:Endpoint");
-            KeilaUsername = configuration.GetValue<string>("LockerMailer:Keila:Username");
-            KeilaPassword = configuration.GetValue<string>("LockerMailer:Keila:Password");
-            KeilaServerPageSize = configuration.GetValue<int>("LockerMailer:Keila:ServerPageSize", 100);
-            KeilaIntegrationIdentifierType = configuration.GetValue<string>("LockerMailer:Keila:IntegrationIdentifierType");
+            
+            // Debug configuration loading
+            logger.Information($"Current working directory: {Environment.CurrentDirectory}");
+            logger.Information($"Configuration sources count: {configuration.AsEnumerable().Count()}");
+            
+            KeilaHost = configuration.GetValue<string>("LockerMailer:Connections:Keila:Host");
+            KeilaPort = configuration.GetValue<int>("LockerMailer:Connections:Keila:Port");
+            
+            logger.Information($"Read KeilaHost: '{KeilaHost}'");
+            logger.Information($"Read KeilaPort: {KeilaPort}");
+            
+            // Validate configuration values
+            if (string.IsNullOrEmpty(KeilaHost))
+            {
+                logger.Error("Keila Host configuration is null or empty");
+                logger.Error($"Configuration path 'LockerMailer:Connections:Keila:Host' returned: '{KeilaHost}'");
+                throw new InvalidOperationException("Keila Host configuration is missing or empty. Please check 'LockerMailer:Connections:Keila:Host' in appsettings.json");
+            }
+            
+            KeilaEndpoint = $"{KeilaHost}:{KeilaPort}";
+            logger.Information($"KeilaEndpoint constructed as: {KeilaEndpoint}");
+            
+            KeilaUsername = configuration.GetValue<string>("LockerMailer:Connections:Keila:User");
+            KeilaPassword = configuration.GetValue<string>("LockerMailer:Connections:Keila:Pass"); 
+            KeilaApiKey = configuration.GetValue<string>("LockerMailer:Connections:Keila:ApiKey");
             // add here connection to Aoes Dashboards
             
-            var endpoint = new Uri(KeilaEndpoint);
+            // Create proper URI for SOAP endpoint
+            logger.Information($"Attempting to create URI from: {KeilaEndpoint}");
+            var soapEndpoint = new Uri(KeilaEndpoint);
             var endpointBinding = new BasicHttpBinding()
             {
                 MaxBufferSize = int.MaxValue,
@@ -64,14 +87,14 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 AllowCookies = true,
                 Security =
                 {
-                    Mode = (endpoint.Scheme == "https") ? BasicHttpSecurityMode.Transport : BasicHttpSecurityMode.None,
+                    Mode = (soapEndpoint.Scheme == "https") ? BasicHttpSecurityMode.Transport : BasicHttpSecurityMode.None,
                     Transport =
                     {
                         ClientCredentialType = HttpClientCredentialType.Basic
                     }
                 }
             };
-            var endpointAddress = new EndpointAddress(endpoint);
+            var endpointAddress = new EndpointAddress(soapEndpoint);
 
             client = new AeosWebServiceTypeClient(endpointBinding, endpointAddress);
             client.ClientCredentials.ServiceCertificate.SslCertificateAuthentication = new X509ServiceCertificateAuthentication()
@@ -83,8 +106,69 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             client.ClientCredentials.UserName.Password = KeilaPassword;
         }
 
+        public async Task<KeilaCampaignsResponse> GetCampaignsAsync()
+        {
+            try
+            {
+                logger.Information("Fetching campaigns from Keila API");
+                
+                using var httpClient = httpClientFactory.CreateClient();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", KeilaApiKey);
+                
+                var campaignsUrl = $"{KeilaEndpoint}/api/v1/campaigns";
+                logger.Information($"Making request to: {campaignsUrl}");
+                
+                var response = await httpClient.GetAsync(campaignsUrl);
+                response.EnsureSuccessStatusCode();
+                
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                logger.Information($"Received response from Keila API: {jsonContent.Length} characters");
+                
+                var campaignsResponse = JsonConvert.DeserializeObject<KeilaCampaignsResponse>(jsonContent);
+                
+                if (campaignsResponse?.Data != null)
+                {
+                    logger.Information($"Successfully fetched {campaignsResponse.Data.Count} campaigns from Keila");
+                    
+                    // Log interesting data for each campaign
+                    foreach (var campaign in campaignsResponse.Data)
+                    {
+                        logger.Information($"Campaign ID: {campaign.Id}, Subject: {campaign.Subject}, Updated: {campaign.UpdatedAt}");
+                        if (campaign.JsonBody?.Blocks != null)
+                        {
+                            logger.Information($"Campaign {campaign.Id} has {campaign.JsonBody.Blocks.Count} blocks");
+                        }
+                    }
+                }
+                else
+                {
+                    logger.Warning("No campaign data received from Keila API");
+                }
+                
+                return campaignsResponse ?? new KeilaCampaignsResponse();
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.Error(ex, "HTTP error occurred while fetching campaigns from Keila API");
+                throw;
+            }
+            catch (JsonException ex)
+            {
+                logger.Error(ex, "JSON deserialization error while processing Keila API response");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Unexpected error occurred while fetching campaigns from Keila API");
+                throw;
+            }
+        }
 
-        
+        public async Task<List<KeilaCampaign>> GetCampaignsWithTemplatesAsync()
+        {
+            var campaignsResponse = await GetCampaignsAsync();
+            return campaignsResponse.Data ?? new List<KeilaCampaign>();
+        }
 
 }
 }
