@@ -39,7 +39,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             this.dashboardsDataAdapter = dashboardsDataAdapter ?? throw new ArgumentNullException(nameof(dashboardsDataAdapter));
             this.keilaDataAdapter = keilaDataAdapter ?? throw new ArgumentNullException(nameof(keilaDataAdapter));
 
-            SyncPeriodMs = configuration.GetValue<int>("LockerMailer:RefreshPeriodMs", 300000); // Default to 5 minutes
+            SyncPeriodMs = configuration.GetValue<int>("LockerMailer:Connections:Dashboards:RefreshPeriodMs", 60000); // Default to 1 minute
             KeilaRefreshPeriodMs = configuration.GetValue<int>("LockerMailer:Connections:Keila:KeilaRefreshPeriodMs", 300000); // Default to 5 minutes
             
             if(SyncPeriodMs == 0)
@@ -60,6 +60,19 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         {
             // Initial Keila data fetch on startup
             await FetchAndCacheKeilaCampaigns();
+            
+            // Initial Dashboards assignment changes fetch on startup
+            try
+            {
+                var emailSummaryOnStartup = await this.dashboardsDataAdapter.GetEmailSummaryAssignmentChanges();
+                this.logger.Information($"[Startup] Retrieved {emailSummaryOnStartup.TotalChanges} assignment changes from Dashboards API");
+                await this.bridge.ProcessEmailSummaryAssignmentChanges(emailSummaryOnStartup);
+                lastSync = DateTime.UtcNow;
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "[Startup] Failed to fetch/process assignment changes");
+            }
             
             while(!cancellationToken.IsCancellationRequested)
             {

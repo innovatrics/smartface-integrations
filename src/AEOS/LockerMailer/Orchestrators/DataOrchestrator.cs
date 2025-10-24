@@ -23,6 +23,48 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         private readonly IKeilaDataAdapter keilaDataAdapter;
         private readonly ISmtpMailAdapter smtpMailAdapter;
         private readonly IDashboardsDataAdapter dashboardsDataAdapter;
+        private readonly string lockersFlow1CheckGroup = string.Empty;
+        private readonly string lockersFlow2CheckGroup = string.Empty;
+        private string cancelTime = "18:00"; // Default value
+        
+        // Helper map for placeholder keys
+        private string ReplaceTemplatePlaceholders(string rawText, AssignmentChange change)
+        {
+            if (string.IsNullOrEmpty(rawText)) return string.Empty;
+
+            var replacements = new Dictionary<string, string?>
+            {
+                { "fullname", change.NewAssignedEmployeeName },
+                { "prev_fullname", change.PreviousAssignedEmployeeName },
+                { "time", DateTime.Now.ToString("HH:mm") },
+                { "source", change.LockerName },
+                { "group", change.GroupName },
+                { "canceltime", this.cancelTime }
+            };
+
+            string processed = rawText;
+            foreach (var kv in replacements)
+            {
+                var val = kv.Value ?? string.Empty;
+                // common variants: with double braces, with single braces, with/without spaces
+                var tokens = new []
+                {
+                    $"{{{{ campaign.data.{kv.Key} }}}}",
+                    $"{{{{campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}"
+                };
+                foreach (var t in tokens)
+                {
+                    processed = processed.Replace(t, val);
+                }
+            }
+            return processed;
+        }
 
         // Fields for tracking assignment changes
         private Dictionary<long, long?> _previousLockerAssignments = new Dictionary<long, long?>();
@@ -42,6 +84,75 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             this.keilaDataAdapter = keilaDataAdapter ?? throw new ArgumentNullException(nameof(keilaDataAdapter));
             this.smtpMailAdapter = smtpMailAdapter ?? throw new ArgumentNullException(nameof(smtpMailAdapter));
             this.dashboardsDataAdapter = dashboardsDataAdapter ?? throw new ArgumentNullException(nameof(dashboardsDataAdapter));
+
+            // Load lockers-flow_1 templateCheckGroup from configuration
+            try
+            {
+                var templatesSection = configuration.GetSection("LockerMailer:Templates");
+                foreach (var template in templatesSection.GetChildren())
+                {
+                    var templateId = template.GetValue<string>("templateId");
+                    if (!string.IsNullOrEmpty(templateId) && templateId.Equals("lockers-flow_1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.lockersFlow1CheckGroup = template.GetValue<string>("templateCheckGroup", string.Empty);
+                        break;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(this.lockersFlow1CheckGroup))
+                {
+                    this.logger.Information($"Loaded lockers-flow_1 check group from configuration: '{this.lockersFlow1CheckGroup}'");
+                }
+                else
+                {
+                    this.logger.Warning("No templateCheckGroup configured for lockers-flow_1; trigger will be skipped.");
+                }
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "Failed to load lockers-flow_1 templateCheckGroup from configuration");
+            }
+            try
+            {
+                var templatesSection = configuration.GetSection("LockerMailer:Templates");
+                foreach (var template in templatesSection.GetChildren())
+                {
+                    var templateId = template.GetValue<string>("templateId");
+                    if (!string.IsNullOrEmpty(templateId) && templateId.Equals("lockers-flow_2", StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.lockersFlow2CheckGroup = template.GetValue<string>("templateCheckGroup", string.Empty);
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "Failed to load lockers-flow_2 templateCheckGroup from configuration");
+            }
+
+            // Load cancelTime from lockers-flow_1 template configuration
+            try
+            {
+                var templatesSection = configuration.GetSection("LockerMailer:Templates");
+                foreach (var template in templatesSection.GetChildren())
+                {
+                    var templateId = template.GetValue<string>("templateId");
+                    if (!string.IsNullOrEmpty(templateId) && templateId.Equals("lockers-flow_1", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var configuredCancelTime = template.GetValue<string>("cancelTime");
+                        if (!string.IsNullOrEmpty(configuredCancelTime))
+                        {
+                            this.cancelTime = configuredCancelTime;
+                            this.logger.Information($"Loaded cancelTime from configuration: '{this.cancelTime}'");
+                        }
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "Failed to load cancelTime from configuration, using default: 18:00");
+            }
         }
 
         public async Task ProcessEmailSummaryAssignmentChanges(EmailSummaryResponse emailSummary)
@@ -57,14 +168,16 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 // Process each assignment change
                 foreach (var change in emailSummary.Changes)
                 {
-                    logger.Information($"Processing change: Locker {change.LockerName} assigned from {change.PreviousAssignedEmployeeName} to {change.NewAssignedEmployeeName}");
+                    var prevName = string.IsNullOrWhiteSpace(change.PreviousAssignedEmployeeName) ? "NULL" : change.PreviousAssignedEmployeeName;
+                    var newName = string.IsNullOrWhiteSpace(change.NewAssignedEmployeeName) ? "NULL" : change.NewAssignedEmployeeName;
+                    logger.Information($"Processing change: Locker {change.LockerName} assigned from {prevName} to {newName}");
 
                     // Determine which template to use based on the change type or locker function
-                    var templateToUse = DetermineTemplateForChange(change, keilaCampaigns);
+                    var templateToUse = DetermineTemplateForChange(change);
                     
                     if (templateToUse != null)
                     {
-                        logger.Information($"Using template: {templateToUse.Subject} (ID: {templateToUse.Id})");
+                        logger.Information($"Using template: {templateToUse}");
                         
                         // Process the template with the assignment data
                         await ProcessTemplateWithAssignmentData(templateToUse, change);
@@ -86,57 +199,157 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             }
         }
 
-        private KeilaCampaign? DetermineTemplateForChange(AssignmentChange change, List<KeilaCampaign> campaigns)
+        private string DetermineTemplateForChange(AssignmentChange change)
         {
-            // Map change types to template subjects based on your configuration
-            string templateSubject = change.ChangeType.ToLower() switch
-            {
-                "food_delivery" or "food" => "lockers-flow_1",
-                "courier_delivery" or "courier" => "lockers-flow_2", 
-                "courier_reminder" or "reminder" => "lockers-flow_3",
-                _ => "lockers-flow_2" // Default to courier delivery
-            };
 
-            return campaigns.FirstOrDefault(c => c.Subject.Equals(templateSubject, StringComparison.OrdinalIgnoreCase));
+            var chosenFlowTemplate = string.Empty;
+            // Check for specific triggers to trigger email templates:
+            
+        // 1# lockers-flow_1
+            // If the information says that you have been newly assigned a locker
+            // from the locker group FOOD, trigger this event
+            // (for now: just log that it was triggered).
+            if (
+                change != null &&
+                change.ChangeType.Equals("Assigned", StringComparison.OrdinalIgnoreCase) &&
+                change.NewAssignedTo.HasValue &&
+                !string.IsNullOrEmpty(this.lockersFlow1CheckGroup) &&
+                string.Equals(change.GroupName, this.lockersFlow1CheckGroup, StringComparison.OrdinalIgnoreCase)
+            )
+            {
+                chosenFlowTemplate = "lockers-flow_1";
+
+                logger.Information(
+                    $"[Trigger] lockers-flow_1 matched for locker '{change.LockerName}' in group '{change.GroupName}' " +
+                    $"for employee '{change.NewAssignedEmployeeName}' (ID: {change.NewAssignedTo}) at {change.ChangeTimestamp}. {chosenFlowTemplate}"
+                );
+
+                return chosenFlowTemplate;
+            }
+
+        // 2# lockers-flow_2
+            // If the information says that you have been newly assigned a locker
+            // from the locker group COURIER, trigger this event
+            // (for now: just log that it was triggered).
+            else if (
+                change != null &&
+                change.ChangeType.Equals("Assigned", StringComparison.OrdinalIgnoreCase) &&
+                change.NewAssignedTo.HasValue &&
+                !string.IsNullOrEmpty(this.lockersFlow2CheckGroup) &&
+                string.Equals(change.GroupName, this.lockersFlow2CheckGroup, StringComparison.OrdinalIgnoreCase)
+            )
+            {
+                chosenFlowTemplate = "lockers-flow_2";
+
+                logger.Information(
+                    $"[Trigger] lockers-flow_2 matched for locker '{change.LockerName}' in group '{change.GroupName}' " +
+                    $"for employee '{change.NewAssignedEmployeeName}' (ID: {change.NewAssignedTo}) at {change.ChangeTimestamp}. {chosenFlowTemplate}"
+                );
+
+                return chosenFlowTemplate;
+            }
+
+            else
+            {
+                return null;
+            }
+            // 3#
+            // 4#
+            // 5#
+            // 6#
+            // 7#
+            // 8#
+            // 9#
+
         }
 
-        private async Task ProcessTemplateWithAssignmentData(KeilaCampaign campaign, AssignmentChange change)
+        private async Task ProcessTemplateWithAssignmentData(string templateId, AssignmentChange change)
         {
             try
             {
-                logger.Information($"Processing template '{campaign.Subject}' for assignment change");
+                logger.Information($"Processing template '{templateId}' for assignment change");
+
+                // Load templateName for this specific templateId from configuration
+                string templateName = string.Empty;
+                try
+                {
+                    var templatesSection = configuration.GetSection("LockerMailer:Templates");
+                    foreach (var template in templatesSection.GetChildren())
+                    {
+                        var configTemplateId = template.GetValue<string>("templateId");
+                        if (!string.IsNullOrEmpty(configTemplateId) && configTemplateId.Equals(templateId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            templateName = template.GetValue<string>("templateName") ?? string.Empty;
+                            logger.Information($"Loaded templateName '{templateName}' for templateId '{templateId}'");
+                            break;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Failed to load templateName for templateId '{templateId}'");
+                }
+
+                // Load campaigns to find the matching template content
+                var campaigns = await keilaDataAdapter.GetCampaignsWithTemplatesAsync();
+                var campaign = campaigns.FirstOrDefault(c =>
+                    c.Id.Equals(templateId, StringComparison.OrdinalIgnoreCase) ||
+                    c.Subject.Equals(templateId, StringComparison.OrdinalIgnoreCase));
+
+                if (campaign == null)
+                {
+                    logger.Warning($"Template '{templateId}' not found among Keila campaigns");
+                    return;
+                }
+
+                // Build HTML from blocks (each block's data.text becomes a paragraph)
+                var sb = new System.Text.StringBuilder();
+                sb.Append("<html><body>");
 
                 if (campaign.JsonBody?.Blocks != null)
                 {
                     foreach (var block in campaign.JsonBody.Blocks)
                     {
-                        if (block.Data?.Text != null)
-                        {
-                            // Replace template variables with actual data
-                            var processedText = block.Data.Text
-                                .Replace("{{ campaign.data.fullname }}", change.NewAssignedEmployeeName)
-                                .Replace("{{ campaign.data.time }}", DateTime.Now.ToString("HH:mm"))
-                                .Replace("{{ campaign.data.source }}", change.LockerName)
-                                .Replace("{{ campaign.data.canceltime }}", "18:00"); // Default to 6 PM
+                        var rawText = block.Data?.Text ?? string.Empty;
+                        var processedText = ReplaceTemplatePlaceholders(rawText, change);
 
-                            logger.Information($"Processed block text: {processedText.Substring(0, Math.Min(100, processedText.Length))}...");
-                            
-                            // Here you would typically:
-                            // 1. Send the processed email via SMTP
-                            // 2. Log the email sending
-                            // 3. Handle any errors
-                        }
+                        sb.Append("<p>").Append(processedText).Append("</p>");
                     }
                 }
 
-                await Task.CompletedTask; // Placeholder for async operations
+                sb.Append("</body></html>");
+                var htmlEmail = sb.ToString();
+
+                // For now, print the HTML to the terminal for debugging
+                logger.Information("Generated HTML email:\n" + htmlEmail);
+
+                // In DebugMode, only log the HTML; otherwise send
+                var debugMode = configuration.GetValue<bool>("LockerMailer:DebugMode", false);
+                if (!debugMode)
+                {
+                    // Determine recipient and subject based on change type
+                    var recipientEmail = change.ChangeType.Equals("Unassigned", StringComparison.OrdinalIgnoreCase)
+                        ? change.PreviousAssignedEmployeeEmail
+                        : change.NewAssignedEmployeeEmail;
+
+                    if (!string.IsNullOrWhiteSpace(recipientEmail))
+                    {
+                        var subject = !string.IsNullOrEmpty(templateName) ? templateName : (campaign.Subject ?? templateId);
+                        await smtpMailAdapter.SendAsync(recipientEmail, subject, htmlEmail);
+                        logger.Information($"Email sent to {recipientEmail} with subject '{subject}' for locker '{change.LockerName}' change {change.ChangeType}");
+                    }
+                    else
+                    {
+                        logger.Warning($"No recipient email available for locker '{change.LockerName}' change {change.ChangeType}");
+                    }
+                }
+
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Error processing template '{campaign.Subject}' with assignment data");
+                logger.Error(ex, $"Error processing template '{templateId}' with assignment data");
                 throw;
             }
         }
-
     }
 }

@@ -6,5 +6,6 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
 {
     public interface ISmtpMailAdapter
     {
+        Task SendAsync(string toEmail, string subject, string htmlBody);
     }
 }

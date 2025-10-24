@@ -133,11 +133,8 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                     // Log interesting data for each campaign
                     foreach (var campaign in campaignsResponse.Data)
                     {
-                        logger.Information($"Campaign ID: {campaign.Id}, Subject: {campaign.Subject}, Updated: {campaign.UpdatedAt}");
-                        if (campaign.JsonBody?.Blocks != null)
-                        {
-                            logger.Information($"Campaign {campaign.Id} has {campaign.JsonBody.Blocks.Count} blocks");
-                        }
+                        logger.Information($"Campaign ID: {campaign.Id}, Subject: {campaign.Subject}, Updated: {campaign.UpdatedAt} with {(campaign.JsonBody?.Blocks != null ? campaign.JsonBody.Blocks.Count : 0)} blocks");
+                        
                     }
                 }
                 else

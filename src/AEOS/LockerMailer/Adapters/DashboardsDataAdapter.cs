@@ -53,6 +53,25 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             DashboardsPassword = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:Pass");
             DashboardsIntegrationIdentifierType = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:IntegrationIdentifierType");
             
+            // Debug configuration values
+            this.logger.Information($"DashboardsHost: '{DashboardsHost}'");
+            this.logger.Information($"DashboardsPort: {DashboardsPort}");
+            this.logger.Information($"DashboardsUsername: '{DashboardsUsername}'");
+            this.logger.Information($"DashboardsPassword: '{(string.IsNullOrEmpty(DashboardsPassword) ? "EMPTY" : "SET")}'");
+            
+            // Validate configuration values
+            if (string.IsNullOrEmpty(DashboardsHost))
+            {
+                this.logger.Error("DashboardsHost configuration is missing or empty");
+                throw new InvalidOperationException("DashboardsHost configuration is missing. Please check 'LockerMailer:Connections:Dashboards:Host' in appsettings.json");
+            }
+            
+            if (DashboardsPort <= 0)
+            {
+                this.logger.Error($"DashboardsPort configuration is invalid: {DashboardsPort}");
+                throw new InvalidOperationException("DashboardsPort configuration is invalid. Please check 'LockerMailer:Connections:Dashboards:Port' in appsettings.json");
+            }
+            
             // Initialize HTTP client for REST API calls
             httpClient = httpClientFactory.CreateClient();
             
@@ -66,7 +85,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             // add here connection to Aoes Dashboards
             if (!string.IsNullOrEmpty(DashboardsHost))
             {
-                var endpoint = new Uri($"http://{DashboardsHost}:{DashboardsPort}");
+                var endpoint = new Uri($"{DashboardsHost}:{DashboardsPort}");
                 var endpointBinding = new BasicHttpBinding()
                 {
                     MaxBufferSize = int.MaxValue,
@@ -99,18 +118,18 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         {
             try
             {
-                this.logger.Debug("Fetching email summary assignment changes from Dashboards API");
+                this.logger.Information("Fetching email summary assignment changes from Dashboards API");
                 
-                var baseUrl = $"http://{DashboardsHost}:{DashboardsPort}";
+                var baseUrl = $"{DashboardsHost}:{DashboardsPort}";
                 var endpoint = $"{baseUrl}/api/lockeranalytics/email-summary/assignment-changes";
                 
-                this.logger.Debug($"Calling endpoint: {endpoint}");
+                this.logger.Information($"Calling endpoint: {endpoint}");
                 
                 var response = await httpClient.GetAsync(endpoint);
                 response.EnsureSuccessStatusCode();
                 
                 var content = await response.Content.ReadAsStringAsync();
-                this.logger.Debug($"Received response: {content}");
+                this.logger.Information($"Received response: {content}");
                 
                 var result = JsonSerializer.Deserialize<EmailSummaryResponse>(content, new JsonSerializerOptions
                 {

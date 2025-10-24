@@ -35,13 +35,13 @@ The application configuration is stored in `appsettings.json`:
 ```json
 {
   "LockerMailer": {
-    "RefreshPeriodMs": 300000,
     "Connections": {
       "Dashboards": {
         "Host": "http://<host>>",
         "Port": 8020,
         "User": "",
-        "Pass": ""
+        "Pass": "",
+        "RefreshPeriodMs": 60000
       },
       "Keila": {
         "Host": "http://<host>>",
