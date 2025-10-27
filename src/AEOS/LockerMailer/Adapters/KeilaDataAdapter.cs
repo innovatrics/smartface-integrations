@@ -23,19 +23,12 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        private readonly string DataSource;
-        private string DashboardsEndpoint;
-        private int DashboardsServerPageSize;
-        private string DashboardsUsername;
-        private string DashboardsPassword;
-        private string DashboardsIntegrationIdentifierType;
-        private Dictionary<string, bool> DefaultTemplates = new();
         private string KeilaEndpoint;
         private string KeilaHost;
         private int KeilaPort;
-        private string KeilaUsername;
-        private string KeilaPassword;
-        private string KeilaApiKey;   
+        private string KeilaUsername = string.Empty;
+        private string KeilaPassword = string.Empty;
+        private string KeilaApiKey = string.Empty;   
         private AeosWebServiceTypeClient client;
 
         public KeilaDataAdapter(
@@ -54,7 +47,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             logger.Information($"Current working directory: {Environment.CurrentDirectory}");
             logger.Information($"Configuration sources count: {configuration.AsEnumerable().Count()}");
             
-            KeilaHost = configuration.GetValue<string>("LockerMailer:Connections:Keila:Host");
+            KeilaHost = configuration.GetValue<string>("LockerMailer:Connections:Keila:Host") ?? string.Empty;
             KeilaPort = configuration.GetValue<int>("LockerMailer:Connections:Keila:Port");
             
             logger.Information($"Read KeilaHost: '{KeilaHost}'");
@@ -71,9 +64,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             KeilaEndpoint = $"{KeilaHost}:{KeilaPort}";
             logger.Information($"KeilaEndpoint constructed as: {KeilaEndpoint}");
             
-            KeilaUsername = configuration.GetValue<string>("LockerMailer:Connections:Keila:User");
-            KeilaPassword = configuration.GetValue<string>("LockerMailer:Connections:Keila:Pass"); 
-            KeilaApiKey = configuration.GetValue<string>("LockerMailer:Connections:Keila:ApiKey");
+            KeilaUsername = configuration.GetValue<string>("LockerMailer:Connections:Keila:User") ?? string.Empty;
+            KeilaPassword = configuration.GetValue<string>("LockerMailer:Connections:Keila:Pass") ?? string.Empty; 
+            KeilaApiKey = configuration.GetValue<string>("LockerMailer:Connections:Keila:ApiKey") ?? string.Empty;
             // add here connection to Aoes Dashboards
             
             // Create proper URI for SOAP endpoint
@@ -110,7 +103,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         {
             try
             {
-                logger.Information("Fetching campaigns from Keila API");
+                logger.Debug("Fetching campaigns from Keila API");
                 
                 using var httpClient = httpClientFactory.CreateClient();
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", KeilaApiKey);
@@ -122,7 +115,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 response.EnsureSuccessStatusCode();
                 
                 var jsonContent = await response.Content.ReadAsStringAsync();
-                logger.Information($"Received response from Keila API: {jsonContent.Length} characters");
+                logger.Debug($"Received response from Keila API: {jsonContent.Length} characters");
                 
                 var campaignsResponse = JsonConvert.DeserializeObject<KeilaCampaignsResponse>(jsonContent);
                 
@@ -133,7 +126,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                     // Log interesting data for each campaign
                     foreach (var campaign in campaignsResponse.Data)
                     {
-                        logger.Information($"Campaign ID: {campaign.Id}, Subject: {campaign.Subject}, Updated: {campaign.UpdatedAt} with {(campaign.JsonBody?.Blocks != null ? campaign.JsonBody.Blocks.Count : 0)} blocks");
+                        logger.Debug($"Campaign ID: {campaign.Id}, Subject: {campaign.Subject}, Updated: {campaign.UpdatedAt} with {(campaign.JsonBody?.Blocks != null ? campaign.JsonBody.Blocks.Count : 0)} blocks");
                         
                     }
                 }

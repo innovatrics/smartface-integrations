@@ -65,8 +65,18 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             try
             {
                 var emailSummaryOnStartup = await this.dashboardsDataAdapter.GetEmailSummaryAssignmentChanges();
-                this.logger.Information($"[Startup] Retrieved {emailSummaryOnStartup.TotalChanges} assignment changes from Dashboards API");
-                await this.bridge.ProcessEmailSummaryAssignmentChanges(emailSummaryOnStartup);
+                
+                // Only process and log if there are actual changes
+                if (emailSummaryOnStartup.TotalChanges > 0)
+                {
+                    this.logger.Information($"[Startup] Retrieved {emailSummaryOnStartup.TotalChanges} assignment changes from Dashboards API");
+                    await this.bridge.ProcessEmailSummaryAssignmentChanges(emailSummaryOnStartup);
+                }
+                else
+                {
+                    this.logger.Debug("[Startup] No assignment changes found - skipping processing");
+                }
+                
                 lastSync = DateTime.UtcNow;
             }
             catch (Exception ex)
@@ -92,10 +102,21 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                     {
                         // Get email summary assignment changes from Dashboards API
                         var emailSummary = await this.dashboardsDataAdapter.GetEmailSummaryAssignmentChanges();
-                        this.logger.Information($"Retrieved {emailSummary.TotalChanges} assignment changes from Dashboards API");
                         
-                        // Process the data through the orchestrator
-                        await this.bridge.ProcessEmailSummaryAssignmentChanges(emailSummary);
+                        // Only process and log if there are actual changes
+                        if (emailSummary.TotalChanges > 0)
+                        {
+                            this.logger.Information($"Retrieved {emailSummary.TotalChanges} assignment changes from Dashboards API");
+                            
+                            // Process the data through the orchestrator
+                            await this.bridge.ProcessEmailSummaryAssignmentChanges(emailSummary);
+                        }
+                        else
+                        {
+                            // Skip processing and logging when there are no changes
+                            this.logger.Debug($"No assignment changes found - skipping processing");
+                        }
+                        
                         lastSync = currentTime;
                     }
                     
@@ -123,7 +144,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 // Update cached campaigns
                 cachedKeilaCampaigns = campaigns;
                 
-                this.logger.Information($"Successfully cached {campaigns.Count} Keila campaigns");
+                this.logger.Debug($"Successfully cached {campaigns.Count} Keila campaigns");
                 
                 // Debug logging - print campaign details
                 var debugMode = configuration.GetValue<bool>("LockerMailer:DebugMode", false);

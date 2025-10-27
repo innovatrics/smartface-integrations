@@ -79,7 +79,8 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Examples
             {
                 foreach (var block in campaignData.Blocks)
                 {
-                    _logger.Information($"Block Type: {block.Type}, Text: {block.Data.Text}");
+                    var blockText = block.Data?.Text ?? "";
+                    _logger.Information($"Block Type: {block.Type}, Text: {blockText}");
                     
                     // Here you can process the block data as needed
                     // For example, extract template variables like {{ campaign.data.fullname }}

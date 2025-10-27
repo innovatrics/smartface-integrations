@@ -31,7 +31,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         private string DashboardsIntegrationIdentifierType;
         private Dictionary<string, bool> DefaultTemplates = new();
 
-        private AeosWebServiceTypeClient client;
+        private AeosWebServiceTypeClient? client;
         private HttpClient httpClient;
 
         public DashBoardsDataAdapter(
@@ -46,18 +46,18 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
 
             this.logger.Information("Aeos Dashboard DataAdapter Initiated");
 
-            DataSource = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:DataSource");
-            DashboardsHost = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:Host");
+            DataSource = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:DataSource") ?? string.Empty;
+            DashboardsHost = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:Host") ?? string.Empty;
             DashboardsPort = configuration.GetValue<int>("LockerMailer:Connections:Dashboards:Port");
-            DashboardsUsername = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:User");
-            DashboardsPassword = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:Pass");
-            DashboardsIntegrationIdentifierType = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:IntegrationIdentifierType");
+            DashboardsUsername = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:User") ?? string.Empty;
+            DashboardsPassword = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:Pass") ?? string.Empty;
+            DashboardsIntegrationIdentifierType = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:IntegrationIdentifierType") ?? string.Empty;
             
             // Debug configuration values
             this.logger.Information($"DashboardsHost: '{DashboardsHost}'");
             this.logger.Information($"DashboardsPort: {DashboardsPort}");
-            this.logger.Information($"DashboardsUsername: '{DashboardsUsername}'");
-            this.logger.Information($"DashboardsPassword: '{(string.IsNullOrEmpty(DashboardsPassword) ? "EMPTY" : "SET")}'");
+            this.logger.Debug($"DashboardsUsername: '{DashboardsUsername}'");
+            this.logger.Debug($"DashboardsPassword: '{(string.IsNullOrEmpty(DashboardsPassword) ? "EMPTY" : "SET")}'");
             
             // Validate configuration values
             if (string.IsNullOrEmpty(DashboardsHost))
@@ -118,18 +118,17 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         {
             try
             {
-                this.logger.Information("Fetching email summary assignment changes from Dashboards API");
+                
                 
                 var baseUrl = $"{DashboardsHost}:{DashboardsPort}";
                 var endpoint = $"{baseUrl}/api/lockeranalytics/email-summary/assignment-changes";
-                
-                this.logger.Information($"Calling endpoint: {endpoint}");
+                this.logger.Information($"Fetching email summary assignment changes from Dashboards API. Calling endpoint: {endpoint}");
                 
                 var response = await httpClient.GetAsync(endpoint);
                 response.EnsureSuccessStatusCode();
                 
                 var content = await response.Content.ReadAsStringAsync();
-                this.logger.Information($"Received response: {content}");
+                this.logger.Debug($"Received response: {content}");
                 
                 var result = JsonSerializer.Deserialize<EmailSummaryResponse>(content, new JsonSerializerOptions
                 {
@@ -153,6 +152,66 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             {
                 this.logger.Error(ex, "Unexpected error occurred while fetching email summary assignment changes");
                 throw;
+            }
+        }
+
+        public async Task<List<GroupInfo>> GetGroups()
+        {
+            try
+            {
+                this.logger.Information("Fetching groups from Dashboards API");
+                
+                var baseUrl = $"{DashboardsHost}:{DashboardsPort}";
+                var endpoint = $"{baseUrl}/api/lockeranalytics/groups";
+                
+                this.logger.Information($"Calling endpoint: {endpoint}");
+                
+                var response = await httpClient.GetAsync(endpoint);
+                
+                // Log response details for debugging
+                this.logger.Information($"Response status: {response.StatusCode}");
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    this.logger.Error($"API returned error status {response.StatusCode}: {errorContent}");
+                    
+                    // Return empty response instead of throwing exception for now
+                    this.logger.Warning($"Returning empty groups response due to API error");
+                    return new List<GroupInfo>();
+                }
+                
+                var content = await response.Content.ReadAsStringAsync();
+                this.logger.Debug($"Received response: {content}");
+                
+                var result = JsonSerializer.Deserialize<List<GroupInfo>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                
+                this.logger.Information($"Successfully retrieved {result?.Count ?? 0} groups from Dashboards API");
+                return result ?? new List<GroupInfo>();
+            }
+            catch (HttpRequestException ex)
+            {
+                this.logger.Error(ex, "HTTP request failed when calling groups API");
+                // Return empty response instead of throwing to allow the application to continue
+                this.logger.Warning($"Returning empty groups response due to HTTP error");
+                return new List<GroupInfo>();
+            }
+            catch (JsonException ex)
+            {
+                this.logger.Error(ex, "Failed to deserialize groups response from Dashboards API");
+                // Return empty response instead of throwing to allow the application to continue
+                this.logger.Warning($"Returning empty groups response due to JSON parsing error");
+                return new List<GroupInfo>();
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "Unexpected error occurred while fetching groups");
+                // Return empty response instead of throwing to allow the application to continue
+                this.logger.Warning($"Returning empty groups response due to unexpected error");
+                return new List<GroupInfo>();
             }
         }
     }

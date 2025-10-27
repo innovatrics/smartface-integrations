@@ -26,5 +26,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.DataModels
         public string NewAssignedEmployeeEmail { get; set; } = string.Empty;
         public DateTime ChangeTimestamp { get; set; }
         public string ChangeType { get; set; } = string.Empty;
+        
+        // Additional properties for lockers-flow_3 template
+        public List<string> AllAssignedLockerNames { get; set; } = new List<string>();
+        public int TotalAssignedLockers { get; set; }
     }
 }

@@ -8,5 +8,6 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
     public interface IDashboardsDataAdapter
     {
         Task<EmailSummaryResponse> GetEmailSummaryAssignmentChanges();
+        Task<List<GroupInfo>> GetGroups();
     }
 }

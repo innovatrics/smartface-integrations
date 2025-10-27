@@ -8,5 +8,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
     public interface IDataOrchestrator
     {
         Task ProcessEmailSummaryAssignmentChanges(EmailSummaryResponse emailSummary);
+        Task ProcessTemplateWithAssignmentData(string templateId, AssignmentChange change);
+        Task ProcessTemplateWithAssignmentData(string templateId, AssignmentChange change, List<KeilaCampaign> preFetchedCampaigns);
     }
 }

@@ -28,9 +28,15 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         private string cancelTime = "18:00"; // Default value
         
         // Helper map for placeholder keys
-        private string ReplaceTemplatePlaceholders(string rawText, AssignmentChange change)
+        private string ReplaceTemplatePlaceholders(string rawText, AssignmentChange change, string templateId = "")
         {
             if (string.IsNullOrEmpty(rawText)) return string.Empty;
+
+            // Load template-specific cancelTime
+            var templateCancelTime = LoadTemplateCancelTime(templateId);
+
+            // Create bulleted list of locker names (for lockers-flow_3)
+            var lockerList = string.Join("<br/>", change.AllAssignedLockerNames.Select(name => $"• {name}"));
 
             var replacements = new Dictionary<string, string?>
             {
@@ -39,7 +45,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 { "time", DateTime.Now.ToString("HH:mm") },
                 { "source", change.LockerName },
                 { "group", change.GroupName },
-                { "canceltime", this.cancelTime }
+                { "canceltime", templateCancelTime },
+                { "lockercount", change.TotalAssignedLockers.ToString() },
+                { "lockerlist", lockerList }
             };
 
             string processed = rawText;
@@ -64,6 +72,32 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 }
             }
             return processed;
+        }
+
+        private string LoadTemplateCancelTime(string templateId)
+        {
+            try
+            {
+                var templatesSection = configuration.GetSection("LockerMailer:Templates");
+                foreach (var template in templatesSection.GetChildren())
+                {
+                    var configTemplateId = template.GetValue<string>("templateId");
+                    if (!string.IsNullOrEmpty(configTemplateId) && configTemplateId.Equals(templateId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var configuredCancelTime = template.GetValue<string>("cancelTime");
+                        if (!string.IsNullOrEmpty(configuredCancelTime))
+                        {
+                            return configuredCancelTime;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Failed to load cancelTime for template '{templateId}', using default: {this.cancelTime}");
+            }
+            
+            return this.cancelTime; // Fallback to default
         }
 
         // Fields for tracking assignment changes
@@ -101,7 +135,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
 
                 if (!string.IsNullOrEmpty(this.lockersFlow1CheckGroup))
                 {
-                    this.logger.Information($"Loaded lockers-flow_1 check group from configuration: '{this.lockersFlow1CheckGroup}'");
+                    this.logger.Debug($"Loaded lockers-flow_1 check group from configuration: '{this.lockersFlow1CheckGroup}'");
                 }
                 else
                 {
@@ -159,6 +193,13 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         {
             try
             {
+                // Skip processing if there are no changes
+                if (emailSummary.TotalChanges == 0)
+                {
+                    logger.Debug("No assignment changes to process - skipping");
+                    return;
+                }
+
                 logger.Information($"Processing {emailSummary.TotalChanges} assignment changes");
 
                 // Get cached Keila campaigns for template processing
@@ -249,6 +290,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 return chosenFlowTemplate;
             }
 
+            // Note: lockers-flow_3 is handled by AlarmTriggerService based on time triggers
+            // and does not need to be processed here as it's triggered by alarms, not assignment changes
+
             else
             {
                 return null;
@@ -263,7 +307,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
 
         }
 
-        private async Task ProcessTemplateWithAssignmentData(string templateId, AssignmentChange change)
+        public async Task ProcessTemplateWithAssignmentData(string templateId, AssignmentChange change)
         {
             try
             {
@@ -311,7 +355,96 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                     foreach (var block in campaign.JsonBody.Blocks)
                     {
                         var rawText = block.Data?.Text ?? string.Empty;
-                        var processedText = ReplaceTemplatePlaceholders(rawText, change);
+                        var processedText = ReplaceTemplatePlaceholders(rawText, change, templateId);
+
+                        sb.Append("<p>").Append(processedText).Append("</p>");
+                    }
+                }
+
+                sb.Append("</body></html>");
+                var htmlEmail = sb.ToString();
+
+                // For now, print the HTML to the terminal for debugging
+                logger.Information("Generated HTML email:\n" + htmlEmail);
+
+                // In DebugMode, only log the HTML; otherwise send
+                var debugMode = configuration.GetValue<bool>("LockerMailer:DebugMode", false);
+                if (!debugMode)
+                {
+                    // Determine recipient and subject based on change type
+                    var recipientEmail = change.ChangeType.Equals("Unassigned", StringComparison.OrdinalIgnoreCase)
+                        ? change.PreviousAssignedEmployeeEmail
+                        : change.NewAssignedEmployeeEmail;
+
+                    if (!string.IsNullOrWhiteSpace(recipientEmail))
+                    {
+                        var subject = !string.IsNullOrEmpty(templateName) ? templateName : (campaign.Subject ?? templateId);
+                        await smtpMailAdapter.SendAsync(recipientEmail, subject, htmlEmail);
+                        logger.Information($"Email sent to {recipientEmail} with subject '{subject}' for locker '{change.LockerName}' change {change.ChangeType}");
+                    }
+                    else
+                    {
+                        logger.Warning($"No recipient email available for locker '{change.LockerName}' change {change.ChangeType}");
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Error processing template '{templateId}' with assignment data");
+                throw;
+            }
+        }
+
+        public async Task ProcessTemplateWithAssignmentData(string templateId, AssignmentChange change, List<KeilaCampaign> preFetchedCampaigns)
+        {
+            try
+            {
+                logger.Debug($"Processing template '{templateId}' for assignment change (using pre-fetched campaigns)");
+
+                // Load templateName for this specific templateId from configuration
+                string templateName = string.Empty;
+                try
+                {
+                    var templatesSection = configuration.GetSection("LockerMailer:Templates");
+                    foreach (var template in templatesSection.GetChildren())
+                    {
+                        var configTemplateId = template.GetValue<string>("templateId");
+                        if (!string.IsNullOrEmpty(configTemplateId) && configTemplateId.Equals(templateId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            templateName = template.GetValue<string>("templateName") ?? string.Empty;
+                            logger.Debug($"Loaded templateName '{templateName}' for templateId '{templateId}'");
+                            break;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Failed to load templateName for templateId '{templateId}'");
+                }
+
+                // Use pre-fetched campaigns instead of fetching again
+                logger.Debug($"Using {preFetchedCampaigns.Count} pre-fetched campaigns from Keila");
+                var campaign = preFetchedCampaigns.FirstOrDefault(c =>
+                    c.Id.Equals(templateId, StringComparison.OrdinalIgnoreCase) ||
+                    c.Subject.Equals(templateId, StringComparison.OrdinalIgnoreCase));
+
+                if (campaign == null)
+                {
+                    logger.Warning($"Template '{templateId}' not found among pre-fetched Keila campaigns");
+                    return;
+                }
+
+                // Build HTML from blocks (each block's data.text becomes a paragraph)
+                var sb = new System.Text.StringBuilder();
+                sb.Append("<html><body>");
+
+                if (campaign.JsonBody?.Blocks != null)
+                {
+                    foreach (var block in campaign.JsonBody.Blocks)
+                    {
+                        var rawText = block.Data?.Text ?? string.Empty;
+                        var processedText = ReplaceTemplatePlaceholders(rawText, change, templateId);
 
                         sb.Append("<p>").Append(processedText).Append("</p>");
                     }

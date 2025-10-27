@@ -62,7 +62,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 try
                 {
                     var addresses = System.Net.Dns.GetHostAddresses(smtpHost).Select(a => a.ToString()).ToArray();
-                    this.logger.Information($"SMTP host '{smtpHost}' resolved to: {string.Join(", ", addresses)}");
+                    this.logger.Debug($"SMTP host '{smtpHost}' resolved to: {string.Join(", ", addresses)}");
                 }
                 catch (Exception dnsEx)
                 {

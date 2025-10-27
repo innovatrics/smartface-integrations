@@ -70,6 +70,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             services.AddSingleton<ISmtpMailAdapter, SmtpMailAdapter>();
             services.AddSingleton<IDataOrchestrator, DataOrchestrator>();
             services.AddHostedService<MainHostedService>();
+            services.AddHostedService<Services.AlarmTriggerService>();
 
             return services;
         }
