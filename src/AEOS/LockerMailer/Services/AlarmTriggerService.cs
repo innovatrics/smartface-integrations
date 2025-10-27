@@ -16,6 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
         private readonly IConfiguration configuration;
         private readonly IDataOrchestrator dataOrchestrator;
         private readonly IDashboardsDataAdapter dashboardsDataAdapter;
+        private readonly ISmtpMailAdapter smtpMailAdapter;
         private readonly Dictionary<string, DateTime> lastTriggeredTimes = new Dictionary<string, DateTime>();
         private readonly List<AlarmConfiguration> alarmConfigurations = new List<AlarmConfiguration>();
         private readonly List<TemplateConfiguration> templateConfigurations = new List<TemplateConfiguration>();
@@ -24,13 +25,15 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
             ILogger logger,
             IConfiguration configuration,
             IDataOrchestrator dataOrchestrator,
-            IDashboardsDataAdapter dashboardsDataAdapter
+            IDashboardsDataAdapter dashboardsDataAdapter,
+            ISmtpMailAdapter smtpMailAdapter
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.dataOrchestrator = dataOrchestrator ?? throw new ArgumentNullException(nameof(dataOrchestrator));
             this.dashboardsDataAdapter = dashboardsDataAdapter ?? throw new ArgumentNullException(nameof(dashboardsDataAdapter));
+            this.smtpMailAdapter = smtpMailAdapter ?? throw new ArgumentNullException(nameof(smtpMailAdapter));
 
             LoadAlarmConfigurations();
             LoadTemplateConfigurations();
@@ -89,7 +92,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                             TemplateAlarm = templateAlarm,
                             TemplateCheckGroup = templateCheckGroup ?? string.Empty
                         });
-                        logger.Information($"Loaded template configuration: {templateId} with alarm {templateAlarm}");
+                        logger.Debug($"Loaded template configuration: {templateId} with alarm {templateAlarm}");
                     }
                 }
             }
@@ -133,9 +136,10 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
 
                     if (templatesToTrigger.Any())
                     {
-                        // Check if lockers-flow_3 or lockers-flow_4 is among the triggered templates
+                        // Check if lockers-flow_3, lockers-flow_4, or lockers-flow_5 is among the triggered templates
                         var lockersFlow3Triggered = templatesToTrigger.Any(t => t.TemplateId.Equals("lockers-flow_3", StringComparison.OrdinalIgnoreCase));
                         var lockersFlow4Triggered = templatesToTrigger.Any(t => t.TemplateId.Equals("lockers-flow_4", StringComparison.OrdinalIgnoreCase));
+                        var lockersFlow5Triggered = templatesToTrigger.Any(t => t.TemplateId.Equals("lockers-flow_5", StringComparison.OrdinalIgnoreCase));
                         if (lockersFlow3Triggered)
                         {
                             logger.Information("lockers-flow_3 triggered as it is time");
@@ -143,6 +147,10 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                         if (lockersFlow4Triggered)
                         {
                             logger.Information("lockers-flow_4 triggered as it is time");
+                        }
+                        if (lockersFlow5Triggered)
+                        {
+                            logger.Information("lockers-flow_5 triggered as it is time");
                         }
                         
                         await ProcessAlarmTriggeredTemplates(templatesToTrigger);
@@ -206,9 +214,16 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     var getCampaignsMethod = keilaDataAdapter.GetType().GetMethod("GetCampaignsWithTemplatesAsync");
                     if (getCampaignsMethod != null)
                     {
-                        var task = (Task<List<KeilaCampaign>>)getCampaignsMethod.Invoke(keilaDataAdapter, null);
-                        keilaCampaigns = await task;
-                        logger.Debug($"Successfully retrieved {keilaCampaigns.Count} Keila campaigns for all template processing");
+                        var taskResult = getCampaignsMethod.Invoke(keilaDataAdapter, null);
+                        if (taskResult is Task<List<KeilaCampaign>> task)
+                        {
+                            keilaCampaigns = await task;
+                            logger.Debug($"Successfully retrieved {keilaCampaigns.Count} Keila campaigns for all template processing");
+                        }
+                        else
+                        {
+                            logger.Warning("GetCampaignsWithTemplatesAsync method did not return expected Task<List<KeilaCampaign>>");
+                        }
                     }
                 }
             }
@@ -227,8 +242,13 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                 {
                     logger.Debug($"Processing alarm-triggered template: {template.TemplateId}");
 
+                    // Special handling for lockers-flow_5 (bulk email to receptionist)
+                    if (template.TemplateId.Equals("lockers-flow_5", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await ProcessLockersFlow5BulkEmail(template, groups, keilaCampaigns);
+                    }
                     // Special handling for lockers-flow_3 and lockers-flow_4 to show detailed assignment information
-                    if (template.TemplateId.Equals("lockers-flow_3", StringComparison.OrdinalIgnoreCase) || 
+                    else if (template.TemplateId.Equals("lockers-flow_3", StringComparison.OrdinalIgnoreCase) || 
                         template.TemplateId.Equals("lockers-flow_4", StringComparison.OrdinalIgnoreCase))
                     {
                         logger.Information($"{template.TemplateId} triggered");
@@ -255,7 +275,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                                     logger.Debug($"Current locker assignments in '{template.TemplateCheckGroup}' group:");
                                     
                                     // Group lockers by employee
-                                    var employeeGroups = assignedLockers.GroupBy(l => l.AssignedTo.Value).ToList();
+                                    var employeeGroups = assignedLockers.GroupBy(l => l.AssignedTo!.Value).ToList();
                                     
                                     // Filter to only employees with email addresses
                                     var employeesWithEmails = employeeGroups.Where(eg => 
@@ -383,6 +403,237 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     logger.Error(ex, $"Error processing alarm-triggered template: {template.TemplateId}");
                 }
             }
+        }
+
+        private async Task ProcessLockersFlow5BulkEmail(TemplateConfiguration template, List<GroupInfo> groups, List<KeilaCampaign> keilaCampaigns)
+        {
+            try
+            {
+                logger.Information($"Processing lockers-flow_5 bulk email for receptionist");
+                
+                // Get current assignments for the specific group using the groups data
+                if (!string.IsNullOrEmpty(template.TemplateCheckGroup))
+                {
+                    // Find the specific group from the already retrieved groups data
+                    var targetGroup = groups.FirstOrDefault(g => g.Name.Equals(template.TemplateCheckGroup, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (targetGroup != null)
+                    {
+                        logger.Debug($"Current assignments for group '{template.TemplateCheckGroup}':");
+                        logger.Debug($"  Total lockers: {targetGroup.TotalLockers}");
+                        logger.Debug($"  Assigned lockers: {targetGroup.AssignedLockers}");
+                        logger.Debug($"  Unassigned lockers: {targetGroup.UnassignedLockers}");
+                        logger.Debug($"  Assignment percentage: {targetGroup.AssignmentPercentage:F1}%");
+                        
+                        // Get assigned lockers (those with assignedTo not null)
+                        var assignedLockers = targetGroup.AllLockers.Where(l => l.AssignedTo.HasValue && !string.IsNullOrEmpty(l.AssignedEmployeeName)).ToList();
+                        
+                        if (assignedLockers.Any())
+                        {
+                            logger.Information($"Found {assignedLockers.Count} assigned lockers for bulk email processing");
+                            
+                            // Create a single bulk email with all locker information
+                            await SendBulkEmailToReceptionist(template, assignedLockers, keilaCampaigns);
+                        }
+                        else
+                        {
+                            logger.Information($"No assigned lockers found in '{template.TemplateCheckGroup}' group - no email to send");
+                        }
+                    }
+                    else
+                    {
+                        logger.Warning($"Group '{template.TemplateCheckGroup}' not found in groups response");
+                    }
+                }
+                else
+                {
+                    logger.Warning($"No templateCheckGroup specified for template {template.TemplateId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Error processing lockers-flow_5 bulk email");
+            }
+        }
+
+        private async Task SendBulkEmailToReceptionist(TemplateConfiguration template, List<LockerInfo> assignedLockers, List<KeilaCampaign> keilaCampaigns)
+        {
+            try
+            {
+                // Get receptionist emails from configuration
+                var receptionistEmails = configuration.GetSection("LockerMailer:ReceptionistEmails").Get<string[]>() ?? new string[0];
+                
+                if (!receptionistEmails.Any())
+                {
+                    logger.Warning("No receptionist emails configured - cannot send bulk email");
+                    return;
+                }
+
+                // Find the Keila campaign for this template
+                var campaign = keilaCampaigns.FirstOrDefault(c =>
+                    c.Id.Equals(template.TemplateId, StringComparison.OrdinalIgnoreCase) ||
+                    c.Subject.Equals(template.TemplateId, StringComparison.OrdinalIgnoreCase));
+
+                if (campaign == null)
+                {
+                    logger.Warning($"Template '{template.TemplateId}' not found among Keila campaigns");
+                    return;
+                }
+
+                // Get template name from configuration as fallback
+                string templateName = string.Empty;
+                try
+                {
+                    var templatesSection = configuration.GetSection("LockerMailer:Templates");
+                    foreach (var configTemplate in templatesSection.GetChildren())
+                    {
+                        var configTemplateId = configTemplate.GetValue<string>("templateId");
+                        if (!string.IsNullOrEmpty(configTemplateId) && configTemplateId.Equals(template.TemplateId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            templateName = configTemplate.GetValue<string>("templateName") ?? string.Empty;
+                            logger.Debug($"Loaded templateName '{templateName}' for templateId '{template.TemplateId}'");
+                            break;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Failed to load templateName for templateId '{template.TemplateId}'");
+                }
+
+                // Create a bulleted list of all lockers for the placeholder replacement
+                var lockerList = string.Join("<br/>", assignedLockers.Select(locker => $"• {locker.Name} (Employee: {locker.AssignedEmployeeName})"));
+
+                // Create a mock AssignmentChange for template processing
+                var mockChange = new AssignmentChange
+                {
+                    LockerId = assignedLockers.FirstOrDefault()?.Id ?? 0,
+                    LockerName = "Multiple Lockers", // Generic name since this is a bulk email
+                    GroupName = template.TemplateCheckGroup,
+                    NewAssignedTo = null, // Not applicable for bulk email
+                    NewAssignedEmployeeName = "Multiple Employees", // Generic name
+                    NewAssignedEmployeeEmail = string.Join(", ", receptionistEmails), // Receptionist emails
+                    NewAssignedEmployeeIdentifier = string.Empty,
+                    ChangeTimestamp = DateTime.UtcNow,
+                    ChangeType = "BulkRelease",
+                    // Custom properties for lockers-flow_5 template
+                    AllAssignedLockerNames = assignedLockers.Select(l => l.Name).ToList(),
+                    TotalAssignedLockers = assignedLockers.Count
+                };
+
+                // Build HTML from Keila template blocks with placeholder replacement
+                var sb = new System.Text.StringBuilder();
+                sb.Append("<html><body>");
+
+                if (campaign.JsonBody?.Blocks != null)
+                {
+                    foreach (var block in campaign.JsonBody.Blocks)
+                    {
+                        var rawText = block.Data?.Text ?? string.Empty;
+                        var processedText = ReplaceTemplatePlaceholdersForBulk(rawText, mockChange, template.TemplateId, lockerList);
+                        sb.Append("<p>").Append(processedText).Append("</p>");
+                    }
+                }
+
+                sb.Append("</body></html>");
+                var htmlEmail = sb.ToString();
+
+                // Log the generated HTML for debugging
+                logger.Information("Generated bulk HTML email for receptionist using Keila template:\n" + htmlEmail);
+
+                // Send email to all receptionist addresses
+                var debugMode = configuration.GetValue<bool>("LockerMailer:DebugMode", false);
+                if (!debugMode)
+                {
+                    var subject = !string.IsNullOrEmpty(templateName) ? templateName : (campaign.Subject ?? template.TemplateId);
+                    
+                    foreach (var receptionistEmail in receptionistEmails)
+                    {
+                        if (!string.IsNullOrWhiteSpace(receptionistEmail))
+                        {
+                            await smtpMailAdapter.SendAsync(receptionistEmail, subject, htmlEmail);
+                            logger.Information($"Bulk email sent to receptionist: {receptionistEmail} with subject '{subject}'");
+                        }
+                    }
+                }
+                else
+                {
+                    logger.Information("Debug mode enabled - bulk email not sent to receptionist");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Error sending bulk email to receptionist");
+            }
+        }
+
+        private string ReplaceTemplatePlaceholdersForBulk(string rawText, AssignmentChange change, string templateId, string lockerList)
+        {
+            if (string.IsNullOrEmpty(rawText)) return string.Empty;
+
+            // Load template-specific cancelTime
+            var templateCancelTime = LoadTemplateCancelTime(templateId);
+
+            var replacements = new Dictionary<string, string?>
+            {
+                { "fullname", change.NewAssignedEmployeeName },
+                { "prev_fullname", change.PreviousAssignedEmployeeName },
+                { "time", DateTime.Now.ToString("HH:mm") },
+                { "source", change.LockerName },
+                { "group", change.GroupName },
+                { "canceltime", templateCancelTime },
+                { "lockercount", change.TotalAssignedLockers.ToString() },
+                { "lockerlist", lockerList } // This is the key replacement for the bulk email
+            };
+
+            string processed = rawText;
+            foreach (var kv in replacements)
+            {
+                var val = kv.Value ?? string.Empty;
+                // Common variants: with double braces, with single braces, with/without spaces
+                var tokens = new[]
+                {
+                    $"{{{{ campaign.data.{kv.Key} }}}}",
+                    $"{{{{campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}",
+                    $"{{ campaign.data.{kv.Key} }}"
+                };
+                foreach (var t in tokens)
+                {
+                    processed = processed.Replace(t, val);
+                }
+            }
+            return processed;
+        }
+
+        private string LoadTemplateCancelTime(string templateId)
+        {
+            try
+            {
+                var templatesSection = configuration.GetSection("LockerMailer:Templates");
+                foreach (var template in templatesSection.GetChildren())
+                {
+                    var configTemplateId = template.GetValue<string>("templateId");
+                    if (!string.IsNullOrEmpty(configTemplateId) && configTemplateId.Equals(templateId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var configuredCancelTime = template.GetValue<string>("cancelTime");
+                        if (!string.IsNullOrEmpty(configuredCancelTime))
+                        {
+                            return configuredCancelTime;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Failed to load cancelTime for template '{templateId}', using default: 18:00");
+            }
+            
+            return "18:00"; // Fallback to default
         }
     }
 

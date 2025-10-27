@@ -54,8 +54,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             DashboardsIntegrationIdentifierType = configuration.GetValue<string>("LockerMailer:Connections:Dashboards:IntegrationIdentifierType") ?? string.Empty;
             
             // Debug configuration values
-            this.logger.Information($"DashboardsHost: '{DashboardsHost}'");
-            this.logger.Information($"DashboardsPort: {DashboardsPort}");
+            this.logger.Information($"DashboardsHost: '{DashboardsHost}', DashboardsPort: {DashboardsPort}");
             this.logger.Debug($"DashboardsUsername: '{DashboardsUsername}'");
             this.logger.Debug($"DashboardsPassword: '{(string.IsNullOrEmpty(DashboardsPassword) ? "EMPTY" : "SET")}'");
             

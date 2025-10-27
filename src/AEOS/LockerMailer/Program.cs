@@ -25,8 +25,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 var configurationRoot = ConfigureBuilder(args);
 
                 var logger = ConfigureLogger(args, configurationRoot);
-
+                Log.Information("======================================================");
                 Log.Information("Locker Mailer Starting up.");
+                Log.Information("======================================================");
 
                 var hostBuilder = CreateHostBuilder(args, logger, configurationRoot);
                 using var host = hostBuilder.Build();

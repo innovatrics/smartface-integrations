@@ -138,7 +138,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         {
             try
             {
-                this.logger.Information("Fetching Keila campaigns...");
+                this.logger.Debug("Fetching Keila campaigns...");
                 var campaigns = await this.keilaDataAdapter.GetCampaignsWithTemplatesAsync();
                 
                 // Update cached campaigns

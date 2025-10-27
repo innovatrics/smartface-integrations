@@ -45,13 +45,13 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             
             // Debug configuration loading
             logger.Information($"Current working directory: {Environment.CurrentDirectory}");
-            logger.Information($"Configuration sources count: {configuration.AsEnumerable().Count()}");
+            logger.Debug($"Configuration sources count: {configuration.AsEnumerable().Count()}");
             
             KeilaHost = configuration.GetValue<string>("LockerMailer:Connections:Keila:Host") ?? string.Empty;
             KeilaPort = configuration.GetValue<int>("LockerMailer:Connections:Keila:Port");
             
-            logger.Information($"Read KeilaHost: '{KeilaHost}'");
-            logger.Information($"Read KeilaPort: {KeilaPort}");
+            logger.Debug($"Read KeilaHost: '{KeilaHost}'");
+            logger.Debug($"Read KeilaPort: {KeilaPort}");
             
             // Validate configuration values
             if (string.IsNullOrEmpty(KeilaHost))
@@ -70,7 +70,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             // add here connection to Aoes Dashboards
             
             // Create proper URI for SOAP endpoint
-            logger.Information($"Attempting to create URI from: {KeilaEndpoint}");
+            logger.Debug($"Attempting to create URI from: {KeilaEndpoint}");
             var soapEndpoint = new Uri(KeilaEndpoint);
             var endpointBinding = new BasicHttpBinding()
             {
@@ -109,7 +109,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", KeilaApiKey);
                 
                 var campaignsUrl = $"{KeilaEndpoint}/api/v1/campaigns";
-                logger.Information($"Making request to: {campaignsUrl}");
+                logger.Information($"Keila DataAdapter: Making request to: {campaignsUrl}");
                 
                 var response = await httpClient.GetAsync(campaignsUrl);
                 response.EnsureSuccessStatusCode();

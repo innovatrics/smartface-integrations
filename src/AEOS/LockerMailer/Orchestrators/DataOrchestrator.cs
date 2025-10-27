@@ -100,9 +100,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             return this.cancelTime; // Fallback to default
         }
 
-        // Fields for tracking assignment changes
-        private Dictionary<long, long?> _previousLockerAssignments = new Dictionary<long, long?>();
-        private DateTime? _lastAssignmentCheckTime = null;
+        // Fields for tracking assignment changes (commented out - not currently used)
+        //private Dictionary<long, long?> _previousLockerAssignments = new Dictionary<long, long?>();
+        //private DateTime? _lastAssignmentCheckTime = null;
         //private List<LockerAssignmentChange> _assignmentChanges = new List<LockerAssignmentChange>();
 
         public DataOrchestrator(
@@ -177,7 +177,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                         if (!string.IsNullOrEmpty(configuredCancelTime))
                         {
                             this.cancelTime = configuredCancelTime;
-                            this.logger.Information($"Loaded cancelTime from configuration: '{this.cancelTime}'");
+                            this.logger.Debug($"Loaded cancelTime from configuration: '{this.cancelTime}'");
                         }
                         break;
                     }
@@ -240,7 +240,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             }
         }
 
-        private string DetermineTemplateForChange(AssignmentChange change)
+        private string? DetermineTemplateForChange(AssignmentChange change)
         {
 
             var chosenFlowTemplate = string.Empty;
@@ -290,16 +290,16 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 return chosenFlowTemplate;
             }
 
-            // Note: lockers-flow_3 is handled by AlarmTriggerService based on time triggers
-            // and does not need to be processed here as it's triggered by alarms, not assignment changes
+            // Note: lockers-flow_3, lockers-flow_4, and lockers-flow_5 are handled by AlarmTriggerService based on time triggers
+            // and do not need to be processed here as they are triggered by alarms, not assignment changes
 
             else
             {
                 return null;
             }
-            // 3#
-            // 4#
-            // 5#
+            // 3# lockers-flow_3 (handled by AlarmTriggerService)
+            // 4# lockers-flow_4 (handled by AlarmTriggerService)
+            // 5# lockers-flow_5 (handled by AlarmTriggerService)
             // 6#
             // 7#
             // 8#
