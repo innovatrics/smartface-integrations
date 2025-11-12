@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kone.Api.Client", "Kone.Api.Client\Kone.Api.Client.csproj", "{E5951F44-8C6B-4407-8868-F51C31F4F315}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kone.Api.Client.Tests", "Kone.Api.Client.Tests\Kone.Api.Client.Tests.csproj", "{D606A3A1-BEDA-43BC-93C3-719ACBECD5BF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E5951F44-8C6B-4407-8868-F51C31F4F315}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{E5951F44-8C6B-4407-8868-F51C31F4F315}.Debug|Any CPU.Build.0 = Debug|x64
+		{E5951F44-8C6B-4407-8868-F51C31F4F315}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5951F44-8C6B-4407-8868-F51C31F4F315}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D606A3A1-BEDA-43BC-93C3-719ACBECD5BF}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{D606A3A1-BEDA-43BC-93C3-719ACBECD5BF}.Debug|Any CPU.Build.0 = Debug|x64
+		{D606A3A1-BEDA-43BC-93C3-719ACBECD5BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D606A3A1-BEDA-43BC-93C3-719ACBECD5BF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A2E75F06-730A-4B94-A07C-EF8708C879AD}
+	EndGlobalSection
+EndGlobal
