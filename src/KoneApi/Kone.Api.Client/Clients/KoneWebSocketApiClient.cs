@@ -25,7 +25,7 @@ namespace Kone.Api.Client.Clients
         private readonly Task _messageReadingTask;
         private readonly CancellationTokenSource _messageReadingCts = new();
 
-        private readonly ConcurrentDictionary<int, TaskCompletionSource<string>> _pendingResponse = new();
+        private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _pendingResponse = new();
 
         private static readonly RandomNumberGenerator Rng = RandomNumberGenerator.Create();
 
@@ -44,13 +44,55 @@ namespace Kone.Api.Client.Clients
             _messageReadingTask = StartReadingMessagesAsync(_messageReadingCts.Token);
         }
 
+        public async Task<TopologyResponse> GetBuildingTopologyAsync(CancellationToken cancellationToken)
+        {
+            var requestId = Guid.NewGuid().ToString();
+
+            var req = new
+            {
+                type = "common-api",
+                requestId,
+                buildingId = $"building:{_buildingId}",
+                callType = "config",
+                groupId = _groupId
+            };
+
+            var jsonMessage = SerializeToJson(req);
+            var bytes = Encoding.UTF8.GetBytes(jsonMessage);
+
+            await EnsureSocketConnectedAsync(cancellationToken);
+
+            var tcs = new TaskCompletionSource<string>();
+            _pendingResponse.TryAdd(requestId, tcs);
+
+            try
+            {
+                await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
+
+                string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
+
+                var topologyResponse = JsonConvert.DeserializeObject<TopologyResponse>(responseMessage);
+
+                if (topologyResponse == null)
+                {
+                    throw new InvalidOperationException($"Failed to deserialize message {responseMessage}");
+                }
+
+                return topologyResponse;
+            }
+            finally
+            {
+                _pendingResponse.TryRemove(requestId, out _);
+            }
+        }
+
         public async Task<string> CallLiftToAreaAsync(int landingAreaId, CancellationToken cancellationToken)
         {
             var requestId = GetRequestId();
 
             var req = new CallTypeRequest
             {
-                type = "lift-call-api-v2",
+                type = CallTypeRequest.TypeLiftCallApi,
                 callType = CallTypeRequest.CallTypeAction,
                 buildingId = $"building:{_buildingId}",
                 groupId = _groupId,
@@ -72,7 +114,7 @@ namespace Kone.Api.Client.Clients
             await EnsureSocketConnectedAsync(cancellationToken);
 
             var tcs = new TaskCompletionSource<string>();
-            _pendingResponse.TryAdd(requestId, tcs);
+            _pendingResponse.TryAdd(requestId.ToString(), tcs);
 
             try
             {
@@ -96,7 +138,7 @@ namespace Kone.Api.Client.Clients
             }
             finally
             {
-                _pendingResponse.TryRemove(requestId, out _);
+                _pendingResponse.TryRemove(requestId.ToString(), out _);
             }
         }
 
@@ -107,7 +149,7 @@ namespace Kone.Api.Client.Clients
                 callType = CallTypeRequest.CallTypeAction,
                 buildingId = $"building:{_buildingId}",
                 groupId = _groupId,
-                type = "lift-call-api-v2",
+                type = CallTypeRequest.TypeLiftCallApi,
                 payload = new Payload
                 {
                     request_id = GetRequestId(),
@@ -209,49 +251,71 @@ namespace Kone.Api.Client.Clients
             return json;
         }
 
-        private async Task ReceiveLoopAsync(ClientWebSocket socket, CancellationToken token)
+        private async Task ReceiveLoopAsync(ClientWebSocket webSocket, CancellationToken token)
         {
             var buffer = new byte[4096];
+            var messageBuffer = new List<byte>();
 
-            while (socket.State == WebSocketState.Open && !token.IsCancellationRequested)
+            while (webSocket.State == WebSocketState.Open && !token.IsCancellationRequested)
             {
-                var result = await socket.ReceiveAsync(buffer, token);
-
-                if (result.MessageType == WebSocketMessageType.Close)
+                WebSocketReceiveResult result;
+                do
                 {
-                    break;
+                    result = await webSocket.ReceiveAsync(buffer, token);
+
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by client", token);
+                        return;
+                    }
+
+                    messageBuffer.AddRange(buffer.AsSpan(0, result.Count).ToArray());
                 }
+                while (!result.EndOfMessage);
 
-                var responseMessage = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                var responseMessage = Encoding.UTF8.GetString(messageBuffer.ToArray());
+                messageBuffer.Clear();
 
+                await HandleMessage(responseMessage);
+
+                if (MessageReceived != null)
+                {
+                    await MessageReceived.Invoke(responseMessage);
+                }
+            }
+
+            return;
+
+            async Task HandleMessage(string responseMessage)
+            {
                 using var doc = JsonDocument.Parse(responseMessage);
                 var root = doc.RootElement;
 
+                // Handle config responses
+                if (root.TryGetProperty("callType", out var callType) &&
+                    callType.GetString() == "config" &&
+                    root.TryGetProperty("requestId", out var requestId))
+                {
+                    if (_pendingResponse.TryGetValue(requestId.GetString(), out var tcs))
+                    {
+                        tcs.TrySetResult(responseMessage);
+                    }
+                    return;
+                }
+
+                // Handle lift call responses
                 if (root.TryGetProperty("data", out var data) &&
                     data.TryGetProperty("request_id", out var reqId) &&
                     reqId.ValueKind == JsonValueKind.Number)
                 {
-                    if (_pendingResponse.TryGetValue(reqId.GetInt32(), out var tcs))
+                    if (_pendingResponse.TryGetValue(reqId.GetInt32().ToString(), out var tcs))
                     {
                         tcs.TrySetResult(responseMessage);
                     }
                 }
-
-                if (MessageReceived == null)
-                {
-                    continue;
-                }
-
-                try
-                {
-                    await MessageReceived.Invoke(responseMessage);
-                }
-                catch (Exception e)
-                {
-                    _log.Error(e, "Message handler failed");
-                }
             }
         }
+
 
         // Generates a positive 32-bit integer (1 to 2,147,483,647)
         private static int GetRequestId()

@@ -48,6 +48,29 @@ namespace Kone.Api.Client.Tests
         }
 
         [Fact]
+        public async Task Test_Get_Building_Topology()
+        {
+            var tokenResponse = await _koneApiClient.GetAccessTokenAsync();
+            var resources = await _koneApiClient.GetResourcesAsync(tokenResponse.Access_token);
+            var building = resources.Buildings.First();
+
+            var cts = new CancellationTokenSource(5000);
+
+            var koneWs = new KoneWebSocketApiClient(Log.Logger, _koneApiClient, building.Id, GroupId);
+
+            koneWs.MessageReceived += KoneWs_MessageReceived;
+            koneWs.MessageSend += KoneWs_MessageSend;
+
+            var topology = await koneWs.GetBuildingTopologyAsync(cts.Token);
+            Assert.NotNull(topology);
+            Assert.NotNull(topology.data);
+            Assert.NotNull(topology.data.groups);
+            Assert.NotEmpty(topology.data.groups);
+
+            _output.WriteLine("Building Topology:");
+        }
+
+        [Fact]
         public async Task Test_Landing_Call_Successful()
         {
             var tokenResponse = await _koneApiClient.GetAccessTokenAsync();

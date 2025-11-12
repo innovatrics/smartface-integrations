@@ -2,6 +2,9 @@
 {
     public class CallTypeRequest
     {
+        public const string TypeLiftCallApi = "lift-call-api-v2";
+        public const string TypeCommonApi = "common-api";
+        
         public const string CallTypeConfig = "config";
         public const string CallTypeAction = "action";
         public const string CallTypePing = "ping";
