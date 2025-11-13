@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
-using ManagementApi;
+using Kone.Api.Client.Clients.Generated;
 
 namespace Kone.Api.Client.Clients
 {

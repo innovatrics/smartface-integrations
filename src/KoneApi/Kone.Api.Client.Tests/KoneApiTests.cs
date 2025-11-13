@@ -1,6 +1,6 @@
 using Kone.Api.Client.Clients;
+using Kone.Api.Client.Clients.Generated;
 using Kone.Api.Client.Exceptions;
-using ManagementApi;
 using Newtonsoft.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
