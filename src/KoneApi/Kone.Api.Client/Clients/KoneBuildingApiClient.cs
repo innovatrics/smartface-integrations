@@ -64,7 +64,7 @@ namespace Kone.Api.Client.Clients
             _pendingResponse.TryAdd(requestId, tcs);
 
             var cts = new CancellationTokenSource();
-            var readingTask = ReceiveLoopAsync(ws, cts.Token);
+            var readingTask = ReceiveMessagesAsync(ws, cts.Token);
 
             try
             {
@@ -111,7 +111,7 @@ namespace Kone.Api.Client.Clients
             _pendingResponse.TryAdd(requestId, tcs);
 
             var cts = new CancellationTokenSource();
-            var readingTask = ReceiveLoopAsync(ws, cts.Token);
+            var readingTask = ReceiveMessagesAsync(ws, cts.Token);
 
             try
             {
@@ -169,7 +169,7 @@ namespace Kone.Api.Client.Clients
             _pendingResponse.TryAdd(requestId.ToString(), tcs);
 
             var cts = new CancellationTokenSource();
-            var readingTask = ReceiveLoopAsync(ws, cts.Token);
+            var readingTask = ReceiveMessagesAsync(ws, cts.Token);
 
             try
             {
@@ -255,7 +255,7 @@ namespace Kone.Api.Client.Clients
             return json;
         }
 
-        private async Task ReceiveLoopAsync(ClientWebSocket webSocket, CancellationToken token)
+        private async Task ReceiveMessagesAsync(ClientWebSocket webSocket, CancellationToken token)
         {
             var buffer = new byte[4096];
             var messageBuffer = new List<byte>();
@@ -280,7 +280,7 @@ namespace Kone.Api.Client.Clients
                 var responseMessage = Encoding.UTF8.GetString(messageBuffer.ToArray());
                 messageBuffer.Clear();
 
-                await HandleMessage(responseMessage);
+                HandleMessage(responseMessage);
 
                 if (MessageReceived != null)
                 {
@@ -290,7 +290,7 @@ namespace Kone.Api.Client.Clients
 
             return;
 
-            async Task HandleMessage(string responseMessage)
+            void HandleMessage(string responseMessage)
             {
                 using var doc = JsonDocument.Parse(responseMessage);
                 var root = doc.RootElement;
