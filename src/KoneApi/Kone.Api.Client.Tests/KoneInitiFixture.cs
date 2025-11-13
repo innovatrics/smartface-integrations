@@ -51,6 +51,12 @@ namespace Kone.Api.Client.Tests
 
             Actions = await KoneBuildingApi.GetActionsAsync(ct);
 
+            var landingCallUpAction = Actions.data.call_types.Single(x => x.name == "LdgCall UP");
+            var landingCallDownAction = Actions.data.call_types.Single(x => x.name == "LdgCall DOWN");
+
+            Assert.Equal(KoneBuildingApiClient.LandingCallUpActionId, landingCallUpAction.action_id);
+            Assert.Equal(KoneBuildingApiClient.LandingCallDownActionId, landingCallDownAction.action_id);
+
             TestAreaId1 = Topology.data.destinations.First().area_id;
             TestAreaId2 = Topology.data.destinations.Last().area_id;
         }

@@ -13,6 +13,9 @@ namespace Kone.Api.Client.Clients
 {
     public class KoneBuildingApiClient : IAsyncDisposable
     {
+        public const int LandingCallUpActionId = 2001;
+        public const int LandingCallDownActionId = 2002;
+
         public event Action<string>? MessageSend;
         public event Func<string, Task>? MessageReceived;
 
@@ -133,9 +136,6 @@ namespace Kone.Api.Client.Clients
 
         public async Task<string> LandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
         {
-            const int landingCallUp = 2001;
-            const int landingCallDown = 2002;
-
             var requestId = GetRequestId();
 
             var req = new CallTypeRequest
@@ -151,7 +151,7 @@ namespace Kone.Api.Client.Clients
                     time = DateTime.UtcNow.ToString("o"),
                     call = new Call
                     {
-                        action = isDirectionUp ? landingCallUp : landingCallDown
+                        action = isDirectionUp ? LandingCallUpActionId : LandingCallDownActionId
                     }
                 }
             };
