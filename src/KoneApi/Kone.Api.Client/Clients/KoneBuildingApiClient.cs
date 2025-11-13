@@ -1,4 +1,5 @@
 ﻿using Kone.Api.Client.Clients.Models;
+using Kone.Api.Client.Exceptions;
 using Newtonsoft.Json;
 using Serilog;
 using System.Collections.Concurrent;
@@ -6,7 +7,6 @@ using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Kone.Api.Client.Exceptions;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Kone.Api.Client.Clients
@@ -42,7 +42,7 @@ namespace Kone.Api.Client.Clients
             _endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
         }
 
-        public async Task<TopologyResponse> GetTopologyAsync(CancellationToken cancellationToken)
+        public Task<TopologyResponse> GetTopologyAsync(CancellationToken cancellationToken)
         {
             var requestId = Guid.NewGuid().ToString();
 
@@ -55,42 +55,12 @@ namespace Kone.Api.Client.Clients
                 groupId = _groupId
             };
 
-            var jsonMessage = SerializeToJson(req);
-            var bytes = Encoding.UTF8.GetBytes(jsonMessage);
-
-            using var ws = await CreatedConnectedWebSocketAsync(cancellationToken);
-
-            var tcs = new TaskCompletionSource<string>();
-            _pendingResponse.TryAdd(requestId, tcs);
-
-            var cts = new CancellationTokenSource();
-            var readingTask = ReceiveMessagesAsync(ws, cts.Token);
-
-            try
-            {
-                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
-
-                string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
-
-                var topologyResponse = JsonConvert.DeserializeObject<TopologyResponse>(responseMessage);
-
-                if (topologyResponse == null)
-                {
-                    throw new InvalidOperationException($"Failed to deserialize message {responseMessage}");
-                }
-
-                return topologyResponse;
-            }
-            finally
-            {
-                _pendingResponse.TryRemove(requestId, out _);
-
-                await cts.CancelAsync();
-                await readingTask;
-            }
+            return SendMessageAndWaitForResponseAsync(requestId, req,
+                responseMessage => JsonConvert.DeserializeObject<TopologyResponse>(responseMessage)!,
+                cancellationToken);
         }
 
-        public async Task<ActionsResponse> GetActionsAsync(CancellationToken cancellationToken)
+        public Task<ActionsResponse> GetActionsAsync(CancellationToken cancellationToken)
         {
             var requestId = Guid.NewGuid().ToString();
 
@@ -103,42 +73,12 @@ namespace Kone.Api.Client.Clients
                 groupId = _groupId
             };
 
-            var jsonMessage = SerializeToJson(req);
-            var bytes = Encoding.UTF8.GetBytes(jsonMessage);
-
-            using var ws = await CreatedConnectedWebSocketAsync(cancellationToken);
-            var tcs = new TaskCompletionSource<string>();
-            _pendingResponse.TryAdd(requestId, tcs);
-
-            var cts = new CancellationTokenSource();
-            var readingTask = ReceiveMessagesAsync(ws, cts.Token);
-
-            try
-            {
-                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
-
-                string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
-
-                var topologyResponse = JsonConvert.DeserializeObject<ActionsResponse>(responseMessage);
-
-                if (topologyResponse == null)
-                {
-                    throw new InvalidOperationException($"Failed to deserialize message {responseMessage}");
-                }
-
-                return topologyResponse;
-            }
-            finally
-            {
-                _pendingResponse.TryRemove(requestId, out _);
-
-                await cts.CancelAsync();
-                await readingTask;
-            }
+            return SendMessageAndWaitForResponseAsync(requestId, req,
+                responseMessage => JsonConvert.DeserializeObject<ActionsResponse>(responseMessage)!,
+                cancellationToken);
         }
 
-
-        public async Task<string> LandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
+        public Task<string> LandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
         {
             var requestId = GetRequestId();
 
@@ -160,23 +100,12 @@ namespace Kone.Api.Client.Clients
                 }
             };
 
-            var jsonMessage = SerializeToJson(req);
-            var bytes = Encoding.UTF8.GetBytes(jsonMessage);
+            return SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
+                MessageParser,
+                cancellationToken);
 
-            using var ws = await CreatedConnectedWebSocketAsync(cancellationToken);
-
-            var tcs = new TaskCompletionSource<string>();
-            _pendingResponse.TryAdd(requestId.ToString(), tcs);
-
-            var cts = new CancellationTokenSource();
-            var readingTask = ReceiveMessagesAsync(ws, cts.Token);
-
-            try
+            string MessageParser(string responseMessage)
             {
-                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
-
-                string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
-
                 using var doc = JsonDocument.Parse(responseMessage);
                 var formattedJsonResponse = JsonSerializer.Serialize(doc, new JsonSerializerOptions
                 {
@@ -191,17 +120,8 @@ namespace Kone.Api.Client.Clients
                 {
                     return formattedJsonResponse;
                 }
-                else
-                {
-                    throw new KoneCallException("No success true found in response message", formattedJsonResponse);
-                }
-            }
-            finally
-            {
-                _pendingResponse.TryRemove(requestId.ToString(), out _);
 
-                await cts.CancelAsync();
-                await readingTask;
+                throw new KoneCallException("No success true found in response message", formattedJsonResponse);
             }
         }
 
@@ -233,6 +153,55 @@ namespace Kone.Api.Client.Clients
             await EnsureSocketConnectedAsync(cancellationToken);
             await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
         }*/
+
+        private async Task<TResponse> SendMessageAndWaitForResponseAsync<TResponse>(
+            string requestId,
+            object request,
+            Func<string, TResponse> deserializeFunc,
+            CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(requestId);
+            ArgumentNullException.ThrowIfNull(request);
+            ArgumentNullException.ThrowIfNull(deserializeFunc);
+
+            var jsonRequest = SerializeToJson(request);
+            var bytes = Encoding.UTF8.GetBytes(jsonRequest);
+
+            using var ws = await CreatedConnectedWebSocketAsync(cancellationToken);
+
+            var tcs = new TaskCompletionSource<string>();
+            _pendingResponse.TryAdd(requestId, tcs);
+
+            var cts = new CancellationTokenSource();
+            var readingTask = ReceiveMessagesAsync(ws, cts.Token);
+
+            try
+            {
+                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
+
+                string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
+
+                return deserializeFunc(responseMessage);
+            }
+            finally
+            {
+                _pendingResponse.TryRemove(requestId, out _);
+
+                try
+                {
+                    await cts.CancelAsync();
+                    await readingTask;
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                catch (Exception e)
+                {
+                    _log.Error(e, "Failed to cleanup message reading task");
+                }
+            }
+        }
+
 
         private async Task<ClientWebSocket> CreatedConnectedWebSocketAsync(CancellationToken cancellationToken)
         {
