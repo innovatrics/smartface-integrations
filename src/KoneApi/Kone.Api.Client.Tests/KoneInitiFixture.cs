@@ -10,13 +10,13 @@ namespace Kone.Api.Client.Tests
         private const string ClientSecret = "ff29f835abbc267aa9813f66ac235cd69bbe6b69dad1c7ff214a589fdf2a1145";
 
         public readonly KoneAuthApiClient KoneAuthApi = new(ClientId, ClientSecret);
-        public KoneBuildingApiClient KoneBuildingApi;
+        public required KoneBuildingApiClient KoneBuildingApi;
 
         public const string GroupId = "1";
-        public TopologyResponse Topology;
-        public ActionsResponse Actions;
+        public required TopologyResponse Topology;
+        public required ActionsResponse Actions;
 
-        public string BuildingId;
+        public required string BuildingId;
 
         public int TestAreaId1;
         public int TestAreaId2;
@@ -25,17 +25,24 @@ namespace Kone.Api.Client.Tests
         /// Authenticate and initialize building topology.
         /// </summary>
         /// <returns></returns>
+        [KoneTestCase(0, "Building id can be retrieved")]
+        [KoneTestCase(1, "Authentication successful")]
+        [KoneTestCase(1, "Building config can be obtained")]
+        [KoneTestCase(1, "Building actions can be obtained")]
         public async Task InitializeAsync()
         {
             var ct = new CancellationTokenSource(10_000).Token;
 
             var tokenResponse = await KoneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, ct);
             var resources = await KoneAuthApi.GetResourcesAsync(tokenResponse.Access_token, ct);
+
             BuildingId = resources.Buildings.First().Id;
 
             KoneBuildingApi = new KoneBuildingApiClient(Log.Logger, KoneAuthApi, BuildingId, GroupId);
 
             Topology = await KoneBuildingApi.GetTopologyAsync(ct);
+
+            Assert.Equal(GroupId, Topology.groupId);
 
             Assert.NotNull(Topology);
             Assert.NotNull(Topology.data);

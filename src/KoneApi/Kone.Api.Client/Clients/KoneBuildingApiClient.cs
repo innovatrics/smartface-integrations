@@ -186,7 +186,7 @@ namespace Kone.Api.Client.Clients
                 }
                 else
                 {
-                    throw new LiftCallException("No success true found in response message", formattedJsonResponse);
+                    throw new KoneCallException("No success true found in response message", formattedJsonResponse);
                 }
             }
             finally

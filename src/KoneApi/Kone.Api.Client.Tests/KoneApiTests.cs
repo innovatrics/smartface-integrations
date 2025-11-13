@@ -58,6 +58,7 @@ namespace Kone.Api.Client.Tests
         }
 
         [Fact]
+        [KoneTestCase(6, "Landing Call")]
         public async Task Test_Landing_Call_Up_Successful()
         {
             var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
@@ -69,6 +70,7 @@ namespace Kone.Api.Client.Tests
         }
 
         [Fact]
+        [KoneTestCase(6, "Landing Call")]
         public async Task Test_Landing_Call_Down_Successful()
         {
             var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
