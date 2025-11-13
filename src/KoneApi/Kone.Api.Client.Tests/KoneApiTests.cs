@@ -20,10 +20,12 @@ namespace Kone.Api.Client.Tests
         private readonly KoneAuthApiClient _koneAuthApiClient = new(ClientId, ClientSecret);
         private KoneBuildingApiClient _koneBuildingApi;
 
-        private string _buildingId;
-        private int _testAreaId;
-        private TopologyResponse _topology;
         private const string GroupId = "1";
+        private TopologyResponse _topology;
+
+        private string _buildingId;
+        private int _testAreaId1;
+        private int _testAreaId2;
 
         /// <summary>
         /// Authenticate and initialize building topology.
@@ -44,7 +46,8 @@ namespace Kone.Api.Client.Tests
             Assert.NotNull(_topology.data.groups);
             Assert.NotEmpty(_topology.data.groups);
 
-            _testAreaId = _topology.data.destinations.First().area_id;
+            _testAreaId1 = _topology.data.destinations.First().area_id;
+            _testAreaId2 = _topology.data.destinations.Last().area_id;
 
             _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
             _koneBuildingApi.MessageSend += KoneWs_MessageSend;
@@ -84,8 +87,21 @@ namespace Kone.Api.Client.Tests
             var cts = new CancellationTokenSource(5000);
 
             var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
-                _testAreaId,
+                _testAreaId1,
                 isDirectionUp: true,
+                cts.Token);
+
+            _output.WriteLine(landingCallResponse);
+        }
+
+        [Fact]
+        public async Task Test_Landing_Call_Down_Successful()
+        {
+            var cts = new CancellationTokenSource(5000);
+
+            var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
+                _testAreaId2,
+                isDirectionUp: false,
                 cts.Token);
 
             _output.WriteLine(landingCallResponse);
