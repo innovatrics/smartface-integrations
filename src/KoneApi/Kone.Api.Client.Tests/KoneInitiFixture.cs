@@ -61,9 +61,9 @@ namespace Kone.Api.Client.Tests
             TestAreaId2 = Topology.data.destinations.Last().area_id;
         }
 
-        public async Task DisposeAsync()
+        public Task DisposeAsync()
         {
-            await using (KoneBuildingApi) { }
+            return Task.CompletedTask;
         }
     }
 }

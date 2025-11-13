@@ -11,7 +11,7 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Kone.Api.Client.Clients
 {
-    public class KoneBuildingApiClient : IAsyncDisposable
+    public class KoneBuildingApiClient
     {
         public const int LandingCallUpActionId = 2001;
         public const int LandingCallDownActionId = 2002;
@@ -24,11 +24,6 @@ namespace Kone.Api.Client.Clients
         private readonly string _buildingId;
         private readonly string _groupId;
         private readonly string _endpoint;
-        private readonly TimeSpan _reconnectDelay = TimeSpan.FromSeconds(5);
-        private ClientWebSocket _webSocket;
-
-        private readonly Task _messageReadingTask;
-        private readonly CancellationTokenSource _messageReadingCts = new();
 
         private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _pendingResponse = new();
 
@@ -45,8 +40,6 @@ namespace Kone.Api.Client.Clients
             _buildingId = buildingId ?? throw new ArgumentNullException(nameof(buildingId));
             _groupId = groupId ?? throw new ArgumentNullException(nameof(groupId));
             _endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
-
-            _messageReadingTask = StartReadingMessagesAsync(_messageReadingCts.Token);
         }
 
         public async Task<TopologyResponse> GetTopologyAsync(CancellationToken cancellationToken)
@@ -65,14 +58,17 @@ namespace Kone.Api.Client.Clients
             var jsonMessage = SerializeToJson(req);
             var bytes = Encoding.UTF8.GetBytes(jsonMessage);
 
-            await EnsureSocketConnectedAsync(cancellationToken);
+            using var ws = await CreatedConnectedWebSocketAsync(cancellationToken);
 
             var tcs = new TaskCompletionSource<string>();
             _pendingResponse.TryAdd(requestId, tcs);
 
+            var cts = new CancellationTokenSource();
+            var readingTask = ReceiveLoopAsync(ws, cts.Token);
+
             try
             {
-                await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
+                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
 
                 string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
 
@@ -88,6 +84,9 @@ namespace Kone.Api.Client.Clients
             finally
             {
                 _pendingResponse.TryRemove(requestId, out _);
+
+                await cts.CancelAsync();
+                await readingTask;
             }
         }
 
@@ -107,14 +106,16 @@ namespace Kone.Api.Client.Clients
             var jsonMessage = SerializeToJson(req);
             var bytes = Encoding.UTF8.GetBytes(jsonMessage);
 
-            await EnsureSocketConnectedAsync(cancellationToken);
-
+            using var ws = await CreatedConnectedWebSocketAsync(cancellationToken);
             var tcs = new TaskCompletionSource<string>();
             _pendingResponse.TryAdd(requestId, tcs);
 
+            var cts = new CancellationTokenSource();
+            var readingTask = ReceiveLoopAsync(ws, cts.Token);
+
             try
             {
-                await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
+                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
 
                 string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
 
@@ -130,6 +131,9 @@ namespace Kone.Api.Client.Clients
             finally
             {
                 _pendingResponse.TryRemove(requestId, out _);
+
+                await cts.CancelAsync();
+                await readingTask;
             }
         }
 
@@ -159,14 +163,17 @@ namespace Kone.Api.Client.Clients
             var jsonMessage = SerializeToJson(req);
             var bytes = Encoding.UTF8.GetBytes(jsonMessage);
 
-            await EnsureSocketConnectedAsync(cancellationToken);
+            using var ws = await CreatedConnectedWebSocketAsync(cancellationToken);
 
             var tcs = new TaskCompletionSource<string>();
             _pendingResponse.TryAdd(requestId.ToString(), tcs);
 
+            var cts = new CancellationTokenSource();
+            var readingTask = ReceiveLoopAsync(ws, cts.Token);
+
             try
             {
-                await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
+                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
 
                 string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
 
@@ -192,6 +199,9 @@ namespace Kone.Api.Client.Clients
             finally
             {
                 _pendingResponse.TryRemove(requestId.ToString(), out _);
+
+                await cts.CancelAsync();
+                await readingTask;
             }
         }
 
@@ -224,71 +234,18 @@ namespace Kone.Api.Client.Clients
             await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
         }*/
 
-        private async Task StartReadingMessagesAsync(CancellationToken cancellationToken)
+        private async Task<ClientWebSocket> CreatedConnectedWebSocketAsync(CancellationToken cancellationToken)
         {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                string accessToken;
+            var accessToken = (await _koneAuthApiClient.GetCallGivingAccessTokenAsync(_buildingId,
+                _groupId, cancellationToken)).Access_token;
 
-                try
-                {
-                    accessToken = (await _koneAuthApiClient.GetCallGivingAccessTokenAsync(_buildingId,
-                        _groupId, cancellationToken)).Access_token;
-                }
-                catch (Exception e)
-                {
-                    _log.Error(e, "Failed to fetch access token");
-                    await Task.Delay(_reconnectDelay, cancellationToken);
-                    continue;
-                }
+            var webSocket = new ClientWebSocket();
+            webSocket.Options.AddSubProtocol("koneapi");
+            var uri = new Uri($"{_endpoint}?accessToken={Uri.EscapeDataString(accessToken)}");
 
-                try
-                {
-                    _webSocket = new ClientWebSocket();
-                    _webSocket.Options.AddSubProtocol("koneapi");
-
-                    var uri = new Uri($"{_endpoint}?accessToken={Uri.EscapeDataString(accessToken)}");
-                    _log.Information("Connecting to websocket at {Uri}", uri);
-                    await _webSocket.ConnectAsync(uri, cancellationToken);
-
-                    await ReceiveLoopAsync(_webSocket, cancellationToken);
-                }
-                catch (WebSocketException wex) when (wex.Message.Contains("401"))
-                {
-                    _log.Warning("Websocket connection returned unauthorized");
-                }
-                catch (Exception ex)
-                {
-                    _log.Error(ex, "Websocket connection error");
-                }
-                finally
-                {
-                    _log.Information("Reconnecting after {Delay}", _reconnectDelay);
-                    await Task.Delay(_reconnectDelay, cancellationToken);
-                }
-            }
-        }
-
-        private async Task EnsureSocketConnectedAsync(CancellationToken cancellationToken)
-        {
-            if (_webSocket is null or { State: WebSocketState.None } or { State: WebSocketState.Connecting })
-            {
-                // Give ~2s time for the websocket connection to establish
-                for (int i = 0; i < 10; i++)
-                {
-                    await Task.Delay(200, cancellationToken);
-
-                    if (_webSocket is { State: WebSocketState.Open })
-                    {
-                        return;
-                    }
-                }
-            }
-
-            if (_webSocket is not { State: WebSocketState.Open })
-            {
-                throw new InvalidOperationException("Websocket is not connected yet");
-            }
+            _log.Debug("Connecting to websocket at {Uri}", uri);
+            await webSocket.ConnectAsync(uri, cancellationToken);
+            return webSocket;
         }
 
         private string SerializeToJson(object request)
@@ -381,17 +338,6 @@ namespace Kone.Api.Client.Clients
             byte[] bytes = new byte[4];
             Rng.GetBytes(bytes);
             return BitConverter.ToInt32(bytes, 0) & 0x7FFFFFFF; // Make it positive
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            await _messageReadingCts.CancelAsync();
-
-            try
-            {
-                await _messageReadingTask;
-            }
-            catch (OperationCanceledException) { }
         }
     }
 }
