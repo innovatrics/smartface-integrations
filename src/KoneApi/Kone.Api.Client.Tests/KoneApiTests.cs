@@ -17,12 +17,12 @@ namespace Kone.Api.Client.Tests
 
         private readonly ITestOutputHelper _output = output ?? throw new ArgumentNullException(nameof(output));
 
-        private readonly KoneApiClient _koneApiClient = new(ClientId, ClientSecret);
+        private readonly KoneAuthApiClient _koneAuthApiClient = new(ClientId, ClientSecret);
 
         [Fact]
         public async Task Test_Get_Access_Token()
         {
-            var tokenResponse = await _koneApiClient.GetAccessTokenAsync();
+            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync();
 
             _output.WriteLine(JsonConvert.SerializeObject(tokenResponse, Formatting.Indented));
 
@@ -34,8 +34,8 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_List_Resources()
         {
-            var tokenResponse = await _koneApiClient.GetAccessTokenAsync();
-            var resources = await _koneApiClient.GetResourcesAsync(tokenResponse.Access_token);
+            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync();
+            var resources = await _koneAuthApiClient.GetResourcesAsync(tokenResponse.Access_token);
 
             _output.WriteLine(JsonConvert.SerializeObject(resources, Formatting.Indented));
         }
@@ -43,25 +43,25 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_List_Resources_Invalid_Token_Returns_Not_Authorized()
         {
-            var ex = await Assert.ThrowsAnyAsync<ApiException>(() => _koneApiClient.GetResourcesAsync("InvalidToken"));
+            var ex = await Assert.ThrowsAnyAsync<ApiException>(() => _koneAuthApiClient.GetResourcesAsync("InvalidToken"));
             Assert.Equal(401, ex.StatusCode);
         }
 
         [Fact]
         public async Task Test_Get_Building_Topology()
         {
-            var tokenResponse = await _koneApiClient.GetAccessTokenAsync();
-            var resources = await _koneApiClient.GetResourcesAsync(tokenResponse.Access_token);
+            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync();
+            var resources = await _koneAuthApiClient.GetResourcesAsync(tokenResponse.Access_token);
             var building = resources.Buildings.First();
 
             var cts = new CancellationTokenSource(5000);
 
-            var koneWs = new KoneWebSocketApiClient(Log.Logger, _koneApiClient, building.Id, GroupId);
+            var koneWs = new KoneBuildingApiClient(Log.Logger, _koneAuthApiClient, building.Id, GroupId);
 
             koneWs.MessageReceived += KoneWs_MessageReceived;
             koneWs.MessageSend += KoneWs_MessageSend;
 
-            var topology = await koneWs.GetBuildingTopologyAsync(cts.Token);
+            var topology = await koneWs.GetTopologyAsync(cts.Token);
             Assert.NotNull(topology);
             Assert.NotNull(topology.data);
             Assert.NotNull(topology.data.groups);
@@ -73,13 +73,13 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_Landing_Call_Successful()
         {
-            var tokenResponse = await _koneApiClient.GetAccessTokenAsync();
-            var resources = await _koneApiClient.GetResourcesAsync(tokenResponse.Access_token);
+            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync();
+            var resources = await _koneAuthApiClient.GetResourcesAsync(tokenResponse.Access_token);
             var building = resources.Buildings.First();
 
             var cts = new CancellationTokenSource(5000);
 
-            var koneWs = new KoneWebSocketApiClient(Log.Logger, _koneApiClient, building.Id, GroupId);
+            var koneWs = new KoneBuildingApiClient(Log.Logger, _koneAuthApiClient, building.Id, GroupId);
 
             koneWs.MessageReceived += KoneWs_MessageReceived;
             koneWs.MessageSend += KoneWs_MessageSend;

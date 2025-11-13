@@ -4,14 +4,14 @@ using ManagementApi;
 
 namespace Kone.Api.Client.Clients
 {
-    public class KoneApiClient
+    public class KoneAuthApiClient
     {
         private readonly HttpClient _httpClientForOAuth = new();
         private readonly Oauth2Client _oauth2Client;
 
         private readonly HttpClient _httpClientForSelf = new();
 
-        public KoneApiClient(string clientId, string clientSecret)
+        public KoneAuthApiClient(string clientId, string clientSecret)
         {
             ArgumentNullException.ThrowIfNull(clientId);
             ArgumentNullException.ThrowIfNull(clientSecret);

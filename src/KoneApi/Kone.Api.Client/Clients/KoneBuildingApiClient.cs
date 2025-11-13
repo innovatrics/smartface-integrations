@@ -6,16 +6,17 @@ using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Kone.Api.Client.Exceptions;
 
 namespace Kone.Api.Client.Clients
 {
-    public class KoneWebSocketApiClient : IAsyncDisposable
+    public class KoneBuildingApiClient : IAsyncDisposable
     {
         public event Action<string>? MessageSend;
         public event Func<string, Task>? MessageReceived;
 
         private readonly ILogger _log;
-        private readonly KoneApiClient _koneApiClient;
+        private readonly KoneAuthApiClient _koneAuthApiClient;
         private readonly string _buildingId;
         private readonly string _groupId;
         private readonly string _endpoint;
@@ -29,14 +30,14 @@ namespace Kone.Api.Client.Clients
 
         private static readonly RandomNumberGenerator Rng = RandomNumberGenerator.Create();
 
-        public KoneWebSocketApiClient(ILogger log,
-            KoneApiClient koneApiClient,
+        public KoneBuildingApiClient(ILogger log,
+            KoneAuthApiClient koneAuthApiClient,
             string buildingId,
             string groupId,
             string endpoint = "wss://dev.kone.com/stream-v2")
         {
             _log = log ?? throw new ArgumentNullException(nameof(log));
-            _koneApiClient = koneApiClient ?? throw new ArgumentNullException(nameof(koneApiClient));
+            _koneAuthApiClient = koneAuthApiClient ?? throw new ArgumentNullException(nameof(koneAuthApiClient));
             _buildingId = buildingId ?? throw new ArgumentNullException(nameof(buildingId));
             _groupId = groupId ?? throw new ArgumentNullException(nameof(groupId));
             _endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
@@ -44,7 +45,7 @@ namespace Kone.Api.Client.Clients
             _messageReadingTask = StartReadingMessagesAsync(_messageReadingCts.Token);
         }
 
-        public async Task<TopologyResponse> GetBuildingTopologyAsync(CancellationToken cancellationToken)
+        public async Task<TopologyResponse> GetTopologyAsync(CancellationToken cancellationToken)
         {
             var requestId = Guid.NewGuid().ToString();
 
@@ -133,7 +134,7 @@ namespace Kone.Api.Client.Clients
                 }
                 else
                 {
-                    throw new KoneLiftCallException("No success true found in response message", responseMessage);
+                    throw new LiftCallException("No success true found in response message", responseMessage);
                 }
             }
             finally
@@ -174,7 +175,7 @@ namespace Kone.Api.Client.Clients
         private async Task<string> GetAccessTokenAsync(string buildingId, string groupId)
         {
             var scope = $"application/inventory callgiving/group:{buildingId}:{groupId}";
-            var tokenResponse = await _koneApiClient.GetAccessTokenAsync(scope);
+            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync(scope);
             return tokenResponse.Access_token;
         }
 
