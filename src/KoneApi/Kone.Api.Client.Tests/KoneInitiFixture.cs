@@ -33,7 +33,7 @@ namespace Kone.Api.Client.Tests
         {
             var ct = new CancellationTokenSource(10_000).Token;
 
-            var tokenResponse = await KoneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, ct);
+            var tokenResponse = await KoneAuthApi.GetDefaultAccessTokenAsync(ct);
             var resources = await KoneAuthApi.GetResourcesAsync(tokenResponse.Access_token, ct);
 
             BuildingId = resources.Buildings.First().Id;

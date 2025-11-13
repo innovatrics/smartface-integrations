@@ -33,7 +33,7 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_Auth_Get_Access_Token()
         {
-            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, CancellationToken.None);
+            var tokenResponse = await _koneAuthApi.GetDefaultAccessTokenAsync(CancellationToken);
 
             _output.WriteLine(JsonConvert.SerializeObject(tokenResponse, Formatting.Indented));
 
@@ -52,7 +52,7 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_Auth_Get_Resources()
         {
-            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, CancellationToken);
+            var tokenResponse = await _koneAuthApi.GetDefaultAccessTokenAsync(CancellationToken);
             var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token, CancellationToken);
 
             _output.WriteLine(JsonConvert.SerializeObject(resources, Formatting.Indented));

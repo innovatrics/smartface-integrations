@@ -23,17 +23,18 @@ namespace Kone.Api.Client.Clients
             _oauth2Client = new Oauth2Client(_httpClientForOAuth);
         }
 
-        public async Task<AccessTokenResponse> GetAccessTokenAsync(string scope, CancellationToken cancellationToken)
+        public Task<AccessTokenResponse> GetDefaultAccessTokenAsync(CancellationToken cancellationToken)
         {
-            ArgumentNullException.ThrowIfNull(scope);
+            return GetAccessTokenAsync(DefaultScope, cancellationToken);
+        }
 
-            var tokenResponse = await _oauth2Client.TokenAsync(new GetAccessToken_request
-            {
-                Grant_type = GetAccessToken_requestGrant_type.Client_credentials,
-                Scope = scope
-            }, cancellationToken);
+        public Task<AccessTokenResponse> GetCallGivingAccessTokenAsync(string buildingId, string groupId, CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(buildingId);
+            ArgumentNullException.ThrowIfNull(groupId);
 
-            return tokenResponse;
+            var scope = $"application/inventory callgiving/group:{buildingId}:{groupId}";
+            return GetAccessTokenAsync(scope, cancellationToken);
         }
 
         public async Task<ResourceListResponse> GetResourcesAsync(string accessToken, CancellationToken cancellationToken)
@@ -44,6 +45,19 @@ namespace Kone.Api.Client.Clients
             var selfClient = new SelfClient(_httpClientForSelf);
             var resources = await selfClient.ResourcesGetAsync(cancellationToken);
             return resources;
+        }
+
+        private async Task<AccessTokenResponse> GetAccessTokenAsync(string scope, CancellationToken cancellationToken)
+        {
+            ArgumentNullException.ThrowIfNull(scope);
+
+            var tokenResponse = await _oauth2Client.TokenAsync(new GetAccessToken_request
+            {
+                Grant_type = GetAccessToken_requestGrant_type.Client_credentials,
+                Scope = scope
+            }, cancellationToken);
+
+            return tokenResponse;
         }
     }
 }

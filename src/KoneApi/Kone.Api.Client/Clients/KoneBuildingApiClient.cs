@@ -224,13 +224,6 @@ namespace Kone.Api.Client.Clients
             await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
         }*/
 
-        private async Task<string> GetAccessTokenAsync(string buildingId, string groupId, CancellationToken cancellationToken)
-        {
-            var scope = $"application/inventory callgiving/group:{buildingId}:{groupId}";
-            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync(scope, cancellationToken);
-            return tokenResponse.Access_token;
-        }
-
         private async Task StartReadingMessagesAsync(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
@@ -239,7 +232,8 @@ namespace Kone.Api.Client.Clients
 
                 try
                 {
-                    accessToken = await GetAccessTokenAsync(_buildingId, _groupId, cancellationToken);
+                    accessToken = (await _koneAuthApiClient.GetCallGivingAccessTokenAsync(_buildingId,
+                        _groupId, cancellationToken)).Access_token;
                 }
                 catch (Exception e)
                 {
