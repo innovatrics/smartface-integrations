@@ -1,4 +1,5 @@
 using Kone.Api.Client.Clients;
+using Kone.Api.Client.Exceptions;
 using ManagementApi;
 using Newtonsoft.Json;
 using System.Text.Json;
@@ -58,7 +59,7 @@ namespace Kone.Api.Client.Tests
         }
 
         [Fact]
-        [KoneTestCase(6, "Landing Call")]
+        [KoneTestCase(6, "Landing Call Up")]
         public async Task Test_Landing_Call_Up_Successful()
         {
             var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
@@ -67,6 +68,20 @@ namespace Kone.Api.Client.Tests
                 CancellationToken);
 
             _output.WriteLine(landingCallResponse);
+        }
+
+        [Fact]
+        [KoneTestCase(6, "Landing Call Up - Invalid direction")]
+        public async Task Test_Landing_Call_Up_Invalid_Direction()
+        {
+            var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.LandingCallAsync(
+                _fixture.TestAreaId1,
+                isDirectionUp: false,
+                CancellationToken));
+
+            Assert.Equal(ex.Error, "INVALID_DIRECTION");
+
+            _output.WriteLine(ex.JsonMessage);
         }
 
         [Fact]
@@ -79,6 +94,20 @@ namespace Kone.Api.Client.Tests
                 CancellationToken);
 
             _output.WriteLine(landingCallResponse);
+        }
+
+        [Fact]
+        [KoneTestCase(6, "Landing Call Down - Invalid direction")]
+        public async Task Test_Landing_Call_Down_Invalid_Direction()
+        {
+            var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.LandingCallAsync(
+                _fixture.TestAreaId2,
+                isDirectionUp: true,
+                CancellationToken));
+
+            Assert.Equal(ex.Error, "INVALID_DIRECTION");
+
+            _output.WriteLine(ex.JsonMessage);
         }
 
         private Task KoneWs_MessageReceived(string message)
