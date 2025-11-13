@@ -22,6 +22,7 @@ namespace Kone.Api.Client.Tests
 
         private const string GroupId = "1";
         private TopologyResponse _topology;
+        private ActionsResponse _actions;
 
         private string _buildingId;
         private int _testAreaId1;
@@ -33,30 +34,34 @@ namespace Kone.Api.Client.Tests
         /// <returns></returns>
         public async Task InitializeAsync()
         {
-            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync();
-            var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token);
+            var ct = new CancellationTokenSource(10_000).Token;
+
+            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, ct);
+            var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token, ct);
             _buildingId = resources.Buildings.First().Id;
 
             _koneBuildingApi = new KoneBuildingApiClient(Log.Logger, _koneAuthApi, _buildingId, GroupId);
 
-            _topology = await _koneBuildingApi.GetTopologyAsync(CancellationToken.None);
+            _topology = await _koneBuildingApi.GetTopologyAsync(ct);
 
             Assert.NotNull(_topology);
             Assert.NotNull(_topology.data);
             Assert.NotNull(_topology.data.groups);
             Assert.NotEmpty(_topology.data.groups);
 
+            _actions = await _koneBuildingApi.GetActionsAsync(ct);
+
             _testAreaId1 = _topology.data.destinations.First().area_id;
             _testAreaId2 = _topology.data.destinations.Last().area_id;
 
-            /*_koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
-            _koneBuildingApi.MessageSend += KoneWs_MessageSend;*/
+            _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
+            _koneBuildingApi.MessageSend += KoneWs_MessageSend;
         }
 
         [Fact]
         public async Task Test_Get_Access_Token()
         {
-            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync();
+            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, CancellationToken.None);
 
             _output.WriteLine(JsonConvert.SerializeObject(tokenResponse, Formatting.Indented));
 
@@ -68,8 +73,9 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_List_Resources()
         {
-            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync();
-            var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token);
+            var ct = new CancellationTokenSource(5000).Token;
+            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, ct);
+            var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token, ct);
 
             _output.WriteLine(JsonConvert.SerializeObject(resources, Formatting.Indented));
         }
@@ -77,7 +83,8 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_List_Resources_Invalid_Token_Returns_Not_Authorized()
         {
-            var ex = await Assert.ThrowsAnyAsync<ApiException>(() => _koneAuthApi.GetResourcesAsync("InvalidToken"));
+            var ct = new CancellationTokenSource(5000).Token;
+            var ex = await Assert.ThrowsAnyAsync<ApiException>(() => _koneAuthApi.GetResourcesAsync("InvalidToken", ct));
             Assert.Equal(401, ex.StatusCode);
         }
 

@@ -88,6 +88,49 @@ namespace Kone.Api.Client.Clients
             }
         }
 
+        public async Task<ActionsResponse> GetActionsAsync(CancellationToken cancellationToken)
+        {
+            var requestId = Guid.NewGuid().ToString();
+
+            var req = new
+            {
+                type = "common-api",
+                requestId,
+                buildingId = $"building:{_buildingId}",
+                callType = "actions",
+                groupId = _groupId
+            };
+
+            var jsonMessage = SerializeToJson(req);
+            var bytes = Encoding.UTF8.GetBytes(jsonMessage);
+
+            await EnsureSocketConnectedAsync(cancellationToken);
+
+            var tcs = new TaskCompletionSource<string>();
+            _pendingResponse.TryAdd(requestId, tcs);
+
+            try
+            {
+                await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
+
+                string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
+
+                var topologyResponse = JsonConvert.DeserializeObject<ActionsResponse>(responseMessage);
+
+                if (topologyResponse == null)
+                {
+                    throw new InvalidOperationException($"Failed to deserialize message {responseMessage}");
+                }
+
+                return topologyResponse;
+            }
+            finally
+            {
+                _pendingResponse.TryRemove(requestId, out _);
+            }
+        }
+
+
         public async Task<string> LandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
         {
             const int landingCallUp = 2001;
@@ -152,7 +195,7 @@ namespace Kone.Api.Client.Clients
             }
         }
 
-        public async Task CallLiftToDestinationAsync(int area, int terminal, CancellationToken cancellationToken)
+        /*public async Task CallLiftToDestinationAsync(int area, int terminal, CancellationToken cancellationToken)
         {
             var req = new CallTypeRequest
             {
@@ -179,12 +222,12 @@ namespace Kone.Api.Client.Clients
 
             await EnsureSocketConnectedAsync(cancellationToken);
             await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
-        }
+        }*/
 
-        private async Task<string> GetAccessTokenAsync(string buildingId, string groupId)
+        private async Task<string> GetAccessTokenAsync(string buildingId, string groupId, CancellationToken cancellationToken)
         {
             var scope = $"application/inventory callgiving/group:{buildingId}:{groupId}";
-            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync(scope);
+            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync(scope, cancellationToken);
             return tokenResponse.Access_token;
         }
 
@@ -196,7 +239,7 @@ namespace Kone.Api.Client.Clients
 
                 try
                 {
-                    accessToken = await GetAccessTokenAsync(_buildingId, _groupId);
+                    accessToken = await GetAccessTokenAsync(_buildingId, _groupId, cancellationToken);
                 }
                 catch (Exception e)
                 {
@@ -301,10 +344,21 @@ namespace Kone.Api.Client.Clients
                 using var doc = JsonDocument.Parse(responseMessage);
                 var root = doc.RootElement;
 
+                var callTypePresent = root.TryGetProperty("callType", out var callType);
+                var requestIdPresent = root.TryGetProperty("requestId", out var requestId);
+
                 // Handle config responses
-                if (root.TryGetProperty("callType", out var callType) &&
-                    callType.GetString() == "config" &&
-                    root.TryGetProperty("requestId", out var requestId))
+                if (callTypePresent && requestIdPresent && callType.GetString() == "config")
+                {
+                    if (_pendingResponse.TryGetValue(requestId.GetString(), out var tcs))
+                    {
+                        tcs.TrySetResult(responseMessage);
+                    }
+                    return;
+                }
+
+                // Handle actions responses
+                if (callTypePresent && requestIdPresent && callType.GetString() == "actions")
                 {
                     if (_pendingResponse.TryGetValue(requestId.GetString(), out var tcs))
                     {

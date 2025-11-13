@@ -6,6 +6,8 @@ namespace Kone.Api.Client.Clients
 {
     public class KoneAuthApiClient
     {
+        public const string DefaultScope = "application/inventory";
+
         private readonly HttpClient _httpClientForOAuth = new();
         private readonly Oauth2Client _oauth2Client;
 
@@ -21,7 +23,7 @@ namespace Kone.Api.Client.Clients
             _oauth2Client = new Oauth2Client(_httpClientForOAuth);
         }
 
-        public async Task<AccessTokenResponse> GetAccessTokenAsync(string scope = "application/inventory")
+        public async Task<AccessTokenResponse> GetAccessTokenAsync(string scope, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(scope);
 
@@ -29,18 +31,18 @@ namespace Kone.Api.Client.Clients
             {
                 Grant_type = GetAccessToken_requestGrant_type.Client_credentials,
                 Scope = scope
-            });
+            }, cancellationToken);
 
             return tokenResponse;
         }
 
-        public async Task<ResourceListResponse> GetResourcesAsync(string accessToken)
+        public async Task<ResourceListResponse> GetResourcesAsync(string accessToken, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(accessToken);
 
             _httpClientForSelf.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var selfClient = new SelfClient(_httpClientForSelf);
-            var resources = await selfClient.ResourcesGetAsync(CancellationToken.None);
+            var resources = await selfClient.ResourcesGetAsync(cancellationToken);
             return resources;
         }
     }
