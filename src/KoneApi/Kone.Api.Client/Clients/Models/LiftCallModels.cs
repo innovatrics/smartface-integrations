@@ -32,5 +32,7 @@
         public int destination { get; set; }
 
         public int group_size { get; set; } = 1;
+
+        public string[] activate_call_states { get; set; } = [];
     }
 }

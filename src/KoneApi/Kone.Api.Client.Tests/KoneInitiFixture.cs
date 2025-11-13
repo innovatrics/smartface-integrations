@@ -21,6 +21,8 @@ namespace Kone.Api.Client.Tests
         public int TestAreaId1;
         public int TestAreaId2;
 
+        public List<int> SampleLiftAreaIds = [];
+
         /// <summary>
         /// Authenticate and initialize building topology.
         /// </summary>
@@ -53,12 +55,23 @@ namespace Kone.Api.Client.Tests
 
             var landingCallUpAction = Actions.data.call_types.Single(x => x.name == "LdgCall UP");
             var landingCallDownAction = Actions.data.call_types.Single(x => x.name == "LdgCall DOWN");
+            var destinationCallAction = Actions.data.call_types.Single(x => x.name == "DcsCall");
 
             Assert.Equal(KoneBuildingApiClient.LandingCallUpActionId, landingCallUpAction.action_id);
             Assert.Equal(KoneBuildingApiClient.LandingCallDownActionId, landingCallDownAction.action_id);
+            Assert.Equal(KoneBuildingApiClient.DestinationCallActionId, destinationCallAction.action_id);
 
             TestAreaId1 = Topology.data.destinations.First().area_id;
             TestAreaId2 = Topology.data.destinations.Last().area_id;
+
+            SampleLiftAreaIds = GetSampleAreaIdsForOneLift(Topology);
+        }
+
+        private static List<int> GetSampleAreaIdsForOneLift(TopologyResponse topology)
+        {
+            var group = topology.data.groups.First();
+            var lift = group.lifts.First(x => x.floors.Count > 2);
+            return lift.floors.Select(x => x.lift_floor_id).ToList();
         }
 
         public Task DisposeAsync()

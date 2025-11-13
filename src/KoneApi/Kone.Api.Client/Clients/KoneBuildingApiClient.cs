@@ -16,6 +16,8 @@ namespace Kone.Api.Client.Clients
         public const int LandingCallUpActionId = 2001;
         public const int LandingCallDownActionId = 2002;
 
+        public const int DestinationCallActionId = 2;
+
         public event Action<string>? MessageSend;
         public event Func<string, Task>? MessageReceived;
 
@@ -121,7 +123,55 @@ namespace Kone.Api.Client.Clients
                     return formattedJsonResponse;
                 }
 
-                throw new KoneCallException("No success true found in response message", formattedJsonResponse);
+                throw new KoneCallException("No success true found in landing call response", formattedJsonResponse);
+            }
+        }
+
+        public Task<string> DestinationCallAsync(int sourceAreaId, int destinationAreaId, CancellationToken cancellationToken)
+        {
+            var requestId = GetRequestId();
+
+            var req = new CallTypeRequest
+            {
+                type = CallTypeRequest.ApiTypeLiftV2,
+                buildingId = $"building:{_buildingId}",
+                callType = CallTypeRequest.CallTypeAction,
+                groupId = _groupId,
+                payload = new Payload
+                {
+                    request_id = requestId,
+                    area = sourceAreaId,
+                    time = DateTime.UtcNow.ToString("o"),
+                    call = new Call
+                    {
+                        action = DestinationCallActionId,
+                        destination = destinationAreaId,
+                    }
+                }
+            };
+
+            return SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
+                MessageParser,
+                cancellationToken);
+
+            string MessageParser(string responseMessage)
+            {
+                using var doc = JsonDocument.Parse(responseMessage);
+                var formattedJsonResponse = JsonSerializer.Serialize(doc, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("data", out var data) &&
+                    data.TryGetProperty("success", out var success) &&
+                    success.ValueKind == JsonValueKind.True)
+                {
+                    return formattedJsonResponse;
+                }
+
+                throw new KoneCallException("No success true found in destination call response", formattedJsonResponse);
             }
         }
 

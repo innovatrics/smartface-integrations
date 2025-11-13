@@ -110,6 +110,36 @@ namespace Kone.Api.Client.Tests
             _output.WriteLine(ex.JsonMessage);
         }
 
+        [Fact]
+        public async Task Test_Destination_Call_Successful()
+        {
+            //TODO: Why these ids does not work ?
+            var srcId = _fixture.SampleLiftAreaIds.First();
+            var dstId = _fixture.SampleLiftAreaIds.Skip(1).First();
+
+            var landingCallResponse = await _koneBuildingApi.DestinationCallAsync(
+                sourceAreaId: 3000,
+                destinationAreaId: 5000,
+                CancellationToken);
+
+            _output.WriteLine(landingCallResponse);
+        }
+
+        [Fact]
+        public async Task Test_Destination_Call_Invalid()
+        {
+            //TODO: Why these ids does not work ?
+            var srcId = _fixture.SampleLiftAreaIds.First();
+            var dstId = _fixture.SampleLiftAreaIds.Skip(1).First();
+
+            var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.DestinationCallAsync(
+                sourceAreaId: 3000,
+                destinationAreaId: 3000,
+                CancellationToken));
+
+            Assert.Equal(ex.Error, "SAME_SOURCE_AND_DEST_FLOOR");
+        }
+
         private Task KoneWs_MessageReceived(string message)
         {
             ArgumentNullException.ThrowIfNull(message);
