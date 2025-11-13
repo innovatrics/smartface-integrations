@@ -125,35 +125,6 @@ namespace Kone.Api.Client.Clients
             }
         }
 
-        /*public async Task CallLiftToDestinationAsync(int area, int terminal, CancellationToken cancellationToken)
-        {
-            var req = new CallTypeRequest
-            {
-                callType = CallTypeRequest.CallTypeAction,
-                buildingId = $"building:{_buildingId}",
-                groupId = _groupId,
-                type = CallTypeRequest.TypeLiftCallApi,
-                payload = new Payload
-                {
-                    request_id = GetRequestId(),
-                    time = DateTime.UtcNow.ToString("o"),
-                    call = new Call
-                    {
-                        action = Call.ElevatorCarCall,
-                        destination = 3000
-                    },
-                    area = area,
-                    terminal = terminal
-                }
-            };
-
-            var jsonMessage = SerializeToJson(req);
-            var bytes = Encoding.UTF8.GetBytes(jsonMessage);
-
-            await EnsureSocketConnectedAsync(cancellationToken);
-            await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
-        }*/
-
         private async Task<TResponse> SendMessageAndWaitForResponseAsync<TResponse>(
             string requestId,
             object request,
