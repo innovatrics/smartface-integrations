@@ -1,61 +1,29 @@
 using Kone.Api.Client.Clients;
 using ManagementApi;
 using Newtonsoft.Json;
-using Serilog;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Kone.Api.Client.Clients.Models;
 using Xunit.Abstractions;
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace Kone.Api.Client.Tests
 {
-    public class KoneApiTests(ITestOutputHelper output) : IAsyncLifetime
+    public class KoneApiTests : IClassFixture<KoneInitFixture>
     {
-        private const string ClientId = "75496e37-3a35-495b-a0d7-d1a143080886";
-        private const string ClientSecret = "ff29f835abbc267aa9813f66ac235cd69bbe6b69dad1c7ff214a589fdf2a1145";
+        private readonly KoneAuthApiClient _koneAuthApi;
+        private readonly KoneBuildingApiClient _koneBuildingApi;
 
-        private readonly ITestOutputHelper _output = output ?? throw new ArgumentNullException(nameof(output));
+        private readonly ITestOutputHelper _output;
+        private readonly KoneInitFixture _fixture;
 
-        private readonly KoneAuthApiClient _koneAuthApi = new(ClientId, ClientSecret);
-        private KoneBuildingApiClient _koneBuildingApi;
-
-        private const string GroupId = "1";
-        private TopologyResponse _topology;
-        private ActionsResponse _actions;
-
-        private string _buildingId;
-        private int _testAreaId1;
-        private int _testAreaId2;
-
-        /// <summary>
-        /// Authenticate and initialize building topology.
-        /// </summary>
-        /// <returns></returns>
-        public async Task InitializeAsync()
+        public KoneApiTests(ITestOutputHelper output, KoneInitFixture fixture)
         {
-            var ct = new CancellationTokenSource(10_000).Token;
+            _fixture = fixture;
+            _koneAuthApi = fixture.KoneAuthApi;
+            _koneBuildingApi = fixture.KoneBuildingApi;
+            _output = output ?? throw new ArgumentNullException(nameof(output));
 
-            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, ct);
-            var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token, ct);
-            _buildingId = resources.Buildings.First().Id;
-
-            _koneBuildingApi = new KoneBuildingApiClient(Log.Logger, _koneAuthApi, _buildingId, GroupId);
-
-            _topology = await _koneBuildingApi.GetTopologyAsync(ct);
-
-            Assert.NotNull(_topology);
-            Assert.NotNull(_topology.data);
-            Assert.NotNull(_topology.data.groups);
-            Assert.NotEmpty(_topology.data.groups);
-
-            _actions = await _koneBuildingApi.GetActionsAsync(ct);
-
-            _testAreaId1 = _topology.data.destinations.First().area_id;
-            _testAreaId2 = _topology.data.destinations.Last().area_id;
-
-            _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
-            _koneBuildingApi.MessageSend += KoneWs_MessageSend;
+            /*_koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
+            _koneBuildingApi.MessageSend += KoneWs_MessageSend;*/
         }
 
         [Fact]
@@ -94,7 +62,7 @@ namespace Kone.Api.Client.Tests
             var cts = new CancellationTokenSource(5000);
 
             var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
-                _testAreaId1,
+                _fixture.TestAreaId1,
                 isDirectionUp: true,
                 cts.Token);
 
@@ -107,7 +75,7 @@ namespace Kone.Api.Client.Tests
             var cts = new CancellationTokenSource(5000);
 
             var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
-                _testAreaId2,
+                _fixture.TestAreaId2,
                 isDirectionUp: false,
                 cts.Token);
 
@@ -137,15 +105,6 @@ namespace Kone.Api.Client.Tests
             _output.WriteLine("MESSAGE SEND");
             _output.WriteLine(message);
             _output.WriteLine("--------------------------------");
-        }
-
-        public async Task DisposeAsync()
-        {
-            await using (_koneBuildingApi)
-            {
-                _koneBuildingApi.MessageReceived -= KoneWs_MessageReceived;
-                _koneBuildingApi.MessageSend -= KoneWs_MessageSend;
-            }
         }
     }
 }
