@@ -27,7 +27,7 @@ namespace Kone.Api.Client.Tests
         }
 
         [Fact]
-        public async Task Test_Get_Access_Token()
+        public async Task Test_Auth_Get_Access_Token()
         {
             var tokenResponse = await _koneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, CancellationToken.None);
 
@@ -39,21 +39,21 @@ namespace Kone.Api.Client.Tests
         }
 
         [Fact]
-        public async Task Test_List_Resources()
+        public async Task Test_Auth_Get_Access_Token_Returns_Not_Authorized()
+        {
+            var ct = new CancellationTokenSource(5000).Token;
+            var ex = await Assert.ThrowsAnyAsync<ApiException>(() => _koneAuthApi.GetResourcesAsync("InvalidToken", ct));
+            Assert.Equal(401, ex.StatusCode);
+        }
+
+        [Fact]
+        public async Task Test_Auth_Get_Resources()
         {
             var ct = new CancellationTokenSource(5000).Token;
             var tokenResponse = await _koneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, ct);
             var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token, ct);
 
             _output.WriteLine(JsonConvert.SerializeObject(resources, Formatting.Indented));
-        }
-
-        [Fact]
-        public async Task Test_List_Resources_Invalid_Token_Returns_Not_Authorized()
-        {
-            var ct = new CancellationTokenSource(5000).Token;
-            var ex = await Assert.ThrowsAnyAsync<ApiException>(() => _koneAuthApi.GetResourcesAsync("InvalidToken", ct));
-            Assert.Equal(401, ex.StatusCode);
         }
 
         [Fact]
