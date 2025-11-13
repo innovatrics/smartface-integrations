@@ -55,10 +55,10 @@ namespace Kone.Api.Client.Clients
 
             var req = new
             {
-                type = "common-api",
+                type = CallTypeRequest.TypeCommonApi,
                 requestId,
                 buildingId = $"building:{_buildingId}",
-                callType = "config",
+                callType = CallTypeRequest.CallTypeConfig,
                 groupId = _groupId
             };
 
@@ -97,7 +97,7 @@ namespace Kone.Api.Client.Clients
 
             var req = new
             {
-                type = "common-api",
+                type = CallTypeRequest.TypeCommonApi,
                 requestId,
                 buildingId = $"building:{_buildingId}",
                 callType = "actions",

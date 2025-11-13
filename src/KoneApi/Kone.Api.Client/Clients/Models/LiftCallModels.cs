@@ -5,9 +5,9 @@
         public const string TypeLiftCallApi = "lift-call-api-v2";
         public const string TypeCommonApi = "common-api";
 
+        public const string CallTypePing = "ping";
         public const string CallTypeConfig = "config";
         public const string CallTypeAction = "action";
-        public const string CallTypePing = "ping";
 
         public string type { get; set; }
         public string buildingId { get; set; }
@@ -27,18 +27,10 @@
 
     public class Call
     {
-        /// <summary>
-        /// Call made outside the elevator (on terminal).
-        /// </summary>
-        public const int LandingCall = 2;
-
-        /// <summary>
-        /// Call made inside the elevator car.
-        /// </summary>
-        public const int ElevatorCarCall = 3;
-
         public int action { get; set; }
 
         public int destination { get; set; }
+
+        public int group_size { get; set; } = 1;
     }
 }
