@@ -30,12 +30,7 @@
         /// <summary>
         /// Call made outside the elevator (on terminal).
         /// </summary>
-        public const int LandingCallUp = 1;
-
-        /// <summary>
-        /// Call made outside the elevator (on terminal).
-        /// </summary>
-        public const int LandingCallDown = 2;
+        public const int LandingCall = 2;
 
         /// <summary>
         /// Call made inside the elevator car.

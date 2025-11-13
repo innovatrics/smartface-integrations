@@ -87,25 +87,28 @@ namespace Kone.Api.Client.Clients
             }
         }
 
-        public async Task<string> CallLiftToAreaAsync(int landingAreaId, CancellationToken cancellationToken)
+        public async Task<string> LandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
         {
+            const int landingCallUp = 2001;
+            const int landingCallDown = 2002;
+
             var requestId = GetRequestId();
 
             var req = new CallTypeRequest
             {
                 type = CallTypeRequest.TypeLiftCallApi,
-                callType = CallTypeRequest.CallTypeAction,
                 buildingId = $"building:{_buildingId}",
+                callType = CallTypeRequest.CallTypeAction,
                 groupId = _groupId,
                 payload = new Payload
                 {
                     request_id = requestId,
+                    area = destinationAreaId,
                     time = DateTime.UtcNow.ToString("o"),
                     call = new Call
                     {
-                        action = 999,//Call.LandingCallDown, // TODO: Does up or down matters ?
-                    },
-                    area = landingAreaId
+                        action = isDirectionUp ? landingCallUp : landingCallDown
+                    }
                 }
             };
 
