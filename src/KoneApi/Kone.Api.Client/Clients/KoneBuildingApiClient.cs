@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Kone.Api.Client.Exceptions;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Kone.Api.Client.Clients
 {
@@ -127,17 +128,22 @@ namespace Kone.Api.Client.Clients
                 string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
 
                 using var doc = JsonDocument.Parse(responseMessage);
+                var formattedJsonResponse = JsonSerializer.Serialize(doc, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
                 var root = doc.RootElement;
 
                 if (root.TryGetProperty("data", out var data) &&
                     data.TryGetProperty("success", out var success) &&
                     success.ValueKind == JsonValueKind.True)
                 {
-                    return responseMessage;
+                    return formattedJsonResponse;
                 }
                 else
                 {
-                    throw new LiftCallException("No success true found in response message", responseMessage);
+                    throw new LiftCallException("No success true found in response message", formattedJsonResponse);
                 }
             }
             finally

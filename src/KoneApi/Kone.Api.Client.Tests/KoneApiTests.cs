@@ -49,8 +49,8 @@ namespace Kone.Api.Client.Tests
             _testAreaId1 = _topology.data.destinations.First().area_id;
             _testAreaId2 = _topology.data.destinations.Last().area_id;
 
-            _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
-            _koneBuildingApi.MessageSend += KoneWs_MessageSend;
+            /*_koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
+            _koneBuildingApi.MessageSend += KoneWs_MessageSend;*/
         }
 
         [Fact]
