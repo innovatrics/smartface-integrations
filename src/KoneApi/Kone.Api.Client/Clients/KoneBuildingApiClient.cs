@@ -48,7 +48,7 @@ namespace Kone.Api.Client.Clients
 
             var req = new
             {
-                type = CallTypeRequest.TypeCommonApi,
+                type = CallTypeRequest.ApiTypeCommon,
                 requestId,
                 buildingId = $"building:{_buildingId}",
                 callType = CallTypeRequest.CallTypeConfig,
@@ -66,7 +66,7 @@ namespace Kone.Api.Client.Clients
 
             var req = new
             {
-                type = CallTypeRequest.TypeCommonApi,
+                type = CallTypeRequest.ApiTypeCommon,
                 requestId,
                 buildingId = $"building:{_buildingId}",
                 callType = "actions",
@@ -84,7 +84,7 @@ namespace Kone.Api.Client.Clients
 
             var req = new CallTypeRequest
             {
-                type = CallTypeRequest.TypeLiftCallApi,
+                type = CallTypeRequest.ApiTypeLiftV2,
                 buildingId = $"building:{_buildingId}",
                 callType = CallTypeRequest.CallTypeAction,
                 groupId = _groupId,
