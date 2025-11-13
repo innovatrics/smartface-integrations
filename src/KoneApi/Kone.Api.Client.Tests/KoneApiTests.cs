@@ -17,7 +17,7 @@ namespace Kone.Api.Client.Tests
 
         private readonly ITestOutputHelper _output = output ?? throw new ArgumentNullException(nameof(output));
 
-        private readonly KoneAuthApiClient _koneAuthApiClient = new(ClientId, ClientSecret);
+        private readonly KoneAuthApiClient _koneAuthApi = new(ClientId, ClientSecret);
         private KoneBuildingApiClient _koneBuildingApi;
 
         private const string GroupId = "1";
@@ -33,11 +33,11 @@ namespace Kone.Api.Client.Tests
         /// <returns></returns>
         public async Task InitializeAsync()
         {
-            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync();
-            var resources = await _koneAuthApiClient.GetResourcesAsync(tokenResponse.Access_token);
+            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync();
+            var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token);
             _buildingId = resources.Buildings.First().Id;
 
-            _koneBuildingApi = new KoneBuildingApiClient(Log.Logger, _koneAuthApiClient, _buildingId, GroupId);
+            _koneBuildingApi = new KoneBuildingApiClient(Log.Logger, _koneAuthApi, _buildingId, GroupId);
 
             _topology = await _koneBuildingApi.GetTopologyAsync(CancellationToken.None);
 
@@ -56,7 +56,7 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_Get_Access_Token()
         {
-            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync();
+            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync();
 
             _output.WriteLine(JsonConvert.SerializeObject(tokenResponse, Formatting.Indented));
 
@@ -68,8 +68,8 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_List_Resources()
         {
-            var tokenResponse = await _koneAuthApiClient.GetAccessTokenAsync();
-            var resources = await _koneAuthApiClient.GetResourcesAsync(tokenResponse.Access_token);
+            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync();
+            var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token);
 
             _output.WriteLine(JsonConvert.SerializeObject(resources, Formatting.Indented));
         }
@@ -77,7 +77,7 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_List_Resources_Invalid_Token_Returns_Not_Authorized()
         {
-            var ex = await Assert.ThrowsAnyAsync<ApiException>(() => _koneAuthApiClient.GetResourcesAsync("InvalidToken"));
+            var ex = await Assert.ThrowsAnyAsync<ApiException>(() => _koneAuthApi.GetResourcesAsync("InvalidToken"));
             Assert.Equal(401, ex.StatusCode);
         }
 
