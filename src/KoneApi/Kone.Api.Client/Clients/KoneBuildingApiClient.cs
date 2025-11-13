@@ -11,7 +11,7 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Kone.Api.Client.Clients
 {
-    public class KoneBuildingApiClient
+    public class KoneBuildingApiClient : IKoneBuildingApi
     {
         public const int LandingCallUpActionId = 2001;
         public const int LandingCallDownActionId = 2002;
