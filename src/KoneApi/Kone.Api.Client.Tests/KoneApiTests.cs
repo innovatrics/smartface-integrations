@@ -15,6 +15,9 @@ namespace Kone.Api.Client.Tests
         private readonly ITestOutputHelper _output;
         private readonly KoneInitFixture _fixture;
 
+        private readonly CancellationTokenSource _cts = new(5000);
+        private CancellationToken CancellationToken => _cts.Token;
+
         public KoneApiTests(ITestOutputHelper output, KoneInitFixture fixture)
         {
             _fixture = fixture;
@@ -41,17 +44,15 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_Auth_Get_Access_Token_Returns_Not_Authorized()
         {
-            var ct = new CancellationTokenSource(5000).Token;
-            var ex = await Assert.ThrowsAnyAsync<ApiException>(() => _koneAuthApi.GetResourcesAsync("InvalidToken", ct));
+            var ex = await Assert.ThrowsAnyAsync<ApiException>(() => _koneAuthApi.GetResourcesAsync("InvalidToken", CancellationToken));
             Assert.Equal(401, ex.StatusCode);
         }
 
         [Fact]
         public async Task Test_Auth_Get_Resources()
         {
-            var ct = new CancellationTokenSource(5000).Token;
-            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, ct);
-            var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token, ct);
+            var tokenResponse = await _koneAuthApi.GetAccessTokenAsync(KoneAuthApiClient.DefaultScope, CancellationToken);
+            var resources = await _koneAuthApi.GetResourcesAsync(tokenResponse.Access_token, CancellationToken);
 
             _output.WriteLine(JsonConvert.SerializeObject(resources, Formatting.Indented));
         }
@@ -59,12 +60,10 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_Landing_Call_Up_Successful()
         {
-            var cts = new CancellationTokenSource(5000);
-
             var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
                 _fixture.TestAreaId1,
                 isDirectionUp: true,
-                cts.Token);
+                CancellationToken);
 
             _output.WriteLine(landingCallResponse);
         }
@@ -72,12 +71,10 @@ namespace Kone.Api.Client.Tests
         [Fact]
         public async Task Test_Landing_Call_Down_Successful()
         {
-            var cts = new CancellationTokenSource(5000);
-
             var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
                 _fixture.TestAreaId2,
                 isDirectionUp: false,
-                cts.Token);
+                CancellationToken);
 
             _output.WriteLine(landingCallResponse);
         }
