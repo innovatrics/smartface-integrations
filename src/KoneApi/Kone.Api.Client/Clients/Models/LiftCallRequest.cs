@@ -1,13 +1,16 @@
 ﻿namespace Kone.Api.Client.Clients.Models
 {
-    public class CallTypeRequest
+    public class LiftCallRequest
     {
         public const string ApiTypeLiftV2 = "lift-call-api-v2";
         public const string ApiTypeCommon = "common-api";
+        public const string ApiTypeSiteMonitoring = "site-monitoring";
 
         public const string CallTypePing = "ping";
         public const string CallTypeConfig = "config";
         public const string CallTypeAction = "action";
+
+        public const string CallTypeMonitor = "monitor";
 
         public string type { get; set; }
         public string buildingId { get; set; }

@@ -26,8 +26,8 @@ namespace Kone.Api.Client.Tests
             _koneBuildingApi = fixture.KoneBuildingApi;
             _output = output ?? throw new ArgumentNullException(nameof(output));
 
-            /*_koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
-            _koneBuildingApi.MessageSend += KoneWs_MessageSend;*/
+            _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
+            _koneBuildingApi.MessageSend += KoneWs_MessageSend;
         }
 
         [Fact]
@@ -67,7 +67,11 @@ namespace Kone.Api.Client.Tests
                 isDirectionUp: true,
                 CancellationToken);
 
-            _output.WriteLine(landingCallResponse);
+            Assert.NotNull(landingCallResponse.data);
+            Assert.True(landingCallResponse.data.success);
+            Assert.True(landingCallResponse.data.request_id > 0);
+
+            _output.WriteLine(landingCallResponse.ResponseMessageRaw);
         }
 
         [Fact]
@@ -93,7 +97,11 @@ namespace Kone.Api.Client.Tests
                 isDirectionUp: false,
                 CancellationToken);
 
-            _output.WriteLine(landingCallResponse);
+            Assert.NotNull(landingCallResponse.data);
+            Assert.True(landingCallResponse.data.success);
+            Assert.True(landingCallResponse.data.request_id > 0);
+
+            _output.WriteLine(landingCallResponse.ResponseMessageRaw);
         }
 
         [Fact]
@@ -117,12 +125,16 @@ namespace Kone.Api.Client.Tests
             var srcId = _fixture.SampleLiftAreaIds.First();
             var dstId = _fixture.SampleLiftAreaIds.Skip(1).First();
 
-            var landingCallResponse = await _koneBuildingApi.DestinationCallAsync(
+            var destinationCallResponse = await _koneBuildingApi.DestinationCallAsync(
                 sourceAreaId: 3000,
                 destinationAreaId: 5000,
                 CancellationToken);
 
-            _output.WriteLine(landingCallResponse);
+            Assert.NotNull(destinationCallResponse.data);
+            Assert.True(destinationCallResponse.data.success);
+            Assert.True(destinationCallResponse.data.request_id > 0);
+
+            _output.WriteLine(destinationCallResponse.ResponseMessageRaw);
         }
 
         [Fact]

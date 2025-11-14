@@ -50,10 +50,10 @@ namespace Kone.Api.Client.Clients
 
             var req = new
             {
-                type = CallTypeRequest.ApiTypeCommon,
+                type = LiftCallRequest.ApiTypeCommon,
                 requestId,
                 buildingId = $"building:{_buildingId}",
-                callType = CallTypeRequest.CallTypeConfig,
+                callType = LiftCallRequest.CallTypeConfig,
                 groupId = _groupId
             };
 
@@ -68,7 +68,7 @@ namespace Kone.Api.Client.Clients
 
             var req = new
             {
-                type = CallTypeRequest.ApiTypeCommon,
+                type = LiftCallRequest.ApiTypeCommon,
                 requestId,
                 buildingId = $"building:{_buildingId}",
                 callType = "actions",
@@ -80,15 +80,15 @@ namespace Kone.Api.Client.Clients
                 cancellationToken);
         }
 
-        public Task<string> LandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
+        public Task<LiftCallResponse> LandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
         {
             var requestId = GetRequestId();
 
-            var req = new CallTypeRequest
+            var req = new LiftCallRequest
             {
-                type = CallTypeRequest.ApiTypeLiftV2,
+                type = LiftCallRequest.ApiTypeLiftV2,
                 buildingId = $"building:{_buildingId}",
-                callType = CallTypeRequest.CallTypeAction,
+                callType = LiftCallRequest.CallTypeAction,
                 groupId = _groupId,
                 payload = new Payload
                 {
@@ -103,39 +103,19 @@ namespace Kone.Api.Client.Clients
             };
 
             return SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
-                MessageParser,
+                CallResponseMessageParser,
                 cancellationToken);
-
-            string MessageParser(string responseMessage)
-            {
-                using var doc = JsonDocument.Parse(responseMessage);
-                var formattedJsonResponse = JsonSerializer.Serialize(doc, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-
-                var root = doc.RootElement;
-
-                if (root.TryGetProperty("data", out var data) &&
-                    data.TryGetProperty("success", out var success) &&
-                    success.ValueKind == JsonValueKind.True)
-                {
-                    return formattedJsonResponse;
-                }
-
-                throw new KoneCallException("No success true found in landing call response", formattedJsonResponse);
-            }
         }
 
-        public Task<string> DestinationCallAsync(int sourceAreaId, int destinationAreaId, CancellationToken cancellationToken)
+        public Task<LiftCallResponse> DestinationCallAsync(int sourceAreaId, int destinationAreaId, CancellationToken cancellationToken)
         {
             var requestId = GetRequestId();
 
-            var req = new CallTypeRequest
+            var req = new LiftCallRequest
             {
-                type = CallTypeRequest.ApiTypeLiftV2,
+                type = LiftCallRequest.ApiTypeLiftV2,
                 buildingId = $"building:{_buildingId}",
-                callType = CallTypeRequest.CallTypeAction,
+                callType = LiftCallRequest.CallTypeAction,
                 groupId = _groupId,
                 payload = new Payload
                 {
@@ -151,28 +131,8 @@ namespace Kone.Api.Client.Clients
             };
 
             return SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
-                MessageParser,
+                CallResponseMessageParser,
                 cancellationToken);
-
-            string MessageParser(string responseMessage)
-            {
-                using var doc = JsonDocument.Parse(responseMessage);
-                var formattedJsonResponse = JsonSerializer.Serialize(doc, new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-
-                var root = doc.RootElement;
-
-                if (root.TryGetProperty("data", out var data) &&
-                    data.TryGetProperty("success", out var success) &&
-                    success.ValueKind == JsonValueKind.True)
-                {
-                    return formattedJsonResponse;
-                }
-
-                throw new KoneCallException("No success true found in destination call response", formattedJsonResponse);
-            }
         }
 
         private async Task<TResponse> SendMessageAndWaitForResponseAsync<TResponse>(
@@ -223,6 +183,25 @@ namespace Kone.Api.Client.Clients
             }
         }
 
+
+        private static LiftCallResponse CallResponseMessageParser(string responseMessage)
+        {
+            var response = JsonSerializer.Deserialize<LiftCallResponse>(responseMessage);
+
+            if (response == null)
+            {
+                throw new KoneCallException("Failed to deserialize call response", responseMessage);
+            }
+
+            if (!response.data.success)
+            {
+                throw new KoneCallException("No success true found in call response", responseMessage);
+            }
+
+            response.ResponseMessageRaw = responseMessage;
+
+            return response;
+        }
 
         private async Task<ClientWebSocket> CreatedConnectedWebSocketAsync(CancellationToken cancellationToken)
         {
