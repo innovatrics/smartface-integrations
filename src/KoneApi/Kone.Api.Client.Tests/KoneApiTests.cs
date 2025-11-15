@@ -111,6 +111,7 @@ namespace Kone.Api.Client.Tests
         [KoneTestCase(6, "Landing Call")]
         public async Task Test_Landing_Call_With_Wait_Until_Served_Successful()
         {
+            //TODO: Disabled for now. Suspicion is that if elevator is on destination area already than we do nto receive any state updates.
             return;
             var destination = _fixture.Destinations.Skip(3).First();
 
