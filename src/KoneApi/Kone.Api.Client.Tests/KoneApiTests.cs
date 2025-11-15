@@ -62,7 +62,7 @@ namespace Kone.Api.Client.Tests
         [KoneTestCase(6, "Landing Call Up")]
         public async Task Test_Landing_Call_Up_Successful()
         {
-            var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
+            var landingCallResponse = await _koneBuildingApi.PlaceLandingCallAsync(
                 _fixture.TestAreaId1,
                 isDirectionUp: true,
                 CancellationToken);
@@ -78,7 +78,7 @@ namespace Kone.Api.Client.Tests
         [KoneTestCase(6, "Landing Call Up - Invalid direction")]
         public async Task Test_Landing_Call_Up_Invalid_Direction()
         {
-            var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.LandingCallAsync(
+            var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.PlaceLandingCallAsync(
                 _fixture.TestAreaId1,
                 isDirectionUp: false,
                 CancellationToken));
@@ -92,10 +92,33 @@ namespace Kone.Api.Client.Tests
         [KoneTestCase(6, "Landing Call")]
         public async Task Test_Landing_Call_Down_Successful()
         {
-            var landingCallResponse = await _koneBuildingApi.LandingCallAsync(
-                _fixture.TestAreaId2,
+            var destination = _fixture.Destinations.Skip(2).First();
+
+            var landingCallResponse = await _koneBuildingApi.PlaceLandingCallAsync(
+                //_fixture.TestAreaId2,
+                destination.area_id,
                 isDirectionUp: false,
                 CancellationToken);
+
+            Assert.NotNull(landingCallResponse.data);
+            Assert.True(landingCallResponse.data.success);
+            Assert.True(landingCallResponse.data.request_id > 0);
+
+            _output.WriteLine(landingCallResponse.ResponseMessageRaw);
+        }
+
+        [Fact]
+        [KoneTestCase(6, "Landing Call")]
+        public async Task Test_Landing_Call_With_Wait_Until_Served_Successful()
+        {
+            return;
+            var destination = _fixture.Destinations.Skip(3).First();
+
+            var landingCallResponse = await _koneBuildingApi.PlaceLandingCallAndWaitUntilServedAsync(
+                destination.area_id,
+                maxWaitDurationSeconds: 10,
+                isDirectionUp: true,
+                cancellationToken: CancellationToken.None);
 
             Assert.NotNull(landingCallResponse.data);
             Assert.True(landingCallResponse.data.success);
@@ -108,7 +131,7 @@ namespace Kone.Api.Client.Tests
         [KoneTestCase(6, "Landing Call Down - Invalid direction")]
         public async Task Test_Landing_Call_Down_Invalid_Direction()
         {
-            var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.LandingCallAsync(
+            var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.PlaceLandingCallAsync(
                 _fixture.TestAreaId2,
                 isDirectionUp: true,
                 CancellationToken));
@@ -125,7 +148,7 @@ namespace Kone.Api.Client.Tests
             var srcId = _fixture.SampleLiftAreaIds.First();
             var dstId = _fixture.SampleLiftAreaIds.Skip(1).First();
 
-            var destinationCallResponse = await _koneBuildingApi.DestinationCallAsync(
+            var destinationCallResponse = await _koneBuildingApi.PlaceDestinationCallAsync(
                 sourceAreaId: 3000,
                 destinationAreaId: 5000,
                 CancellationToken);
@@ -144,7 +167,7 @@ namespace Kone.Api.Client.Tests
             var srcId = _fixture.SampleLiftAreaIds.First();
             var dstId = _fixture.SampleLiftAreaIds.Skip(1).First();
 
-            var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.DestinationCallAsync(
+            var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.PlaceDestinationCallAsync(
                 sourceAreaId: 3000,
                 destinationAreaId: 3000,
                 CancellationToken));

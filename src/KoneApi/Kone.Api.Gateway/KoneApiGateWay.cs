@@ -30,7 +30,7 @@ namespace Kone.Api.Gateway
                 return;
             }
 
-            await _koneBuildingApi.LandingCallAsync(destinationAreaId, isDirectionUp, cancellationToken);
+            await _koneBuildingApi.PlaceLandingCallAsync(destinationAreaId, isDirectionUp, cancellationToken);
 
             _memoryCache.GetOrCreate(key, entry =>
             {

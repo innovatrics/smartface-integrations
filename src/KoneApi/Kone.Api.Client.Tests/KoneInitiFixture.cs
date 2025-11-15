@@ -21,6 +21,8 @@ namespace Kone.Api.Client.Tests
         public int TestAreaId1;
         public int TestAreaId2;
 
+        public List<Destination> Destinations = [];
+
         public List<int> SampleLiftAreaIds = [];
 
         /// <summary>
@@ -61,8 +63,10 @@ namespace Kone.Api.Client.Tests
             Assert.Equal(KoneBuildingApiClient.LandingCallDownActionId, landingCallDownAction.action_id);
             Assert.Equal(KoneBuildingApiClient.DestinationCallActionId, destinationCallAction.action_id);
 
-            TestAreaId1 = Topology.data.destinations.First().area_id;
-            TestAreaId2 = Topology.data.destinations.Last().area_id;
+            Destinations = Topology.data.destinations;
+
+            TestAreaId1 = Destinations.First().area_id;
+            TestAreaId2 = Destinations.Last().area_id;
 
             SampleLiftAreaIds = GetSampleAreaIdsForOneLift(Topology);
         }

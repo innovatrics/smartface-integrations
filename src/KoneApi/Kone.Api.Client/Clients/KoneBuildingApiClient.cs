@@ -58,7 +58,7 @@ namespace Kone.Api.Client.Clients
             };
 
             return SendMessageAndWaitForResponseAsync(requestId, req,
-                responseMessage => JsonConvert.DeserializeObject<TopologyResponse>(responseMessage)!,
+                (responseMessage, _) => Task.FromResult(JsonConvert.DeserializeObject<TopologyResponse>(responseMessage)!),
                 cancellationToken);
         }
 
@@ -76,11 +76,11 @@ namespace Kone.Api.Client.Clients
             };
 
             return SendMessageAndWaitForResponseAsync(requestId, req,
-                responseMessage => JsonConvert.DeserializeObject<ActionsResponse>(responseMessage)!,
+                (responseMessage, _) => Task.FromResult(JsonConvert.DeserializeObject<ActionsResponse>(responseMessage)!),
                 cancellationToken);
         }
 
-        public Task<LiftCallResponse> LandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
+        public Task<LiftCallResponse> PlaceLandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
         {
             var requestId = GetRequestId();
 
@@ -103,11 +103,92 @@ namespace Kone.Api.Client.Clients
             };
 
             return SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
-                CallResponseMessageParser,
+                LiftCallResponseMessageParser,
                 cancellationToken);
         }
 
-        public Task<LiftCallResponse> DestinationCallAsync(int sourceAreaId, int destinationAreaId, CancellationToken cancellationToken)
+        public Task<LiftCallResponse> PlaceLandingCallAndWaitUntilServedAsync(int destinationAreaId, bool isDirectionUp,
+            int maxWaitDurationSeconds, CancellationToken cancellationToken)
+        {
+            var requestId = GetRequestId();
+
+            var req = new LiftCallRequest
+            {
+                type = LiftCallRequest.ApiTypeLiftV2,
+                buildingId = $"building:{_buildingId}",
+                callType = LiftCallRequest.CallTypeAction,
+                groupId = _groupId,
+                payload = new Payload
+                {
+                    request_id = requestId,
+                    area = destinationAreaId,
+                    time = DateTime.UtcNow.ToString("o"),
+                    call = new Call
+                    {
+                        action = isDirectionUp ? LandingCallUpActionId : LandingCallDownActionId
+                    }
+                }
+            };
+
+            return SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
+                ResponseInterceptor,
+                cancellationToken);
+
+            async Task<LiftCallResponse> ResponseInterceptor(string message, ClientWebSocket ws)
+            {
+                var response = await LiftCallResponseMessageParser(message, ws);
+                var sessionId = response.data.session_id;
+
+                var monitorReqId = Guid.NewGuid().ToString();
+
+                //https://dev.kone.com/api-portal/dashboard/api-documentation/elevator-websocket-api-v2#monitoring-commands
+                var monitorReq = new
+                {
+                    type = LiftCallRequest.ApiTypeSiteMonitoring,
+                    requestId = monitorReqId,
+                    buildingId = $"building:{_buildingId}",
+                    callType = LiftCallRequest.CallTypeMonitor,
+                    groupId = _groupId,
+                    payload = new
+                    {
+                        sub = $"LandingCall_{Guid.NewGuid()}",
+                        duration = maxWaitDurationSeconds,
+                        subtopics = new[]
+                        {
+                            $"call_state/{sessionId}/registered",
+                            $"call_state/{sessionId}/being_assigned",
+                            $"call_state/{sessionId}/assigned",
+                            $"call_state/{sessionId}/being_fixed",
+                            $"call_state/{sessionId}/fixed",
+                            $"call_state/{sessionId}/served",
+                            $"call_state/{sessionId}/cancelled"
+                        }
+                    }
+                };
+
+                var monitorTcs = new CancellationTokenSource(TimeSpan.FromSeconds(maxWaitDurationSeconds));
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, monitorTcs.Token);
+
+                await SendMessageAndWaitForResponseAsync(monitorReqId, monitorReq,
+                    (r, _) => Task.FromResult(new LiftCallResponse()), cts.Token);
+
+                return response;
+
+                /*var jsonRequest = SerializeToJson(monitorReq);
+                var bytes = Encoding.UTF8.GetBytes(jsonRequest);
+
+                var monitorTcs = new CancellationTokenSource(TimeSpan.FromSeconds(maxWaitDurationSeconds));
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, monitorTcs.Token);
+                var readingTask = ReceiveMessagesAsync(ws, cts.Token);
+
+                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
+
+                await readingTask;*/
+                return response;
+            }
+        }
+
+        public Task<LiftCallResponse> PlaceDestinationCallAsync(int sourceAreaId, int destinationAreaId, CancellationToken cancellationToken)
         {
             var requestId = GetRequestId();
 
@@ -131,19 +212,19 @@ namespace Kone.Api.Client.Clients
             };
 
             return SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
-                CallResponseMessageParser,
+                LiftCallResponseMessageParser,
                 cancellationToken);
         }
 
         private async Task<TResponse> SendMessageAndWaitForResponseAsync<TResponse>(
             string requestId,
             object request,
-            Func<string, TResponse> deserializeFunc,
+            Func<string, ClientWebSocket, Task<TResponse>> responseDeserializerFunc,
             CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(requestId);
             ArgumentNullException.ThrowIfNull(request);
-            ArgumentNullException.ThrowIfNull(deserializeFunc);
+            ArgumentNullException.ThrowIfNull(responseDeserializerFunc);
 
             var jsonRequest = SerializeToJson(request);
             var bytes = Encoding.UTF8.GetBytes(jsonRequest);
@@ -160,9 +241,9 @@ namespace Kone.Api.Client.Clients
             {
                 await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
 
-                string responseMessage = await tcs.Task.WaitAsync(cancellationToken);
+                var responseMessage = await tcs.Task.WaitAsync(cancellationToken);
 
-                return deserializeFunc(responseMessage);
+                return await responseDeserializerFunc(responseMessage, ws);
             }
             finally
             {
@@ -184,7 +265,7 @@ namespace Kone.Api.Client.Clients
         }
 
 
-        private static LiftCallResponse CallResponseMessageParser(string responseMessage)
+        private static Task<LiftCallResponse> LiftCallResponseMessageParser(string responseMessage, ClientWebSocket clientWebSocket)
         {
             var response = JsonSerializer.Deserialize<LiftCallResponse>(responseMessage);
 
@@ -200,7 +281,7 @@ namespace Kone.Api.Client.Clients
 
             response.ResponseMessageRaw = responseMessage;
 
-            return response;
+            return Task.FromResult(response);
         }
 
         private async Task<ClientWebSocket> CreatedConnectedWebSocketAsync(CancellationToken cancellationToken)
@@ -224,7 +305,7 @@ namespace Kone.Api.Client.Clients
             return json;
         }
 
-        private async Task ReceiveMessagesAsync(ClientWebSocket webSocket, CancellationToken token)
+        private async Task ReceiveMessagesAsync(WebSocket webSocket, CancellationToken token)
         {
             var buffer = new byte[4096];
             var messageBuffer = new List<byte>();
@@ -287,6 +368,19 @@ namespace Kone.Api.Client.Clients
                     return;
                 }
 
+                // Handle lift monitor responses
+                if (callTypePresent && requestIdPresent && callType.GetString() == "monitor" &&
+                    root.TryGetProperty("subtopic", out var subTopic)
+                    )
+                {
+                    //subTopic.GetString().EndsWith("served")
+                    if (_pendingResponse.TryGetValue(requestId.GetString(), out var tcs))
+                    {
+                        tcs.TrySetResult(responseMessage);
+                    }
+                    return;
+                }
+
                 // Handle lift call responses
                 if (root.TryGetProperty("data", out var data) &&
                     data.TryGetProperty("request_id", out var reqId) &&
@@ -296,6 +390,7 @@ namespace Kone.Api.Client.Clients
                     {
                         tcs.TrySetResult(responseMessage);
                     }
+                    return;
                 }
             }
         }
