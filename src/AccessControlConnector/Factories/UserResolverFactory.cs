@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Serilog;
@@ -13,6 +14,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
     {
         public const string WATCHLIST_MEMBER_LABEL_TYPE = "WATCHLIST_MEMBER_LABEL";
         public const string AEOS_USER = "AEOS_USER";
+        public const string WATCHLIST_MEMBER_DATA = "WATCHLIST_MEMBER_DATA";
         
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
@@ -50,6 +52,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AEOS_USER:
                     return new AeosUserResolver(_logger, _configuration, _httpClientFactory, type);
+
+                case WATCHLIST_MEMBER_DATA:
+                    // Parse label keys from type string (e.g., "WATCHLIST_MEMBER_DATA:Sharry_Id,Integrity_QR_Token")
+                    var labelKeys = ParseLabelKeys(type);
+                    return new WatchlistMemberDataResolver(_logger, labelKeys);
             }
         }
 
@@ -69,9 +76,26 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 normalizedType = WATCHLIST_MEMBER_LABEL_TYPE;
             }
 
-            _logger.Information("Normalized type {type} to {normalizedType}", type, normalizedType);
+            // Extract base type before any colon
+            var baseType = normalizedType.Split(':')[0];
 
-            return normalizedType;
+            _logger.Information("Normalized type {type} to {normalizedType}", type, baseType);
+
+            return baseType;
+        }
+
+        private string[] ParseLabelKeys(string type)
+        {
+            // Format: "WATCHLIST_MEMBER_DATA:Sharry_Id,Integrity_QR_Token,Integrity_Face_Token"
+            var parts = type.Split(':');
+            if (parts.Length < 2)
+            {
+                return Array.Empty<string>();
+            }
+
+            return parts[1].Split(',', StringSplitOptions.RemoveEmptyEntries)
+                          .Select(k => k.Trim())
+                          .ToArray();
         }
     }
 }

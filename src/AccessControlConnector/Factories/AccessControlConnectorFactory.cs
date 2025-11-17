@@ -71,6 +71,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 case AccessControlConnectorTypes.MYQ_CONNECTOR:
                     return new MyQConnector(_logger, _configuration, _httpClientFactory);
 
+                case AccessControlConnectorTypes.SHARRY_CHECK_IN_CONNECTOR:
+                    return new SharryCheckInConnector(_logger, _configuration, _httpClientFactory);
+
                 case AccessControlConnectorTypes.VILLA_PRO_CONNECTOR:
                     return new VillaProConnector(_logger, _configuration, _httpClientFactory);
 
