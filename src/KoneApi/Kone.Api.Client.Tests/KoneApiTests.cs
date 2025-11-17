@@ -26,8 +26,8 @@ namespace Kone.Api.Client.Tests
             _koneBuildingApi = fixture.KoneBuildingApi;
             _output = output ?? throw new ArgumentNullException(nameof(output));
 
-            _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
-            _koneBuildingApi.MessageSend += KoneWs_MessageSend;
+            /*_koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
+            _koneBuildingApi.MessageSend += KoneWs_MessageSend;*/
         }
 
         [Fact]
@@ -111,21 +111,36 @@ namespace Kone.Api.Client.Tests
         [KoneTestCase(6, "Landing Call")]
         public async Task Test_Landing_Call_With_Wait_Until_Served_Successful()
         {
-            //TODO: Disabled for now. Suspicion is that if elevator is on destination area already than we do nto receive any state updates.
-            return;
-            var destination = _fixture.Destinations.Skip(3).First();
+            foreach (var lift in _fixture.Topology.data.groups.Single().lifts)
+            {
 
-            var landingCallResponse = await _koneBuildingApi.PlaceLandingCallAndWaitUntilServedAsync(
-                destination.area_id,
-                maxWaitDurationSeconds: 10,
-                isDirectionUp: true,
-                cancellationToken: CancellationToken.None);
+                //lift.floors.Select(f => f.sides.Select(s => s.decks.Select(d => d)))
+                _output.WriteLine($"LIFT: {lift.lift_id}");
+                lift.decks.ForEach(d => _output.WriteLine($"DECK_AREA {d.area_id}"));
 
-            Assert.NotNull(landingCallResponse.data);
-            Assert.True(landingCallResponse.data.success);
-            Assert.True(landingCallResponse.data.request_id > 0);
+                var cts = new CancellationTokenSource(5000);
+                var liftPosition = await _koneBuildingApi.GetLiftPositionAsync(lift.lift_id, cts.Token);
 
-            _output.WriteLine(landingCallResponse.ResponseMessageRaw);
+                var liftAreas = lift.decks.Select(x => x.area_id);
+                var destinationAreaId = liftAreas.First(a => a != liftPosition.data.area);
+
+                try
+                {
+                    var landingCallResponse = await _koneBuildingApi.PlaceLandingCallAndWaitUntilServedAsync(
+                        destinationAreaId,
+                        maxWaitDurationSeconds: 10,
+                        isDirectionUp: true,
+                        cancellationToken: CancellationToken.None);
+                }
+                catch (Exception e)
+                {
+                    var landingCallResponse = await _koneBuildingApi.PlaceLandingCallAndWaitUntilServedAsync(
+                        destinationAreaId,
+                        maxWaitDurationSeconds: 10,
+                        isDirectionUp: false,
+                        cancellationToken: CancellationToken.None);
+                }
+            }
         }
 
         [Fact]

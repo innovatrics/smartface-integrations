@@ -80,6 +80,33 @@ namespace Kone.Api.Client.Clients
                 cancellationToken);
         }
 
+        public Task<LiftPositionResponse> GetLiftPositionAsync(int liftId, CancellationToken cancellationToken)
+        {
+            var monitorReqId = Guid.NewGuid().ToString();
+
+            var liftMonitorReq = new
+            {
+                type = LiftCallRequest.ApiTypeSiteMonitoring,
+                requestId = monitorReqId,
+                buildingId = $"building:{_buildingId}",
+                callType = LiftCallRequest.CallTypeMonitor,
+                groupId = _groupId,
+                payload = new
+                {
+                    sub = $"DeckPosition_{Guid.NewGuid()}",
+                    duration = 10,
+                    subtopics = new[]
+                    {
+                        $"lift_{liftId}/position",
+                    }
+                }
+            };
+
+            return SendMessageAndWaitForResponseAsync(monitorReqId, liftMonitorReq,
+                (responseMessage, _) => Task.FromResult(JsonConvert.DeserializeObject<LiftPositionResponse>(responseMessage)!),
+                cancellationToken);
+        }
+
         public Task<LiftCallResponse> PlaceLandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
         {
             var requestId = GetRequestId();
@@ -347,6 +374,7 @@ namespace Kone.Api.Client.Clients
 
                 var callTypePresent = root.TryGetProperty("callType", out var callType);
                 var requestIdPresent = root.TryGetProperty("requestId", out var requestId);
+                var subTopicPresent = root.TryGetProperty("subtopic", out var subTopic);
 
                 // Handle config responses
                 if (callTypePresent && requestIdPresent && callType.GetString() == "config")
@@ -370,10 +398,19 @@ namespace Kone.Api.Client.Clients
 
                 // Handle lift monitor responses
                 if (callTypePresent && requestIdPresent && callType.GetString() == "monitor" &&
-                    root.TryGetProperty("subtopic", out var subTopic)
-                    )
+                    subTopicPresent && subTopic.GetString().EndsWith("served"))
                 {
-                    //subTopic.GetString().EndsWith("served")
+                    if (_pendingResponse.TryGetValue(requestId.GetString(), out var tcs))
+                    {
+                        tcs.TrySetResult(responseMessage);
+                    }
+                    return;
+                }
+
+                // Handle lift monitor responses
+                if (callTypePresent && requestIdPresent && callType.GetString() == "monitor" &&
+                    subTopicPresent && subTopic.GetString().EndsWith("position"))
+                {
                     if (_pendingResponse.TryGetValue(requestId.GetString(), out var tcs))
                     {
                         tcs.TrySetResult(responseMessage);

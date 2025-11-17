@@ -7,6 +7,8 @@ namespace Kone.Api.Client
         Task<TopologyResponse> GetTopologyAsync(CancellationToken cancellationToken);
         Task<ActionsResponse> GetActionsAsync(CancellationToken cancellationToken);
 
+        Task<LiftPositionResponse> GetLiftPositionAsync(int liftId, CancellationToken cancellationToken);
+
         Task<LiftCallResponse> PlaceLandingCallAsync(int destinationAreaId, bool isDirectionUp,
             CancellationToken cancellationToken);
 
