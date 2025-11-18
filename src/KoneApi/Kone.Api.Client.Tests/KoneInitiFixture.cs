@@ -35,7 +35,7 @@ namespace Kone.Api.Client.Tests
         [KoneTestCase(1, "Building actions can be obtained")]
         public async Task InitializeAsync()
         {
-            var ct = new CancellationTokenSource(10_000).Token;
+            var ct = new CancellationTokenSource(30_000).Token;
 
             var tokenResponse = await KoneAuthApi.GetDefaultAccessTokenAsync(ct);
             var resources = await KoneAuthApi.GetResourcesAsync(tokenResponse.Access_token, ct);

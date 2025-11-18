@@ -20,7 +20,14 @@ namespace Kone.Api.Client
 
             foreach (var building in resources.Buildings)
             {
+                log.Information("Fetching building info for {BuildingId}", building.Id);
+
                 var buildingApi = new KoneBuildingApiClient(log, koneAuthApi, building.Id, groupId);
+
+                var pingResponse = buildingApi.PingAsync(cancellationToken);
+
+                log.Information("KONE Ping Info: {@Ping}", pingResponse);
+
                 var topology = await buildingApi.GetTopologyAsync(cancellationToken);
 
                 log.Information("KONE Building Topology: {@BuildingTopology}", topology);
