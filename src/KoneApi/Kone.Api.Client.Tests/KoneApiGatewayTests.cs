@@ -2,36 +2,30 @@
 using System.Threading.Tasks.Dataflow;
 using Kone.Api.Gateway;
 using Serilog;
-using Xunit.Abstractions;
 
 namespace Kone.Api.Client.Tests
 {
     public class KoneApiGatewayTests : IClassFixture<KoneInitFixture>
     {
         private readonly KoneApiGateWay _koneApiGateWay;
-                private readonly ITestOutputHelper _output;
         private readonly KoneInitFixture _fixture;
 
-        private readonly CancellationTokenSource _cts = new(10_0000);
-        private CancellationToken CancellationToken => _cts.Token;
-
-        public KoneApiGatewayTests(ITestOutputHelper output, KoneInitFixture fixture)
+        public KoneApiGatewayTests(KoneInitFixture fixture)
         {
             _fixture = fixture;
-            _output = output ?? throw new ArgumentNullException(nameof(output));
-
             _koneApiGateWay = new KoneApiGateWay(fixture.KoneBuildingApi, Log.Logger);
         }
 
         [Fact]
         public async Task Test_GateWay_Filtering_Multiple_Calls()
         {
+            var debounceTime = TimeSpan.FromSeconds(2);
             var callsResult = new ConcurrentBag<bool>();
 
             var ab = new ActionBlock<int>(async (area) =>
             {
                 var callAlreadyInProgress = await _koneApiGateWay.SendLandingCallToAreaIfNotInProgressAsync(
-                    area, true, CancellationToken);
+                    area, true, debounceTime, CancellationToken.None);
 
                 callsResult.Add(callAlreadyInProgress);
 
@@ -51,6 +45,15 @@ namespace Kone.Api.Client.Tests
 
             var callsAccepted = callsResult.Count(x => x);
             Assert.True(callsAccepted is >= 1 and < 5, $"{callsAccepted}");
+
+            // wait debounce time
+            await Task.Delay(debounceTime * 2, CancellationToken.None);
+
+            var accepted = await _koneApiGateWay.SendLandingCallToAreaIfNotInProgressAsync(
+                _fixture.TestAreaId2, true, debounceTime, CancellationToken.None);
+
+            // next one should be accepted again
+            Assert.True(accepted);
         }
     }
 }

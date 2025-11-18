@@ -21,6 +21,7 @@ namespace Kone.Api.Gateway
         public async Task<bool> SendLandingCallToAreaIfNotInProgressAsync(
             int destinationAreaId,
             bool isDirectionUp,
+            TimeSpan maxUpdateWaitTime,
             CancellationToken cancellationToken = default)
         {
             if (_activeLandingCalls.ContainsKey(destinationAreaId))
@@ -32,7 +33,7 @@ namespace Kone.Api.Gateway
             var landingCallTask = _koneBuildingApi.PlaceLandingCallUntilServedOrNoUpdateForAsync(
                 destinationAreaId,
                 isDirectionUp,
-                TimeSpan.FromSeconds(5),
+                maxUpdateWaitTime,
                 cancellationToken);
 
             var registeredTask = _activeLandingCalls.GetOrAdd(destinationAreaId, landingCallTask);
