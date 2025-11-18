@@ -162,27 +162,9 @@ namespace Kone.Api.Client.Clients
 
             await SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
                 LandingCallResponseInterceptor,
-                cancellationToken,
-                OnResponseMessage);
+                cancellationToken);
 
-            void OnResponseMessage(string message)
-            {
-                using var doc = JsonDocument.Parse(message);
-                var root = doc.RootElement;
-
-                // Call monitor position updates
-                if (root.TryGetProperty("requestId", out var requestId) &&
-                    requestId.GetString() == monitorReqId &&
-
-                    root.TryGetProperty("callType", out var callType) &&
-                    callType.GetString() == "monitor" &&
-
-                    root.TryGetProperty("subtopic", out var subTopic) &&
-                    subTopic.GetString().EndsWith("position"))
-                {
-                    positionUpdated?.Invoke(message);
-                }
-            }
+            return;
 
             // If a landing call is placed successfully, start monitoring its state changes
             async Task<LiftCallResponse> LandingCallResponseInterceptor(string message, ClientWebSocket ws)
@@ -216,9 +198,37 @@ namespace Kone.Api.Client.Clients
                 };
 
                 await SendMessageAndWaitForResponseAsync(monitorReqId, monitorReq,
-                    (r, _) => Task.FromResult(new LiftCallResponse()), cancellationToken);
+                    (r, _) => Task.FromResult(new LiftCallResponse()),
+                    cancellationToken,
+                    OnResponseMessage);
 
                 return response;
+            }
+
+            void OnResponseMessage(string message)
+            {
+                using var doc = JsonDocument.Parse(message);
+                var root = doc.RootElement;
+
+                // Call monitor position updates
+                if (root.TryGetProperty("requestId", out var requestIdElement) &&
+                    requestIdElement.ValueKind == JsonValueKind.String &&
+                    requestIdElement.GetString() == monitorReqId &&
+
+                    root.TryGetProperty("callType", out var callTypeElement) &&
+                    callTypeElement.ValueKind == JsonValueKind.String &&
+                    callTypeElement.GetString() == "monitor" &&
+
+                    root.TryGetProperty("subtopic", out var subTopicElement) &&
+                    subTopicElement.ValueKind == JsonValueKind.String)
+                {
+                    var subTopic = subTopicElement.GetString();
+
+                    if (subTopic != null && subTopic.StartsWith("call_state"))
+                    {
+                        positionUpdated?.Invoke(message);
+                    }
+                }
             }
         }
 

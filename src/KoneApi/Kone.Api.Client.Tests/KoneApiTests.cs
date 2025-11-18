@@ -1,11 +1,12 @@
-using System.Collections.Concurrent;
 using Kone.Api.Client.Clients;
+using Kone.Api.Client.Clients.Extensions;
 using Kone.Api.Client.Clients.Generated;
+using Kone.Api.Client.Clients.Models;
 using Kone.Api.Client.Exceptions;
 using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Kone.Api.Client.Clients.Models;
 using Xunit.Abstractions;
 
 namespace Kone.Api.Client.Tests
@@ -28,8 +29,8 @@ namespace Kone.Api.Client.Tests
             _koneBuildingApi = fixture.KoneBuildingApi;
             _output = output ?? throw new ArgumentNullException(nameof(output));
 
-            /*_koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
-            _koneBuildingApi.MessageSend += KoneWs_MessageSend;*/
+            _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
+            _koneBuildingApi.MessageSend += KoneWs_MessageSend;
         }
 
         [Fact]
@@ -112,37 +113,21 @@ namespace Kone.Api.Client.Tests
         [KoneTestCase(6, "Landing Call")]
         public async Task Test_Landing_Call_With_Position_Updates_Successful()
         {
-            var positionUpdates = new ConcurrentBag<string>();
+            var destination = _fixture.Destinations.Skip(5).First();
 
-            var cts = new CancellationTokenSource(30_000);
-            var positionUpdateReceivedTcs = new CancellationTokenSource(5000);
-            positionUpdateReceivedTcs.Token.Register(() =>
-            {
-                // Stop waiting if after 5 seconds no position updates were received
-                if (positionUpdates.IsEmpty)
-                {
-                    cts.Cancel();
-                }
-            });
+            var sw = Stopwatch.StartNew();
 
-            try
-            {
-                var destination = _fixture.Destinations.Skip(2).First();
+            var maxUpdateTime = TimeSpan.FromSeconds(10);
 
-                await _koneBuildingApi.PlaceLandingCallWithPositionUpdatesAsync(
-                    destinationAreaId: destination.area_id,
-                    isDirectionUp: false,
-                    positionUpdated: m =>
-                    {
-                        positionUpdates.Add(m);
-                        _output.WriteLine(m);
-                    },
-                    cancellationToken: cts.Token);
-            }
-            catch (OperationCanceledException) when (positionUpdates.IsEmpty)
-            {
+            var positionUpdates = await _koneBuildingApi.PlaceLandingCallUntilServedOrNoUpdateForAsync(
+                destinationAreaId: destination.area_id,
+                isDirectionUp: false,
+                maxUpdateWaitTime: maxUpdateTime,
+                cancellationToken: new CancellationTokenSource(60_000).Token);
 
-            }
+            sw.Stop();
+
+            Assert.True(sw.Elapsed < maxUpdateTime.Add(TimeSpan.FromSeconds(1)));
 
             foreach (var positionUpdate in positionUpdates)
             {
