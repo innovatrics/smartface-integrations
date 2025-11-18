@@ -7,11 +7,12 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Serilog;
 using Xunit.Abstractions;
 
 namespace Kone.Api.Client.Tests
 {
-    public class KoneApiTests : IClassFixture<KoneInitFixture>
+    public class KoneApiTests : IClassFixture<KoneInitFixture>, IAsyncLifetime
     {
         private readonly KoneAuthApiClient _koneAuthApi;
         private readonly KoneBuildingApiClient _koneBuildingApi;
@@ -28,9 +29,17 @@ namespace Kone.Api.Client.Tests
             _koneAuthApi = fixture.KoneAuthApi;
             _koneBuildingApi = fixture.KoneBuildingApi;
             _output = output ?? throw new ArgumentNullException(nameof(output));
+        }
 
-            _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
-            _koneBuildingApi.MessageSend += KoneWs_MessageSend;
+        [Fact]
+        public async Task Test_Log_Buildings_Topology_Info()
+        {
+            var logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.TestOutput(_output)
+                .CreateLogger();
+
+            await KoneDiagnostics.LogInfoAsync(_fixture.KoneAuthApi, logger, CancellationToken.None);
         }
 
         [Fact]
@@ -229,6 +238,20 @@ namespace Kone.Api.Client.Tests
             _output.WriteLine("MESSAGE SEND");
             _output.WriteLine(message);
             _output.WriteLine("--------------------------------");
+        }
+
+        public Task InitializeAsync()
+        {
+            _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
+            _koneBuildingApi.MessageSend += KoneWs_MessageSend;
+            return Task.CompletedTask;
+        }
+
+        public Task DisposeAsync()
+        {
+            _koneBuildingApi.MessageReceived -= KoneWs_MessageReceived;
+            _koneBuildingApi.MessageSend -= KoneWs_MessageSend;
+            return Task.CompletedTask;
         }
     }
 }

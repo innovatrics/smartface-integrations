@@ -6,8 +6,8 @@ namespace Kone.Api.Client.Tests
 {
     public class KoneInitFixture : IAsyncLifetime
     {
-        private const string ClientId = "75496e37-3a35-495b-a0d7-d1a143080886";
-        private const string ClientSecret = "ff29f835abbc267aa9813f66ac235cd69bbe6b69dad1c7ff214a589fdf2a1145";
+        public const string ClientId = "75496e37-3a35-495b-a0d7-d1a143080886";
+        public const string ClientSecret = "ff29f835abbc267aa9813f66ac235cd69bbe6b69dad1c7ff214a589fdf2a1145";
 
         public readonly KoneAuthApiClient KoneAuthApi = new(ClientId, ClientSecret);
         public required KoneBuildingApiClient KoneBuildingApi;

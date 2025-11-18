@@ -1,6 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿using Kone.Api.Gateway;
+using System.Collections.Concurrent;
 using System.Threading.Tasks.Dataflow;
-using Kone.Api.Gateway;
 using Serilog;
 
 namespace Kone.Api.Client.Tests
@@ -13,7 +13,7 @@ namespace Kone.Api.Client.Tests
         public KoneApiGatewayTests(KoneInitFixture fixture)
         {
             _fixture = fixture;
-            _koneApiGateWay = new KoneApiGateWay(fixture.KoneBuildingApi, Log.Logger);
+            _koneApiGateWay = new KoneApiGateWay(_fixture.KoneBuildingApi, Log.Logger);
         }
 
         [Fact]
