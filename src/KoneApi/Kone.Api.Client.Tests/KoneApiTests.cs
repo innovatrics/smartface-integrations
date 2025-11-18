@@ -4,6 +4,7 @@ using Kone.Api.Client.Exceptions;
 using Newtonsoft.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Kone.Api.Client.Clients.Models;
 using Xunit.Abstractions;
 
 namespace Kone.Api.Client.Tests
@@ -63,9 +64,9 @@ namespace Kone.Api.Client.Tests
         public async Task Test_Landing_Call_Up_Successful()
         {
             var landingCallResponse = await _koneBuildingApi.PlaceLandingCallAsync(
-                _fixture.TestAreaId1,
+                destinationAreaId: _fixture.TestAreaId1,
                 isDirectionUp: true,
-                CancellationToken);
+                cancellationToken: CancellationToken);
 
             Assert.NotNull(landingCallResponse.data);
             Assert.True(landingCallResponse.data.success);
@@ -79,9 +80,9 @@ namespace Kone.Api.Client.Tests
         public async Task Test_Landing_Call_Up_Invalid_Direction()
         {
             var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.PlaceLandingCallAsync(
-                _fixture.TestAreaId1,
+                destinationAreaId: _fixture.TestAreaId1,
                 isDirectionUp: false,
-                CancellationToken));
+                cancellationToken: CancellationToken));
 
             Assert.Equal(ex.Error, "INVALID_DIRECTION");
 
@@ -95,10 +96,9 @@ namespace Kone.Api.Client.Tests
             var destination = _fixture.Destinations.Skip(2).First();
 
             var landingCallResponse = await _koneBuildingApi.PlaceLandingCallAsync(
-                //_fixture.TestAreaId2,
-                destination.area_id,
+                destinationAreaId: destination.area_id,
                 isDirectionUp: false,
-                CancellationToken);
+                cancellationToken: CancellationToken);
 
             Assert.NotNull(landingCallResponse.data);
             Assert.True(landingCallResponse.data.success);
@@ -108,39 +108,26 @@ namespace Kone.Api.Client.Tests
         }
 
         [Fact]
-        [KoneTestCase(6, "Landing Call")]
-        public async Task Test_Landing_Call_With_Wait_Until_Served_Successful()
+        public async Task Test_Lift_Position_Successful()
         {
-            foreach (var lift in _fixture.Topology.data.groups.Single().lifts)
-            {
+            var lift = _fixture.Topology.data.groups.Single().lifts.First();
+            var liftPosition = await _koneBuildingApi.GetLiftPositionAsync(lift.lift_id, CancellationToken);
 
-                //lift.floors.Select(f => f.sides.Select(s => s.decks.Select(d => d)))
-                _output.WriteLine($"LIFT: {lift.lift_id}");
-                lift.decks.ForEach(d => _output.WriteLine($"DECK_AREA {d.area_id}"));
+            Assert.NotNull(liftPosition.data);
 
-                var cts = new CancellationTokenSource(5000);
-                var liftPosition = await _koneBuildingApi.GetLiftPositionAsync(lift.lift_id, cts.Token);
+            Assert.True(DateTimeOffset.TryParse(liftPosition.data.time, out var parsed));
+            Assert.True(parsed.Year == DateTime.UtcNow.Year);
+            Assert.True(parsed.Month == DateTime.UtcNow.Month);
+            Assert.True(parsed.Day == DateTime.UtcNow.Day);
+            Assert.True(parsed.Hour == DateTime.UtcNow.Hour);
 
-                var liftAreas = lift.decks.Select(x => x.area_id);
-                var destinationAreaId = liftAreas.First(a => a != liftPosition.data.area);
+            Assert.Contains(LiftPositionData.Directions, d => d == liftPosition.data.coll);
+            Assert.Contains(LiftPositionData.Directions, d => d == liftPosition.data.dir);
+            Assert.Contains(LiftPositionData.MovingStates, d => d == liftPosition.data.moving_state);
 
-                try
-                {
-                    var landingCallResponse = await _koneBuildingApi.PlaceLandingCallAndWaitUntilServedAsync(
-                        destinationAreaId,
-                        maxWaitDurationSeconds: 10,
-                        isDirectionUp: true,
-                        cancellationToken: CancellationToken.None);
-                }
-                catch (Exception e)
-                {
-                    var landingCallResponse = await _koneBuildingApi.PlaceLandingCallAndWaitUntilServedAsync(
-                        destinationAreaId,
-                        maxWaitDurationSeconds: 10,
-                        isDirectionUp: false,
-                        cancellationToken: CancellationToken.None);
-                }
-            }
+            Assert.True(liftPosition.data.area > 0);
+            Assert.True(liftPosition.data.cur > 0);
+            Assert.True(liftPosition.data.adv > 0);
         }
 
         [Fact]
@@ -148,9 +135,9 @@ namespace Kone.Api.Client.Tests
         public async Task Test_Landing_Call_Down_Invalid_Direction()
         {
             var ex = await Assert.ThrowsAnyAsync<KoneCallException>(() => _koneBuildingApi.PlaceLandingCallAsync(
-                _fixture.TestAreaId2,
+                destinationAreaId: _fixture.TestAreaId2,
                 isDirectionUp: true,
-                CancellationToken));
+                cancellationToken: CancellationToken));
 
             Assert.Equal(ex.Error, "INVALID_DIRECTION");
 

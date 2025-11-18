@@ -107,7 +107,8 @@ namespace Kone.Api.Client.Clients
                 cancellationToken);
         }
 
-        public Task<LiftCallResponse> PlaceLandingCallAsync(int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
+        public Task<LiftCallResponse> PlaceLandingCallAsync(int destinationAreaId,
+            bool isDirectionUp, CancellationToken cancellationToken)
         {
             var requestId = GetRequestId();
 
@@ -134,10 +135,12 @@ namespace Kone.Api.Client.Clients
                 cancellationToken);
         }
 
-        public Task<LiftCallResponse> PlaceLandingCallAndWaitUntilServedAsync(int destinationAreaId, bool isDirectionUp,
-            int maxWaitDurationSeconds, CancellationToken cancellationToken)
+        public Task<LiftCallResponse> PlaceLandingCallWithPositionUpdatesAsync(int destinationAreaId,
+            Action<string>? positionUpdated,
+            bool isDirectionUp, CancellationToken cancellationToken)
         {
             var requestId = GetRequestId();
+            var monitorReqId = Guid.NewGuid().ToString();
 
             var req = new LiftCallRequest
             {
@@ -158,15 +161,34 @@ namespace Kone.Api.Client.Clients
             };
 
             return SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
-                ResponseInterceptor,
-                cancellationToken);
+                LandingCallResponseInterceptor,
+                cancellationToken,
+                OnResponseMessage);
 
-            async Task<LiftCallResponse> ResponseInterceptor(string message, ClientWebSocket ws)
+            void OnResponseMessage(string message)
+            {
+                using var doc = JsonDocument.Parse(message);
+                var root = doc.RootElement;
+
+                // Call monitor position updates
+                if (root.TryGetProperty("requestId", out var requestId) &&
+                    requestId.GetString() == monitorReqId &&
+
+                    root.TryGetProperty("callType", out var callType) &&
+                    callType.GetString() == "monitor" &&
+
+                    root.TryGetProperty("subtopic", out var subTopic) &&
+                    subTopic.GetString().EndsWith("position"))
+                {
+                    positionUpdated?.Invoke(message);
+                }
+            }
+
+            // If a landing call is placed successfully, start monitoring its state changes
+            async Task<LiftCallResponse> LandingCallResponseInterceptor(string message, ClientWebSocket ws)
             {
                 var response = await LiftCallResponseMessageParser(message, ws);
                 var sessionId = response.data.session_id;
-
-                var monitorReqId = Guid.NewGuid().ToString();
 
                 //https://dev.kone.com/api-portal/dashboard/api-documentation/elevator-websocket-api-v2#monitoring-commands
                 var monitorReq = new
@@ -179,7 +201,7 @@ namespace Kone.Api.Client.Clients
                     payload = new
                     {
                         sub = $"LandingCall_{Guid.NewGuid()}",
-                        duration = maxWaitDurationSeconds,
+                        duration = 300,
                         subtopics = new[]
                         {
                             $"call_state/{sessionId}/registered",
@@ -193,24 +215,9 @@ namespace Kone.Api.Client.Clients
                     }
                 };
 
-                var monitorTcs = new CancellationTokenSource(TimeSpan.FromSeconds(maxWaitDurationSeconds));
-                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, monitorTcs.Token);
-
                 await SendMessageAndWaitForResponseAsync(monitorReqId, monitorReq,
-                    (r, _) => Task.FromResult(new LiftCallResponse()), cts.Token);
+                    (r, _) => Task.FromResult(new LiftCallResponse()), cancellationToken);
 
-                return response;
-
-                /*var jsonRequest = SerializeToJson(monitorReq);
-                var bytes = Encoding.UTF8.GetBytes(jsonRequest);
-
-                var monitorTcs = new CancellationTokenSource(TimeSpan.FromSeconds(maxWaitDurationSeconds));
-                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, monitorTcs.Token);
-                var readingTask = ReceiveMessagesAsync(ws, cts.Token);
-
-                await ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
-
-                await readingTask;*/
                 return response;
             }
         }
@@ -247,7 +254,8 @@ namespace Kone.Api.Client.Clients
             string requestId,
             object request,
             Func<string, ClientWebSocket, Task<TResponse>> responseDeserializerFunc,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            Action<string>? onResponseMessage = null)
         {
             ArgumentNullException.ThrowIfNull(requestId);
             ArgumentNullException.ThrowIfNull(request);
@@ -262,7 +270,7 @@ namespace Kone.Api.Client.Clients
             _pendingResponse.TryAdd(requestId, tcs);
 
             var cts = new CancellationTokenSource();
-            var readingTask = ReceiveMessagesAsync(ws, cts.Token);
+            var readingTask = ReceiveMessagesAsync(ws, onResponseMessage, cts.Token);
 
             try
             {
@@ -332,7 +340,7 @@ namespace Kone.Api.Client.Clients
             return json;
         }
 
-        private async Task ReceiveMessagesAsync(WebSocket webSocket, CancellationToken token)
+        private async Task ReceiveMessagesAsync(WebSocket webSocket, Action<string> onResponseMessage, CancellationToken token)
         {
             var buffer = new byte[4096];
             var messageBuffer = new List<byte>();
@@ -357,6 +365,7 @@ namespace Kone.Api.Client.Clients
                 var responseMessage = Encoding.UTF8.GetString(messageBuffer.ToArray());
                 messageBuffer.Clear();
 
+                onResponseMessage?.Invoke(responseMessage);
                 HandleMessage(responseMessage);
 
                 if (MessageReceived != null)

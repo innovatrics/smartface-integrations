@@ -3,6 +3,7 @@
     public class LiftCallResponse
     {
         public CallData data { get; set; }
+        public List<string> TransitionStates { get; set; }
         public string ResponseMessageRaw { get; set; }
     }
 
