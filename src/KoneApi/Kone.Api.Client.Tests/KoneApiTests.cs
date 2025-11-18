@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Kone.Api.Client.Clients;
 using Kone.Api.Client.Clients.Generated;
 using Kone.Api.Client.Exceptions;
@@ -105,6 +106,48 @@ namespace Kone.Api.Client.Tests
             Assert.True(landingCallResponse.data.request_id > 0);
 
             _output.WriteLine(landingCallResponse.ResponseMessageRaw);
+        }
+
+        [Fact]
+        [KoneTestCase(6, "Landing Call")]
+        public async Task Test_Landing_Call_With_Position_Updates_Successful()
+        {
+            var positionUpdates = new ConcurrentBag<string>();
+
+            var cts = new CancellationTokenSource(30_000);
+            var positionUpdateReceivedTcs = new CancellationTokenSource(5000);
+            positionUpdateReceivedTcs.Token.Register(() =>
+            {
+                // Stop waiting if after 5 seconds no position updates were received
+                if (positionUpdates.IsEmpty)
+                {
+                    cts.Cancel();
+                }
+            });
+
+            try
+            {
+                var destination = _fixture.Destinations.Skip(2).First();
+
+                await _koneBuildingApi.PlaceLandingCallWithPositionUpdatesAsync(
+                    destinationAreaId: destination.area_id,
+                    isDirectionUp: false,
+                    positionUpdated: m =>
+                    {
+                        positionUpdates.Add(m);
+                        _output.WriteLine(m);
+                    },
+                    cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException) when (positionUpdates.IsEmpty)
+            {
+
+            }
+
+            foreach (var positionUpdate in positionUpdates)
+            {
+                _output.WriteLine(positionUpdate);
+            }
         }
 
         [Fact]

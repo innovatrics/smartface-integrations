@@ -12,7 +12,7 @@ namespace Kone.Api.Client
         Task<LiftCallResponse> PlaceLandingCallAsync(int destinationAreaId, bool isDirectionUp,
             CancellationToken cancellationToken);
 
-        Task<LiftCallResponse> PlaceLandingCallWithPositionUpdatesAsync(int destinationAreaId,
+        Task PlaceLandingCallWithPositionUpdatesAsync(int destinationAreaId,
             Action<string>? positionUpdated, bool isDirectionUp, 
             CancellationToken cancellationToken);
 

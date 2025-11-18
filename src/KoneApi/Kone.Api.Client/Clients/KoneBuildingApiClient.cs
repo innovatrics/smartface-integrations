@@ -135,7 +135,7 @@ namespace Kone.Api.Client.Clients
                 cancellationToken);
         }
 
-        public Task<LiftCallResponse> PlaceLandingCallWithPositionUpdatesAsync(int destinationAreaId,
+        public async Task PlaceLandingCallWithPositionUpdatesAsync(int destinationAreaId,
             Action<string>? positionUpdated,
             bool isDirectionUp, CancellationToken cancellationToken)
         {
@@ -160,7 +160,7 @@ namespace Kone.Api.Client.Clients
                 }
             };
 
-            return SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
+            await SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
                 LandingCallResponseInterceptor,
                 cancellationToken,
                 OnResponseMessage);
