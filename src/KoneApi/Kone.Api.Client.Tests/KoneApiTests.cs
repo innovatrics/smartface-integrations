@@ -43,6 +43,14 @@ namespace Kone.Api.Client.Tests
         }
 
         [Fact]
+        public async Task Test_Ping()
+        {
+            var pingResponse = await _koneBuildingApi.PingAsync(cancellationToken: CancellationToken);
+            Assert.NotNull(pingResponse.data);
+            _output.WriteLine(JsonConvert.SerializeObject(pingResponse, Formatting.Indented));
+        }
+
+        [Fact]
         public async Task Test_Auth_Get_Access_Token()
         {
             var tokenResponse = await _koneAuthApi.GetDefaultAccessTokenAsync(CancellationToken);

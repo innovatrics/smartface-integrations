@@ -18,6 +18,8 @@ namespace Kone.Api.Client.Clients
 
         public const int DestinationCallActionId = 2;
 
+        private const string PING_TCS_ID = "ping";
+
         public event Action<string>? MessageSend;
         public event Func<string, Task>? MessageReceived;
 
@@ -42,6 +44,27 @@ namespace Kone.Api.Client.Clients
             _buildingId = buildingId ?? throw new ArgumentNullException(nameof(buildingId));
             _groupId = groupId ?? throw new ArgumentNullException(nameof(groupId));
             _endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
+        }
+
+        public Task<PingResponse> PingAsync(CancellationToken cancellationToken)
+        {
+            int requestId = GenerateIntRequestId();
+
+            var req = new
+            {
+                type = LiftCallRequest.ApiTypeCommon,
+                buildingId = $"building:{_buildingId}",
+                callType = LiftCallRequest.CallTypePing,
+                groupId = _groupId,
+                payload = new
+                {
+                    request_id = requestId
+                }
+            };
+
+            return SendMessageAndWaitForResponseAsync(PING_TCS_ID, req,
+                (responseMessage, _) => Task.FromResult(JsonConvert.DeserializeObject<PingResponse>(responseMessage)!),
+                cancellationToken);
         }
 
         public Task<TopologyResponse> GetTopologyAsync(CancellationToken cancellationToken)
@@ -110,7 +133,7 @@ namespace Kone.Api.Client.Clients
         public Task<LiftCallResponse> PlaceLandingCallAsync(int destinationAreaId,
             bool isDirectionUp, CancellationToken cancellationToken)
         {
-            var requestId = GetRequestId();
+            var requestId = GenerateIntRequestId();
 
             var req = new LiftCallRequest
             {
@@ -139,7 +162,7 @@ namespace Kone.Api.Client.Clients
             Action<string>? positionUpdated,
             bool isDirectionUp, CancellationToken cancellationToken)
         {
-            var requestId = GetRequestId();
+            var requestId = GenerateIntRequestId();
             var monitorReqId = Guid.NewGuid().ToString();
 
             var req = new LiftCallRequest
@@ -234,7 +257,7 @@ namespace Kone.Api.Client.Clients
 
         public Task<LiftCallResponse> PlaceDestinationCallAsync(int sourceAreaId, int destinationAreaId, CancellationToken cancellationToken)
         {
-            var requestId = GetRequestId();
+            var requestId = GenerateIntRequestId();
 
             var req = new LiftCallRequest
             {
@@ -391,46 +414,56 @@ namespace Kone.Api.Client.Clients
                 using var doc = JsonDocument.Parse(responseMessage);
                 var root = doc.RootElement;
 
-                var callTypePresent = root.TryGetProperty("callType", out var callType);
-                var requestIdPresent = root.TryGetProperty("requestId", out var requestId);
-                var subTopicPresent = root.TryGetProperty("subtopic", out var subTopic);
+                var callTypePresent = root.TryGetProperty("callType", out var callTypeElement) && callTypeElement.ValueKind == JsonValueKind.String;
+                var requestIdPresent = root.TryGetProperty("requestId", out var requestIdElement) && callTypeElement.ValueKind == JsonValueKind.String;
+                var subTopicPresent = root.TryGetProperty("subtopic", out var subTopicElement) && callTypeElement.ValueKind == JsonValueKind.String;
 
-                // Handle config responses
-                if (callTypePresent && requestIdPresent && callType.GetString() == "config")
+                // Handle ping response
+                if (callTypePresent && callTypeElement.GetString() == "ping")
                 {
-                    if (_pendingResponse.TryGetValue(requestId.GetString(), out var tcs))
+                    if (_pendingResponse.TryGetValue(PING_TCS_ID, out var tcs))
                     {
                         tcs.TrySetResult(responseMessage);
                     }
                     return;
                 }
 
-                // Handle actions responses
-                if (callTypePresent && requestIdPresent && callType.GetString() == "actions")
+                // Handle config response
+                if (callTypePresent && requestIdPresent && callTypeElement.GetString() == "config")
                 {
-                    if (_pendingResponse.TryGetValue(requestId.GetString(), out var tcs))
+                    if (_pendingResponse.TryGetValue(requestIdElement.GetString(), out var tcs))
                     {
                         tcs.TrySetResult(responseMessage);
                     }
                     return;
                 }
 
-                // Handle lift monitor responses
-                if (callTypePresent && requestIdPresent && callType.GetString() == "monitor" &&
-                    subTopicPresent && subTopic.GetString().EndsWith("served"))
+                // Handle actions response
+                if (callTypePresent && requestIdPresent && callTypeElement.GetString() == "actions")
                 {
-                    if (_pendingResponse.TryGetValue(requestId.GetString(), out var tcs))
+                    if (_pendingResponse.TryGetValue(requestIdElement.GetString(), out var tcs))
                     {
                         tcs.TrySetResult(responseMessage);
                     }
                     return;
                 }
 
-                // Handle lift monitor responses
-                if (callTypePresent && requestIdPresent && callType.GetString() == "monitor" &&
-                    subTopicPresent && subTopic.GetString().EndsWith("position"))
+                // Handle lift monitor response
+                if (callTypePresent && requestIdPresent && callTypeElement.GetString() == "monitor" &&
+                    subTopicPresent && subTopicElement.GetString().EndsWith("served"))
                 {
-                    if (_pendingResponse.TryGetValue(requestId.GetString(), out var tcs))
+                    if (_pendingResponse.TryGetValue(requestIdElement.GetString(), out var tcs))
+                    {
+                        tcs.TrySetResult(responseMessage);
+                    }
+                    return;
+                }
+
+                // Handle lift monitor response
+                if (callTypePresent && requestIdPresent && callTypeElement.GetString() == "monitor" &&
+                    subTopicPresent && subTopicElement.GetString().EndsWith("position"))
+                {
+                    if (_pendingResponse.TryGetValue(requestIdElement.GetString(), out var tcs))
                     {
                         tcs.TrySetResult(responseMessage);
                     }
@@ -453,7 +486,7 @@ namespace Kone.Api.Client.Clients
 
 
         // Generates a positive 32-bit integer (1 to 2,147,483,647)
-        private static int GetRequestId()
+        private static int GenerateIntRequestId()
         {
             byte[] bytes = new byte[4];
             Rng.GetBytes(bytes);
