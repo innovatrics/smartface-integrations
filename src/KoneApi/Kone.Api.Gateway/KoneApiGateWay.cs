@@ -1,6 +1,7 @@
 ﻿using Kone.Api.Client;
-using Microsoft.Extensions.Caching.Memory;
+using Kone.Api.Client.Clients.Extensions;
 using Serilog;
+using System.Collections.Concurrent;
 
 namespace Kone.Api.Gateway
 {
@@ -9,10 +10,7 @@ namespace Kone.Api.Gateway
         private readonly IKoneBuildingApi _koneBuildingApi;
         private readonly ILogger _log;
 
-        private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions
-        {
-            ExpirationScanFrequency = TimeSpan.FromMilliseconds(100)
-        });
+        private readonly ConcurrentDictionary<int, Task> _activeLandingCalls = new();
 
         public KoneApiGateWay(IKoneBuildingApi koneBuildingApi, ILogger log)
         {
@@ -20,23 +18,40 @@ namespace Kone.Api.Gateway
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
-        public async Task SendLandingCallIfNotRecentAsync(Guid memberId, int destinationAreaId, bool isDirectionUp, CancellationToken cancellationToken)
+        public async Task<bool> SendLandingCallToAreaIfNotInProgressAsync(
+            int destinationAreaId,
+            bool isDirectionUp,
+            CancellationToken cancellationToken = default)
         {
-            var key = $"{memberId}_{destinationAreaId}";
-
-            if (_memoryCache.TryGetValue(key, out _))
+            if (_activeLandingCalls.ContainsKey(destinationAreaId))
             {
-                _log.Debug("Skipping landing call for {Key} due to recent one already being called", key);
-                return;
+                _log.Debug("Landing call skipped - already in progress for area {DestinationAreaId}", destinationAreaId);
+                return false;
             }
 
-            await _koneBuildingApi.PlaceLandingCallAsync(destinationAreaId, isDirectionUp, cancellationToken);
+            var landingCallTask = _koneBuildingApi.PlaceLandingCallUntilServedOrNoUpdateForAsync(
+                destinationAreaId,
+                isDirectionUp,
+                TimeSpan.FromSeconds(5),
+                cancellationToken);
 
-            _memoryCache.GetOrCreate(key, entry =>
+            var registeredTask = _activeLandingCalls.GetOrAdd(destinationAreaId, landingCallTask);
+
+            if (registeredTask != landingCallTask)
             {
-                entry.SlidingExpiration = TimeSpan.FromSeconds(8);
-                return new object();
-            });
+                _log.Debug("Landing call skipped - already in progress for area {DestinationAreaId}", destinationAreaId);
+                return false;
+            }
+
+            try
+            {
+                await landingCallTask;
+                return true;
+            }
+            finally
+            {
+                _activeLandingCalls.TryRemove(destinationAreaId, out _);
+            }
         }
     }
 }

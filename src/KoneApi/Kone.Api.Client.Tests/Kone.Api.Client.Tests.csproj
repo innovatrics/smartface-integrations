@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kone.Api.Client\Kone.Api.Client.csproj" />
+    <ProjectReference Include="..\Kone.Api.Gateway\Kone.Api.Gateway.csproj" />
   </ItemGroup>
 
   <ItemGroup>
