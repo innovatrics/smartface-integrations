@@ -8,6 +8,7 @@ namespace Kone.Api.Client
         public static async Task LogInfoAsync(KoneAuthApiClient koneAuthApi,
             ILogger log,
             CancellationToken cancellationToken,
+            bool fullDiagnostic,
             string groupId = "1")
         {
             ArgumentNullException.ThrowIfNull(koneAuthApi);
@@ -20,21 +21,23 @@ namespace Kone.Api.Client
 
             foreach (var building in resources.Buildings)
             {
-                log.Information("Fetching building info for {BuildingId}", building.Id);
+                log.Information("Fetching building info for Building with Id {BuildingId}", building.Id);
 
                 var buildingApi = new KoneBuildingApiClient(log, koneAuthApi, building.Id, groupId);
 
                 var pingResponse = buildingApi.PingAsync(cancellationToken);
+                log.Information("KONE Building Ping Result: {@Ping}", pingResponse);
 
-                log.Information("KONE Ping Info: {@Ping}", pingResponse);
+                if (fullDiagnostic)
+                {
+                    var topology = await buildingApi.GetTopologyAsync(cancellationToken);
 
-                var topology = await buildingApi.GetTopologyAsync(cancellationToken);
+                    log.Information("KONE Building Topology: {@BuildingTopology}", topology);
 
-                log.Information("KONE Building Topology: {@BuildingTopology}", topology);
+                    var actions = await buildingApi.GetActionsAsync(cancellationToken);
 
-                var actions = await buildingApi.GetActionsAsync(cancellationToken);
-
-                log.Information("KONE Building Actions: {@BuildingActions}", actions);
+                    log.Information("KONE Building Actions: {@BuildingActions}", actions);
+                }
             }
         }
     }

@@ -2,6 +2,7 @@
 
 public class KoneConfiguration
 {
+    public bool LogFullStartupDiagnostics { get; set; }
     public string ClientId { get; set; }
     public string ClientSecret { get; set; }
     public string BuildingId { get; set; }

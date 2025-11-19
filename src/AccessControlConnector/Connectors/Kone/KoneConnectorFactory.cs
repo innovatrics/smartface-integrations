@@ -30,10 +30,11 @@ namespace AccessControlConnector.Connectors.Kone
 
                 var authClient = new KoneAuthApiClient(koneConfiguration.ClientId, koneConfiguration.ClientSecret);
 
-                var diagnosticCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                var diagnosticCts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
-                KoneDiagnostics.LogInfoAsync(authClient, log, diagnosticCts.Token, koneConfiguration.GroupId)
-                    .GetAwaiter().GetResult();
+                KoneDiagnostics.LogInfoAsync(authClient, log, diagnosticCts.Token,
+                    fullDiagnostic: koneConfiguration.LogFullStartupDiagnostics,
+                    koneConfiguration.GroupId).GetAwaiter().GetResult();
 
                 var buildingApiClient = new KoneBuildingApiClient(log.ForContext<KoneBuildingApiClient>(), authClient,
                     koneConfiguration.BuildingId,

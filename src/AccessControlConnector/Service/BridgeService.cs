@@ -6,7 +6,6 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
-using AccessControlConnector.Connectors.Kone;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
@@ -35,8 +34,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             {
                 throw new InvalidOperationException("No connectors configured in mappings");
             }
-
-            KoneConnectorFactory.Create(log, configuration);
         }
 
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
