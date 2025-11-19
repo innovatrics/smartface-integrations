@@ -26,21 +26,21 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(AccessConnectorConfig accessConnectorConfig, string accessControlUserId = null)
         {
-            _logger.Information("Send Open to {host}:{port}/do_value/slot_0/ and channel: {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Channel);
+            _logger.Information("Send Open to {host}:{port}/do_value/slot_0/ and channel: {channel}", accessConnectorConfig.Host, accessConnectorConfig.Port, accessConnectorConfig.Channel);
 
             var httpClient = _httpClientFactory.CreateClient();
 
-            var port = accessControlMapping.Port ?? 80;
+            var port = accessConnectorConfig.Port ?? 80;
 
-            var requestUri = $"{accessControlMapping.Schema ?? "http"}://{accessControlMapping.Host}:{port}/do_value/slot_0/";
+            var requestUri = $"{accessConnectorConfig.Schema ?? "http"}://{accessConnectorConfig.Host}:{port}/do_value/slot_0/";
 
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
-            if (!string.IsNullOrEmpty(accessControlMapping.Username) && !string.IsNullOrEmpty(accessControlMapping.Password))
+            if (!string.IsNullOrEmpty(accessConnectorConfig.Username) && !string.IsNullOrEmpty(accessConnectorConfig.Password))
             {
-                var authenticationString = $"{accessControlMapping.Username}:{accessControlMapping.Password}";
+                var authenticationString = $"{accessConnectorConfig.Username}:{accessConnectorConfig.Password}";
                 var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
 
                 httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
@@ -50,11 +50,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             {
                 DOVal = new[] {
                     new {
-                        Ch = accessControlMapping.Channel,
+                        Ch = accessConnectorConfig.Channel,
                         Val = 1
                     },
                     new {
-                        Ch = accessControlMapping.Channel,
+                        Ch = accessConnectorConfig.Channel,
                         Val = 0
                     }
                 }

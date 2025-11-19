@@ -48,12 +48,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             return Task.CompletedTask;
         }
         
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(AccessConnectorConfig accessConnectorConfig, string accessControlUserId = null)
         {
-            _logger.Information($"Initiating OpenAsync: VillaProConnector: {accessControlMapping.Username}({accessControlUserId}), using stream mapping: {accessControlMapping.StreamId}, for the gate: {accessControlMapping.TargetId}");
+            _logger.Information($"Initiating OpenAsync: VillaProConnector: {accessConnectorConfig.Username}({accessControlUserId}), using stream mapping: {accessConnectorConfig.StreamId}, for the gate: {accessConnectorConfig.TargetId}");
             
             // Implementation for opening the gate
-            await TicketPassAsync(accessControlMapping.TargetId, accessControlUserId, authToken, systToken);
+            await TicketPassAsync(accessConnectorConfig.TargetId, accessControlUserId, authToken, systToken);
         }
 
         public async Task TicketPassAsync(string deviceId, string ticketId, string authToken, string systToken)

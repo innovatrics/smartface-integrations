@@ -14,7 +14,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly ILogger _logger;
         private readonly AccessControlConnectorFactory _accessControlConnectorFactory;
         private readonly IUserResolverFactory _userResolverFactory;
-        private readonly AccessControlMapping[] _allAcMappings;
+        private readonly AccessConnectorConfig[] _allAccessConnectorConfigs;
 
         public BridgeService(
             ILogger logger,
@@ -28,9 +28,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _accessControlConnectorFactory = accessControlConnectorFactory ?? throw new ArgumentNullException(nameof(accessControlConnectorFactory));
             _userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
 
-            _allAcMappings = configuration.GetSection("AccessControlMapping").Get<AccessControlMapping[]>() ?? [];
+            _allAccessConnectorConfigs = configuration.GetSection("AccessControlMapping").Get<AccessConnectorConfig[]>() ?? [];
 
-            if (!_allAcMappings.Any())
+            if (!_allAccessConnectorConfigs.Any())
             {
                 throw new InvalidOperationException("No connectors configured in mappings");
             }
@@ -40,19 +40,19 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         {
             ArgumentNullException.ThrowIfNull(notification);
 
-            var streamMappings = GetMappingsByStreamId(notification.StreamId);
+            var streamAccessConnectorsConfigs = GetAccessConnectorConfigsForStream(notification.StreamId);
 
-            if (streamMappings.Length == 0)
+            if (streamAccessConnectorsConfigs.Length == 0)
             {
-                _logger.Warning("Stream {streamId} has not any mapping to AccessControl", notification.StreamId);
+                _logger.Warning("Granted notification for Stream {streamId} has no AccessConnector configuration", notification.StreamId);
                 return;
             }
 
-            foreach (var acStreamMapping in streamMappings)
+            foreach (var streamAccessConnectorsConfig in streamAccessConnectorsConfigs)
             {
-                _logger.Debug("Handling mapping for connector type {ConnectorType}", acStreamMapping.Type);
+                _logger.Debug("Handling access for connector of type {ConnectorType}", streamAccessConnectorsConfig.Type);
 
-                var watchlistExternalIds = acStreamMapping.WatchlistExternalIds;
+                var watchlistExternalIds = streamAccessConnectorsConfig.WatchlistExternalIds;
 
                 if (watchlistExternalIds != null)
                 {
@@ -66,13 +66,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                     }
                 }
 
+                var accessControlConnector = _accessControlConnectorFactory.Create(streamAccessConnectorsConfig.Type);
                 string accessControlUser = null;
 
-                var accessControlConnector = _accessControlConnectorFactory.Create(acStreamMapping.Type);
-
-                if (acStreamMapping.UserResolver != null)
+                if (streamAccessConnectorsConfig.UserResolver != null)
                 {
-                    var userResolver = _userResolverFactory.Create(acStreamMapping.UserResolver);
+                    var userResolver = _userResolverFactory.Create(streamAccessConnectorsConfig.UserResolver);
 
                     accessControlUser = await userResolver.ResolveUserAsync(notification);
 
@@ -84,20 +83,20 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                     }
                 }
 
-                await accessControlConnector.OpenAsync(acStreamMapping, accessControlUser);
+                await accessControlConnector.OpenAsync(streamAccessConnectorsConfig, accessControlUser);
 
-                if (acStreamMapping.NextCallDelayMs is > 0)
+                if (streamAccessConnectorsConfig.NextCallDelayMs is > 0)
                 {
-                    _logger.Information("Delay next call for {nextCallDelayMs} ms", acStreamMapping.NextCallDelayMs);
+                    _logger.Information("Delay next call for {nextCallDelayMs} ms", streamAccessConnectorsConfig.NextCallDelayMs);
 
-                    await Task.Delay(acStreamMapping.NextCallDelayMs.Value);
+                    await Task.Delay(streamAccessConnectorsConfig.NextCallDelayMs.Value);
                 }
             }
         }
 
         public async Task SendKeepAliveSignalAsync()
         {
-            var uniqueAccessControls = _allAcMappings
+            var uniqueAccessControls = _allAccessConnectorConfigs
                                                 .GroupBy(g => new
                                                 {
                                                     g.Schema,
@@ -124,14 +123,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
-        private AccessControlMapping[] GetMappingsByStreamId(string streamIdStr)
+        private AccessConnectorConfig[] GetAccessConnectorConfigsForStream(string streamIdStr)
         {
             if (!Guid.TryParse(streamIdStr, out var streamId))
             {
                 throw new InvalidOperationException($"{nameof(streamIdStr)} is expected as GUID");
             }
 
-            return _allAcMappings.Where(w => w.StreamId == streamId).ToArray();
+            return _allAccessConnectorConfigs.Where(w => w.StreamId == streamId).ToArray();
         }
     }
 }

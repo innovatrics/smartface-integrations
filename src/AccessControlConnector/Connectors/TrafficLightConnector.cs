@@ -28,13 +28,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             this.logger.Information("Traffic Light Connector Created!");
         }
 
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(AccessConnectorConfig accessConnectorConfig, string accessControlUserId = null)
         {
-            this.logger.Information("Send Open to {host}:{port}/go", accessControlMapping.Host, accessControlMapping.Port);
+            this.logger.Information("Send Open to {host}:{port}/go", accessConnectorConfig.Host, accessConnectorConfig.Port);
 
             var httpClient = this.httpClientFactory.CreateClient();
 
-            var requestUri = $"{accessControlMapping.Schema ?? "http"}://{accessControlMapping.Host}:{accessControlMapping.Port}/go";
+            var requestUri = $"{accessConnectorConfig.Schema ?? "http"}://{accessConnectorConfig.Host}:{accessConnectorConfig.Port}/go";
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
