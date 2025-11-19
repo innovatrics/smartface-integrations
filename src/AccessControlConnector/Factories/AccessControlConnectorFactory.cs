@@ -74,7 +74,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                     return KoneConnectorFactory.Create(_logger, _configuration);
 
                 default:
-                    throw new NotImplementedException($"AccessControl of type {accessConnectorType} not supported");
+                    throw new NotImplementedException($"Access Connector of type {accessConnectorType} not supported");
             }
         }
     }
