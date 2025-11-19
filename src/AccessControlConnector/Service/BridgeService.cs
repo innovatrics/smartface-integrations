@@ -29,10 +29,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
 
             _allAccessConnectorConfigs = configuration.GetSection("AccessControlMapping").Get<AccessConnectorConfig[]>() ?? [];
+            _allAccessConnectorConfigs = _allAccessConnectorConfigs.Where(x => x.Enabled).ToArray();
 
             if (!_allAccessConnectorConfigs.Any())
             {
-                throw new InvalidOperationException("No connectors configured in mappings");
+                throw new InvalidOperationException("No enabled connectors configured in AccessControlMapping");
             }
         }
 
@@ -44,7 +45,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             if (streamAccessConnectorsConfigs.Length == 0)
             {
-                _log.Warning("Granted notification for Stream {streamId} has no AccessConnector configuration", notification.StreamId);
+                _log.Warning("Granted notification for Stream {StreamId} has no AccessConnector configuration", notification.StreamId);
                 return;
             }
 
@@ -59,7 +60,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                     if (watchlistExternalIds.Length > 0 &&
                         !watchlistExternalIds.Contains(notification.WatchlistExternalId))
                     {
-                        _log.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.",
+                        _log.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {StreamId}",
                             notification.WatchlistExternalId, notification.StreamId);
 
                         continue;
@@ -75,7 +76,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
                     accessControlUser = await userResolver.ResolveUserAsync(notification);
 
-                    _log.Debug("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
+                    _log.Debug("Resolved {WlMemberId} to {AccessControlUser}", notification.WatchlistMemberId, accessControlUser);
 
                     if (accessControlUser == null)
                     {
@@ -87,7 +88,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
                 if (streamAccessConnectorsConfig.NextCallDelayMs is > 0)
                 {
-                    _log.Information("Delay next call for {nextCallDelayMs} ms", streamAccessConnectorsConfig.NextCallDelayMs);
+                    _log.Information("Delay next call for {NextCallDelayMs} ms", streamAccessConnectorsConfig.NextCallDelayMs);
 
                     await Task.Delay(streamAccessConnectorsConfig.NextCallDelayMs.Value);
                 }

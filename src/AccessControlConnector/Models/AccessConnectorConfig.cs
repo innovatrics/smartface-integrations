@@ -4,6 +4,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
 {
     public class AccessConnectorConfig
     {
+        public bool Enabled { get; set; } = true;
         public string Type                              { get; set; } = "Advantech WISE-4000";
         public Guid StreamId                            { get; set; }
         public string Schema                            { get; set; } = "http";
