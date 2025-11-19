@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using AccessControlConnector.Connectors;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
@@ -19,26 +20,25 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
         public AccessControlConnectorFactory(
             ILogger logger,
             IConfiguration configuration,
-            IHttpClientFactory httpClientFactory
-        )
+            IHttpClientFactory httpClientFactory)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public IAccessControlConnector Create(string type)
+        public IAccessControlConnector Create(string accessConnectorType)
         {
-            if (type == null)
+            if (accessConnectorType == null)
             {
-                throw new ArgumentNullException(nameof(type));
+                throw new ArgumentNullException(nameof(accessConnectorType));
             }
 
-            _logger.Information("Creating IAccessControlConnector for type {type}", type);
+            _logger.Information("Creating IAccessControlConnector for type {type}", accessConnectorType);
 
-            type = type.ReplaceAll(["-", " ", "."], ["_", "_", "_"]).ToUpper();
+            accessConnectorType = accessConnectorType.ReplaceAll(["-", " ", "."], ["_", "_", "_"]).ToUpper();
 
-            switch (type)
+            switch (accessConnectorType)
             {
                 case AccessControlConnectorTypes.ADVANTECH_WISE_4000:
                     return new AdvantechWISE4000Connector(_logger, _configuration, _httpClientFactory);
@@ -57,7 +57,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AccessControlConnectorTypes.AXIS_IO_PORT:
                     return new IOPortConnector(_logger, _httpClientFactory);
-                
+
                 case AccessControlConnectorTypes.NN_IP_INTERCOM:
                     return new IpIntercomConnector(_logger, _httpClientFactory);
 
@@ -74,7 +74,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                     return new KoneConnector(_logger, _configuration, _httpClientFactory);
 
                 default:
-                    throw new NotImplementedException($"AccessControl of type {type} not supported");
+                    throw new NotImplementedException($"AccessControl of type {accessConnectorType} not supported");
             }
         }
     }

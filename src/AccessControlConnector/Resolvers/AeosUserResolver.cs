@@ -67,7 +67,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 
                 if (notification.WatchlistMemberId != null)
                 {
-                    _logger.Information("WatchlistMemberId {notification.WatchlistMemberId} is available and will be used as clientId", 
+                    _logger.Information("WatchlistMemberId {WatchlistMemberId} is available and will be used as clientId", 
                         notification.WatchlistMemberId);
 
                     _returnedValue = notification.WatchlistMemberId;

@@ -30,6 +30,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
 
             _allCamerasMappings = GetAllCameraMappings();
+
+            if (!_allCamerasMappings.Any())
+            {
+                throw new InvalidOperationException("No connectors configured in mappings");
+            }
         }
 
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
@@ -46,13 +51,18 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             foreach (var cameraToAccessControlMapping in cameraToAccessControlMappings)
             {
-                _logger.Warning("Handling mapping {type}", cameraToAccessControlMapping.Type);
+                _logger.Debug("Handling mapping for connector type {ConnectorType}", cameraToAccessControlMapping.Type);
 
-                if (cameraToAccessControlMapping.WatchlistExternalIds != null)
+                var watchlistExternalIds = cameraToAccessControlMapping.WatchlistExternalIds;
+
+                if (watchlistExternalIds != null)
                 {
-                    if (cameraToAccessControlMapping.WatchlistExternalIds.Length > 0 && !cameraToAccessControlMapping.WatchlistExternalIds.Contains(notification.WatchlistExternalId))
+                    if (watchlistExternalIds.Length > 0 &&
+                        !watchlistExternalIds.Contains(notification.WatchlistExternalId))
                     {
-                        _logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.", notification.WatchlistExternalId, notification.StreamId);
+                        _logger.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {streamId}.",
+                            notification.WatchlistExternalId, notification.StreamId);
+
                         continue;
                     }
                 }
@@ -67,7 +77,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
                     accessControlUser = await userResolver.ResolveUserAsync(notification);
 
-                    _logger.Information("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
+                    _logger.Debug("Resolved {wlMemberId} to {accessControlUser}", notification.WatchlistMemberId, accessControlUser);
 
                     if (accessControlUser == null)
                     {
