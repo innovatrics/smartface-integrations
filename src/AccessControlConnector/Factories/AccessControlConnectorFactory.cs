@@ -11,7 +11,7 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 {
-    public class AccessControlConnectorFactory : IAccessControlConnectorFactory
+    public class AccessControlConnectorFactory
     {
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;

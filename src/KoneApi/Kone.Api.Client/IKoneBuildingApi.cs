@@ -4,6 +4,9 @@ namespace Kone.Api.Client
 {
     public interface IKoneBuildingApi
     {
+        event Action<string>? MessageSend;
+        event Func<string, Task>? MessageReceived;
+
         Task<PingResponse> PingAsync(CancellationToken cancellationToken);
         Task<TopologyResponse> GetTopologyAsync(CancellationToken cancellationToken);
         Task<ActionsResponse> GetActionsAsync(CancellationToken cancellationToken);

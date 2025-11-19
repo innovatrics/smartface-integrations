@@ -12,26 +12,25 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
     public class BridgeService : IBridgeService
     {
         private readonly ILogger _logger;
-        private readonly IConfiguration _configuration;
-        private readonly IAccessControlConnectorFactory _accessControlConnectorFactory;
+        private readonly AccessControlConnectorFactory _accessControlConnectorFactory;
         private readonly IUserResolverFactory _userResolverFactory;
-        private readonly AccessControlMapping[] _allCamerasMappings;
+        private readonly AccessControlMapping[] _allAcMappings;
 
         public BridgeService(
             ILogger logger,
             IConfiguration configuration,
-            IAccessControlConnectorFactory accessControlConnectorFactory,
+            AccessControlConnectorFactory accessControlConnectorFactory,
             IUserResolverFactory userResolverFactory
         )
         {
+            ArgumentNullException.ThrowIfNull(configuration);
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _accessControlConnectorFactory = accessControlConnectorFactory ?? throw new ArgumentNullException(nameof(accessControlConnectorFactory));
             _userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
 
-            _allCamerasMappings = GetAllCameraMappings();
+            _allAcMappings = configuration.GetSection("AccessControlMapping").Get<AccessControlMapping[]>() ?? [];
 
-            if (!_allCamerasMappings.Any())
+            if (!_allAcMappings.Any())
             {
                 throw new InvalidOperationException("No connectors configured in mappings");
             }
@@ -41,19 +40,19 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         {
             ArgumentNullException.ThrowIfNull(notification);
 
-            var cameraToAccessControlMappings = GetCameraMappings(notification.StreamId);
+            var streamMappings = GetMappingsByStreamId(notification.StreamId);
 
-            if (cameraToAccessControlMappings.Length == 0)
+            if (streamMappings.Length == 0)
             {
                 _logger.Warning("Stream {streamId} has not any mapping to AccessControl", notification.StreamId);
                 return;
             }
 
-            foreach (var cameraToAccessControlMapping in cameraToAccessControlMappings)
+            foreach (var acStreamMapping in streamMappings)
             {
-                _logger.Debug("Handling mapping for connector type {ConnectorType}", cameraToAccessControlMapping.Type);
+                _logger.Debug("Handling mapping for connector type {ConnectorType}", acStreamMapping.Type);
 
-                var watchlistExternalIds = cameraToAccessControlMapping.WatchlistExternalIds;
+                var watchlistExternalIds = acStreamMapping.WatchlistExternalIds;
 
                 if (watchlistExternalIds != null)
                 {
@@ -69,11 +68,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
                 string accessControlUser = null;
 
-                var accessControlConnector = _accessControlConnectorFactory.Create(cameraToAccessControlMapping.Type);
+                var accessControlConnector = _accessControlConnectorFactory.Create(acStreamMapping.Type);
 
-                if (cameraToAccessControlMapping.UserResolver != null)
+                if (acStreamMapping.UserResolver != null)
                 {
-                    var userResolver = _userResolverFactory.Create(cameraToAccessControlMapping.UserResolver);
+                    var userResolver = _userResolverFactory.Create(acStreamMapping.UserResolver);
 
                     accessControlUser = await userResolver.ResolveUserAsync(notification);
 
@@ -85,28 +84,20 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                     }
                 }
 
-                await accessControlConnector.OpenAsync(cameraToAccessControlMapping, accessControlUser);
+                await accessControlConnector.OpenAsync(acStreamMapping, accessControlUser);
 
-                if (cameraToAccessControlMapping.NextCallDelayMs is > 0)
+                if (acStreamMapping.NextCallDelayMs is > 0)
                 {
-                    _logger.Information("Delay next call for {nextCallDelayMs} ms", cameraToAccessControlMapping.NextCallDelayMs);
+                    _logger.Information("Delay next call for {nextCallDelayMs} ms", acStreamMapping.NextCallDelayMs);
 
-                    await Task.Delay(cameraToAccessControlMapping.NextCallDelayMs.Value);
+                    await Task.Delay(acStreamMapping.NextCallDelayMs.Value);
                 }
             }
         }
 
         public async Task SendKeepAliveSignalAsync()
         {
-            var cameraToAccessControlMapping = GetAllCameraMappings();
-
-            if (cameraToAccessControlMapping == null)
-            {
-                _logger.Warning("No mapping to AccessControl configured");
-                return;
-            }
-
-            var uniqueAccessControls = cameraToAccessControlMapping
+            var uniqueAccessControls = _allAcMappings
                                                 .GroupBy(g => new
                                                 {
                                                     g.Schema,
@@ -133,25 +124,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
-        private AccessControlMapping[] GetCameraMappings(string streamId)
+        private AccessControlMapping[] GetMappingsByStreamId(string streamIdStr)
         {
-            if (!Guid.TryParse(streamId, out var streamGuid))
+            if (!Guid.TryParse(streamIdStr, out var streamId))
             {
-                throw new InvalidOperationException($"{nameof(streamId)} is expected as GUID");
+                throw new InvalidOperationException($"{nameof(streamIdStr)} is expected as GUID");
             }
 
-            return _allCamerasMappings
-                        .Where(w => w.StreamId == streamGuid)
-                        .ToArray();
-        }
-
-        private AccessControlMapping[] GetAllCameraMappings()
-        {
-            var mappings = _configuration
-                .GetSection("AccessControlMapping")
-                .Get<AccessControlMapping[]>() ?? [];
-
-            return mappings;
+            return _allAcMappings.Where(w => w.StreamId == streamId).ToArray();
         }
     }
 }
