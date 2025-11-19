@@ -7,7 +7,7 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Kone.Api.Client;
 using Serilog;
 
-namespace AccessControlConnector.Connectors
+namespace AccessControlConnector.Connectors.Kone
 {
     public class KoneConnector : IAccessControlConnector
     {

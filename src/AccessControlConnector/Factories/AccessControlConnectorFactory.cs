@@ -1,6 +1,5 @@
 using System;
 using System.Net.Http;
-using AccessControlConnector.Connectors;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
@@ -8,6 +7,7 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.Inner
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.AXIS;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.NN;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using AccessControlConnector.Connectors.Kone;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 {
@@ -71,7 +71,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                     return new AeosConnector(_logger, _configuration, _httpClientFactory);
 
                 case AccessControlConnectorTypes.KONE_CONNECTOR:
-                    return new KoneConnector(_logger, _configuration, _httpClientFactory);
+                    return KoneConnectorFactory.Create(_logger, _configuration);
 
                 default:
                     throw new NotImplementedException($"AccessControl of type {accessConnectorType} not supported");
