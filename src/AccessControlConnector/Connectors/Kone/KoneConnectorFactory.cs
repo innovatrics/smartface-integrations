@@ -1,9 +1,10 @@
-﻿using System;
-using System.Threading;
-using Kone.Api.Client;
+﻿using Kone.Api.Client;
 using Kone.Api.Client.Clients;
 using Microsoft.Extensions.Configuration;
 using Serilog;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AccessControlConnector.Connectors.Kone
 {
@@ -40,6 +41,20 @@ namespace AccessControlConnector.Connectors.Kone
                     koneConfiguration.BuildingId,
                     koneConfiguration.GroupId,
                     koneConfiguration.WebSocketEndpoint);
+
+                if (koneConfiguration.LogAllWebSocketMessages)
+                {
+                    buildingApiClient.MessageSend += message =>
+                    {
+                        log.Information("MESSAGE SEND: {Message}", message);
+                    };
+
+                    buildingApiClient.MessageReceived += message =>
+                    {
+                        log.Information("MESSAGE RECEIVED: {Message}", message);
+                        return Task.CompletedTask;
+                    };
+                }
 
                 var gateway = new KoneApiGateWay(buildingApiClient, log.ForContext<KoneApiGateWay>());
                 _koneConnector = new KoneConnector(gateway, log.ForContext<KoneConnector>());
