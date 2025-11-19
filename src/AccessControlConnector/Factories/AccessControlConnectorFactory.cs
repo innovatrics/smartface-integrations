@@ -1,9 +1,7 @@
 using System;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.AXIS;
@@ -38,15 +36,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
             _logger.Information("Creating IAccessControlConnector for type {type}", type);
 
-            type = type
-                    .ReplaceAll(new string[] { "-", " ", "." }, new string[] { "_", "_", "_" })
-                    .ToUpper();
+            type = type.ReplaceAll(["-", " ", "."], ["_", "_", "_"]).ToUpper();
 
             switch (type)
             {
-                default:
-                    throw new NotImplementedException($"AccessControl of type {type} not supported");
-
                 case AccessControlConnectorTypes.ADVANTECH_WISE_4000:
                     return new AdvantechWISE4000Connector(_logger, _configuration, _httpClientFactory);
 
@@ -79,6 +72,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AccessControlConnectorTypes.KONE_CONNECTOR:
                     return new KoneConnector(_logger, _configuration, _httpClientFactory);
+
+                default:
+                    throw new NotImplementedException($"AccessControl of type {type} not supported");
             }
         }
     }

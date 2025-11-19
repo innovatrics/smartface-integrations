@@ -1,13 +1,11 @@
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
-using System.Threading;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
@@ -79,8 +77,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
                 await accessControlConnector.OpenAsync(cameraToAccessControlMapping, accessControlUser);
 
-                if (cameraToAccessControlMapping.NextCallDelayMs != null &&
-                    cameraToAccessControlMapping.NextCallDelayMs > 0)
+                if (cameraToAccessControlMapping.NextCallDelayMs is > 0)
                 {
                     _logger.Information("Delay next call for {nextCallDelayMs} ms", cameraToAccessControlMapping.NextCallDelayMs);
 
@@ -141,13 +138,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private AccessControlMapping[] GetAllCameraMappings()
         {
             var mappings = _configuration
-                                .GetSection("AccessControlMapping")
-                                .Get<AccessControlMapping[]>();
-
-            if (mappings == null)
-            {
-                mappings = new AccessControlMapping[] { };
-            }
+                .GetSection("AccessControlMapping")
+                .Get<AccessControlMapping[]>() ?? [];
 
             return mappings;
         }
