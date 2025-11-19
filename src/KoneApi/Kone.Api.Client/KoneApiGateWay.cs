@@ -1,9 +1,8 @@
-﻿using Kone.Api.Client;
+﻿using System.Collections.Concurrent;
 using Kone.Api.Client.Clients.Extensions;
 using Serilog;
-using System.Collections.Concurrent;
 
-namespace Kone.Api.Gateway
+namespace Kone.Api.Client
 {
     public class KoneApiGateWay
     {
