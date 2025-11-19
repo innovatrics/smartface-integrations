@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.Linq;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
-using System.ComponentModel;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 {
@@ -30,7 +29,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
             _labelName = _configuration.GetValue<string>("AeosConfiguration:LabelName");
-            if(string.IsNullOrEmpty(_labelName)){
+            if (string.IsNullOrEmpty(_labelName))
+            {
                 _logger.Error("AeosConfiguration:LabelName is not set in the configuration");
                 throw new ArgumentException("AeosConfiguration:LabelName is not set in the configuration");
             }
@@ -56,15 +56,24 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
                                         .SingleOrDefault();
             }
 
-            if(_aeoslabel != null){
+            if (_aeoslabel != null)
+            {
                 _logger.Information("AEOS Label {aeoslabel} is available and will be used as clientId", _aeoslabel);
                 _returnedValue = _aeoslabel;
-            }else{
+            }
+            else
+            {
                 _logger.Information("AEOS Label {aeoslabel} is not available, we will check for WatchlistMemberId", _aeoslabel);
-                if(notification.WatchlistMemberId != null){
-                    _logger.Information("WatchlistMemberId {notification.WatchlistMemberId} is available and will be used as clientId", notification.WatchlistMemberId);
+
+                if (notification.WatchlistMemberId != null)
+                {
+                    _logger.Information("WatchlistMemberId {notification.WatchlistMemberId} is available and will be used as clientId", 
+                        notification.WatchlistMemberId);
+
                     _returnedValue = notification.WatchlistMemberId;
-                }else{
+                }
+                else
+                {
                     _logger.Error("No valid client ID found - both values for AEOS Label and WatchlistMemberId are either null or empty");
                     throw new ArgumentException("No valid client ID found - both values for Label and WatchlistMemberId are either null or empty");
                 }

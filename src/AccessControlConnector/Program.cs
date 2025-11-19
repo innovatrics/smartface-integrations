@@ -61,7 +61,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
         {
             services.AddHttpClient();
 
-            services.AddSingleton<ILogger>(logger);
+            services.AddSingleton(logger);
 
             services.AddSingleton<IGrpcStreamSubscriber, GrpcStreamSubscriber>();
             services.AddSingleton<GrpcStreamSubscriberFactory>();
