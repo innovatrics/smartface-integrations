@@ -14,7 +14,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly ILogger _log;
         private readonly AccessControlConnectorFactory _accessControlConnectorFactory;
         private readonly IUserResolverFactory _userResolverFactory;
-        private readonly AccessConnectorConfig[] _allAccessConnectorConfigs;
+        private readonly AccessControlMapping[] _allAccessConnectorConfigs;
 
         public BridgeService(
             ILogger log,
@@ -28,7 +28,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _accessControlConnectorFactory = accessControlConnectorFactory ?? throw new ArgumentNullException(nameof(accessControlConnectorFactory));
             _userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
 
-            _allAccessConnectorConfigs = configuration.GetSection("AccessControlMapping").Get<AccessConnectorConfig[]>() ?? [];
+            _allAccessConnectorConfigs = configuration.GetSection("AccessControlMapping").Get<AccessControlMapping[]>() ?? [];
             _allAccessConnectorConfigs = _allAccessConnectorConfigs.Where(x => x.Enabled).ToArray();
 
             if (!_allAccessConnectorConfigs.Any())
@@ -124,7 +124,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
-        private AccessConnectorConfig[] GetAccessConnectorConfigsForStream(string streamIdStr)
+        private AccessControlMapping[] GetAccessConnectorConfigsForStream(string streamIdStr)
         {
             if (!Guid.TryParse(streamIdStr, out var streamId))
             {

@@ -29,7 +29,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(AccessConnectorConfig accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
             _logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 

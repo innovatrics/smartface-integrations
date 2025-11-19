@@ -38,7 +38,7 @@ namespace AccessControlConnector.Connectors.Kone
             });
         }
 
-        public async Task OpenAsync(AccessConnectorConfig accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
             var maxStateUpdateWaitTime = TimeSpan.FromSeconds(3);
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
