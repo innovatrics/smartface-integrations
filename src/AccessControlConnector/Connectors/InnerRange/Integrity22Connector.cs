@@ -29,9 +29,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(AccessConnectorConfig accessConnectorConfig, string accessControlUserId = null)
+        public async Task OpenAsync(AccessConnectorConfig accessControlMapping, string accessControlUserId = null)
         {
-            _logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessConnectorConfig.Host, accessConnectorConfig.Port, accessConnectorConfig.Reader, accessConnectorConfig.Channel);
+            _logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
             var cardData = $"20000000000000000{accessControlUserId}";
 
@@ -42,14 +42,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             }
 
             await SendOpenAsync(
-                accessConnectorConfig.Schema,
-                accessConnectorConfig.Host, 
-                accessConnectorConfig.Port, 
-                accessConnectorConfig.Username, 
-                accessConnectorConfig.Password, 
+                accessControlMapping.Schema,
+                accessControlMapping.Host, 
+                accessControlMapping.Port, 
+                accessControlMapping.Username, 
+                accessControlMapping.Password, 
                 cardData,
-                accessConnectorConfig.Reader,
-                accessConnectorConfig.Channel.Value
+                accessControlMapping.Reader,
+                accessControlMapping.Channel.Value
             );
 
             return;

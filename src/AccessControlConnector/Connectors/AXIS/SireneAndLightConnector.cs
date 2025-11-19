@@ -28,17 +28,17 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(AccessConnectorConfig accessConnectorConfig, string accessControlUserId = null)
+        public async Task OpenAsync(AccessConnectorConfig accessControlMapping, string accessControlUserId = null)
         {
-            this.logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessConnectorConfig.Host, accessConnectorConfig.Port, accessConnectorConfig.Reader, accessConnectorConfig.Channel);
+            this.logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
             await this.SendOpenAsync(
-                accessConnectorConfig.Schema,
-                accessConnectorConfig.Host,
-                accessConnectorConfig.Port ?? 80,
-                accessConnectorConfig.Username,
-                accessConnectorConfig.Password,
-                accessConnectorConfig.Params ?? "access_granted"
+                accessControlMapping.Schema,
+                accessControlMapping.Host,
+                accessControlMapping.Port ?? 80,
+                accessControlMapping.Username,
+                accessControlMapping.Password,
+                accessControlMapping.Params ?? "access_granted"
             );
 
             return;

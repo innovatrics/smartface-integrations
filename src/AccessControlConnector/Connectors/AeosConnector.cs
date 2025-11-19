@@ -46,15 +46,15 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             return Task.CompletedTask;
         }
 
-        public async Task OpenAsync(AccessConnectorConfig accessConnectorConfig, string accessControlUserId = null)
+        public async Task OpenAsync(AccessConnectorConfig accessControlMapping, string accessControlUserId = null)
         {
-            _logger.Information($"Sending ipBadge to {accessConnectorConfig.Host}:{accessConnectorConfig.Port}");
+            _logger.Information($"Sending ipBadge to {accessControlMapping.Host}:{accessControlMapping.Port}");
 
             try
             {
                 if (_socket == null)
                 {
-                    _socket = await CreateOpenSocketAsync(accessConnectorConfig.Host, accessConnectorConfig.Port ?? 0);
+                    _socket = await CreateOpenSocketAsync(accessControlMapping.Host, accessControlMapping.Port ?? 0);
                 }
                 var clientIdBytes = Encoding.UTF8.GetBytes(accessControlUserId);
 

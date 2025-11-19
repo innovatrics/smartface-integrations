@@ -25,49 +25,49 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.N
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(AccessConnectorConfig accessConnectorConfig, string accessControlUserId = null)
+        public async Task OpenAsync(AccessConnectorConfig accessControlMapping, string accessControlUserId = null)
         {
-            this.logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessConnectorConfig.Host, accessConnectorConfig.Port, accessConnectorConfig.Reader, accessConnectorConfig.Channel);
+            this.logger.Information("OpenAsync to {host}:{port} for {reader} and channel {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Reader, accessControlMapping.Channel);
 
-            if (!string.IsNullOrEmpty(accessControlUserId) && accessConnectorConfig.Channel != null)
+            if (!string.IsNullOrEmpty(accessControlUserId) && accessControlMapping.Channel != null)
             {
                 await SendOpenToAccessPointAsync(
-                    accessConnectorConfig.Schema,
-                    accessConnectorConfig.Host,
-                    accessConnectorConfig.Port ?? 80,
-                    accessConnectorConfig.Username,
-                    accessConnectorConfig.Password,
-                    accessConnectorConfig.Channel,
+                    accessControlMapping.Schema,
+                    accessControlMapping.Host,
+                    accessControlMapping.Port ?? 80,
+                    accessControlMapping.Username,
+                    accessControlMapping.Password,
+                    accessControlMapping.Channel,
                     accessControlUserId
                 );
 
                 return;
             }
 
-            if (accessConnectorConfig.Switch != null && accessConnectorConfig.Action != null && accessConnectorConfig.Reader == null)
+            if (accessControlMapping.Switch != null && accessControlMapping.Action != null && accessControlMapping.Reader == null)
             {
                 await SendOpenToSwitchAsync(
-                    accessConnectorConfig.Schema,
-                    accessConnectorConfig.Host,
-                    accessConnectorConfig.Port ?? 80,
-                    accessConnectorConfig.Username,
-                    accessConnectorConfig.Password,
-                    accessConnectorConfig.Switch,
-                    accessConnectorConfig.Action,
-                    accessConnectorConfig.Params
+                    accessControlMapping.Schema,
+                    accessControlMapping.Host,
+                    accessControlMapping.Port ?? 80,
+                    accessControlMapping.Username,
+                    accessControlMapping.Password,
+                    accessControlMapping.Switch,
+                    accessControlMapping.Action,
+                    accessControlMapping.Params
                 );
 
                 return;
             }
 
             await SendOpenToControlAsync(
-                accessConnectorConfig.Schema,
-                accessConnectorConfig.Host,
-                accessConnectorConfig.Port ?? 80,
-                accessConnectorConfig.Username,
-                accessConnectorConfig.Password,
-                accessConnectorConfig.Reader,
-                accessConnectorConfig.Action
+                accessControlMapping.Schema,
+                accessControlMapping.Host,
+                accessControlMapping.Port ?? 80,
+                accessControlMapping.Username,
+                accessControlMapping.Password,
+                accessControlMapping.Reader,
+                accessControlMapping.Action
             );
 
             return;
