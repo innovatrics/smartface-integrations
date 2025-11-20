@@ -4,10 +4,11 @@ using Kone.Api.Client.Clients.Generated;
 using Kone.Api.Client.Clients.Models;
 using Kone.Api.Client.Exceptions;
 using Newtonsoft.Json;
+using Serilog;
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Serilog;
 using Xunit.Abstractions;
 
 namespace Kone.Api.Client.Tests
@@ -28,7 +29,18 @@ namespace Kone.Api.Client.Tests
             _fixture = fixture;
             _koneAuthApi = fixture.KoneAuthApi;
             _koneBuildingApi = fixture.KoneBuildingApi;
-            _output = output ?? throw new ArgumentNullException(nameof(output));
+            _output = output ?? throw new ArgumentNullException(nameof(output));            
+        }
+
+        public Task InitializeAsync()
+        {
+            _koneAuthApi.OnRequest += OnKoneAuthApiOnOnRequest;
+            _koneAuthApi.OnResponse += OnKoneAuthApiOnOnResponse;
+
+            _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
+            _koneBuildingApi.MessageSend += KoneWs_MessageSend;
+
+            return Task.CompletedTask;
         }
 
         [Fact]
@@ -39,7 +51,14 @@ namespace Kone.Api.Client.Tests
                 .WriteTo.TestOutput(_output)
                 .CreateLogger();
 
-            await KoneDiagnostics.LogInfoAsync(_fixture.KoneAuthApi, logger, CancellationToken.None, fullDiagnostic: true);
+            await KoneDiagnostics.LogInfoAsync(_fixture.KoneAuthApi,
+                logger, CancellationToken.None, 
+                fullDiagnostic: true,
+                buildingApiModifier: api =>
+            {
+                api.MessageReceived += KoneWs_MessageReceived;
+                api.MessageSend += KoneWs_MessageSend;
+            });
         }
 
         [Fact]
@@ -209,6 +228,20 @@ namespace Kone.Api.Client.Tests
         }
 
         [Fact]
+        public async Task Test_Destination_Call_With_Monitor_Successful()
+        {
+            //TODO: Why these ids does not work ?
+            var srcId = _fixture.SampleLiftAreaIds.First();
+            var dstId = _fixture.SampleLiftAreaIds.Skip(1).First();
+
+            await _koneBuildingApi.PlaceDestinationCallWithPositionUpdatesAsync(
+                sourceAreaId: 3000,
+                destinationAreaId: 5000,
+                null,
+                new CancellationTokenSource(60_000).Token);
+        }
+
+        [Fact]
         public async Task Test_Destination_Call_Invalid()
         {
             //TODO: Why these ids does not work ?
@@ -248,17 +281,30 @@ namespace Kone.Api.Client.Tests
             _output.WriteLine("--------------------------------");
         }
 
-        public Task InitializeAsync()
+        void OnKoneAuthApiOnOnRequest((HttpRequestMessage, string Url) r)
         {
-            _koneBuildingApi.MessageReceived += KoneWs_MessageReceived;
-            _koneBuildingApi.MessageSend += KoneWs_MessageSend;
-            return Task.CompletedTask;
+            _output.WriteLine($"AUTH API REQUEST: ({r.Url}):");
+        }
+
+        void OnKoneAuthApiOnOnResponse(HttpResponseMessage r)
+        {
+            var sb = new StringBuilder();
+            sb.Append("StatusCode: ");
+            sb.Append((int)r.StatusCode);
+            sb.Append("', Version: ");
+            sb.Append(r.Version);
+
+            _output.WriteLine($"AUTH API RESPONSE: {sb}");
         }
 
         public Task DisposeAsync()
         {
+            _koneAuthApi.OnRequest -= OnKoneAuthApiOnOnRequest;
+            _koneAuthApi.OnResponse -= OnKoneAuthApiOnOnResponse;
+
             _koneBuildingApi.MessageReceived -= KoneWs_MessageReceived;
             _koneBuildingApi.MessageSend -= KoneWs_MessageSend;
+
             return Task.CompletedTask;
         }
     }

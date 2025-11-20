@@ -6,6 +6,9 @@ namespace Kone.Api.Client.Clients
 {
     public class KoneAuthApiClient
     {
+        public event Action<(HttpRequestMessage, string Url)>? OnRequest;
+        public event Action<HttpResponseMessage>? OnResponse;
+
         public const string DefaultScope = "application/inventory";
 
         private readonly HttpClient _httpClientForOAuth = new();
@@ -21,6 +24,8 @@ namespace Kone.Api.Client.Clients
             var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
             _httpClientForOAuth.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basic);
             _oauth2Client = new Oauth2Client(_httpClientForOAuth);
+            _oauth2Client.OnRequest += r => OnRequest?.Invoke(r);
+            _oauth2Client.OnResponse += r => OnResponse?.Invoke(r);
         }
 
         public Task<AccessTokenResponse> GetDefaultAccessTokenAsync(CancellationToken cancellationToken)
@@ -42,9 +47,31 @@ namespace Kone.Api.Client.Clients
             ArgumentNullException.ThrowIfNull(accessToken);
 
             _httpClientForSelf.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
             var selfClient = new SelfClient(_httpClientForSelf);
-            var resources = await selfClient.ResourcesGetAsync(cancellationToken);
-            return resources;
+            selfClient.OnRequest += SelfClientOnOnRequest;
+            selfClient.OnResponse += SelfClientOnOnResponse;
+
+            void SelfClientOnOnRequest((HttpRequestMessage, string Url) obj)
+            {
+                OnRequest?.Invoke(obj);
+            }
+
+            void SelfClientOnOnResponse(HttpResponseMessage obj)
+            {
+                OnResponse?.Invoke(obj);
+            }
+
+            try
+            {
+                var resources = await selfClient.ResourcesGetAsync(cancellationToken);
+                return resources;
+            }
+            finally
+            {
+                selfClient.OnRequest -= SelfClientOnOnRequest;
+                selfClient.OnResponse -= SelfClientOnOnResponse;
+            }
         }
 
         private async Task<AccessTokenResponse> GetAccessTokenAsync(string scope, CancellationToken cancellationToken)

@@ -9,7 +9,8 @@ namespace Kone.Api.Client
             ILogger log,
             CancellationToken cancellationToken,
             bool fullDiagnostic,
-            string groupId = "1")
+            string groupId = "1",
+            Action<KoneBuildingApiClient>? buildingApiModifier = null)
         {
             ArgumentNullException.ThrowIfNull(koneAuthApi);
             ArgumentNullException.ThrowIfNull(log);
@@ -24,6 +25,7 @@ namespace Kone.Api.Client
                 log.Information("Fetching building info for Building with Id {BuildingId}", building.Id);
 
                 var buildingApi = new KoneBuildingApiClient(log, koneAuthApi, building.Id, groupId);
+                buildingApiModifier?.Invoke(buildingApi);
 
                 var pingResponse = buildingApi.PingAsync(cancellationToken);
                 log.Information("KONE Building Ping Result: {@Ping}", pingResponse);

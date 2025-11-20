@@ -22,5 +22,8 @@ namespace Kone.Api.Client
 
         Task<LiftCallResponse> PlaceDestinationCallAsync(int sourceAreaId, int destinationAreaId,
             CancellationToken cancellationToken);
+
+        Task PlaceDestinationCallWithPositionUpdatesAsync(int sourceAreaId, int destinationAreaId,
+            Action<string>? positionUpdated, CancellationToken cancellationToken);
     }
 }

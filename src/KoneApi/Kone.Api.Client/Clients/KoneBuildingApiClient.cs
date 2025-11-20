@@ -18,7 +18,7 @@ namespace Kone.Api.Client.Clients
 
         public const int DestinationCallActionId = 2;
 
-        private const string PING_TCS_ID = "ping";
+        private const string PingTcsId = "ping";
 
         public event Action<string>? MessageSend;
         public event Func<string, Task>? MessageReceived;
@@ -62,7 +62,7 @@ namespace Kone.Api.Client.Clients
                 }
             };
 
-            return SendMessageAndWaitForResponseAsync(PING_TCS_ID, req,
+            return SendMessageAndWaitForResponseAsync(PingTcsId, req,
                 (responseMessage, _) => Task.FromResult(JsonConvert.DeserializeObject<PingResponse>(responseMessage)!),
                 cancellationToken);
         }
@@ -283,6 +283,103 @@ namespace Kone.Api.Client.Clients
                 cancellationToken);
         }
 
+        public async Task PlaceDestinationCallWithPositionUpdatesAsync(int sourceAreaId, int destinationAreaId, 
+            Action<string>? positionUpdated, CancellationToken cancellationToken)
+        {
+            var requestId = GenerateIntRequestId();
+            var monitorReqId = Guid.NewGuid().ToString();
+
+            var req = new LiftCallRequest
+            {
+                type = LiftCallRequest.ApiTypeLiftV2,
+                buildingId = $"building:{_buildingId}",
+                callType = LiftCallRequest.CallTypeAction,
+                groupId = _groupId,
+                payload = new Payload
+                {
+                    request_id = requestId,
+                    area = sourceAreaId,
+                    time = DateTime.UtcNow.ToString("o"),
+                    call = new Call
+                    {
+                        action = DestinationCallActionId,
+                        destination = destinationAreaId,
+                    }
+                }
+            };
+
+            await SendMessageAndWaitForResponseAsync(requestId.ToString(), req,
+            DestinationCallResponseInterceptor,
+            cancellationToken);
+
+            return;
+
+            // If a destination call is placed successfully, start monitoring its state changes
+            async Task<LiftCallResponse> DestinationCallResponseInterceptor(string message, ClientWebSocket ws)
+            {
+                var response = await LiftCallResponseMessageParser(message, ws);
+                var sessionId = response.data.session_id;
+
+                //https://dev.kone.com/api-portal/dashboard/api-documentation/elevator-websocket-api-v2#monitoring-commands
+                var monitorReq = new
+                {
+                    type = LiftCallRequest.ApiTypeSiteMonitoring,
+                    requestId = monitorReqId,
+                    buildingId = $"building:{_buildingId}",
+                    callType = LiftCallRequest.CallTypeMonitor,
+                    groupId = _groupId,
+                    payload = new
+                    {
+                        sub = $"LandingCall_{Guid.NewGuid()}",
+                        duration = 300,
+                        subtopics = new[]
+                        {
+                            $"call_state/{sessionId}/registered",
+                            $"call_state/{sessionId}/being_assigned",
+                            $"call_state/{sessionId}/assigned",
+                            $"call_state/{sessionId}/being_fixed",
+                            $"call_state/{sessionId}/fixed",
+                            $"call_state/{sessionId}/served",
+                            $"call_state/{sessionId}/cancelled"
+                        }
+                    }
+                };
+
+                await SendMessageAndWaitForResponseAsync(monitorReqId, monitorReq,
+                    (r, _) => Task.FromResult(new LiftCallResponse()),
+                    cancellationToken,
+                    OnResponseMessage);
+
+                return response;
+            }
+
+            void OnResponseMessage(string message)
+            {
+                using var doc = JsonDocument.Parse(message);
+                var root = doc.RootElement;
+
+                // Call monitor position updates
+                if (root.TryGetProperty("requestId", out var requestIdElement) &&
+                    requestIdElement.ValueKind == JsonValueKind.String &&
+                    requestIdElement.GetString() == monitorReqId &&
+
+                    root.TryGetProperty("callType", out var callTypeElement) &&
+                    callTypeElement.ValueKind == JsonValueKind.String &&
+                    callTypeElement.GetString() == "monitor" &&
+
+                    root.TryGetProperty("subtopic", out var subTopicElement) &&
+                    subTopicElement.ValueKind == JsonValueKind.String)
+                {
+                    var subTopic = subTopicElement.GetString();
+
+                    if (subTopic != null && subTopic.StartsWith("call_state"))
+                    {
+                        positionUpdated?.Invoke(message);
+                    }
+                }
+            }
+        }
+
         private async Task<TResponse> SendMessageAndWaitForResponseAsync<TResponse>(
             string requestId,
             object request,
@@ -421,7 +518,7 @@ namespace Kone.Api.Client.Clients
                 // Handle ping response
                 if (callTypePresent && callTypeElement.GetString() == "ping")
                 {
-                    if (_pendingResponse.TryGetValue(PING_TCS_ID, out var tcs))
+                    if (_pendingResponse.TryGetValue(PingTcsId, out var tcs))
                     {
                         tcs.TrySetResult(responseMessage);
                     }
