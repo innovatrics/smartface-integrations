@@ -9,7 +9,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
     public class AccessControlConnectorService
     {
-        public readonly int MaxParallelBlocks;
+        public readonly int Parallelism;
         private readonly ILogger _logger;
         private readonly IBridgeService _bridgeService;
         private ActionBlock<GrantedNotification> _actionBlock;
@@ -22,7 +22,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _bridgeService = bridgeService ?? throw new ArgumentNullException(nameof(bridgeService));
 
-            MaxParallelBlocks = configuration.GetValue<int>("Config:MaxParallelActionBlocks", 4);
+            Parallelism = configuration.GetValue("Config:MaxParallelActionBlocks", 1);
         }
 
         public void Start()
@@ -40,7 +40,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             },
             new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = MaxParallelBlocks
+                MaxDegreeOfParallelism = Parallelism,
+                BoundedCapacity = 100
             });
         }
 
@@ -57,7 +58,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            _actionBlock.Post(notification);
+            if (!_actionBlock.Post(notification))
+            {
+                _logger.Error("Action block did not accept granted notification");
+            }
         }
 
         public async Task SendKeepAliveSignalAsync()
