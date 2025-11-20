@@ -39,7 +39,7 @@ namespace Kone.Api.Client.Tests
                 .WriteTo.TestOutput(_output)
                 .CreateLogger();
 
-            await KoneDiagnostics.LogInfoAsync(_fixture.KoneAuthApi, logger, CancellationToken.None);
+            await KoneDiagnostics.LogInfoAsync(_fixture.KoneAuthApi, logger, CancellationToken.None, fullDiagnostic: true);
         }
 
         [Fact]

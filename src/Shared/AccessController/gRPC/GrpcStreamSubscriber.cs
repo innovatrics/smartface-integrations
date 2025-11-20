@@ -22,6 +22,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
 
         public GrpcStreamSubscriber(string host, int port)
         {
+            ArgumentNullException.ThrowIfNull(host);
+            ArgumentOutOfRangeException.ThrowIfNegative(port);
+
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
             grpcChannel = GrpcChannel.ForAddress($"http://{host}:{port}", new GrpcChannelOptions

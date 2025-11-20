@@ -1,18 +1,17 @@
 using System;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.AXIS;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.NN;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using AccessControlConnector.Connectors.Kone;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 {
-    public class AccessControlConnectorFactory : IAccessControlConnectorFactory
+    public class AccessControlConnectorFactory
     {
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
@@ -21,32 +20,26 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
         public AccessControlConnectorFactory(
             ILogger logger,
             IConfiguration configuration,
-            IHttpClientFactory httpClientFactory
-        )
+            IHttpClientFactory httpClientFactory)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public IAccessControlConnector Create(string type)
+        public IAccessControlConnector Create(string accessConnectorType)
         {
-            if (type == null)
+            if (accessConnectorType == null)
             {
-                throw new ArgumentNullException(nameof(type));
+                throw new ArgumentNullException(nameof(accessConnectorType));
             }
 
-            _logger.Information("Creating IAccessControlConnector for type {type}", type);
+            _logger.Information("Creating IAccessControlConnector for type {type}", accessConnectorType);
 
-            type = type
-                    .ReplaceAll(new string[] { "-", " ", "." }, new string[] { "_", "_", "_" })
-                    .ToUpper();
+            accessConnectorType = accessConnectorType.ReplaceAll(["-", " ", "."], ["_", "_", "_"]).ToUpper();
 
-            switch (type)
+            switch (accessConnectorType)
             {
-                default:
-                    throw new NotImplementedException($"AccessControl of type {type} not supported");
-
                 case AccessControlConnectorTypes.ADVANTECH_WISE_4000:
                     return new AdvantechWISE4000Connector(_logger, _configuration, _httpClientFactory);
 
@@ -64,7 +57,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AccessControlConnectorTypes.AXIS_IO_PORT:
                     return new IOPortConnector(_logger, _httpClientFactory);
-                
+
                 case AccessControlConnectorTypes.NN_IP_INTERCOM:
                     return new IpIntercomConnector(_logger, _httpClientFactory);
 
@@ -78,7 +71,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                     return new AeosConnector(_logger, _configuration, _httpClientFactory);
 
                 case AccessControlConnectorTypes.KONE_CONNECTOR:
-                    return new KoneConnector(_logger, _configuration, _httpClientFactory);
+                    return KoneConnectorFactory.Create(_logger, _configuration);
+
+                default:
+                    throw new NotImplementedException($"Access Connector of type {accessConnectorType} not supported");
             }
         }
     }
