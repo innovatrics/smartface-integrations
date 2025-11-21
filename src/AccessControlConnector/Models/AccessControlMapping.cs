@@ -18,6 +18,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
 
         public int? Channel                             { get; set; }
         public string Reader                            { get; set; }
+        public string DoorName                          { get; set; }
+        public string DoorId                            { get; set; }
+        public string Controller                        { get; set; }
 
         public string Token                             { get; set; }
         public string Params                            { get; set; }
