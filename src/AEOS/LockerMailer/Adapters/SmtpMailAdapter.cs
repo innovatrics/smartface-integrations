@@ -14,6 +14,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Linq;
 using Innovatrics.SmartFace.Integrations.LockerMailer.DataModels;
 using System.Net.Mail;
+using Innovatrics.SmartFace.Integrations.LockerMailer.Services;
 
 namespace Innovatrics.SmartFace.Integrations.LockerMailer
 {
@@ -22,6 +23,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
+        private readonly MailLoggingService? mailLoggingService;
 
         private string smtpHost = string.Empty;
         private int smtpPort;
@@ -32,12 +34,14 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         public SmtpMailAdapter(
             ILogger logger,
             IConfiguration configuration,
-            IHttpClientFactory httpClientFactory
+            IHttpClientFactory httpClientFactory,
+            MailLoggingService? mailLoggingService = null
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            this.mailLoggingService = mailLoggingService;
 
             this.logger.Information("SmtpMail DataAdapter Initiated");
 
@@ -117,6 +121,27 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
 
                 throw;
             }
+        }
+
+        public async Task SendAsync(string toEmail, string subject, string htmlBody, MailLoggingData? loggingData)
+        {
+            // Log email before sending
+            if (mailLoggingService != null && loggingData != null)
+            {
+                mailLoggingService.LogEmail(
+                    templateUsed: loggingData.TemplateUsed,
+                    employeeName: loggingData.EmployeeName,
+                    employeeId: loggingData.EmployeeId,
+                    fromEmail: fromEmail,
+                    toEmail: toEmail,
+                    subject: subject,
+                    content: htmlBody,
+                    variableDump: loggingData.VariableDump
+                );
+            }
+
+            // Send the email using the base method
+            await SendAsync(toEmail, subject, htmlBody);
         }
     }
 }

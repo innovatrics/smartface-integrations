@@ -527,6 +527,20 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     TotalAssignedLockers = assignedLockers.Count
                 };
 
+                // Get variable dump for logging (reuse the same logic as ReplaceTemplatePlaceholdersForBulk)
+                var templateCancelTime = LoadTemplateCancelTime(template.TemplateId);
+                var variableDump = new Dictionary<string, string?>
+                {
+                    { "fullname", mockChange.NewAssignedEmployeeName },
+                    { "prev_fullname", mockChange.PreviousAssignedEmployeeName },
+                    { "time", DateTime.Now.ToString("HH:mm") },
+                    { "source", mockChange.LockerName },
+                    { "group", mockChange.GroupName },
+                    { "canceltime", templateCancelTime },
+                    { "lockercount", mockChange.TotalAssignedLockers.ToString() },
+                    { "lockerlist", lockerList }
+                };
+
                 // Build HTML from Keila template blocks with placeholder replacement
                 var sb = new System.Text.StringBuilder();
                 sb.Append("<html><body>");
@@ -557,7 +571,16 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     {
                         if (!string.IsNullOrWhiteSpace(receptionistEmail))
                         {
-                            await smtpMailAdapter.SendAsync(receptionistEmail, subject, htmlEmail);
+                            // Create logging data for bulk email
+                            var loggingData = new MailLoggingData
+                            {
+                                TemplateUsed = template.TemplateId,
+                                EmployeeName = "Receptionist (Bulk Email)",
+                                EmployeeId = null,
+                                VariableDump = variableDump
+                            };
+
+                            await smtpMailAdapter.SendAsync(receptionistEmail, subject, htmlEmail, loggingData);
                             logger.Information($"Bulk email sent to receptionist: {receptionistEmail} with subject '{subject}'");
                         }
                     }

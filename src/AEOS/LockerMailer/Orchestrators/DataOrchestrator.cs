@@ -29,18 +29,16 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         private readonly string[] lockersFlow8CheckGroups = new string[0];
         private string cancelTime = "18:00"; // Default value
         
-        // Helper map for placeholder keys
-        private string ReplaceTemplatePlaceholders(string rawText, AssignmentChange change, string templateId = "")
+        // Helper method to get placeholder replacements
+        private Dictionary<string, string?> GetTemplatePlaceholderReplacements(AssignmentChange change, string templateId = "")
         {
-            if (string.IsNullOrEmpty(rawText)) return string.Empty;
-
             // Load template-specific cancelTime
             var templateCancelTime = LoadTemplateCancelTime(templateId);
 
             // Create bulleted list of locker names (for lockers-flow_3)
             var lockerList = string.Join("<br/>", change.AllAssignedLockerNames.Select(name => $"• {name}"));
 
-            var replacements = new Dictionary<string, string?>
+            return new Dictionary<string, string?>
             {
                 { "fullname", change.NewAssignedEmployeeName },
                 { "prev_fullname", change.PreviousAssignedEmployeeName },
@@ -51,6 +49,14 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 { "lockercount", change.TotalAssignedLockers.ToString() },
                 { "lockerlist", lockerList }
             };
+        }
+
+        // Helper map for placeholder keys
+        private string ReplaceTemplatePlaceholders(string rawText, AssignmentChange change, string templateId = "")
+        {
+            if (string.IsNullOrEmpty(rawText)) return string.Empty;
+
+            var replacements = GetTemplatePlaceholderReplacements(change, templateId);
 
             string processed = rawText;
             foreach (var kv in replacements)
@@ -449,6 +455,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                     return;
                 }
 
+                // Get placeholder replacements for logging
+                var variableDump = GetTemplatePlaceholderReplacements(change, templateId);
+
                 // Build HTML from blocks (each block's data.text becomes a paragraph)
                 var sb = new System.Text.StringBuilder();
                 sb.Append("<html><body>");
@@ -479,10 +488,28 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                         ? change.PreviousAssignedEmployeeEmail
                         : change.NewAssignedEmployeeEmail;
 
+                    // Determine employee name and ID based on change type
+                    var employeeName = change.ChangeType.Equals("Unassigned", StringComparison.OrdinalIgnoreCase)
+                        ? change.PreviousAssignedEmployeeName
+                        : change.NewAssignedEmployeeName;
+                    var employeeId = change.ChangeType.Equals("Unassigned", StringComparison.OrdinalIgnoreCase)
+                        ? change.PreviousAssignedTo
+                        : change.NewAssignedTo;
+
                     if (!string.IsNullOrWhiteSpace(recipientEmail))
                     {
                         var subject = !string.IsNullOrEmpty(templateName) ? templateName : (campaign.Subject ?? templateId);
-                        await smtpMailAdapter.SendAsync(recipientEmail, subject, htmlEmail);
+                        
+                        // Create logging data
+                        var loggingData = new MailLoggingData
+                        {
+                            TemplateUsed = templateId,
+                            EmployeeName = employeeName ?? string.Empty,
+                            EmployeeId = employeeId,
+                            VariableDump = variableDump
+                        };
+
+                        await smtpMailAdapter.SendAsync(recipientEmail, subject, htmlEmail, loggingData);
                         logger.Information($"Email sent to {recipientEmail} with subject '{subject}' for locker '{change.LockerName}' change {change.ChangeType}");
                     }
                     else
@@ -538,6 +565,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                     return;
                 }
 
+                // Get placeholder replacements for logging
+                var variableDump = GetTemplatePlaceholderReplacements(change, templateId);
+
                 // Build HTML from blocks (each block's data.text becomes a paragraph)
                 var sb = new System.Text.StringBuilder();
                 sb.Append("<html><body>");
@@ -568,10 +598,28 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                         ? change.PreviousAssignedEmployeeEmail
                         : change.NewAssignedEmployeeEmail;
 
+                    // Determine employee name and ID based on change type
+                    var employeeName = change.ChangeType.Equals("Unassigned", StringComparison.OrdinalIgnoreCase)
+                        ? change.PreviousAssignedEmployeeName
+                        : change.NewAssignedEmployeeName;
+                    var employeeId = change.ChangeType.Equals("Unassigned", StringComparison.OrdinalIgnoreCase)
+                        ? change.PreviousAssignedTo
+                        : change.NewAssignedTo;
+
                     if (!string.IsNullOrWhiteSpace(recipientEmail))
                     {
                         var subject = !string.IsNullOrEmpty(templateName) ? templateName : (campaign.Subject ?? templateId);
-                        await smtpMailAdapter.SendAsync(recipientEmail, subject, htmlEmail);
+                        
+                        // Create logging data
+                        var loggingData = new MailLoggingData
+                        {
+                            TemplateUsed = templateId,
+                            EmployeeName = employeeName ?? string.Empty,
+                            EmployeeId = employeeId,
+                            VariableDump = variableDump
+                        };
+
+                        await smtpMailAdapter.SendAsync(recipientEmail, subject, htmlEmail, loggingData);
                         logger.Information($"Email sent to {recipientEmail} with subject '{subject}' for locker '{change.LockerName}' change {change.ChangeType}");
                     }
                     else

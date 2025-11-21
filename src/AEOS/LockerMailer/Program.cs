@@ -66,6 +66,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                             .ConfigureHttpClient((serviceProvider, httpClient) =>
                             {});
             services.AddSingleton<Serilog.ILogger>(logger);
+            services.AddSingleton<Services.MailLoggingService>();
             services.AddSingleton<IKeilaDataAdapter, KeilaDataAdapter>();
             services.AddSingleton<IDashboardsDataAdapter, DashBoardsDataAdapter>();
             services.AddSingleton<ISmtpMailAdapter, SmtpMailAdapter>();
