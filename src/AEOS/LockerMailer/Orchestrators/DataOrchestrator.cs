@@ -38,9 +38,16 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             // Create bulleted list of locker names (for lockers-flow_3)
             var lockerList = string.Join("<br/>", change.AllAssignedLockerNames.Select(name => $"• {name}"));
 
+            // Determine which employee name to use for "fullname" based on change type
+            // For "Unassigned" changes, use PreviousAssignedEmployeeName
+            // For "Assigned" changes, use NewAssignedEmployeeName
+            var fullname = change.ChangeType.Equals("Unassigned", StringComparison.OrdinalIgnoreCase)
+                ? change.PreviousAssignedEmployeeName
+                : change.NewAssignedEmployeeName;
+
             return new Dictionary<string, string?>
             {
-                { "fullname", change.NewAssignedEmployeeName },
+                { "fullname", fullname },
                 { "prev_fullname", change.PreviousAssignedEmployeeName },
                 { "time", DateTime.Now.ToString("HH:mm") },
                 { "source", change.LockerName },
