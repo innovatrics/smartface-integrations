@@ -25,11 +25,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Resolv
         }
 
         [Theory]
-        [InlineData("LABEL_Integrity_Face_Token", "LABEL_Integrity_Face_Token", "F123456", "F123456")]
+        [InlineData("LABEL_INTEGRITY_FACE_TOKEN", "INTEGRITY_FACE_TOKEN", "F123456", "F123456")]
+        [InlineData("LABEL_INTEGRITY_FACE_TOKEN", "Integrity_Face_Token", "F123456", "F123456")]
+        [InlineData("LABEL_Integrity_Face_Token", "Integrity_Face_Token", "F123456", "F123456")]
         public async Task ResolveUserAsync_ExtractsValue_WhenLabelKeyMatches(
-            string labelKey,
-            string labelKeyInNotification,
-            string labelValue,
+            string configuredLabelKey,
+            string notificationKey,
+            string notificationValue,
             string expectedValue
         )
         {
@@ -38,7 +40,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Resolv
                 _logger,
                 _configuration,
                 _httpClientFactory,
-                labelKey
+                configuredLabelKey
             );
 
             var notification = new GrantedNotification
@@ -50,7 +52,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Resolv
             // Set WatchlistMemberLabels using reflection since it has internal setter
             var labels = new KeyValuePair<string, string>[]
             {
-                new KeyValuePair<string, string>(labelKeyInNotification, labelValue)
+                new KeyValuePair<string, string>(notificationKey, notificationValue)
             };
             
             typeof(GrantedNotification)
