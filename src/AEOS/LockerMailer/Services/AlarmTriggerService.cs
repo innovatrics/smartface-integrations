@@ -136,10 +136,11 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
 
                     if (templatesToTrigger.Any())
                     {
-                        // Check if lockers-flow_3, lockers-flow_4, or lockers-flow_5 is among the triggered templates
+                        // Check if lockers-flow_3, lockers-flow_4, lockers-flow_5, or lockers-flow_6 is among the triggered templates
                         var lockersFlow3Triggered = templatesToTrigger.Any(t => t.TemplateId.Equals("lockers-flow_3", StringComparison.OrdinalIgnoreCase));
                         var lockersFlow4Triggered = templatesToTrigger.Any(t => t.TemplateId.Equals("lockers-flow_4", StringComparison.OrdinalIgnoreCase));
                         var lockersFlow5Triggered = templatesToTrigger.Any(t => t.TemplateId.Equals("lockers-flow_5", StringComparison.OrdinalIgnoreCase));
+                        var lockersFlow6Triggered = templatesToTrigger.Any(t => t.TemplateId.Equals("lockers-flow_6", StringComparison.OrdinalIgnoreCase));
                         if (lockersFlow3Triggered)
                         {
                             logger.Information("lockers-flow_3 triggered as it is time");
@@ -151,6 +152,10 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                         if (lockersFlow5Triggered)
                         {
                             logger.Information("lockers-flow_5 triggered as it is time");
+                        }
+                        if (lockersFlow6Triggered)
+                        {
+                            logger.Information("lockers-flow_6 triggered as it is time");
                         }
                         
                         await ProcessAlarmTriggeredTemplates(templatesToTrigger);
@@ -247,9 +252,10 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     {
                         await ProcessLockersFlow5BulkEmail(template, groups, keilaCampaigns);
                     }
-                    // Special handling for lockers-flow_3 and lockers-flow_4 to show detailed assignment information
+                    // Special handling for lockers-flow_3, lockers-flow_4, and lockers-flow_6 to show detailed assignment information
                     else if (template.TemplateId.Equals("lockers-flow_3", StringComparison.OrdinalIgnoreCase) || 
-                        template.TemplateId.Equals("lockers-flow_4", StringComparison.OrdinalIgnoreCase))
+                        template.TemplateId.Equals("lockers-flow_4", StringComparison.OrdinalIgnoreCase) ||
+                        template.TemplateId.Equals("lockers-flow_6", StringComparison.OrdinalIgnoreCase))
                     {
                         logger.Information($"{template.TemplateId} triggered");
                         

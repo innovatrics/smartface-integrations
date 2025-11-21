@@ -25,6 +25,8 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         private readonly IDashboardsDataAdapter dashboardsDataAdapter;
         private readonly string lockersFlow1CheckGroup = string.Empty;
         private readonly string lockersFlow2CheckGroup = string.Empty;
+        private readonly string[] lockersFlow7CheckGroups = new string[0];
+        private readonly string[] lockersFlow8CheckGroups = new string[0];
         private string cancelTime = "18:00"; // Default value
         
         // Helper map for placeholder keys
@@ -164,6 +166,64 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 this.logger.Error(ex, "Failed to load lockers-flow_2 templateCheckGroup from configuration");
             }
 
+            // Load lockers-flow_7 templateCheckGroups from configuration
+            try
+            {
+                var templatesSection = configuration.GetSection("LockerMailer:Templates");
+                foreach (var template in templatesSection.GetChildren())
+                {
+                    var templateId = template.GetValue<string>("templateId");
+                    if (!string.IsNullOrEmpty(templateId) && templateId.Equals("lockers-flow_7", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var checkGroups = template.GetSection("templateCheckGroups").Get<string[]>();
+                        this.lockersFlow7CheckGroups = checkGroups ?? new string[0];
+                        break;
+                    }
+                }
+
+                if (this.lockersFlow7CheckGroups.Any())
+                {
+                    this.logger.Debug($"Loaded lockers-flow_7 check groups from configuration: [{string.Join(", ", this.lockersFlow7CheckGroups)}]");
+                }
+                else
+                {
+                    this.logger.Warning("No templateCheckGroups configured for lockers-flow_7; trigger will be skipped.");
+                }
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "Failed to load lockers-flow_7 templateCheckGroups from configuration");
+            }
+
+            // Load lockers-flow_8 templateCheckGroups from configuration
+            try
+            {
+                var templatesSection = configuration.GetSection("LockerMailer:Templates");
+                foreach (var template in templatesSection.GetChildren())
+                {
+                    var templateId = template.GetValue<string>("templateId");
+                    if (!string.IsNullOrEmpty(templateId) && templateId.Equals("lockers-flow_8", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var checkGroups = template.GetSection("templateCheckGroups").Get<string[]>();
+                        this.lockersFlow8CheckGroups = checkGroups ?? new string[0];
+                        break;
+                    }
+                }
+
+                if (this.lockersFlow8CheckGroups.Any())
+                {
+                    this.logger.Debug($"Loaded lockers-flow_8 check groups from configuration: [{string.Join(", ", this.lockersFlow8CheckGroups)}]");
+                }
+                else
+                {
+                    this.logger.Warning("No templateCheckGroups configured for lockers-flow_8; trigger will be skipped.");
+                }
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "Failed to load lockers-flow_8 templateCheckGroups from configuration");
+            }
+
             // Load cancelTime from lockers-flow_1 template configuration
             try
             {
@@ -290,7 +350,50 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 return chosenFlowTemplate;
             }
 
-            // Note: lockers-flow_3, lockers-flow_4, and lockers-flow_5 are handled by AlarmTriggerService based on time triggers
+        // 7# lockers-flow_7
+            // If the information says that you have been newly assigned a locker
+            // from any of the configured locker groups, trigger this event
+            // (for now: just log that it was triggered).
+            else if (
+                change != null &&
+                change.ChangeType.Equals("Assigned", StringComparison.OrdinalIgnoreCase) &&
+                change.NewAssignedTo.HasValue &&
+                this.lockersFlow7CheckGroups.Any() &&
+                this.lockersFlow7CheckGroups.Any(group => string.Equals(change.GroupName, group, StringComparison.OrdinalIgnoreCase))
+            )
+            {
+                chosenFlowTemplate = "lockers-flow_7";
+
+                logger.Information(
+                    $"[Trigger] lockers-flow_7 matched for locker '{change.LockerName}' in group '{change.GroupName}' " +
+                    $"for employee '{change.NewAssignedEmployeeName}' (ID: {change.NewAssignedTo}) at {change.ChangeTimestamp}. {chosenFlowTemplate}"
+                );
+
+                return chosenFlowTemplate;
+            }
+
+        // 8# lockers-flow_8
+            // If the information says that a locker has been unassigned
+            // from any of the configured locker groups, trigger this event
+            else if (
+                change != null &&
+                change.ChangeType.Equals("Unassigned", StringComparison.OrdinalIgnoreCase) &&
+                change.PreviousAssignedTo.HasValue &&
+                this.lockersFlow8CheckGroups.Any() &&
+                this.lockersFlow8CheckGroups.Any(group => string.Equals(change.GroupName, group, StringComparison.OrdinalIgnoreCase))
+            )
+            {
+                chosenFlowTemplate = "lockers-flow_8";
+
+                logger.Information(
+                    $"[Trigger] lockers-flow_8 matched for unassigned locker '{change.LockerName}' in group '{change.GroupName}' " +
+                    $"for employee '{change.PreviousAssignedEmployeeName}' (ID: {change.PreviousAssignedTo}) at {change.ChangeTimestamp}. {chosenFlowTemplate}"
+                );
+
+                return chosenFlowTemplate;
+            }
+
+            // Note: lockers-flow_3, lockers-flow_4, lockers-flow_5, and lockers-flow_6 are handled by AlarmTriggerService based on time triggers
             // and do not need to be processed here as they are triggered by alarms, not assignment changes
 
             else
@@ -300,9 +403,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             // 3# lockers-flow_3 (handled by AlarmTriggerService)
             // 4# lockers-flow_4 (handled by AlarmTriggerService)
             // 5# lockers-flow_5 (handled by AlarmTriggerService)
-            // 6#
-            // 7#
-            // 8#
+            // 6# lockers-flow_6 (handled by AlarmTriggerService)
+            // 7# lockers-flow_7 (handled by assignment changes - Assigned)
+            // 8# lockers-flow_8 (handled by assignment changes - Unassigned)
             // 9#
 
         }
