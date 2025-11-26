@@ -12,13 +12,13 @@ using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange
 {
-    public class Integrity22Connector : IAccessControlConnector
+    public class Integriti22Connector : IAccessControlConnector
     {
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public Integrity22Connector(
+        public Integriti22Connector(
             ILogger logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory

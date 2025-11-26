@@ -50,7 +50,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Factor
         [InlineData("LABEL_2N_USER_ID", "2N_USER_ID")]
         [InlineData("LABEL_ACCESS_CARD_ID", "ACCESS_CARD_ID")]
         [InlineData("LABEL_XXX", "XXX")]
-        [InlineData("LABEL_Integrity_Face_Token", "INTEGRITY_FACE_TOKEN")]
+        [InlineData("LABEL_Integriti_Face_Token", "INTEGRITI_FACE_TOKEN")]
         [InlineData("WATCHLIST_MEMBER_LABEL_2N_USER_ID", "2N_USER_ID")]
         [InlineData("WATCHLIST_MEMBER_LABEL_ACCESS_CARD_ID", "ACCESS_CARD_ID")]
         [InlineData("WATCHLIST_MEMBER_LABEL_XXX", "XXX")]

@@ -25,9 +25,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Resolv
         }
 
         [Theory]
-        [InlineData("LABEL_INTEGRITY_FACE_TOKEN", "INTEGRITY_FACE_TOKEN", "F123456", "F123456")]
-        [InlineData("LABEL_INTEGRITY_FACE_TOKEN", "Integrity_Face_Token", "F123456", "F123456")]
-        [InlineData("LABEL_Integrity_Face_Token", "Integrity_Face_Token", "F123456", "F123456")]
+        [InlineData("LABEL_INTEGRITI_FACE_TOKEN", "INTEGRITI_FACE_TOKEN", "F123456", "F123456")]
+        [InlineData("LABEL_INTEGRITI_FACE_TOKEN", "Integriti_Face_Token", "F123456", "F123456")]
+        [InlineData("LABEL_Integriti_Face_Token", "Integriti_Face_Token", "F123456", "F123456")]
         public async Task ResolveUserAsync_ExtractsValue_WhenLabelKeyMatches(
             string configuredLabelKey,
             string notificationKey,

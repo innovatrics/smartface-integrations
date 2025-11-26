@@ -43,8 +43,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 case AccessControlConnectorTypes.ADVANTECH_WISE_4000:
                     return new AdvantechWISE4000Connector(_logger, _configuration, _httpClientFactory);
 
-                case AccessControlConnectorTypes.INNERRANGE_INTEGRITY_22:
-                    return new Integrity22Connector(_logger, _configuration, _httpClientFactory);
+                case AccessControlConnectorTypes.INNERRANGE_INTEGRITI_22:
+                    return new Integriti22Connector(_logger, _configuration, _httpClientFactory);
 
                 case AccessControlConnectorTypes.TRAFFICLIGHT:
                     return new TrafficLightConnector(_logger, _configuration, _httpClientFactory);
