@@ -36,7 +36,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 MatchResultScore = accessNotificationGranted.MatchResultScore,
                 CropImage = accessNotificationGranted.CropImage.ToByteArray(),
                 GrpcSentAt = accessNotification.SentAt.ToDateTime(),
-                Modality = GetModality(accessNotification)
+                Modality = accessNotificationGranted.Modality != Modality.Face 
+                    ? accessNotificationGranted.Modality 
+                    : GetModality(accessNotification)
             };
             return grantedNotification;
         }
@@ -57,7 +59,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 MatchResultScore = accessNotificationBlocked.MatchResultScore,
                 CropImage = accessNotificationBlocked.CropImage.ToByteArray(),
                 GrpcSentAt = accessNotification.SentAt.ToDateTime(),
-                Modality = GetModality(accessNotification)
+                Modality = accessNotificationBlocked.Modality != Modality.Face 
+                    ? accessNotificationBlocked.Modality 
+                    : GetModality(accessNotification)
             };
             return blockedNotification;
         }
@@ -79,6 +83,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
         
         private static Modality GetModality(AccessNotification accessNotification)
         {
+            // Derive modality from AccessNotificationType as fallback
             var type = (AccessNotificationType)accessNotification.TypeOfAccessNotification;
 
             if (type.HasFlag(AccessNotificationType.PalmGranted) ||
@@ -95,6 +100,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 return Modality.OpticalCode;
             }
 
+            // Default to Face for FACE_GRANTED, FACE_DENIED, FACE_BLOCKED, or any other case
             return Modality.Face;
         }
     }
