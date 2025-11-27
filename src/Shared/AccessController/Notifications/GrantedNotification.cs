@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Innovatrics.Smartface;
 
 namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
 {
