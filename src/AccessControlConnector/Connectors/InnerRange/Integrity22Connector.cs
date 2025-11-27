@@ -16,6 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
     {
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
+        private IntegritiConfiguration _integritiConfiguration;
         private readonly IHttpClientFactory _httpClientFactory;
 
         public Integriti22Connector(
@@ -31,7 +32,19 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
 
         public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
         {
-            _logger.Information($"{nameof(OpenAsync)} to {{host}}:{{port}} for {{doorName}}, {{doorId}}, {{controller}}, {{reader}} and {{channel}}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.DoorName, accessControlMapping.DoorId, accessControlMapping.Controller, accessControlMapping.Reader, accessControlMapping.Channel);
+            if (_integritiConfiguration == null)
+            {
+                _integritiConfiguration = _configuration.GetSection("Integriti22").Get<IntegritiConfiguration>();
+            }
+
+            var schema = accessControlMapping.Schema ?? _integritiConfiguration.Schema;
+            var host = accessControlMapping.Host ?? _integritiConfiguration.Host;
+            var port = accessControlMapping.Port ?? _integritiConfiguration.Port;
+            var username = accessControlMapping.Username ?? _integritiConfiguration.Username;
+            var password = accessControlMapping.Password ?? _integritiConfiguration.Password;
+            var controller = accessControlMapping.Controller ?? _integritiConfiguration.Controller;
+
+            _logger.Information($"{nameof(OpenAsync)} to {{host}}:{{port}} for {{doorName}}, {{doorId}}, {{controller}}, {{reader}} and {{channel}}", host, port, accessControlMapping.DoorName, accessControlMapping.DoorId, controller, accessControlMapping.Reader, accessControlMapping.Channel);
 
             string cardData = null;
 
@@ -48,7 +61,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             }
             else
             {
-                cardData = await GetCardDataAsync(accessControlMapping.Schema, accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Username, accessControlMapping.Password, accessControlUserId);
+                cardData = await GetCardDataAsync(schema, host, port, username, password, accessControlUserId);
             }
 
             if (cardData == null)
@@ -58,17 +71,17 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             }
 
             await SendOpenAsync(
-                accessControlMapping.Schema,
-                accessControlMapping.Host,
-                accessControlMapping.Port,
-                accessControlMapping.Username,
-                accessControlMapping.Password,
+                schema,
+                host,
+                port,
+                username,
+                password,
                 cardData,
                 accessControlMapping.Reader,
                 accessControlMapping.Channel,
                 accessControlMapping.DoorName,
                 accessControlMapping.DoorId,
-                accessControlMapping.Controller
+                controller
             );
 
             return;
@@ -145,19 +158,23 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
 
             string requestUri;
 
-            switch (doorName, doorId, controller)
+            if (!string.IsNullOrEmpty(doorName) && !string.IsNullOrEmpty(controller))
             {
-                case var (dn, _, c) when !string.IsNullOrEmpty(dn) && !string.IsNullOrEmpty(c):
-                    requestUri = $"{schema ?? "http"}://{host}:{port}/CardBadge?CardData={cardData}&CardBitLength=32&DoorName={dn}&Controller={c}";
-                    break;
-
-                case var (_, did, c) when !string.IsNullOrEmpty(did) && !string.IsNullOrEmpty(c):
-                    requestUri = $"{schema ?? "http"}://{host}:{port}/CardBadge?CardData={cardData}&CardBitLength=32&DoorId={did}&Controller={c}";
-                    break;
-
-                default:
-                    requestUri = $"{schema ?? "http"}://{host}:{port}/CardBadge?CardData={cardData}&CardBitLength=32&ReaderModuleID={readerModuleID}&ReaderNumber={readerNumber}";
-                    break;
+                if (!string.IsNullOrEmpty(doorId))
+                {
+                    requestUri = $"{schema ?? "http"}://{host}:{port}/CardBadge" +
+                                 $"?CardData={cardData}&CardBitLength=32&DoorId={doorId}&Controller={controller}";
+                }
+                else
+                {
+                    requestUri = $"{schema ?? "http"}://{host}:{port}/CardBadge" +
+                                 $"?CardData={cardData}&CardBitLength=32&DoorName={doorName}&Controller={controller}";
+                }
+            }
+            else
+            {
+                requestUri = $"{schema ?? "http"}://{host}:{port}/CardBadge" +
+                             $"?CardData={cardData}&CardBitLength=32&ReaderModuleID={readerModuleID}&ReaderNumber={readerNumber}";
             }
 
             _logger.Information("Url: {url}", requestUri);
