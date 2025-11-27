@@ -46,6 +46,13 @@ enum BlockReason
 	OPENING_TEMPORARILY_BLOCKED = 2;
 }
 
+enum Modality
+{
+	FACE = 0;
+	PALM = 1;
+	OPTICAL_CODE = 2;
+}
+
 message AccessNotification
 {
 	AccessNotificationGranted access_notification_granted = 1;
@@ -77,6 +84,7 @@ message AccessNotificationGranted
 	int64 match_result_score = 7;
 	bytes crop_image = 8;
 	map<string, string> watchlist_member_labels = 9;
+	Modality modality = 10;
 }
 
 message AccessNotificationDenied
@@ -100,6 +108,7 @@ message AccessNotificationBlocked
 	bytes crop_image = 6;
 	BlockReason reason = 7;
 	google.protobuf.Timestamp blocked_until = 8;
+	Modality modality = 9;
 }
 
 message EyeCoordinates

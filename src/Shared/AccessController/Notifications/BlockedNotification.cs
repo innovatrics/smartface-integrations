@@ -7,5 +7,6 @@
         public string WatchlistId { get; set; }
         public string WatchlistDisplayName { get; set; }
         public long MatchResultScore { get; set; }
+        public Modality Modality { get; set; }
     }
 }

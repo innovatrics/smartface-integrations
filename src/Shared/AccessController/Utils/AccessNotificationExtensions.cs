@@ -35,7 +35,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 WatchlistId = accessNotificationGranted.WatchlistId,
                 MatchResultScore = accessNotificationGranted.MatchResultScore,
                 CropImage = accessNotificationGranted.CropImage.ToByteArray(),
-                GrpcSentAt = accessNotification.SentAt.ToDateTime()
+                GrpcSentAt = accessNotification.SentAt.ToDateTime(),
+                Modality = GetModality(accessNotification)
             };
             return grantedNotification;
         }
@@ -55,7 +56,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 WatchlistId = accessNotificationBlocked.WatchlistId,
                 MatchResultScore = accessNotificationBlocked.MatchResultScore,
                 CropImage = accessNotificationBlocked.CropImage.ToByteArray(),
-                GrpcSentAt = accessNotification.SentAt.ToDateTime()
+                GrpcSentAt = accessNotification.SentAt.ToDateTime(),
+                Modality = GetModality(accessNotification)
             };
             return blockedNotification;
         }
@@ -73,6 +75,27 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 GrpcSentAt = accessNotification.SentAt.ToDateTime()
             };
             return deniedNotification;
+        }
+        
+        private static Modality GetModality(AccessNotification accessNotification)
+        {
+            var type = (AccessNotificationType)accessNotification.TypeOfAccessNotification;
+
+            if (type.HasFlag(AccessNotificationType.PalmGranted) ||
+                type.HasFlag(AccessNotificationType.PalmDeniedUnsupported) ||
+                type.HasFlag(AccessNotificationType.PalmBlocked))
+            {
+                return Modality.Palm;
+            }
+
+            if (type.HasFlag(AccessNotificationType.OpticalCodeGranted) ||
+                type.HasFlag(AccessNotificationType.OpticalCodeDeniedUnsupported) ||
+                type.HasFlag(AccessNotificationType.OpticalCodeBlocked))
+            {
+                return Modality.OpticalCode;
+            }
+
+            return Modality.Face;
         }
     }
 }
