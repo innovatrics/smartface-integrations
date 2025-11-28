@@ -13,11 +13,11 @@
         <PackageReference Include="GraphQL.Client.Serializer.Newtonsoft" Version="6.1.0" />
         <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.7" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.7" />
-        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.7" />
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.7" />
-        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.7" />
-        <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.7" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="9.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.8" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
         <PackageReference Include="Serilog" Version="4.3.0" />
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
@@ -42,14 +42,4 @@
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
     </ItemGroup>
-
-
-    <ItemGroup>
-        <Content Include="credentials.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-        </Content>
-    </ItemGroup>
-
 </Project>
