@@ -14,6 +14,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 TrackletId = accessNotification.TrackletId,
                 FaceId = accessNotification.FaceId,
                 GrpcSentAt = accessNotification.SentAt.ToDateTime()
+                Modality = accessNotification.
             };
         }
 

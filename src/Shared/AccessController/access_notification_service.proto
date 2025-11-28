@@ -46,13 +46,6 @@ enum BlockReason
 	OPENING_TEMPORARILY_BLOCKED = 2;
 }
 
-enum Modality
-{
-	FACE = 0;
-	PALM = 1;
-	OPTICAL_CODE = 2;
-}
-
 message AccessNotification
 {
 	AccessNotificationGranted access_notification_granted = 1;
