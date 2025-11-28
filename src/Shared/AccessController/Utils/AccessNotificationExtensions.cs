@@ -36,9 +36,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 MatchResultScore = accessNotificationGranted.MatchResultScore,
                 CropImage = accessNotificationGranted.CropImage.ToByteArray(),
                 GrpcSentAt = accessNotification.SentAt.ToDateTime(),
-                Modality = accessNotificationGranted.Modality != Modality.Face 
-                    ? accessNotificationGranted.Modality 
-                    : GetModality(accessNotification)
+                Modality = GetModality(accessNotificationGranted, accessNotification)
             };
             return grantedNotification;
         }
@@ -59,9 +57,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 MatchResultScore = accessNotificationBlocked.MatchResultScore,
                 CropImage = accessNotificationBlocked.CropImage.ToByteArray(),
                 GrpcSentAt = accessNotification.SentAt.ToDateTime(),
-                Modality = accessNotificationBlocked.Modality != Modality.Face 
-                    ? accessNotificationBlocked.Modality 
-                    : GetModality(accessNotification)
+                Modality = GetModality(accessNotificationBlocked, accessNotification)
             };
             return blockedNotification;
         }
@@ -81,9 +77,29 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
             return deniedNotification;
         }
         
+        private static Modality GetModality(AccessNotificationGranted accessNotificationGranted, AccessNotification accessNotification)
+        {
+            if (accessNotificationGranted.Modality != Modality.Face)
+            {
+                return accessNotificationGranted.Modality;
+            }
+
+            return GetModality(accessNotification);
+        }
+
+        private static Modality GetModality(AccessNotificationBlocked accessNotificationBlocked, AccessNotification accessNotification)
+        {
+            if (accessNotificationBlocked.Modality != Modality.Face)
+            {
+                return accessNotificationBlocked.Modality;
+            }
+
+            return GetModality(accessNotification);
+        }
+
         private static Modality GetModality(AccessNotification accessNotification)
         {
-            // Derive modality from AccessNotificationType as fallback
+            // Derive modality from AccessNotificationType
             var type = (AccessNotificationType)accessNotification.TypeOfAccessNotification;
 
             if (type.HasFlag(AccessNotificationType.PalmGranted) ||
