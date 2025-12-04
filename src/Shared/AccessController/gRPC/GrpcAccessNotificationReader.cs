@@ -5,10 +5,11 @@ using Innovatrics.Smartface;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessController.Utils;
+using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
 {
-    public class GrpcNotificationReader : IAsyncDisposable
+    public class GrpcAccessNotificationReader : IAsyncDisposable
     {
         private readonly object _lock = new object();
 
@@ -19,18 +20,20 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
         public event Action<BlockedNotification> OnGrpcBlockedNotification;
         public event Action<Exception> OnGrpcError;
 
-        private readonly IGrpcStreamSubscriber grpcStreamSubscriber;
+        private readonly IGrpcStreamSubscriber _grpcStreamSubscriber;
+        private readonly ILogger _log;
 
-        public GrpcNotificationReader(IGrpcStreamSubscriber grpcStreamSubscriber)
+        public GrpcAccessNotificationReader(IGrpcStreamSubscriber grpcStreamSubscriber, ILogger log)
         {
-            this.grpcStreamSubscriber = grpcStreamSubscriber ?? throw new ArgumentNullException(nameof(grpcStreamSubscriber));
+            _grpcStreamSubscriber = grpcStreamSubscriber ?? throw new ArgumentNullException(nameof(grpcStreamSubscriber));
+            _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
         public void StartReceiving()
         {
-            this.grpcStreamSubscriber.OnMessageReceived += AccessReceived;
-            this.grpcStreamSubscriber.OnError += OnError;
-            this.grpcStreamSubscriber.Subscribe();
+            _grpcStreamSubscriber.OnMessageReceived += AccessReceived;
+            _grpcStreamSubscriber.OnError += OnError;
+            _grpcStreamSubscriber.Subscribe();
         }
 
         private void AccessReceived(object source, AccessNotification accessNotification)
@@ -70,6 +73,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
 
         private void OnError(object source, Exception e)
         {
+            _log.Error(e, "Grpc message reading failed");
             OnGrpcError?.Invoke(e);
         }
 
@@ -109,11 +113,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Readers
         {
             lock (_lock)
             {
-                grpcStreamSubscriber.OnMessageReceived -= AccessReceived;
-                grpcStreamSubscriber.OnError -= OnError;
+                _grpcStreamSubscriber.OnMessageReceived -= AccessReceived;
+                _grpcStreamSubscriber.OnError -= OnError;
             }
 
-            await grpcStreamSubscriber.DisposeAsync();
+            await _grpcStreamSubscriber.DisposeAsync();
         }
     }
 }

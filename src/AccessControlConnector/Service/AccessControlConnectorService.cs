@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
@@ -11,26 +9,20 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
     public class AccessControlConnectorService
     {
-        public readonly int MaxParallelBlocks;
+        public readonly int Parallelism;
         private readonly ILogger _logger;
-        private readonly IConfiguration _configuration;
-        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IBridgeService _bridgeService;
         private ActionBlock<GrantedNotification> _actionBlock;
 
         public AccessControlConnectorService(
             ILogger logger,
             IConfiguration configuration,
-            IHttpClientFactory httpClientFactory,
-            IBridgeService bridgeService
-        )
+            IBridgeService bridgeService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             _bridgeService = bridgeService ?? throw new ArgumentNullException(nameof(bridgeService));
 
-            MaxParallelBlocks = configuration.GetValue<int>("Config:MaxParallelActionBlocks", 4);
+            Parallelism = configuration.GetValue("Config:MaxParallelActionBlocks", 1);
         }
 
         public void Start()
@@ -48,7 +40,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             },
             new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = MaxParallelBlocks
+                MaxDegreeOfParallelism = Parallelism,
+                BoundedCapacity = 100
             });
         }
 
@@ -65,7 +58,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            _actionBlock.Post(notification);
+            if (!_actionBlock.Post(notification))
+            {
+                _logger.Error("Action block did not accept granted notification");
+            }
         }
 
         public async Task SendKeepAliveSignalAsync()

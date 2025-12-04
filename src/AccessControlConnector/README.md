@@ -1,26 +1,32 @@
 # AccessControlConnector
+
 This application connects SmartFace with range of Access Control system or hardware that can act as an access control device.
 Application subscribes to SmartFace AccessController gRPC stream, receive and process `GRANTED` notifications and send `Open` request to Fingera Server
 
 ## Development
+
 To run application localy, follow these steps
- - open terminal
- - navigate to /src/AccessControlConnector
- - run `dotnet run`
 
- ## Deployment
- To deploy application, follow these steps
- - open terminal
- - navigate to /src/AccessControlConnector
- - run `dotnet publish -c Release -r win10-x64 --self-contained true -p:ReadyToRun=false -p:PublishSingleFile=true -p:PublishTrimmed=false -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true`
+- open terminal
+- navigate to /src/AccessControlConnector
+- run `dotnet run`
 
-### Deploy to Docker (AMD64)
+## Deployment
+
+To deploy application, follow these steps
+
+- open terminal
+- navigate to /src/AccessControlConnector
+- run `dotnet publish -c Release -r win10-x64 --self-contained true -p:ReadyToRun=false -p:PublishSingleFile=true -p:PublishTrimmed=false -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true`
+
+### Deploy to Docker
+
 - navigate to root of this repo
 - run following commands
- - `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
+- `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.0.2 .`
+- `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.0.2 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
+- `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.0.2`
+- `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
 
 ### Deploy to Docker (ARM)
 - navigate to root of this repo
@@ -32,10 +38,11 @@ To run application localy, follow these steps
 
 
 ## Usage
+
 Add following pattern to existing docker compose, depending on the integrations used:
 
 ```
-      
+
   ...
 
   sf-station:
@@ -71,18 +78,18 @@ Add following pattern to existing docker compose, depending on the integrations 
       - AccessControlMapping__3__StreamId=c74158b8-ede9-432b-fed4-08dd991ee484
       - AccessControlMapping__3__TargetId=WSJP78266
       - AccessControlMapping__3__UserResolver=WATCHLIST_MEMBER_LABEL_EMAIL
-      # VillaPro Gate #1 
+      # VillaPro Gate #1
       - AccessControlMapping__4__Type=VILLA_PRO_CONNECTOR
       - AccessControlMapping__4__StreamId=8821a3dc-fd07-4a53-5e64-08dab1c351a0
       - AccessControlMapping__4__TargetId=000-001
       - AccessControlMapping__4__UserResolver=WATCHLIST_MEMBER_LABEL_TOKEN_VILLAPRO
-      # VillaPro Gate #2 
+      # VillaPro Gate #2
       - AccessControlMapping__5__Type=VILLA_PRO_CONNECTOR
       - AccessControlMapping__5__StreamId=2e49f358-bebb-42b6-03e9-08db6e4030a1
       - AccessControlMapping__5__TargetId=001-575
       - AccessControlMapping__5__UserResolver=WATCHLIST_MEMBER_LABEL_TOKEN_VILLAPRO
       # NEDAP Aeos Controller #1
-      - AccessControlMapping__6__Type=AEOS_CONNECTOR 
+      - AccessControlMapping__6__Type=AEOS_CONNECTOR
       - AccessControlMapping__6__StreamId=0195f6a3-aa3c-716e-8116-9c8bbbfa671e
       - AccessControlMapping__6__Host=10.11.109.12
       - AccessControlMapping__6__Port=11020
@@ -90,7 +97,7 @@ Add following pattern to existing docker compose, depending on the integrations 
           # list of allowed Watchlists for the Aeos AEpu controller (optional)
       - AccessControlMapping__6__WatchlistExternalIds__0=2e49f358-bebb-42b6-03e9-08db6e4030a1
       # NEDAP Aeos Controller #2
-      - AccessControlMapping__7__Type=AEOS_CONNECTOR 
+      - AccessControlMapping__7__Type=AEOS_CONNECTOR
       - AccessControlMapping__7__StreamId=0195f6a3-aa3c-716e-8116-9c8bbbfa671e
       - AccessControlMapping__7__Host=10.11.109.12
       - AccessControlMapping__7__Port=11020
@@ -112,8 +119,25 @@ Add following pattern to existing docker compose, depending on the integrations 
       - VillaProConfiguration__AuthToken=
       - VillaProConfiguration__SystToken=
       - VillaProConfiguration__BaseUrl=
-       # General AEOS NEDAP Configuration 
+      # General AEOS NEDAP Configuration
       - AeosConfiguration__LabelName=LOCKERS
+      # KONE connector Maping configuration
+      AccessControlMapping__0__Type=KONE_CONNECTOR
+      AccessControlMapping__0__StreamId=<add your stream id>
+      AccessControlMapping__0__Terminal=1
+      AccessControlMapping__0__Area=1000
+      AccessControlMapping__0__Action=2001
+      # KONE defaults (used if a mapping omits Terminal/Area/Action)
+      KoneConfiguration__ClientId=<add your client id>
+      KoneConfiguration__ClientSecret=<add your client secret>
+      KoneConfiguration__BuildingId=${KONE_BUILDING_ID}
+      KoneConfiguration__ApiHostname=dev.kone.com
+      # omit WebSocketEndpoint to use default wss://<ApiHostname>/stream-v2
+      KoneConfiguration__WebSocketSubprotocol=koneapi
+      KoneConfiguration__GroupId=1
+      KoneConfiguration__Terminal=1
+      KoneConfiguration__Area=1000
+      KoneConfiguration__Action=2001
 
 networks:
   default:
@@ -121,3 +145,63 @@ networks:
       name: sf-network
 
 ```
+
+### KONE Connector
+
+This connector places elevator calls through the KONE Elevator Call API v2 (WebSocket) when a SmartFace access GRANTED event occurs on a mapped stream.
+
+Configuration is done in `src/AccessControlConnector/appsettings.json`.
+
+1. Global KONE settings (defaults/fallbacks):
+
+```json
+"KoneConfiguration": {
+  "ClientId": "<your-kone-client-id>",
+  "ClientSecret": "<your-kone-client-secret>",
+  "BuildingId": "<your-building-id>",
+  "ApiHostname": "dev.kone.com",
+  "WebSocketEndpoint": "",
+  "WebSocketSubprotocol": "koneapi",
+  "GroupId": "1",
+  "Terminal": 1,
+  "Area": 1000,
+  "Action": 2001
+}
+```
+
+- ClientId / ClientSecret: credentials from KONE Developer.
+- BuildingId: building identifier; connector uses `building:<BuildingId>`.
+- ApiHostname/WebSocketEndpoint: leave default for KONE dev.
+- GroupId: elevator group (default "1").
+- Terminal: default elevator terminal/car (can be overridden per mapping).
+- Area: default floor/area ID (can be overridden per mapping).
+- Action: default call action (can be overridden per mapping). See Actions below.
+
+2. Per-stream mapping (triggers the call on GRANTED for that stream):
+
+```json
+"AccessControlMapping": [
+  {
+    "Type": "KONE_CONNECTOR",
+    "StreamId": "<stream-guid-1>",
+    "Terminal": 1,
+    "Area": 1000,
+    "Action": 2001
+  },
+  {
+    "Type": "KONE_CONNECTOR",
+    "StreamId": "<stream-guid-2>",
+    "Terminal": 1,
+    "Area": 2000,
+    "Action": 2002
+  }
+]
+```
+
+Semantics:
+
+- Action: call type
+  - 2001: call elevator UP
+  - 2002: call elevator DOWN
+- Area: floor/area identifier to call to (destination or state activation target, depending on action).
+- Terminal: elevator terminal/car number.
