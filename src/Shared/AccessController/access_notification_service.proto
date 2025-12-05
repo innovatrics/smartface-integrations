@@ -77,7 +77,6 @@ message AccessNotificationGranted
 	int64 match_result_score = 7;
 	bytes crop_image = 8;
 	map<string, string> watchlist_member_labels = 9;
-	Modality modality = 10;
 }
 
 message AccessNotificationDenied
@@ -101,7 +100,6 @@ message AccessNotificationBlocked
 	bytes crop_image = 6;
 	BlockReason reason = 7;
 	google.protobuf.Timestamp blocked_until = 8;
-	Modality modality = 9;
 }
 
 message EyeCoordinates

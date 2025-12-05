@@ -14,8 +14,28 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 TrackletId = accessNotification.TrackletId,
                 FaceId = accessNotification.FaceId,
                 GrpcSentAt = accessNotification.SentAt.ToDateTime()
-                Modality = accessNotification.
             };
+        }
+
+        private static Modality ExtractModality(uint typeOfAccessNotification)
+        {
+            var type = (AccessNotificationType)typeOfAccessNotification;
+
+            if (type.HasFlag(AccessNotificationType.PalmGranted) ||
+                type.HasFlag(AccessNotificationType.PalmDeniedUnsupported) ||
+                type.HasFlag(AccessNotificationType.PalmBlocked))
+            {
+                return Modality.Palm;
+            }
+
+            if (type.HasFlag(AccessNotificationType.OpticalCodeGranted) ||
+                type.HasFlag(AccessNotificationType.OpticalCodeDeniedUnsupported) ||
+                type.HasFlag(AccessNotificationType.OpticalCodeBlocked))
+            {
+                return Modality.OpticalCode;
+            }
+
+            return Modality.Face;
         }
 
         public static GrantedNotification GetGrantedNotification(this AccessNotification accessNotification)
@@ -37,7 +57,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 MatchResultScore = accessNotificationGranted.MatchResultScore,
                 CropImage = accessNotificationGranted.CropImage.ToByteArray(),
                 GrpcSentAt = accessNotification.SentAt.ToDateTime(),
-                Modality = accessNotificationGranted.Modality
+                Modality = ExtractModality(accessNotification.TypeOfAccessNotification)
             };
             return grantedNotification;
         }
@@ -58,7 +78,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 MatchResultScore = accessNotificationBlocked.MatchResultScore,
                 CropImage = accessNotificationBlocked.CropImage.ToByteArray(),
                 GrpcSentAt = accessNotification.SentAt.ToDateTime(),
-                Modality = accessNotificationBlocked.Modality
+                Modality = ExtractModality(accessNotification.TypeOfAccessNotification)
             };
             return blockedNotification;
         }
