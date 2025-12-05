@@ -1,4 +1,6 @@
-﻿namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
+﻿using Innovatrics.Smartface;
+
+namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
 {
     public class BlockedNotification : Notification
     {
@@ -7,5 +9,6 @@
         public string WatchlistId { get; set; }
         public string WatchlistDisplayName { get; set; }
         public long MatchResultScore { get; set; }
+        public Modality Modality { get; set; }
     }
 }
