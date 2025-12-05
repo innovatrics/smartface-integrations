@@ -28,6 +28,15 @@ To deploy application, follow these steps
 - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.0.2`
 - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
 
+### Deploy to Docker (ARM)
+- navigate to root of this repo
+- run following commands
+ - `docker build -f src/AccessControlConnector/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4arm2 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4arm2 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latestarm`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:0.4arm2`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latestarm`
+
+
 ## Usage
 
 Add following pattern to existing docker compose, depending on the integrations used:

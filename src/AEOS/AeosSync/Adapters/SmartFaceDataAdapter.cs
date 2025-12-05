@@ -143,10 +143,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                     skipValue += SmartFaceSetPageSize;
 
+                    if (watchlistMembers?.WatchlistMembers?.Items == null)
+                    {
+                        _logger.Warning("GraphQL response returned null or empty watchlist members. Breaking the loop.");
+                        break;
+                    }
+
                     foreach (var wm in watchlistMembers.WatchlistMembers.Items)
                     {
 
-                        var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == FaceType.Regular)?.ImageDataId;
+                        var imageDataId = wm.Tracklet?.Faces?.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == FaceType.Regular)?.ImageDataId;
                         
                         if (KeepPhotoUpToDate)
                         {
@@ -180,7 +186,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                     }
 
-                    if (watchlistMembers.WatchlistMembers.PageInfo.HasNextPage == false)
+                    if (watchlistMembers.WatchlistMembers.PageInfo?.HasNextPage == false)
                     {
                         allMembers = true;
                     }
@@ -204,10 +210,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         var watchlistMembers = await _graphQlClient.GetWatchlistMembersPerWatchlistAsync(skipValue, SmartFaceSetPageSize, item);
                         skipValue += SmartFaceSetPageSize;
 
+                        if (watchlistMembers?.WatchlistMembers?.Items == null)
+                        {
+                            _logger.Warning($"GraphQL response returned null or empty watchlist members for watchlist {item}. Skipping this watchlist.");
+                            continue;
+                        }
+
                         _logger.Debug($"watchlistMembers.WatchlistMembers.Items.Count: {watchlistMembers.WatchlistMembers.Items.Length}");
                         foreach (var wm in watchlistMembers.WatchlistMembers.Items)
                         {
-                            var imageDataId = wm.Tracklet.Faces.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == FaceType.Regular)?.ImageDataId;
+                            var imageDataId = wm.Tracklet?.Faces?.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == FaceType.Regular)?.ImageDataId;
                             if (KeepPhotoUpToDate)
                             {
                                 var imageDataBytes = await GetImageData(imageDataId.ToString());
@@ -225,7 +237,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                                 smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
                             }
                         }
-                        if (watchlistMembers.WatchlistMembers.PageInfo.HasNextPage == false)
+                        if (watchlistMembers.WatchlistMembers.PageInfo?.HasNextPage == false)
                         {
                             allMembers = true;
                         }
