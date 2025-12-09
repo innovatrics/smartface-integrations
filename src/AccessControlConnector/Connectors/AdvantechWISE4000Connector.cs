@@ -26,21 +26,21 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(StreamConfig accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(StreamConfig streamConfig, string accessControlUserId = null)
         {
-            _logger.Information("Send Open to {host}:{port}/do_value/slot_0/ and channel: {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Channel);
+            _logger.Information("Send Open to {host}:{port}/do_value/slot_0/ and channel: {channel}", streamConfig.Host, streamConfig.Port, streamConfig.Channel);
 
             var httpClient = _httpClientFactory.CreateClient();
 
-            var port = accessControlMapping.Port ?? 80;
+            var port = streamConfig.Port ?? 80;
 
-            var requestUri = $"{accessControlMapping.Schema ?? "http"}://{accessControlMapping.Host}:{port}/do_value/slot_0/";
+            var requestUri = $"{streamConfig.Schema ?? "http"}://{streamConfig.Host}:{port}/do_value/slot_0/";
 
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
-            if (!string.IsNullOrEmpty(accessControlMapping.Username) && !string.IsNullOrEmpty(accessControlMapping.Password))
+            if (!string.IsNullOrEmpty(streamConfig.Username) && !string.IsNullOrEmpty(streamConfig.Password))
             {
-                var authenticationString = $"{accessControlMapping.Username}:{accessControlMapping.Password}";
+                var authenticationString = $"{streamConfig.Username}:{streamConfig.Password}";
                 var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
 
                 httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
@@ -50,11 +50,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             {
                 DOVal = new[] {
                     new {
-                        Ch = accessControlMapping.Channel,
+                        Ch = streamConfig.Channel,
                         Val = 1
                     },
                     new {
-                        Ch = accessControlMapping.Channel,
+                        Ch = streamConfig.Channel,
                         Val = 0
                     }
                 }
