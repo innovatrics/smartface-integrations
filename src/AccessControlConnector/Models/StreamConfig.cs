@@ -1,6 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Text.Json.Serialization;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
