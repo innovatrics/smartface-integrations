@@ -26,7 +26,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(StreamConfig accessControlMapping, string accessControlUserId = null)
         {
             _logger.Information("Send Open to {host}:{port}/do_value/slot_0/ and channel: {channel}", accessControlMapping.Host, accessControlMapping.Port, accessControlMapping.Channel);
 

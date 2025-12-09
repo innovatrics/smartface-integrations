@@ -180,7 +180,7 @@ Configuration is done in `src/AccessControlConnector/appsettings.json`.
 2. Per-stream mapping (triggers the call on GRANTED for that stream):
 
 ```json
-"AccessControlMapping": [
+"StreamConfig": [
   {
     "Type": "KONE_CONNECTOR",
     "StreamId": "<stream-guid-1>",

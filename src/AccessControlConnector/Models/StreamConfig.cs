@@ -1,0 +1,35 @@
+﻿using System;
+using System.ComponentModel;
+using System.Text.Json.Serialization;
+using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
+
+namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
+{
+    public class StreamConfig
+    {
+        public bool Enabled { get; set; } = true;
+        public string Type { get; set; }
+        public Modality[] Modalities { get; set; }
+        public Guid StreamId { get; set; }
+        public string Schema { get; set; } = "http";
+        public string Host { get; set; }
+        public int? Port { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string[] WatchlistExternalIds { get; set; }
+        public string UserResolver { get; set; }
+        public int? Channel { get; set; }
+        public string Reader { get; set; }
+        public string DoorName { get; set; }
+        public string DoorId { get; set; }
+        public string Controller { get; set; }
+        public string Token { get; set; }
+        public string Params { get; set; }
+        public string Switch { get; set; }
+        public string Action { get; set; }
+        public int? NextCallDelayMs { get; set; }
+        public string TargetId { get; set; }
+        public int DestinationArea { get; set; }
+        public bool IsDirectionUp { get; set; }
+    }
+}

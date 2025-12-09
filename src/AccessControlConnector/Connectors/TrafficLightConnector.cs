@@ -28,7 +28,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             this.logger.Information("Traffic Light Connector Created!");
         }
 
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(StreamConfig accessControlMapping, string accessControlUserId = null)
         {
             this.logger.Information("Send Open to {host}:{port}/go", accessControlMapping.Host, accessControlMapping.Port);
 

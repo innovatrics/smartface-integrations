@@ -52,7 +52,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             return Task.CompletedTask;
         }
         
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(StreamConfig accessControlMapping, string accessControlUserId = null)
         {
 
             this.logger.Information($"MyQ Printer: {accessControlMapping.TargetId} Initiating OpenAsync using email: ({accessControlUserId}), using stream mapping: {accessControlMapping.StreamId}");

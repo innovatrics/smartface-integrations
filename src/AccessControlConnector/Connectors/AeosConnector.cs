@@ -46,7 +46,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             return Task.CompletedTask;
         }
 
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(StreamConfig accessControlMapping, string accessControlUserId = null)
         {
             _logger.Information($"Sending ipBadge to {accessControlMapping.Host}:{accessControlMapping.Port}");
 

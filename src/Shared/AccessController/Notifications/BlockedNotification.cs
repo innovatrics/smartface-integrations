@@ -9,6 +9,5 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
         public string WatchlistId { get; set; }
         public string WatchlistDisplayName { get; set; }
         public long MatchResultScore { get; set; }
-        public Modality Modality { get; set; }
     }
 }
