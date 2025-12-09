@@ -171,8 +171,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
 
             var httpClient = _httpClientFactory.CreateClient();
 
-            // {schema ?? "http"}://192.168.10.22:15108/CardBadge?CardData=250000000000000047D4A3D1&ReaderModuleID=77407156193722391&ReaderNumber=2 
-
             string requestUri;
 
             if (!string.IsNullOrEmpty(doorName) && !string.IsNullOrEmpty(controller))
