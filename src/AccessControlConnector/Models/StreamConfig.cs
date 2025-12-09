@@ -2,7 +2,7 @@
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
 {
-    public class AccessControlMapping
+    public class StreamConfig
     {
         public bool Enabled { get; set; } = true;
         public string Type                              { get; set; } = "Advantech WISE-4000";

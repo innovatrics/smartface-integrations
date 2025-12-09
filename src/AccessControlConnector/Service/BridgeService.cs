@@ -14,7 +14,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly ILogger _log;
         private readonly AccessControlConnectorFactory _accessControlConnectorFactory;
         private readonly IUserResolverFactory _userResolverFactory;
-        private readonly AccessControlMapping[] _allAccessConnectorConfigs;
+        private readonly StreamConfig[] _allAccessConnectorConfigs;
 
         public BridgeService(
             ILogger log,
@@ -28,12 +28,12 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _accessControlConnectorFactory = accessControlConnectorFactory ?? throw new ArgumentNullException(nameof(accessControlConnectorFactory));
             _userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
 
-            _allAccessConnectorConfigs = configuration.GetSection("AccessControlMapping").Get<AccessControlMapping[]>() ?? [];
+            _allAccessConnectorConfigs = configuration.GetSection("StreamConfig").Get<StreamConfig[]>() ?? [];
             _allAccessConnectorConfigs = _allAccessConnectorConfigs.Where(x => x.Enabled).ToArray();
 
             if (!_allAccessConnectorConfigs.Any())
             {
-                throw new InvalidOperationException("No enabled connectors configured in AccessControlMapping");
+                throw new InvalidOperationException("No enabled connectors configured in StreamConfig");
             }
         }
 
@@ -124,7 +124,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
-        private AccessControlMapping[] GetAccessConnectorConfigsForStream(string streamIdStr)
+        private StreamConfig[] GetAccessConnectorConfigsForStream(string streamIdStr)
         {
             if (!Guid.TryParse(streamIdStr, out var streamId))
             {

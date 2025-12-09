@@ -38,13 +38,13 @@ namespace AccessControlConnector.Connectors.Kone
             });
         }
 
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(StreamConfig streamConfig, string accessControlUserId = null)
         {
             var maxStateUpdateWaitTime = TimeSpan.FromSeconds(3);
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
-            var areaId = accessControlMapping.DestinationArea;
-            var isDirectionUp = accessControlMapping.IsDirectionUp;
+            var areaId = streamConfig.DestinationArea;
+            var isDirectionUp = streamConfig.IsDirectionUp;
             var landingCallId = Guid.NewGuid();
 
             _log.Information("Sending landing call with Id {Id} to area {areaId}, direction up: {isDirectionUp}",

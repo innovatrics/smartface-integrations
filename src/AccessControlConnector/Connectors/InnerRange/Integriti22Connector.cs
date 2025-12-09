@@ -30,21 +30,21 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(StreamConfig streamConfig, string accessControlUserId = null)
         {
             if (_integritiConfiguration == null)
             {
                 _integritiConfiguration = _configuration.GetSection("Integriti22").Get<IntegritiConfiguration>();
             }
 
-            var schema = accessControlMapping.Schema ?? _integritiConfiguration.Schema;
-            var host = accessControlMapping.Host ?? _integritiConfiguration.Host;
-            var port = accessControlMapping.Port ?? _integritiConfiguration.Port;
-            var username = accessControlMapping.Username ?? _integritiConfiguration.Username;
-            var password = accessControlMapping.Password ?? _integritiConfiguration.Password;
-            var controller = accessControlMapping.Controller ?? _integritiConfiguration.Controller;
+            var schema = streamConfig.Schema ?? _integritiConfiguration.Schema;
+            var host = streamConfig.Host ?? _integritiConfiguration.Host;
+            var port = streamConfig.Port ?? _integritiConfiguration.Port;
+            var username = streamConfig.Username ?? _integritiConfiguration.Username;
+            var password = streamConfig.Password ?? _integritiConfiguration.Password;
+            var controller = streamConfig.Controller ?? _integritiConfiguration.Controller;
 
-            _logger.Information($"{nameof(OpenAsync)} to {{host}}:{{port}} for {{doorName}}, {{doorId}}, {{controller}}, {{reader}} and {{channel}}", host, port, accessControlMapping.DoorName, accessControlMapping.DoorId, controller, accessControlMapping.Reader, accessControlMapping.Channel);
+            _logger.Information($"{nameof(OpenAsync)} to {{host}}:{{port}} for {{doorName}}, {{doorId}}, {{controller}}, {{reader}} and {{channel}}", host, port, streamConfig.DoorName, streamConfig.DoorId, controller, streamConfig.Reader, streamConfig.Channel);
 
             string cardData = null;
 
@@ -77,10 +77,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
                 username,
                 password,
                 cardData,
-                accessControlMapping.Reader,
-                accessControlMapping.Channel,
-                accessControlMapping.DoorName,
-                accessControlMapping.DoorId,
+                streamConfig.Reader,
+                streamConfig.Channel,
+                streamConfig.DoorName,
+                streamConfig.DoorId,
                 controller
             );
 

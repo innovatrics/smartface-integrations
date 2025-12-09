@@ -61,50 +61,50 @@ Add following pattern to existing docker compose, depending on the integrations 
       - AccessController__Host=SFAccessController
       - AccessController__Port=80
       # IP Relay Integration #1
-      - AccessControlMapping__0__StreamId=ec0437ae-7716-4141-99d9-a9b2a4dd2106
-      - AccessControlMapping__0__Host=ip-of-the-relay
-      - AccessControlMapping__0__Channel=3
+      - StreamConfig__0__StreamId=ec0437ae-7716-4141-99d9-a9b2a4dd2106
+      - StreamConfig__0__Host=ip-of-the-relay
+      - StreamConfig__0__Channel=3
       # IP Relay Integration #2
-      - AccessControlMapping__1__StreamId=d5ff8f40-f900-4492-8ecc-6a2539648964
-      - AccessControlMapping__1__Host=ip-of-the-relay
-      - AccessControlMapping__1__Channel=3
+      - StreamConfig__1__StreamId=d5ff8f40-f900-4492-8ecc-6a2539648964
+      - StreamConfig__1__Host=ip-of-the-relay
+      - StreamConfig__1__Channel=3
       # MyQ Printer #1
-      - AccessControlMapping__2__Type=MYQ_CONNECTOR
-      - AccessControlMapping__2__StreamId=a7206eec-46f1-498a-9a4e-c15983a129d1
-      - AccessControlMapping__2__TargetId=CSJP42700
-      - AccessControlMapping__2__UserResolver=WATCHLIST_MEMBER_LABEL_EMAIL
+      - StreamConfig__2__Type=MYQ_CONNECTOR
+      - StreamConfig__2__StreamId=a7206eec-46f1-498a-9a4e-c15983a129d1
+      - StreamConfig__2__TargetId=CSJP42700
+      - StreamConfig__2__UserResolver=WATCHLIST_MEMBER_LABEL_EMAIL
       # MyQ Printer #2
-      - AccessControlMapping__3__Type=MYQ_CONNECTOR
-      - AccessControlMapping__3__StreamId=c74158b8-ede9-432b-fed4-08dd991ee484
-      - AccessControlMapping__3__TargetId=WSJP78266
-      - AccessControlMapping__3__UserResolver=WATCHLIST_MEMBER_LABEL_EMAIL
+      - StreamConfig__3__Type=MYQ_CONNECTOR
+      - StreamConfig__3__StreamId=c74158b8-ede9-432b-fed4-08dd991ee484
+      - StreamConfig__3__TargetId=WSJP78266
+      - StreamConfig__3__UserResolver=WATCHLIST_MEMBER_LABEL_EMAIL
       # VillaPro Gate #1
-      - AccessControlMapping__4__Type=VILLA_PRO_CONNECTOR
-      - AccessControlMapping__4__StreamId=8821a3dc-fd07-4a53-5e64-08dab1c351a0
-      - AccessControlMapping__4__TargetId=000-001
-      - AccessControlMapping__4__UserResolver=WATCHLIST_MEMBER_LABEL_TOKEN_VILLAPRO
+      - StreamConfig__4__Type=VILLA_PRO_CONNECTOR
+      - StreamConfig__4__StreamId=8821a3dc-fd07-4a53-5e64-08dab1c351a0
+      - StreamConfig__4__TargetId=000-001
+      - StreamConfig__4__UserResolver=WATCHLIST_MEMBER_LABEL_TOKEN_VILLAPRO
       # VillaPro Gate #2
-      - AccessControlMapping__5__Type=VILLA_PRO_CONNECTOR
-      - AccessControlMapping__5__StreamId=2e49f358-bebb-42b6-03e9-08db6e4030a1
-      - AccessControlMapping__5__TargetId=001-575
-      - AccessControlMapping__5__UserResolver=WATCHLIST_MEMBER_LABEL_TOKEN_VILLAPRO
+      - StreamConfig__5__Type=VILLA_PRO_CONNECTOR
+      - StreamConfig__5__StreamId=2e49f358-bebb-42b6-03e9-08db6e4030a1
+      - StreamConfig__5__TargetId=001-575
+      - StreamConfig__5__UserResolver=WATCHLIST_MEMBER_LABEL_TOKEN_VILLAPRO
       # NEDAP Aeos Controller #1
-      - AccessControlMapping__6__Type=AEOS_CONNECTOR
-      - AccessControlMapping__6__StreamId=0195f6a3-aa3c-716e-8116-9c8bbbfa671e
-      - AccessControlMapping__6__Host=10.11.109.12
-      - AccessControlMapping__6__Port=11020
-      - AccessControlMapping__6__UserResolver=AEOS_USER
+      - StreamConfig__6__Type=AEOS_CONNECTOR
+      - StreamConfig__6__StreamId=0195f6a3-aa3c-716e-8116-9c8bbbfa671e
+      - StreamConfig__6__Host=10.11.109.12
+      - StreamConfig__6__Port=11020
+      - StreamConfig__6__UserResolver=AEOS_USER
           # list of allowed Watchlists for the Aeos AEpu controller (optional)
-      - AccessControlMapping__6__WatchlistExternalIds__0=2e49f358-bebb-42b6-03e9-08db6e4030a1
+      - StreamConfig__6__WatchlistExternalIds__0=2e49f358-bebb-42b6-03e9-08db6e4030a1
       # NEDAP Aeos Controller #2
-      - AccessControlMapping__7__Type=AEOS_CONNECTOR
-      - AccessControlMapping__7__StreamId=0195f6a3-aa3c-716e-8116-9c8bbbfa671e
-      - AccessControlMapping__7__Host=10.11.109.12
-      - AccessControlMapping__7__Port=11020
-      - AccessControlMapping__7__UserResolver=AEOS_USER
+      - StreamConfig__7__Type=AEOS_CONNECTOR
+      - StreamConfig__7__StreamId=0195f6a3-aa3c-716e-8116-9c8bbbfa671e
+      - StreamConfig__7__Host=10.11.109.12
+      - StreamConfig__7__Port=11020
+      - StreamConfig__7__UserResolver=AEOS_USER
           # list of allowed Watchlists for the Aeos AEpu controller (optional)
-      - AccessControlMapping__7__WatchlistExternalIds__0=2e49f358-bebb-42b6-03e9-08db6e4030a1
-      - AccessControlMapping__7__WatchlistExternalIds__1=2e49f358-bebb-42b6-03e9-08db6e4030a1
+      - StreamConfig__7__WatchlistExternalIds__0=2e49f358-bebb-42b6-03e9-08db6e4030a1
+      - StreamConfig__7__WatchlistExternalIds__1=2e49f358-bebb-42b6-03e9-08db6e4030a1
       # MYQ Integration Configuration (Optional)
       - MyQConfiguration__ClientId=<id your client ID>
       - MyQConfiguration__ClientSecret=<add your client secret>
@@ -122,11 +122,11 @@ Add following pattern to existing docker compose, depending on the integrations 
       # General AEOS NEDAP Configuration
       - AeosConfiguration__LabelName=LOCKERS
       # KONE connector Maping configuration
-      AccessControlMapping__0__Type=KONE_CONNECTOR
-      AccessControlMapping__0__StreamId=<add your stream id>
-      AccessControlMapping__0__Terminal=1
-      AccessControlMapping__0__Area=1000
-      AccessControlMapping__0__Action=2001
+      StreamConfig__0__Type=KONE_CONNECTOR
+      StreamConfig__0__StreamId=<add your stream id>
+      StreamConfig__0__Terminal=1
+      StreamConfig__0__Area=1000
+      StreamConfig__0__Action=2001
       # KONE defaults (used if a mapping omits Terminal/Area/Action)
       KoneConfiguration__ClientId=<add your client id>
       KoneConfiguration__ClientSecret=<add your client secret>
@@ -180,7 +180,7 @@ Configuration is done in `src/AccessControlConnector/appsettings.json`.
 2. Per-stream mapping (triggers the call on GRANTED for that stream):
 
 ```json
-"AccessControlMapping": [
+"StreamConfig": [
   {
     "Type": "KONE_CONNECTOR",
     "StreamId": "<stream-guid-1>",
