@@ -53,10 +53,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             {
                 _log.Debug("Handling access for connector of type {ConnectorType}", streamConfig.Type);
 
-                if (!streamConfig.Modalities.Contains(notification.Modality) && streamConfig.Modalities.Length > 0)
+                if (streamConfig.Modalities.Length > 0)
                 {
-                    _log.Warning("Stream config does not apply to modality {Modality} for Stream {StreamId}", notification.Modality, notification.StreamId);
-                    continue;
+                    if (!streamConfig.Modalities.Contains(notification.Modality))
+                    {
+                        _log.Warning("Stream config does not apply to modality {Modality} for Stream {StreamId}", notification.Modality, notification.StreamId);
+                        continue;
+                    }
                 }
 
                 var watchlistExternalIds = streamConfig.WatchlistExternalIds;
