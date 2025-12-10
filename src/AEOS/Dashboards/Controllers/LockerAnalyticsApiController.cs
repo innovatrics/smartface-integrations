@@ -203,21 +203,21 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AssignLocker([FromBody] AssignLockerRequest request)
+        public Task<IActionResult> AssignLocker([FromBody] AssignLockerRequest request)
         {
             var allowChanges = configuration.GetValue<bool>("AeosDashboards:AllowChanges", false);
             if (!allowChanges)
             {
-                return StatusCode(403, new { error = "Changes are not allowed. Set AeosDashboards:AllowChanges to true to enable this endpoint." });
+                return Task.FromResult<IActionResult>(StatusCode(403, new { error = "Changes are not allowed. Set AeosDashboards:AllowChanges to true to enable this endpoint." }));
             }
 
             if (request == null)
             {
-                return BadRequest(new { error = "Request body is required." });
+                return Task.FromResult<IActionResult>(BadRequest(new { error = "Request body is required." }));
             }
 
             // Dummy implementation - to be updated later
-            return Ok(new { message = "Locker assignment endpoint - implementation pending", employeeId = request.EmployeeId, lockerId = request.LockerId });
+            return Task.FromResult<IActionResult>(Ok(new { message = "Locker assignment endpoint - implementation pending", employeeId = request.EmployeeId, lockerId = request.LockerId }));
         }
 
         /// <summary>

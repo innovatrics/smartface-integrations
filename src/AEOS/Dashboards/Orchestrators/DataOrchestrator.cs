@@ -48,12 +48,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             AeosIntegrationIdentifierType = configuration.GetValue<string>("AeosDashboards:Aeos:Integration:SmartFace:IdentifierType") ?? throw new InvalidOperationException("The AEOS integration identifier type is not read.");
         }
 
-        public async Task<LockerAnalytics> GetLockerAnalytics()
+        public Task<LockerAnalytics> GetLockerAnalytics()
         {
-            return currentAnalytics;
+            return Task.FromResult(currentAnalytics);
         }
 
-        public async Task<AssignmentChangesResponse> GetAssignmentChanges()
+        public Task<AssignmentChangesResponse> GetAssignmentChanges()
         {
             var currentCheckTime = DateTime.Now;
             var changes = new List<LockerAssignmentChange>();
@@ -67,17 +67,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 UpdatePreviousAssignments();
                 _lastAssignmentCheckTime = currentCheckTime;
                 
-                return new AssignmentChangesResponse
+                return Task.FromResult(new AssignmentChangesResponse
                 {
                     LastCheckTime = currentCheckTime,
                     CurrentCheckTime = currentCheckTime,
                     Changes = changes,
                     TotalChanges = 0
-                };
+                });
             }
 
             // Compare current assignments with previous assignments
-            foreach (var locker in _AeosAllLockers)
+            foreach (var locker in _AeosAllLockers?.Where(l => l != null) ?? Enumerable.Empty<AeosLockers>())
             {
                 var previousAssignment = _previousLockerAssignments.ContainsKey(locker.Id) 
                     ? _previousLockerAssignments[locker.Id] 
@@ -110,7 +110,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             _lastAssignmentCheckTime = currentCheckTime;
             _assignmentChanges.AddRange(changes);
 
-            return response;
+            return Task.FromResult(response);
         }
 
         private List<LockerAssignmentChange> CreateAssignmentChanges(AeosLockers locker, long? previousAssignment, long? currentAssignment)
@@ -162,9 +162,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     GroupName = groupName,
                     PreviousAssignedTo = previousAssignment,
                     PreviousAssignedEmployeeName = previousAssignment.HasValue 
-                        ? _AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value) != null 
-                            ? $"{_AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value).FirstName} {_AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value).LastName}" 
-                            : null 
+                        ? (_AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value) is { } prevEmployee
+                            ? $"{prevEmployee.FirstName} {prevEmployee.LastName}" 
+                            : null)
                         : null,
                     PreviousAssignedEmployeeIdentifier = previousAssignment.HasValue 
                         ? _AeosAllIdentifiers.FirstOrDefault(i => i.CarrierId == previousAssignment.Value)?.BadgeNumber 
@@ -237,7 +237,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
                 var sortedLockers = lockerGroup.LockerIds
                     .Select(lockerId => _AeosAllLockers.FirstOrDefault(l => l.Id == lockerId))
-                    .Where(l => l != null)
+                    .OfType<AeosLockers>()
                     .OrderBy(l => l.Name)
                     .ToList();
 
@@ -350,7 +350,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             }
         }
 
-        public async Task<IList<AeosMember>> GetEmployees()
+        public Task<IList<AeosMember>> GetEmployees()
         {
             // Add assigned lockers to each employee using current data
             foreach (var employee in _AeosAllEmployees)
@@ -368,12 +368,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 this.logger.Debug($"Employee {employee.FirstName} {employee.LastName} (ID: {employee.Id}) has {assignedLockers.Count} assigned lockers");
             }
 
-            return _AeosAllEmployees;
+            return Task.FromResult<IList<AeosMember>>(_AeosAllEmployees);
         }
 
-        public async Task<IList<AeosIdentifierType>> GetIdentifierTypes()
+        public Task<IList<AeosIdentifierType>> GetIdentifierTypes()
         {
-            return _AeosAllIdentifierTypes;
+            return Task.FromResult<IList<AeosIdentifierType>>(_AeosAllIdentifierTypes);
         }
 
         public async Task<IList<AeosIdentifier>> GetIdentifiersPerType(long identifierType)
@@ -381,7 +381,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             return await aeosDataAdapter.GetIdentifiersPerType(identifierType);
         }
 
-        public async Task<AeosMember> GetEmployeeByIdentifier(string identifier)
+        public Task<AeosMember?> GetEmployeeByIdentifier(string identifier)
         {
             this.logger.Information($"Finding employee for identifier: {identifier}");
             
@@ -389,20 +389,20 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             if (matchingIdentifier == null)
             {
                 this.logger.Warning($"No identifier found with BadgeNumber: {identifier}");
-                return null;
+                return Task.FromResult<AeosMember?>(null);
             }
 
             if (matchingIdentifier.CarrierId == 0)
             {
                 this.logger.Warning($"Identifier {identifier} has no associated carrier (CarrierId is 0)");
-                return null;
+                return Task.FromResult<AeosMember?>(null);
             }
 
             var employee = _AeosAllEmployees.FirstOrDefault(e => e.Id == matchingIdentifier.CarrierId);
             if (employee == null)
             {
                 this.logger.Warning($"No employee found with Id: {matchingIdentifier.CarrierId} for identifier: {identifier}");
-                return null;
+                return Task.FromResult<AeosMember?>(null);
             }
 
             // Find all lockers assigned to this employee
@@ -411,10 +411,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             employee.Identifier = identifier;
 
             this.logger.Information($"Found employee: {employee.FirstName} {employee.LastName} (ID: {employee.Id}) for identifier: {identifier} with {assignedLockers.Count} assigned lockers");
-            return employee;
+            return Task.FromResult<AeosMember?>(employee);
         }
 
-        public async Task<AeosMember> GetEmployeeByEmail(string email)
+        public Task<AeosMember?> GetEmployeeByEmail(string email)
         {
             this.logger.Information($"Finding employee for email: {email}");
             
@@ -422,7 +422,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             if (employee == null)
             {
                 this.logger.Warning($"No employee found with email: {email}");
-                return null;
+                return Task.FromResult<AeosMember?>(null);
             }
 
             // Find all lockers assigned to this employee
@@ -437,10 +437,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             }
 
             this.logger.Information($"Found employee: {employee.FirstName} {employee.LastName} (ID: {employee.Id}) for email: {email} with {assignedLockers.Count} assigned lockers");
-            return employee;
+            return Task.FromResult<AeosMember?>(employee);
         }
 
-        public async Task<GroupAssignmentEmailSummary> GetGroupAssignmentEmailSummary(long groupId)
+        public Task<GroupAssignmentEmailSummary?> GetGroupAssignmentEmailSummary(long groupId)
         {
             logger.Information($"Getting email summary for group ID: {groupId}");
 
@@ -449,7 +449,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             if (group == null)
             {
                 logger.Warning($"Group with ID {groupId} not found");
-                return null;
+                return Task.FromResult<GroupAssignmentEmailSummary?>(null);
             }
 
             // Get all lockers in this group
@@ -519,7 +519,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             };
 
             logger.Information($"Email summary for group {group.Name}: {summary.TotalEmployeesWithAssignments} employees with {summary.TotalAssignedLockers} assigned lockers");
-            return summary;
+            return Task.FromResult<GroupAssignmentEmailSummary?>(summary);
         }
     }
 }

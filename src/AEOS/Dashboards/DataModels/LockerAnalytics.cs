@@ -31,9 +31,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
     public class LockerGroupAnalytics
     {
         public long Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Function { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Function { get; set; } = string.Empty;
         public long Template { get; set; }
         public int TotalLockers { get; set; }
         public int AssignedLockers { get; set; }
@@ -46,30 +46,30 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
     public class LockerInfo
     {
         public long Id { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public DateTime? LastUsed { get; set; }
         public long? AssignedTo { get; set; }
-        public string AssignedEmployeeName { get; set; }
-        public string AssignedEmployeeIdentifier { get; set; }
-        public string AssignedEmployeeEmail { get; set; }
+        public string? AssignedEmployeeName { get; set; }
+        public string? AssignedEmployeeIdentifier { get; set; }
+        public string? AssignedEmployeeEmail { get; set; }
         public double DaysSinceLastUse { get; set; }
     }
 
     public class LockerAssignmentChange
     {
         public long LockerId { get; set; }
-        public string LockerName { get; set; }
-        public string GroupName { get; set; }
+        public string? LockerName { get; set; }
+        public string? GroupName { get; set; }
         public long? PreviousAssignedTo { get; set; }
-        public string PreviousAssignedEmployeeName { get; set; }
-        public string PreviousAssignedEmployeeIdentifier { get; set; }
-        public string PreviousAssignedEmployeeEmail { get; set; }
+        public string? PreviousAssignedEmployeeName { get; set; }
+        public string? PreviousAssignedEmployeeIdentifier { get; set; }
+        public string? PreviousAssignedEmployeeEmail { get; set; }
         public long? NewAssignedTo { get; set; }
-        public string NewAssignedEmployeeName { get; set; }
-        public string NewAssignedEmployeeIdentifier { get; set; }
-        public string NewAssignedEmployeeEmail { get; set; }
+        public string? NewAssignedEmployeeName { get; set; }
+        public string? NewAssignedEmployeeIdentifier { get; set; }
+        public string? NewAssignedEmployeeEmail { get; set; }
         public DateTime ChangeTimestamp { get; set; }
-        public string ChangeType { get; set; } // "Assigned", "Unassigned" - each change is a separate event
+        public string ChangeType { get; set; } = string.Empty; // "Assigned", "Unassigned" - each change is a separate event
     }
 
     public class AssignmentChangesResponse
@@ -83,7 +83,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
     public class SimplifiedLockerInfo
     {
         public long Id { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public DateTime? LastUsed { get; set; }
         public double DaysSinceLastUse { get; set; }
     }
@@ -91,9 +91,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
     public class EmployeeAssignmentSummary
     {
         public long EmployeeId { get; set; }
-        public string EmployeeName { get; set; }
-        public string EmployeeEmail { get; set; }
-        public string EmployeeIdentifier { get; set; }
+        public string EmployeeName { get; set; } = string.Empty;
+        public string? EmployeeEmail { get; set; }
+        public string? EmployeeIdentifier { get; set; }
         public List<SimplifiedLockerInfo> AssignedLockers { get; set; } = new List<SimplifiedLockerInfo>();
         public int TotalAssignedLockers { get; set; }
     }
@@ -101,8 +101,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
     public class GroupAssignmentEmailSummary
     {
         public long GroupId { get; set; }
-        public string GroupName { get; set; }
-        public string GroupDescription { get; set; }
+        public string GroupName { get; set; } = string.Empty;
+        public string GroupDescription { get; set; } = string.Empty;
         public List<EmployeeAssignmentSummary> EmployeeAssignments { get; set; } = new List<EmployeeAssignmentSummary>();
         public int TotalEmployeesWithAssignments { get; set; }
         public int TotalAssignedLockers { get; set; }

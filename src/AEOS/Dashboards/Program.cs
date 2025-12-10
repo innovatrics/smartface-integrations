@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -155,9 +156,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     pattern: "{controller=LockerAnalytics}/{action=Index}/{id?}");
                 
                 // Add a fallback route for the root URL
-                endpoints.MapGet("/", async context =>
+                endpoints.MapGet("/", context =>
                 {
                     context.Response.Redirect("/LockerAnalytics");
+                    return Task.CompletedTask;
                 });
             });
         }

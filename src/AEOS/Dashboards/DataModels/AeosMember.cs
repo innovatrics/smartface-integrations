@@ -5,12 +5,12 @@ public class AeosMember
     public long Id { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
-    public string Email { get; set; }
-    public string Identifier { get; set; }
+    public string? Email { get; set; }
+    public string? Identifier { get; set; }
     public IList<AeosLockers> AssignedLockers { get; set; }
 
 
-    public AeosMember(long id, string firstName, string lastName, string email = null, string identifier = null)
+    public AeosMember(long id, string firstName, string lastName, string? email = null, string? identifier = null)
     {
         this.Id = id;
         this.FirstName = firstName;

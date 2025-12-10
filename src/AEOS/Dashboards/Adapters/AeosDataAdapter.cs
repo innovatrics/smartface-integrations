@@ -21,7 +21,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        private readonly string DataSource;
+        private readonly string? DataSource;
         private string AeosEndpoint;
         private int AeosServerPageSize;
         private string AeosUsername;
@@ -434,7 +434,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         return result;
     }
 
-    public async Task<AeosMember> GetEmployeeByEmail(string email)
+    public async Task<AeosMember?> GetEmployeeByEmail(string email)
     {
         this.logger.Debug($"Searching for employee with email: {email}");
         
