@@ -166,7 +166,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 }
             }
 
-            this.logger.Information($"Amount of Lockers found: {LockersTotalCount}");
+            this.logger.Debug($"Amount of Lockers found: {LockersTotalCount}");
             return AeosAllLockers;
         }
 
@@ -224,7 +224,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 ));
             }
 
-            this.logger.Information($"Amount of Locker Groups found: {AeosAllGroups.Count}");
+            this.logger.Debug($"Amount of Locker Groups found: {AeosAllGroups.Count}");
             return AeosAllGroups;
         }
 
@@ -292,7 +292,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     break;
                 }
             }
-            this.logger.Information($"Amount of Employees found: {EmployeesTotalCount}");
+            this.logger.Debug($"Amount of Employees found: {EmployeesTotalCount}");
             return AeosAllMembersReturn;
         }
 
@@ -323,7 +323,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 this.logger.Debug($"identifierType.Id: {type.Id}, identifierType.Name: {type.Name}");
                 AeosAllIdentifierTypes.Add(new AeosIdentifierType(type.Id, type.Name));
             }
-            this.logger.Information($"Amount of Identifier Types found: {AeosAllIdentifierTypes.Count}");
+            this.logger.Debug($"Amount of Identifier Types found: {AeosAllIdentifierTypes.Count}");
             return AeosAllIdentifierTypes;
 
     }
@@ -352,7 +352,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             AeosAllIdentifiers.Add(new AeosIdentifier(identifier.Identifier.Id, identifier.Identifier.BadgeNumber, identifier.Identifier.Blocked, identifier.CarrierId, identifier.Identifier.IdentifierType));
             
         }
-        this.logger.Information($"Amount of Identifiers found: {AeosAllIdentifiers.Count}");
+        this.logger.Debug($"Amount of Identifiers found: {AeosAllIdentifiers.Count}");
         return AeosAllIdentifiers;
     }
 
@@ -464,6 +464,24 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             employee.EmployeeInfo.LastName,
             employee.EmployeeInfo.Email
         );
+    }
+
+    public async Task<bool> ReleaseLocker(long lockerId)
+    {
+        this.logger.Information($"Releasing locker with ID: {lockerId}");
+        
+        try
+        {
+            var response = await client.releaseLockerAsync(lockerId);
+            
+            this.logger.Information($"Locker release result for locker ID {lockerId}: {response.LockerActionResult}");
+            return response.LockerActionResult;
+        }
+        catch (Exception ex)
+        {
+            this.logger.Error(ex, $"Error releasing locker with ID: {lockerId}");
+            throw;
+        }
     }
 }
 }

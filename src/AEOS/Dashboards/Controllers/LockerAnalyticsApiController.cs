@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using System.Collections.Generic;
 using System;
+using Microsoft.Extensions.Configuration;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {
@@ -16,10 +17,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
     public class LockerAnalyticsApiController : ControllerBase
     {
         private readonly IDataOrchestrator dataOrchestrator;
+        private readonly IConfiguration configuration;
+        private readonly IAeosDataAdapter aeosDataAdapter;
 
-        public LockerAnalyticsApiController(IDataOrchestrator dataOrchestrator)
+        public LockerAnalyticsApiController(IDataOrchestrator dataOrchestrator, IConfiguration configuration, IAeosDataAdapter aeosDataAdapter)
         {
             this.dataOrchestrator = dataOrchestrator;
+            this.configuration = configuration;
+            this.aeosDataAdapter = aeosDataAdapter;
         }
 
         /// <summary>
@@ -184,5 +189,90 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 return StatusCode(500, new { error = "Failed to retrieve current assignment summary", details = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Assigns a locker to an employee.
+        /// This endpoint is only available when AeosDashboards:AllowChanges is set to true.
+        /// </summary>
+        /// <param name="request">The assignment request containing employee ID and locker ID.</param>
+        /// <returns>Result of the assignment operation.</returns>
+        /// <response code="200">Assignment operation completed successfully.</response>
+        /// <response code="403">Changes are not allowed. Set AeosDashboards:AllowChanges to true.</response>
+        /// <response code="400">Invalid request parameters.</response>
+        [HttpPost("asign-locker")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> AssignLocker([FromBody] AssignLockerRequest request)
+        {
+            var allowChanges = configuration.GetValue<bool>("AeosDashboards:AllowChanges", false);
+            if (!allowChanges)
+            {
+                return StatusCode(403, new { error = "Changes are not allowed. Set AeosDashboards:AllowChanges to true to enable this endpoint." });
+            }
+
+            if (request == null)
+            {
+                return BadRequest(new { error = "Request body is required." });
+            }
+
+            // Dummy implementation - to be updated later
+            return Ok(new { message = "Locker assignment endpoint - implementation pending", employeeId = request.EmployeeId, lockerId = request.LockerId });
+        }
+
+        /// <summary>
+        /// Releases a locker by its ID.
+        /// This endpoint is only available when AeosDashboards:AllowChanges is set to true.
+        /// </summary>
+        /// <param name="lockerId">The ID of the locker to release.</param>
+        /// <returns>Result of the release operation.</returns>
+        /// <response code="200">Locker release operation completed successfully.</response>
+        /// <response code="403">Changes are not allowed. Set AeosDashboards:AllowChanges to true.</response>
+        /// <response code="400">Invalid locker ID.</response>
+        /// <response code="500">Error occurred during locker release.</response>
+        [HttpPost("release-locker/{lockerId}")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ReleaseLocker(long lockerId)
+        {
+            var allowChanges = configuration.GetValue<bool>("AeosDashboards:AllowChanges", false);
+            if (!allowChanges)
+            {
+                return StatusCode(403, new { error = "Changes are not allowed. Set AeosDashboards:AllowChanges to true to enable this endpoint." });
+            }
+
+            if (lockerId <= 0)
+            {
+                return BadRequest(new { error = "Invalid locker ID. Locker ID must be greater than 0." });
+            }
+
+            try
+            {
+                var result = await aeosDataAdapter.ReleaseLocker(lockerId);
+                return Ok(new { success = result, message = result ? $"Locker {lockerId} released successfully." : $"Failed to release locker {lockerId}." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to release locker", details = ex.Message });
+            }
+        }
+    }
+
+    /// <summary>
+    /// Request model for assigning a locker to an employee.
+    /// </summary>
+    public class AssignLockerRequest
+    {
+        /// <summary>
+        /// The ID of the employee.
+        /// </summary>
+        public long EmployeeId { get; set; }
+
+        /// <summary>
+        /// The ID of the locker.
+        /// </summary>
+        public long LockerId { get; set; }
     }
 } 

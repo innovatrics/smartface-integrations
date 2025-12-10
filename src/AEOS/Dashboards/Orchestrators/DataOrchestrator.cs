@@ -197,7 +197,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
         public async Task GetLockersData()
         {
-            this.logger.Information("Retrieving lockers data from AEOS.");
+            this.logger.Debug("Retrieving lockers data from AEOS.");
 
             _AeosAllLockers = await this.aeosDataAdapter.GetLockers();
             _AeosAllLockerGroups = await this.aeosDataAdapter.GetLockerGroups();
@@ -209,7 +209,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             _AeosAllEmployees = await this.aeosDataAdapter.GetEmployees();
 
-            this.logger.Information($"Lockers data retrieved");
+            this.logger.Information($"Lockers data retrieved: {_AeosAllLockers.Count} lockers, {_AeosAllLockerGroups.Count} locker groups, {_AeosAllIdentifierTypes.Count} identifier types, {_AeosAllIdentifiers.Count} identifiers, {_AeosAllEmployees.Count} employees");
 
             // ---------------------------
 
