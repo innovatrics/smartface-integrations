@@ -1,7 +1,9 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
@@ -28,13 +30,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _accessControlConnectorFactory = accessControlConnectorFactory ?? throw new ArgumentNullException(nameof(accessControlConnectorFactory));
             _userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
 
-            _allStreamConfigs = configuration.GetSection("StreamConfig").Get<StreamConfig[]>() ?? [];
-            _allStreamConfigs = _allStreamConfigs.Where(x => x.Enabled).ToArray();
-
-            if (!_allStreamConfigs.Any())
-            {
-                throw new InvalidOperationException("No enabled connectors configured in StreamConfig");
-            }
+            _allStreamConfigs = LoadStreamConfig(configuration);
         }
 
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
@@ -53,13 +49,18 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             {
                 _log.Debug("Handling access for connector of type {ConnectorType}", streamConfig.Type);
 
-                if (streamConfig.Modalities?.Length > 0)
+                bool? modalityEnabled = notification.Modality switch
                 {
-                    if (!streamConfig.Modalities.Contains(notification.Modality))
-                    {
-                        _log.Warning("Stream config does not apply to modality {Modality} for Stream {StreamId}", notification.Modality, notification.StreamId);
-                        continue;
-                    }
+                    Modality.Face => streamConfig.FaceModalityEnabled,
+                    Modality.Palm => streamConfig.PalmModalityEnabled,
+                    Modality.OpticalCode => streamConfig.OpticalCodeModalityEnabled,
+                    _ => false
+                };
+
+                if (modalityEnabled == false)
+                {
+                    _log.Warning("Stream config does not apply to modality {Modality} for Stream {StreamId}", notification.Modality, notification.StreamId);
+                    continue;
                 }
 
                 var watchlistExternalIds = streamConfig.WatchlistExternalIds;
@@ -133,6 +134,44 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
+        private StreamConfig[] LoadStreamConfig(IConfiguration configuration)
+        {
+            var globalStreamConfig = configuration.GetSection("StreamConfig").Get<GlobalStreamConfig>();
+
+            StreamConfig[] streamConfigs;
+
+            if (!string.IsNullOrWhiteSpace(globalStreamConfig.StreamsConfigPath))
+            {
+                if (!File.Exists(globalStreamConfig.StreamsConfigPath))
+                {
+                    throw new FileNotFoundException($"StreamConfigJson file not found: {globalStreamConfig.StreamsConfigPath}");
+                }
+
+                var jsonContent = File.ReadAllText(globalStreamConfig.StreamsConfigPath);
+                streamConfigs = JsonConvert.DeserializeObject<StreamConfig[]>(jsonContent) ?? [];
+            }
+            else
+            {
+                streamConfigs = configuration.GetSection("StreamConfig").Get<StreamConfig[]>() ?? [];
+            }
+
+            streamConfigs = streamConfigs.Where(x => x.Enabled).ToArray();
+
+            if (!streamConfigs.Any())
+            {
+                throw new InvalidOperationException("No enabled connectors configured in StreamConfig");
+            }
+
+            foreach (var streamConfig in streamConfigs)
+            {
+                ExtendStreamConfig(streamConfig, globalStreamConfig);
+
+                _log.Information("Stream [{streamId}] for {Type} with {FaceModalityEnabled} {PalmModalityEnabled} {OpticalCodeModalityEnabled}", streamConfig.StreamId, streamConfig.Type, streamConfig.FaceModalityEnabled, streamConfig.PalmModalityEnabled, streamConfig.OpticalCodeModalityEnabled);
+            }
+
+            return streamConfigs;
+        }
+
         private StreamConfig[] GetStreamConfigsForStream(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
@@ -143,6 +182,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             return _allStreamConfigs
                         .Where(w => w.StreamId == streamGuid)
                         .ToArray();
+        }
+
+        private void ExtendStreamConfig(StreamConfig streamConfig, GlobalStreamConfig globalStreamConfig)
+        {
+            streamConfig.FaceModalityEnabled ??= globalStreamConfig.FaceModalityEnabled;
+            streamConfig.PalmModalityEnabled ??= globalStreamConfig.PalmModalityEnabled;
+            streamConfig.OpticalCodeModalityEnabled ??= globalStreamConfig.OpticalCodeModalityEnabled;
         }
     }
 }

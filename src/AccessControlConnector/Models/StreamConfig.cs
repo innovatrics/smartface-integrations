@@ -1,5 +1,4 @@
 ﻿using System;
-using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
 {
@@ -7,7 +6,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
     {
         public bool Enabled { get; set; } = true;
         public string Type { get; set; }
-        public Modality[] Modalities { get; set; }
+        public bool? FaceModalityEnabled { get; set; }
+        public bool? PalmModalityEnabled { get; set; }
+        public bool? OpticalCodeModalityEnabled { get; set; }
         public Guid StreamId { get; set; }
         public string Schema { get; set; } = "http";
         public string Host { get; set; }
