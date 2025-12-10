@@ -53,7 +53,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             {
                 _log.Debug("Handling access for connector of type {ConnectorType}", streamConfig.Type);
 
-                if (streamConfig.Modalities.Length > 0)
+                if (streamConfig.Modalities?.Length > 0)
                 {
                     if (!streamConfig.Modalities.Contains(notification.Modality))
                     {
