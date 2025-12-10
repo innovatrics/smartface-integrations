@@ -49,7 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             {
                 _log.Debug("Handling access for connector of type {ConnectorType}", streamConfig.Type);
 
-                bool? modalityEnabled = notification.Modality switch
+                bool modalityEnabled = notification.Modality switch
                 {
                     Modality.Face => streamConfig.FaceModalityEnabled,
                     Modality.Palm => streamConfig.PalmModalityEnabled,
@@ -57,7 +57,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                     _ => false
                 };
 
-                if (modalityEnabled == false)
+                if (!modalityEnabled)
                 {
                     _log.Warning("Stream config does not apply to modality {Modality} for Stream {StreamId}", notification.Modality, notification.StreamId);
                     continue;
@@ -134,6 +134,18 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
+        private StreamConfig[] GetStreamConfigsForStream(string streamId)
+        {
+            if (!Guid.TryParse(streamId, out var streamGuid))
+            {
+                throw new InvalidOperationException($"{nameof(streamId)} is expected as GUID");
+            }
+
+            return _allStreamConfigs
+                        .Where(w => w.StreamId == streamGuid)
+                        .ToArray();
+        }
+
         private StreamConfig[] LoadStreamConfig(IConfiguration configuration)
         {
             StreamConfig[] streamConfigs;
@@ -167,25 +179,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
 
             return streamConfigs;
-        }
-
-        private StreamConfig[] GetStreamConfigsForStream(string streamId)
-        {
-            if (!Guid.TryParse(streamId, out var streamGuid))
-            {
-                throw new InvalidOperationException($"{nameof(streamId)} is expected as GUID");
-            }
-
-            return _allStreamConfigs
-                        .Where(w => w.StreamId == streamGuid)
-                        .ToArray();
-        }
-
-        private void ExtendStreamConfig(StreamConfig streamConfig, GlobalStreamConfig globalStreamConfig)
-        {
-            streamConfig.FaceModalityEnabled ??= globalStreamConfig.FaceModalityEnabled;
-            streamConfig.PalmModalityEnabled ??= globalStreamConfig.PalmModalityEnabled;
-            streamConfig.OpticalCodeModalityEnabled ??= globalStreamConfig.OpticalCodeModalityEnabled;
         }
     }
 }
