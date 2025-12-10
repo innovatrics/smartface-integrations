@@ -152,7 +152,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
             else
             {
-                streamConfigs = configuration.GetSection("StreamConfig").Get<StreamConfig[]>() ?? [];
+                streamConfigs = globalStreamConfig.Streams ?? [];
             }
 
             streamConfigs = streamConfigs.Where(x => x.Enabled).ToArray();
