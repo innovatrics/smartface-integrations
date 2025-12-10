@@ -175,7 +175,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             foreach (var streamConfig in streamConfigs)
             {
-                _log.Information("Stream [{streamId}] for {Type} with {FaceModalityEnabled} {PalmModalityEnabled} {OpticalCodeModalityEnabled}", streamConfig.StreamId, streamConfig.Type, streamConfig.FaceModalityEnabled, streamConfig.PalmModalityEnabled, streamConfig.OpticalCodeModalityEnabled);
+                _log.Information("Stream [{streamId}] for {Type} with face: {FaceModalityEnabled} palm: {PalmModalityEnabled} opticalCode: {OpticalCodeModalityEnabled}", streamConfig.StreamId, streamConfig.Type, streamConfig.FaceModalityEnabled, streamConfig.PalmModalityEnabled, streamConfig.OpticalCodeModalityEnabled);
             }
 
             return streamConfigs;
