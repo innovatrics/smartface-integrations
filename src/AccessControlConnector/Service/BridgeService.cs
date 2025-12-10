@@ -136,23 +136,22 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
         private StreamConfig[] LoadStreamConfig(IConfiguration configuration)
         {
-            var globalStreamConfig = configuration.GetSection("StreamConfig").Get<GlobalStreamConfig>();
-
             StreamConfig[] streamConfigs;
 
-            if (!string.IsNullOrWhiteSpace(globalStreamConfig.StreamsConfigPath))
+            var streamConfigPath = configuration.GetValue<string>("StreamConfigPath");
+            if (!string.IsNullOrWhiteSpace(streamConfigPath))
             {
-                if (!File.Exists(globalStreamConfig.StreamsConfigPath))
+                if (!File.Exists(streamConfigPath))
                 {
-                    throw new FileNotFoundException($"StreamConfigJson file not found: {globalStreamConfig.StreamsConfigPath}");
+                    throw new FileNotFoundException($"StreamConfigJson file not found: {streamConfigPath}");
                 }
 
-                var jsonContent = File.ReadAllText(globalStreamConfig.StreamsConfigPath);
+                var jsonContent = File.ReadAllText(streamConfigPath);
                 streamConfigs = JsonConvert.DeserializeObject<StreamConfig[]>(jsonContent) ?? [];
             }
             else
             {
-                streamConfigs = globalStreamConfig.Streams ?? [];
+                streamConfigs = configuration.GetSection("StreamConfig").Get<StreamConfig[]>() ?? [];
             }
 
             streamConfigs = streamConfigs.Where(x => x.Enabled).ToArray();
@@ -164,8 +163,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             foreach (var streamConfig in streamConfigs)
             {
-                ExtendStreamConfig(streamConfig, globalStreamConfig);
-
                 _log.Information("Stream [{streamId}] for {Type} with {FaceModalityEnabled} {PalmModalityEnabled} {OpticalCodeModalityEnabled}", streamConfig.StreamId, streamConfig.Type, streamConfig.FaceModalityEnabled, streamConfig.PalmModalityEnabled, streamConfig.OpticalCodeModalityEnabled);
             }
 
