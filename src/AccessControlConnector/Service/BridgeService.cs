@@ -41,7 +41,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         {
             ArgumentNullException.ThrowIfNull(notification);
 
-            var streamConfigs = GetAccessConnectorConfigsForStream(notification.StreamId);
+            var streamConfigs = GetStreamConfigsForStream(notification.StreamId);
 
             if (streamConfigs.Length == 0)
             {
