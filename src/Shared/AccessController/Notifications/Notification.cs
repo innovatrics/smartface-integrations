@@ -9,5 +9,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Notifications
         public string FaceId { get; set; }
         public DateTime GrpcSentAt { get; set; }
         public byte[] CropImage { get; set; }
+        public Modality Modality { get; set; }
     }
 }

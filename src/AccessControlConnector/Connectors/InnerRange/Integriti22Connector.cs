@@ -46,23 +46,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
 
             _logger.Information($"{nameof(OpenAsync)} to {{host}}:{{port}} for {{doorName}}, {{doorId}}, {{controller}}, {{reader}} and {{channel}}", host, port, streamConfig.DoorName, streamConfig.DoorId, controller, streamConfig.Reader, streamConfig.Channel);
 
-            string cardData = null;
-
-            if (!string.IsNullOrEmpty(accessControlUserId))
-            {
-                if (accessControlUserId.StartsWith("2000000000000000"))
-                {
-                    cardData = accessControlUserId;
-                }
-                else
-                {
-                    cardData = $"20000000000000000{accessControlUserId}";
-                }
-            }
-            else
-            {
-                cardData = await GetCardDataAsync(schema, host, port, username, password, accessControlUserId);
-            }
+            string cardData = ApplyCardMask(accessControlUserId, _integritiConfiguration.CardMask);
 
             if (cardData == null)
             {
@@ -90,6 +74,39 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
         public Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null, string username = null, string password = null)
         {
             return Task.CompletedTask;
+        }
+
+        private string ApplyCardMask(string accessControlUserId, string cardMask)
+        {
+            if (string.IsNullOrEmpty(accessControlUserId))
+            {
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(cardMask))
+            {
+                return accessControlUserId;
+            }
+
+            if (cardMask.Contains("{0}"))
+            {
+                try
+                {
+                    return string.Format(cardMask, accessControlUserId);
+                }
+                catch (FormatException ex)
+                {
+                    _logger.Warning("Invalid card mask format '{cardMask}': {error}. Returning accessControlUserId as-is.", cardMask, ex.Message);
+                    return accessControlUserId;
+                }
+            }
+
+            if (accessControlUserId.StartsWith(cardMask))
+            {
+                return accessControlUserId;
+            }
+
+            return accessControlUserId;
         }
 
         private async Task<string> GetCardDataAsync(string schema, string host, int? port, string username, string password, string cardNumber)
@@ -153,8 +170,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
             _logger.Information($"{nameof(SendOpenAsync)} to {{schema}}:{{host}}:{{port}} for {{doorName}}, {{doorId}}, {{controller}}, {{readerModuleID}}, {{readerNumber}}, {{cardData}}", schema, host, port, doorName, doorId, controller, readerModuleID, readerNumber, cardData);
 
             var httpClient = _httpClientFactory.CreateClient();
-
-            // {schema ?? "http"}://192.168.10.22:15108/CardBadge?CardData=250000000000000047D4A3D1&ReaderModuleID=77407156193722391&ReaderNumber=2 
 
             string requestUri;
 

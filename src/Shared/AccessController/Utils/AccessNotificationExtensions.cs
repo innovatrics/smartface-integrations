@@ -17,6 +17,27 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
             };
         }
 
+        private static Modality ExtractModality(uint typeOfAccessNotification)
+        {
+            var type = (AccessNotificationType)typeOfAccessNotification;
+
+            if (type.HasFlag(AccessNotificationType.PalmGranted) ||
+                type.HasFlag(AccessNotificationType.PalmDeniedUnsupported) ||
+                type.HasFlag(AccessNotificationType.PalmBlocked))
+            {
+                return Modality.Palm;
+            }
+
+            if (type.HasFlag(AccessNotificationType.OpticalCodeGranted) ||
+                type.HasFlag(AccessNotificationType.OpticalCodeDeniedUnsupported) ||
+                type.HasFlag(AccessNotificationType.OpticalCodeBlocked))
+            {
+                return Modality.OpticalCode;
+            }
+
+            return Modality.Face;
+        }
+
         public static GrantedNotification GetGrantedNotification(this AccessNotification accessNotification)
         {
             var accessNotificationGranted = accessNotification.AccessNotificationGranted;
@@ -35,7 +56,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 WatchlistId = accessNotificationGranted.WatchlistId,
                 MatchResultScore = accessNotificationGranted.MatchResultScore,
                 CropImage = accessNotificationGranted.CropImage.ToByteArray(),
-                GrpcSentAt = accessNotification.SentAt.ToDateTime()
+                GrpcSentAt = accessNotification.SentAt.ToDateTime(),
+                Modality = ExtractModality(accessNotification.TypeOfAccessNotification)
             };
             return grantedNotification;
         }
@@ -55,7 +77,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
                 WatchlistId = accessNotificationBlocked.WatchlistId,
                 MatchResultScore = accessNotificationBlocked.MatchResultScore,
                 CropImage = accessNotificationBlocked.CropImage.ToByteArray(),
-                GrpcSentAt = accessNotification.SentAt.ToDateTime()
+                GrpcSentAt = accessNotification.SentAt.ToDateTime(),
+                Modality = ExtractModality(accessNotification.TypeOfAccessNotification)
             };
             return blockedNotification;
         }

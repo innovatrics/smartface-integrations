@@ -8,6 +8,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models.Inner
         public string Username { get; set; }
         public string Password { get; set; }
         public string Controller { get; set; }
+        public string CardMask { get; set; }
     }
 }
 
