@@ -16,5 +16,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         Task<IList<AeosIdentifier>> GetIdentifiersPerType(long identifierType);
         Task<IList<AeosMember>> GetEmployeesByIdentifier(string identifier);
         Task<bool> ReleaseLocker(long lockerId);
+        Task<IList<ServiceReference.TemplateInfo>> GetTemplates(string unitOfAuthType);
     }
 }

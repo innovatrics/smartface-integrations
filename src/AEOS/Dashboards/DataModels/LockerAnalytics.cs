@@ -36,11 +36,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         public string Function { get; set; } = string.Empty;
         public long Template { get; set; }
         public long? LockerAuthorisationGroupId { get; set; }
+        public int? LockerAuthorisationGroupNetworkId { get; set; }
+        public long? LockerAuthorisationPresetId { get; set; }
         public int TotalLockers { get; set; }
         public int AssignedLockers { get; set; }
         public int UnassignedLockers { get; set; }
         public double AssignmentPercentage { get; set; }
-        public List<LockerAuthorisationPresetInfo> AvailablePresets { get; set; } = new List<LockerAuthorisationPresetInfo>();
         public List<LockerInfo> AllLockers { get; set; } = new List<LockerInfo>();
         public List<LockerInfo> LeastUsedLockers { get; set; } = new List<LockerInfo>();
     }

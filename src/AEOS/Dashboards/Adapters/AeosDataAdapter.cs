@@ -536,5 +536,64 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             throw;
         }
     }
+
+    public async Task<IList<ServiceReference.TemplateInfo>> GetTemplates(string unitOfAuthType)
+    {
+        this.logger.Debug($"Receiving Templates from AEOS with UnitOfAuthType: {unitOfAuthType}");
+
+        List<ServiceReference.TemplateInfo> allTemplates = new List<ServiceReference.TemplateInfo>();
+
+        bool allTemplatesRetrieved = false;
+        int pageNumber = 0;
+
+        while (!allTemplatesRetrieved)
+        {
+            pageNumber += 1;
+            this.logger.Debug($"Receiving Templates from AEOS: Page {pageNumber}");
+
+            var templateSearchInfo = new TemplateSearchInfo();
+            templateSearchInfo.TemplateInfo = new TemplateInfo();
+            templateSearchInfo.TemplateInfo.UnitOfAuthType = unitOfAuthType;
+            
+            templateSearchInfo.SearchRange = new SearchRange();
+            templateSearchInfo.SearchRange.startRecordNo = (pageNumber - 1) * AeosServerPageSize;
+            templateSearchInfo.SearchRange.nrOfRecords = AeosServerPageSize;
+            templateSearchInfo.SearchRange.nrOfRecordsSpecified = true;
+
+            var templates = await client.findTemplateAsync(templateSearchInfo);
+
+            if (templates?.TemplateList?.Template == null)
+            {
+                this.logger.Debug("No templates found in the response");
+                break;
+            }
+
+            foreach (var template in templates.TemplateList.Template)
+            {
+                if (template != null)
+                {
+                    allTemplates.Add(template);
+                    var templateItemDetails = template.TemplateItem?
+                        .Where(ti => ti != null && ti.AuthorisationType == AuthSubject.LockerAuthorisationGroup)
+                        .Select(ti => $"SubjectId={ti.SubjectId}, NetworkId={(ti.LockerAuthorisationGroupNetworkIdSpecified ? ti.LockerAuthorisationGroupNetworkId.ToString() : "not specified")}, PresetId={(ti.LockerAuthorisationPresetIdSpecified ? ti.LockerAuthorisationPresetId.ToString() : "not specified")}")
+                        .ToList() ?? new List<string>();
+                    
+                    this.logger.Debug($"Processing template - Id: {template.Id}, Name: {template.Name}, UnitOfAuthType: {template.UnitOfAuthType}, TemplateItemCount: {template.TemplateItem?.Length ?? 0}");
+                    if (templateItemDetails.Any())
+                    {
+                        this.logger.Debug($"  LockerAuthorisationGroup TemplateItems: {string.Join("; ", templateItemDetails)}");
+                    }
+                }
+            }
+
+            if (templates.TemplateList.Template.Length < AeosServerPageSize)
+            {
+                allTemplatesRetrieved = true;
+            }
+        }
+
+        this.logger.Debug($"Amount of Templates found: {allTemplates.Count}");
+        return allTemplates;
+    }
 }
 }

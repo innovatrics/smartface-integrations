@@ -30,6 +30,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private IList<ServiceReference.LockerAuthorisationGroupInfo> _AeosAllLockerAuthorisationGroups = new List<ServiceReference.LockerAuthorisationGroupInfo>();
         private IList<AeosIdentifierType> _AeosAllIdentifierTypes = new List<AeosIdentifierType>();
         private IList<AeosIdentifier> _AeosAllIdentifiers = new List<AeosIdentifier>();
+        private IList<ServiceReference.TemplateInfo> _AeosAllTemplates = new List<ServiceReference.TemplateInfo>();
 
         // Fields for tracking assignment changes
         private Dictionary<long, long?> _previousLockerAssignments = new Dictionary<long, long?>();
@@ -210,8 +211,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 .ToList();
 
             _AeosAllEmployees = await this.aeosDataAdapter.GetEmployees();
+            _AeosAllTemplates = await this.aeosDataAdapter.GetTemplates("Locker");
 
-            this.logger.Information($"Lockers data retrieved: {_AeosAllLockers.Count} lockers, {_AeosAllLockerGroups.Count} locker groups, {_AeosAllIdentifierTypes.Count} identifier types, {_AeosAllIdentifiers.Count} identifiers, {_AeosAllEmployees.Count} employees");
+            this.logger.Information($"Lockers data retrieved: {_AeosAllLockers.Count} lockers, {_AeosAllLockerGroups.Count} locker groups, {_AeosAllIdentifierTypes.Count} identifier types, {_AeosAllIdentifiers.Count} identifiers, {_AeosAllEmployees.Count} employees, {_AeosAllTemplates.Count} templates");
 
             // ---------------------------
 
@@ -233,6 +235,44 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     ag.LockerGroupIdList != null && 
                     ag.LockerGroupIdList.Contains(lockerGroup.Id));
 
+                // Find the TemplateItem that matches this locker group
+                // The SubjectId in TemplateItem corresponds to the LockerAuthorisationGroupId (not LockerGroup.Id)
+                int? networkId = null;
+                long? presetId = null;
+                
+                if (authGroup != null)
+                {
+                    var matchingTemplateItem = _AeosAllTemplates
+                        .Where(t => t.TemplateItem != null)
+                        .SelectMany(t => t.TemplateItem
+                            .Where(ti => ti != null 
+                                && ti.SubjectId == authGroup.Id 
+                                && ti.AuthorisationType == AuthSubject.LockerAuthorisationGroup))
+                        .FirstOrDefault();
+
+                    if (matchingTemplateItem != null)
+                    {
+                        // Check if the properties are specified before using them
+                        if (matchingTemplateItem.LockerAuthorisationGroupNetworkIdSpecified)
+                        {
+                            networkId = matchingTemplateItem.LockerAuthorisationGroupNetworkId;
+                        }
+                        if (matchingTemplateItem.LockerAuthorisationPresetIdSpecified)
+                        {
+                            presetId = matchingTemplateItem.LockerAuthorisationPresetId;
+                        }
+                        this.logger.Debug($"Found template match for locker group {lockerGroup.Id} (authGroupId: {authGroup.Id}): NetworkId={networkId}, PresetId={presetId}");
+                    }
+                    else
+                    {
+                        this.logger.Debug($"No template match found for locker group {lockerGroup.Id} (authGroupId: {authGroup.Id}). Available template SubjectIds: {string.Join(", ", _AeosAllTemplates.Where(t => t.TemplateItem != null).SelectMany(t => t.TemplateItem.Where(ti => ti != null && ti.AuthorisationType == AuthSubject.LockerAuthorisationGroup).Select(ti => ti.SubjectId)))}");
+                    }
+                }
+                else
+                {
+                    this.logger.Debug($"No LockerAuthorisationGroup found for locker group {lockerGroup.Id}");
+                }
+
                 var groupAnalytics = new LockerGroupAnalytics
                 {
                     Id = lockerGroup.Id,
@@ -241,7 +281,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     Function = lockerGroup.LockerFunction,
                     Template = lockerGroup.LockerBehaviourTemplate,
                     LockerAuthorisationGroupId = authGroup?.Id,
-                    AvailablePresets = new List<LockerAuthorisationPresetInfo>()
+                    LockerAuthorisationGroupNetworkId = networkId,
+                    LockerAuthorisationPresetId = presetId
                 };
 
                 var sortedLockers = lockerGroup.LockerIds
