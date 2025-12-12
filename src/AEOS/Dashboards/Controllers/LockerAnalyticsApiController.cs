@@ -194,30 +194,126 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// Assigns a locker to an employee.
         /// This endpoint is only available when AeosDashboards:AllowChanges is set to true.
         /// </summary>
-        /// <param name="request">The assignment request containing employee ID and locker ID.</param>
+        /// <param name="request">The assignment request containing employee ID, locker ID, and optionally NetworkId and PresetId.</param>
         /// <returns>Result of the assignment operation.</returns>
         /// <response code="200">Assignment operation completed successfully.</response>
         /// <response code="403">Changes are not allowed. Set AeosDashboards:AllowChanges to true.</response>
-        /// <response code="400">Invalid request parameters.</response>
+        /// <response code="400">Invalid request parameters or missing required data.</response>
+        /// <response code="404">Locker or employee not found, or locker group data not available.</response>
+        /// <response code="500">Error occurred during locker assignment.</response>
         [HttpPost("asign-locker")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-        public Task<IActionResult> AssignLocker([FromBody] AssignLockerRequest request)
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> AssignLocker([FromBody] AssignLockerRequest request)
         {
             var allowChanges = configuration.GetValue<bool>("AeosDashboards:AllowChanges", false);
             if (!allowChanges)
             {
-                return Task.FromResult<IActionResult>(StatusCode(403, new { error = "Changes are not allowed. Set AeosDashboards:AllowChanges to true to enable this endpoint." }));
+                return StatusCode(403, new { error = "Changes are not allowed. Set AeosDashboards:AllowChanges to true to enable this endpoint." });
             }
 
+            // Validate request
             if (request == null)
             {
-                return Task.FromResult<IActionResult>(BadRequest(new { error = "Request body is required." }));
+                return BadRequest(new { error = "Request body is required." });
             }
 
-            // Dummy implementation - to be updated later
-            return Task.FromResult<IActionResult>(Ok(new { message = "Locker assignment endpoint - implementation pending", employeeId = request.EmployeeId, lockerId = request.LockerId }));
+            if (request.LockerId <= 0)
+            {
+                return BadRequest(new { error = "Invalid locker ID. Locker ID must be greater than 0." });
+            }
+
+            if (request.EmployeeId <= 0)
+            {
+                return BadRequest(new { error = "Invalid employee ID. Employee ID must be greater than 0." });
+            }
+
+            try
+            {
+                // Get current analytics to find locker group information
+                var analytics = await dataOrchestrator.GetLockerAnalytics();
+                
+                // Find the locker in the analytics
+                var lockerInfo = analytics.Groups
+                    .SelectMany(g => g.AllLockers)
+                    .FirstOrDefault(l => l.Id == request.LockerId);
+
+                if (lockerInfo == null)
+                {
+                    return NotFound(new { error = $"Locker with ID {request.LockerId} not found." });
+                }
+
+                // Find the locker group that contains this locker
+                var lockerGroup = analytics.Groups
+                    .FirstOrDefault(g => g.AllLockers.Any(l => l.Id == request.LockerId));
+
+                if (lockerGroup == null)
+                {
+                    return NotFound(new { error = $"Locker group for locker {request.LockerId} not found." });
+                }
+
+                // Determine NetworkId and PresetId
+                int networkId;
+                long presetId;
+
+                if (request.LockerAuthorisationGroupNetworkId.HasValue && request.LockerAuthorisationPresetId.HasValue)
+                {
+                    // Use provided values
+                    networkId = request.LockerAuthorisationGroupNetworkId.Value;
+                    presetId = request.LockerAuthorisationPresetId.Value;
+                }
+                else if (lockerGroup.LockerAuthorisationGroupNetworkId.HasValue && lockerGroup.LockerAuthorisationPresetId.HasValue)
+                {
+                    // Use values from locker group
+                    networkId = lockerGroup.LockerAuthorisationGroupNetworkId.Value;
+                    presetId = lockerGroup.LockerAuthorisationPresetId.Value;
+                }
+                else
+                {
+                    return BadRequest(new { 
+                        error = "Locker Authorisation Group Network ID and Preset ID are required but not available.",
+                        details = "Either provide LockerAuthorisationGroupNetworkId and LockerAuthorisationPresetId in the request, or ensure the locker group has these values configured."
+                    });
+                }
+
+                // Attempt to assign the locker
+                var result = await aeosDataAdapter.AssignLocker(
+                    request.LockerId,
+                    request.EmployeeId,
+                    networkId,
+                    presetId
+                );
+
+                if (result)
+                {
+                    return Ok(new { 
+                        success = true,
+                        message = $"Locker {request.LockerId} assigned successfully to employee {request.EmployeeId}.",
+                        lockerId = request.LockerId,
+                        employeeId = request.EmployeeId,
+                        networkId = networkId,
+                        presetId = presetId
+                    });
+                }
+                else
+                {
+                    return StatusCode(500, new { 
+                        error = "Failed to assign locker.",
+                        message = "The assignment operation did not complete successfully. The locker may already be assigned or the operation may have failed."
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { 
+                    error = "Failed to assign locker",
+                    details = ex.Message,
+                    innerException = ex.InnerException?.Message
+                });
+            }
         }
 
         /// <summary>
@@ -266,7 +362,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
     public class AssignLockerRequest
     {
         /// <summary>
-        /// The ID of the employee.
+        /// The ID of the employee (CarrierId).
         /// </summary>
         public long EmployeeId { get; set; }
 
@@ -274,5 +370,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// The ID of the locker.
         /// </summary>
         public long LockerId { get; set; }
+
+        /// <summary>
+        /// The Locker Authorisation Group Network ID. If not provided, will be looked up from the locker group.
+        /// </summary>
+        public int? LockerAuthorisationGroupNetworkId { get; set; }
+
+        /// <summary>
+        /// The Locker Authorisation Preset ID. If not provided, will be looked up from the locker group.
+        /// </summary>
+        public long? LockerAuthorisationPresetId { get; set; }
     }
 } 

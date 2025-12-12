@@ -595,5 +595,48 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         this.logger.Debug($"Amount of Templates found: {allTemplates.Count}");
         return allTemplates;
     }
+
+    public async Task<bool> AssignLocker(long lockerId, long carrierId, int lockerAuthorisationGroupNetworkId, long lockerAuthorisationPresetId)
+    {
+        this.logger.Information($"Assigning locker {lockerId} to carrier {carrierId} with NetworkId={lockerAuthorisationGroupNetworkId}, PresetId={lockerAuthorisationPresetId}");
+        
+        try
+        {
+            var lockerAuthorization = new LockerAuthorizationAdd
+            {
+                LockerId = lockerId,
+                CarrierId = carrierId,
+                LockerAuthorisationGroupNetworkId = lockerAuthorisationGroupNetworkId,
+                LockerAuthorisationPresetId = lockerAuthorisationPresetId
+            };
+
+            var response = await client.addCarrierLockerAuthorizationAsync(lockerAuthorization);
+            
+            // Check if the response indicates success
+            // The response contains ProfileResult which should indicate success
+            bool success = response?.ProfileResult != null;
+            
+            if (success)
+            {
+                this.logger.Information($"Locker assignment successful for locker {lockerId} to carrier {carrierId}");
+            }
+            else
+            {
+                this.logger.Warning($"Locker assignment failed for locker {lockerId} to carrier {carrierId} - no ProfileResult in response");
+            }
+            
+            return success;
+        }
+        catch (System.ServiceModel.FaultException<ServiceReference.ErrorInfo> faultEx)
+        {
+            this.logger.Error(faultEx, $"SOAP fault while assigning locker {lockerId} to carrier {carrierId}. Error: {faultEx.Detail?.Message ?? faultEx.Message}");
+            throw new Exception($"Failed to assign locker: {faultEx.Detail?.Message ?? faultEx.Message}", faultEx);
+        }
+        catch (Exception ex)
+        {
+            this.logger.Error(ex, $"Error assigning locker {lockerId} to carrier {carrierId}");
+            throw;
+        }
+    }
 }
 }
