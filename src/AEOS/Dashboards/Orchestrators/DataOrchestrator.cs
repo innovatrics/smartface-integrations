@@ -27,6 +27,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private IList<AeosMember> _AeosAllEmployees = new List<AeosMember>();
         private IList<AeosLockers> _AeosAllLockers = new List<AeosLockers>();
         private IList<AeosLockerGroups> _AeosAllLockerGroups = new List<AeosLockerGroups>();
+        private IList<ServiceReference.LockerAuthorisationGroupInfo> _AeosAllLockerAuthorisationGroups = new List<ServiceReference.LockerAuthorisationGroupInfo>();
         private IList<AeosIdentifierType> _AeosAllIdentifierTypes = new List<AeosIdentifierType>();
         private IList<AeosIdentifier> _AeosAllIdentifiers = new List<AeosIdentifier>();
 
@@ -201,6 +202,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             _AeosAllLockers = await this.aeosDataAdapter.GetLockers();
             _AeosAllLockerGroups = await this.aeosDataAdapter.GetLockerGroups();
+            _AeosAllLockerAuthorisationGroups = await this.aeosDataAdapter.GetLockerAuthorisationGroups();
             _AeosAllIdentifierTypes = await this.aeosDataAdapter.GetIdentifierTypes();
             _AeosAllIdentifiers = (await this.aeosDataAdapter.GetIdentifiersPerType(
                 _AeosAllIdentifierTypes.FirstOrDefault(t => t.Name == AeosIntegrationIdentifierType)?.Id ?? 0))
@@ -226,13 +228,20 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             foreach (var lockerGroup in _AeosAllLockerGroups)
             {
+                // Find the LockerAuthorisationGroup that contains this LockerGroup
+                var authGroup = _AeosAllLockerAuthorisationGroups?.FirstOrDefault(ag => 
+                    ag.LockerGroupIdList != null && 
+                    ag.LockerGroupIdList.Contains(lockerGroup.Id));
+
                 var groupAnalytics = new LockerGroupAnalytics
                 {
                     Id = lockerGroup.Id,
                     Name = lockerGroup.Name,
                     Description = lockerGroup.Description,
                     Function = lockerGroup.LockerFunction,
-                    Template = lockerGroup.LockerBehaviourTemplate
+                    Template = lockerGroup.LockerBehaviourTemplate,
+                    LockerAuthorisationGroupId = authGroup?.Id,
+                    AvailablePresets = new List<LockerAuthorisationPresetInfo>()
                 };
 
                 var sortedLockers = lockerGroup.LockerIds

@@ -228,6 +228,59 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             return AeosAllGroups;
         }
 
+        public async Task<IList<ServiceReference.LockerAuthorisationGroupInfo>> GetLockerAuthorisationGroups()
+        {
+            this.logger.Debug("Receiving Locker Authorisation Groups from AEOS");
+
+            List<ServiceReference.LockerAuthorisationGroupInfo> allAuthGroups = new List<ServiceReference.LockerAuthorisationGroupInfo>();
+
+            var authGroupSearchInfo = new LockerAuthorisationGroupSearchInfo();
+            authGroupSearchInfo.LockerAuthorisationGroupSearch = new LockerAuthorisationGroupSearch();
+            authGroupSearchInfo.SearchRange = new SearchRange();
+            authGroupSearchInfo.SearchRange.startRecordNo = 0;
+            authGroupSearchInfo.SearchRange.nrOfRecords = AeosServerPageSize;
+            authGroupSearchInfo.SearchRange.nrOfRecordsSpecified = true;
+
+            bool allAuthGroupsRetrieved = false;
+            int pageNumber = 0;
+
+            while (!allAuthGroupsRetrieved)
+            {
+                pageNumber += 1;
+                this.logger.Debug($"Receiving Locker Authorisation Groups from AEOS: Page {pageNumber}");
+
+                if (pageNumber > 1)
+                {
+                    authGroupSearchInfo.SearchRange.startRecordNo = (pageNumber - 1) * AeosServerPageSize;
+                }
+
+                var authGroups = await client.findLockerAuthorisationGroupAsync(authGroupSearchInfo);
+
+                if (authGroups?.LockerAuthorisationGroupList?.LockerAuthorisationGroup == null)
+                {
+                    this.logger.Debug("No locker authorisation groups found in the response");
+                    break;
+                }
+
+                foreach (var authGroup in authGroups.LockerAuthorisationGroupList.LockerAuthorisationGroup)
+                {
+                    if (authGroup != null)
+                    {
+                        allAuthGroups.Add(authGroup);
+                        this.logger.Debug($"Processing locker authorisation group - Id: {authGroup.Id}, Name: {authGroup.Name}, LockerGroupCount: {authGroup.LockerGroupIdList?.Length ?? 0}");
+                    }
+                }
+
+                if (authGroups.LockerAuthorisationGroupList.LockerAuthorisationGroup.Length < AeosServerPageSize)
+                {
+                    allAuthGroupsRetrieved = true;
+                }
+            }
+
+            this.logger.Debug($"Amount of Locker Authorisation Groups found: {allAuthGroups.Count}");
+            return allAuthGroups;
+        }
+
         public async Task<IList<AeosMember>> GetEmployees()
         {
             this.logger.Debug("Receiving Employees from AEOS");
