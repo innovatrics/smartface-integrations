@@ -560,6 +560,7 @@
                                         // Small - half the width of normal
                                         button.style.minWidth = '40px';
                                         button.style.flex = '0 0 40px';
+                                        button.style.fontSize = '0.60em'; // Smaller font to prevent wrapping
                                         
                                         // Remove gap between pairs of (s) buttons or (s) + smallspacer (2nd, 4th, 6th, etc. in consecutive sequence)
                                         // So: 1st and 2nd have no gap, 3rd and 4th have no gap, but 2nd and 3rd have normal gap
@@ -571,6 +572,26 @@
                                         // Normal size
                                         button.style.flex = '0 0 80px';
                                         consecutiveSmallCount = 0; // Reset counter for normal buttons
+                                    }
+                                    
+                                    // Match button text with locker data
+                                    const matchedLocker = lockers.find(l => l.name === displayText);
+                                    if (matchedLocker) {
+                                        // Locker exists - apply assigned/unassigned styling
+                                        if (matchedLocker.assignedTo) {
+                                            button.classList.add('assigned');
+                                        } else {
+                                            button.classList.add('unassigned');
+                                        }
+                                        // Make it clickable
+                                        button.addEventListener('click', () => showLockerModal(matchedLocker));
+                                    } else {
+                                        // Locker doesn't exist - grey and disabled
+                                        button.style.backgroundColor = '#e9ecef';
+                                        button.style.borderColor = '#ced4da';
+                                        button.style.color = '#6c757d';
+                                        button.style.cursor = 'not-allowed';
+                                        button.disabled = true;
                                     }
                                 }
                                 
