@@ -222,6 +222,61 @@
             border-radius: 4px;
             color: #155724;
         }
+        .error-message {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8d7da;
+            border: 1px solid #dc3545;
+            border-radius: 4px;
+            color: #721c24;
+        }
+        .loading-message {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            color: #0c5460;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .employee-results {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .employee-item {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .employee-item:hover {
+            background-color: #e9ecef;
+        }
+        .employee-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .employee-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .no-results {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -270,16 +325,31 @@
                 <div class="success-message" id="successMessage"></div>
                 <div class="modal-actions" id="successActions"></div>
             </div>
+            
+            <!-- Employee Search View -->
+            <div id="employeeSearchView" class="modal-view">
+                <div class="modal-title">Search for Employee</div>
+                <div class="modal-info">
+                    <input type="text" id="employeeSearchInput" class="search-input" placeholder="Search by name, email, or identifier..." />
+                    <button type="button" id="employeeSearchButton" class="modal-button assign" style="margin-top: 10px;">Search</button>
+                </div>
+                <div id="employeeSearchResults" class="employee-results"></div>
+                <div class="modal-actions" id="employeeSearchActions">
+                    <button type="button" class="modal-button cancel" id="employeeSearchCancel">Cancel</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const lockerData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(analytics?.Groups ?? new List<LockerGroupAnalytics>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        let lockerData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(analytics?.Groups ?? new List<LockerGroupAnalytics>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
         let currentLocker = null;
+        let currentActiveGroupName = null;
         
         document.querySelectorAll('.group-button').forEach(button => {
             button.addEventListener('click', function() {
                 const groupName = this.getAttribute('data-group-name');
+                currentActiveGroupName = groupName;
                 
                 // Remove active class from all buttons
                 document.querySelectorAll('.group-button').forEach(btn => btn.classList.remove('active'));
@@ -381,7 +451,7 @@
                 assignButton.className = 'modal-button assign';
                 assignButton.textContent = 'Assign';
                 assignButton.type = 'button';
-                // No functionality for now
+                assignButton.addEventListener('click', () => showEmployeeSearchView(locker));
                 modalActions.appendChild(assignButton);
             }
             
@@ -393,12 +463,102 @@
             document.getElementById('mainView').classList.add('show');
             document.getElementById('confirmationView').classList.remove('show');
             document.getElementById('successView').classList.remove('show');
+            document.getElementById('employeeSearchView').classList.remove('show');
+        }
+        
+        function showEmployeeSearchView(locker) {
+            document.getElementById('mainView').classList.remove('show');
+            document.getElementById('confirmationView').classList.remove('show');
+            document.getElementById('successView').classList.remove('show');
+            document.getElementById('employeeSearchView').classList.add('show');
+            
+            // Clear previous search
+            document.getElementById('employeeSearchInput').value = '';
+            document.getElementById('employeeSearchResults').innerHTML = '';
+            
+            // Set up search button
+            const searchButton = document.getElementById('employeeSearchButton');
+            searchButton.onclick = () => searchEmployees();
+            
+            // Set up Enter key on input
+            const searchInput = document.getElementById('employeeSearchInput');
+            searchInput.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    searchEmployees();
+                }
+            };
+            
+            // Set up cancel button
+            document.getElementById('employeeSearchCancel').onclick = () => {
+                showMainView();
+            };
+        }
+        
+        async function searchEmployees() {
+            const searchInput = document.getElementById('employeeSearchInput');
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            const resultsDiv = document.getElementById('employeeSearchResults');
+            
+            if (!searchTerm) {
+                resultsDiv.innerHTML = '<div class="no-results">Please enter a search term</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="no-results">Searching...</div>';
+            
+            try {
+                const response = await fetch('/api/lockeranalytics/employees');
+                if (response.ok) {
+                    const employees = await response.json();
+                    
+                    // Filter employees based on search term
+                    const filtered = employees.filter(emp => {
+                        const fullName = `${emp.firstName || ''} ${emp.lastName || ''}`.toLowerCase();
+                        const email = (emp.email || '').toLowerCase();
+                        const identifier = (emp.identifier || '').toLowerCase();
+                        
+                        return fullName.includes(searchTerm) || 
+                               email.includes(searchTerm) || 
+                               identifier.includes(searchTerm);
+                    });
+                    
+                    if (filtered.length === 0) {
+                        resultsDiv.innerHTML = '<div class="no-results">No employees found matching your search</div>';
+                    } else {
+                        resultsDiv.innerHTML = '';
+                        filtered.forEach(employee => {
+                            const employeeDiv = document.createElement('div');
+                            employeeDiv.className = 'employee-item';
+                            
+                            const nameDiv = document.createElement('div');
+                            nameDiv.className = 'employee-name';
+                            nameDiv.textContent = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
+                            
+                            const detailsDiv = document.createElement('div');
+                            detailsDiv.className = 'employee-details';
+                            let details = [];
+                            if (employee.email) details.push(`Email: ${employee.email}`);
+                            if (employee.identifier) details.push(`Identifier: ${employee.identifier}`);
+                            detailsDiv.textContent = details.join(' | ') || 'No additional details';
+                            
+                            employeeDiv.appendChild(nameDiv);
+                            employeeDiv.appendChild(detailsDiv);
+                            resultsDiv.appendChild(employeeDiv);
+                        });
+                    }
+                } else {
+                    resultsDiv.innerHTML = '<div class="no-results">Failed to load employees</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="no-results">Error searching employees: ${error.message}</div>`;
+            }
         }
         
         function showConfirmationView(locker) {
             document.getElementById('mainView').classList.remove('show');
             document.getElementById('confirmationView').classList.add('show');
             document.getElementById('successView').classList.remove('show');
+            document.getElementById('employeeSearchView').classList.remove('show');
             
             const confirmationMessage = document.getElementById('confirmationMessage');
             const confirmationActions = document.getElementById('confirmationActions');
@@ -422,28 +582,132 @@
             confirmationActions.appendChild(confirmButton);
         }
         
-        function confirmUnassign(locker) {
+        async function confirmUnassign(locker) {
+            // Show loading state
             document.getElementById('mainView').classList.remove('show');
             document.getElementById('confirmationView').classList.remove('show');
             document.getElementById('successView').classList.add('show');
+            document.getElementById('employeeSearchView').classList.remove('show');
             
             const successTitle = document.getElementById('successTitle');
             const successMessage = document.getElementById('successMessage');
             const successActions = document.getElementById('successActions');
             
             successTitle.textContent = locker.name || `Locker ${locker.id}`;
-            successMessage.textContent = `Locker "${locker.name || `Locker ${locker.id}`}" has been unassigned from ${locker.assignedEmployeeName || 'Unknown'}.`;
-            
+            successMessage.className = 'loading-message';
+            successMessage.textContent = 'Unassigning locker...';
             successActions.innerHTML = '';
             
+            try {
+                const response = await fetch(`/api/lockeranalytics/release-locker/${locker.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Success
+                    if (data.success) {
+                        successMessage.className = 'success-message';
+                        successMessage.textContent = `Locker "${locker.name || `Locker ${locker.id}`}" has been successfully unassigned from ${locker.assignedEmployeeName || 'Unknown'}. Please note that it may take a few seconds for the change to be visible in the system.`;
+                        
+                        // Wait a few seconds, then trigger data refresh and update display
+                        setTimeout(async () => {
+                            // First trigger backend data refresh
+                            try {
+                                const refreshResponse = await fetch('/api/lockeranalytics/refresh-data', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+                                
+                                if (refreshResponse.ok) {
+                                    // Then fetch updated data
+                                    await refreshLockerData();
+                                } else {
+                                    console.error('Failed to trigger data refresh');
+                                }
+                            } catch (error) {
+                                console.error('Error refreshing data:', error);
+                                // Still try to refresh the display with cached data
+                                await refreshLockerData();
+                            }
+                        }, 3000); // Wait 3 seconds before refreshing
+                    } else {
+                        // API returned success but operation failed
+                        successMessage.className = 'error-message';
+                        successMessage.textContent = data.message || `Failed to unassign locker "${locker.name || `Locker ${locker.id}`}".`;
+                    }
+                } else {
+                    // Error response
+                    successMessage.className = 'error-message';
+                    let errorText = `Failed to unassign locker "${locker.name || `Locker ${locker.id}`}".`;
+                    
+                    if (data.error) {
+                        errorText += ` ${data.error}`;
+                    }
+                    if (data.details) {
+                        errorText += ` Details: ${data.details}`;
+                    }
+                    if (data.message) {
+                        errorText += ` ${data.message}`;
+                    }
+                    
+                    successMessage.textContent = errorText;
+                }
+            } catch (error) {
+                // Network or other error
+                successMessage.className = 'error-message';
+                successMessage.textContent = `Failed to unassign locker "${locker.name || `Locker ${locker.id}`}". Error: ${error.message}`;
+            }
+            
+            // Add close button
+            successActions.innerHTML = '';
             const closeButton = document.createElement('button');
             closeButton.className = 'modal-button assign';
             closeButton.textContent = 'Close';
             closeButton.type = 'button';
             closeButton.addEventListener('click', closeLockerModal);
             successActions.appendChild(closeButton);
-            
-            // TODO: Call endpoint to unassign locker
+        }
+        
+        async function refreshLockerData() {
+            try {
+                // Fetch updated locker analytics data
+                const response = await fetch('/api/lockeranalytics/groups');
+                if (response.ok) {
+                    const updatedGroups = await response.json();
+                    lockerData = updatedGroups;
+                    
+                    // If there's an active group, refresh its display
+                    if (currentActiveGroupName) {
+                        const group = lockerData.find(g => g.name === currentActiveGroupName);
+                        if (group && group.allLockers) {
+                            displayLockers(currentActiveGroupName, group.allLockers);
+                            
+                            // If modal is open and showing the same locker, update it
+                            const modal = document.getElementById('lockerModal');
+                            if (modal.classList.contains('show') && currentLocker) {
+                                // Find the updated locker data
+                                const updatedLocker = group.allLockers.find(l => l.id === currentLocker.id);
+                                if (updatedLocker) {
+                                    // Update the modal if we're on the main view
+                                    const mainView = document.getElementById('mainView');
+                                    if (mainView.classList.contains('show')) {
+                                        showLockerModal(updatedLocker);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to refresh locker data:', error);
+            }
         }
         
         function closeLockerModal() {

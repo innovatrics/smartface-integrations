@@ -347,11 +347,38 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             try
             {
                 var result = await aeosDataAdapter.ReleaseLocker(lockerId);
+                if (result)
+                {
+                    // Force data refresh after successful unassignment
+                    await dataOrchestrator.GetLockersData();
+                }
                 return Ok(new { success = result, message = result ? $"Locker {lockerId} released successfully." : $"Failed to release locker {lockerId}." });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { error = "Failed to release locker", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Forces a refresh of locker data from AEOS.
+        /// </summary>
+        /// <returns>Result of the refresh operation.</returns>
+        /// <response code="200">Data refresh completed successfully.</response>
+        /// <response code="500">Error occurred during data refresh.</response>
+        [HttpPost("refresh-data")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> RefreshData()
+        {
+            try
+            {
+                await dataOrchestrator.GetLockersData();
+                return Ok(new { success = true, message = "Locker data refreshed successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to refresh locker data", details = ex.Message });
             }
         }
     }
