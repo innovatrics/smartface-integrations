@@ -905,6 +905,9 @@
                         successMessage.className = 'success-message';
                         successMessage.textContent = `Locker "${locker.name || `Locker ${locker.id}`}" has been successfully unassigned from ${locker.assignedEmployeeName || 'Unknown'}. Please note that it may take a few seconds for the change to be visible in the system.`;
                         
+                        // Set locker button to yellow (pending state)
+                        setLockerButtonPending(locker.id, locker.name);
+                        
                         // Wait a few seconds, then trigger data refresh and update display
                         setTimeout(async () => {
                             // First trigger backend data refresh
@@ -919,13 +922,17 @@
                                 if (refreshResponse.ok) {
                                     // Then fetch updated data
                                     await refreshLockerData();
+                                    // Clear pending state after refresh
+                                    clearLockerButtonPending(locker.id, locker.name);
                                 } else {
                                     console.error('Failed to trigger data refresh');
+                                    clearLockerButtonPending(locker.id, locker.name);
                                 }
                             } catch (error) {
                                 console.error('Error refreshing data:', error);
                                 // Still try to refresh the display with cached data
                                 await refreshLockerData();
+                                clearLockerButtonPending(locker.id, locker.name);
                             }
                         }, 3000); // Wait 3 seconds before refreshing
                     } else {
@@ -1080,6 +1087,9 @@
                     closeButton.addEventListener('click', closeLockerModal);
                     successActions.appendChild(closeButton);
                     
+                    // Set locker button to yellow (pending state)
+                    setLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
+                    
                     // Wait a few seconds, then trigger data refresh and update display
                     setTimeout(async () => {
                         // First trigger backend data refresh
@@ -1094,13 +1104,17 @@
                             if (refreshResponse.ok) {
                                 // Then fetch updated data
                                 await refreshLockerData();
+                                // Clear pending state after refresh
+                                clearLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
                             } else {
                                 console.error('Failed to trigger data refresh');
+                                clearLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
                             }
                         } catch (error) {
                             console.error('Error refreshing data:', error);
                             // Still try to refresh the display with cached data
                             await refreshLockerData();
+                            clearLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
                         }
                     }, 3000); // Wait 3 seconds before refreshing
                 } else {
@@ -1154,6 +1168,45 @@
             errorDiv.textContent = errorMessage;
             resultsDiv.innerHTML = '';
             resultsDiv.appendChild(errorDiv);
+        }
+        
+        function setLockerButtonPending(lockerId, lockerName) {
+            // Find the locker button in both custom and default layouts
+            const allButtons = document.querySelectorAll('.locker-item:not(.pending)');
+            allButtons.forEach(button => {
+                let matches = false;
+                
+                // For default layout, check the locker-name div
+                const nameDiv = button.querySelector('.locker-name');
+                if (nameDiv) {
+                    const nameText = nameDiv.textContent.trim();
+                    if (lockerName && nameText === lockerName) {
+                        matches = true;
+                    } else if (nameText === `Locker ${lockerId}`) {
+                        matches = true;
+                    }
+                } else {
+                    // For custom layout buttons - check button text directly
+                    const buttonText = button.textContent.trim();
+                    if (lockerName && buttonText === lockerName) {
+                        matches = true;
+                    }
+                }
+                
+                if (matches) {
+                    button.style.backgroundColor = '#ffc107';
+                    button.style.borderColor = '#ff9800';
+                    button.classList.add('pending');
+                }
+            });
+        }
+        
+        function clearLockerButtonPending(lockerId, lockerName) {
+            // Remove pending styling - the normal refresh will handle the color update
+            const allButtons = document.querySelectorAll('.locker-item.pending');
+            allButtons.forEach(button => {
+                button.classList.remove('pending');
+            });
         }
         
         async function refreshLockerData() {
