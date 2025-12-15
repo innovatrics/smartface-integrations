@@ -87,6 +87,18 @@
         .locker-info {
             font-size: 0.9em;
             color: #666;
+        }
+        .layout-toggle-button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .layout-toggle-button:hover {
+            background-color: #0056b3;
             margin-bottom: 3px;
         }
         .container-title {
@@ -316,7 +328,10 @@
     </div>
     
     <div class="lockers-container" id="lockersContainer">
-        <div class="container-title" id="containerTitle"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div class="container-title" id="containerTitle"></div>
+            <button id="layoutToggle" class="layout-toggle-button" style="display: none;">Switch to Default View</button>
+        </div>
         <div class="locker-list" id="lockerList"></div>
     </div>
 
@@ -383,6 +398,7 @@
         let currentActiveGroupName = null;
         let lockerForAssignment = null; // Track locker when assigning
         let retryCountdownInterval = null;
+        let useCustomLayout = {}; // Track view state per group (true = custom, false = default)
         
         // Check if data is available on page load
         function checkDataAvailability() {
@@ -460,15 +476,39 @@
             });
         });
         
+        // Toggle button event listener
+        document.getElementById('layoutToggle').addEventListener('click', function() {
+            const group = lockerData.find(g => g.name === currentActiveGroupName);
+            if (group && group.allLockers) {
+                // Toggle the view state
+                useCustomLayout[currentActiveGroupName] = !useCustomLayout[currentActiveGroupName];
+                displayLockers(currentActiveGroupName, group.allLockers);
+            }
+        });
+        
         function displayLockers(groupName, lockers) {
             const container = document.getElementById('lockersContainer');
             const title = document.getElementById('containerTitle');
             const list = document.getElementById('lockerList');
+            const toggleButton = document.getElementById('layoutToggle');
             
             // Check if this group has a custom layout
             const hasCustomLayout = Array.isArray(groupsWithCustomLayout) && groupsWithCustomLayout.includes(groupName);
             
+            // Initialize view state if not set (default to custom layout if available)
+            if (useCustomLayout[groupName] === undefined) {
+                useCustomLayout[groupName] = hasCustomLayout;
+            }
+            
+            // Show/hide toggle button based on whether group has custom layout
             if (hasCustomLayout) {
+                toggleButton.style.display = 'block';
+                toggleButton.textContent = useCustomLayout[groupName] ? 'Switch to Default View' : 'Switch to Custom Layout';
+            } else {
+                toggleButton.style.display = 'none';
+            }
+            
+            if (hasCustomLayout && useCustomLayout[groupName]) {
                 title.textContent = `Lockers in ${groupName} (${lockers.length} total)`;
                 list.innerHTML = '';
                 list.className = 'locker-list custom-layout';
@@ -604,19 +644,18 @@
                 }
                 
                 container.classList.add('show');
-                return;
-            }
-            
-            // Reset list class and style for normal layout
-            list.className = 'locker-list';
-            list.style.display = 'grid'; // Ensure grid layout is restored
-            list.style.gap = '15px';
-            list.style.marginTop = '15px';
-            
-            title.textContent = `Lockers in ${groupName} (${lockers.length} total)`;
-            list.innerHTML = '';
-            
-            lockers.forEach(locker => {
+            } else {
+                // Default layout (either no custom layout, or custom layout is toggled off)
+                // Reset list class and style for normal layout
+                list.className = 'locker-list';
+                list.style.display = 'grid'; // Ensure grid layout is restored
+                list.style.gap = '15px';
+                list.style.marginTop = '15px';
+                
+                title.textContent = `Lockers in ${groupName} (${lockers.length} total)`;
+                list.innerHTML = '';
+                
+                lockers.forEach(locker => {
                 const lockerButton = document.createElement('button');
                 lockerButton.className = 'locker-item ' + (locker.assignedTo ? 'assigned' : 'unassigned');
                 lockerButton.type = 'button';
@@ -640,13 +679,14 @@
                 const daysSinceLastUse = locker.daysSinceLastUse ?? 0;
                 daysDiv.textContent = `Days since last use: ${daysSinceLastUse.toFixed(1)}`;
                 
-                lockerButton.appendChild(nameDiv);
-                lockerButton.appendChild(infoDiv);
-                lockerButton.appendChild(daysDiv);
-                list.appendChild(lockerButton);
-            });
-            
-            container.classList.add('show');
+                    lockerButton.appendChild(nameDiv);
+                    lockerButton.appendChild(infoDiv);
+                    lockerButton.appendChild(daysDiv);
+                    list.appendChild(lockerButton);
+                });
+                
+                container.classList.add('show');
+            }
         }
         
         function hideLockers() {
