@@ -64,6 +64,13 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             background-color: #f8f9fa;
+            cursor: pointer;
+            text-align: left;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .locker-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
         .locker-item.assigned {
             border-color: #28a745;
@@ -88,6 +95,133 @@
             margin-bottom: 15px;
             color: #333;
         }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            margin: auto;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+        }
+        .modal-close:hover {
+            color: #000;
+        }
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            padding-right: 40px;
+        }
+        .modal-info {
+            margin-bottom: 15px;
+        }
+        .modal-info-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .modal-info-value {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .modal-actions {
+            margin-top: 25px;
+            display: flex;
+            gap: 10px;
+        }
+        .modal-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .modal-button.assign {
+            background-color: #28a745;
+            color: white;
+        }
+        .modal-button.assign:hover {
+            background-color: #218838;
+        }
+        .modal-button.unassign {
+            background-color: #dc3545;
+            color: white;
+        }
+        .modal-button.unassign:hover {
+            background-color: #c82333;
+        }
+        .modal-button.cancel {
+            background-color: #6c757d;
+            color: white;
+        }
+        .modal-button.cancel:hover {
+            background-color: #5a6268;
+        }
+        .modal-button.confirm {
+            background-color: #dc3545;
+            color: white;
+        }
+        .modal-button.confirm:hover {
+            background-color: #c82333;
+        }
+        .modal-view {
+            display: none;
+        }
+        .modal-view.show {
+            display: block;
+        }
+        .confirmation-message {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            color: #856404;
+        }
+        .success-message {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #d4edda;
+            border: 1px solid #28a745;
+            border-radius: 4px;
+            color: #155724;
+        }
     </style>
 </head>
 <body>
@@ -104,8 +238,44 @@
         <div class="locker-list" id="lockerList"></div>
     </div>
 
+    <!-- Modal -->
+    <div id="lockerModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">&times;</button>
+            
+            <!-- Main View -->
+            <div id="mainView" class="modal-view show">
+                <div class="modal-title" id="modalTitle"></div>
+                <div class="modal-info">
+                    <div class="modal-info-label">Current Assigned Employee:</div>
+                    <div class="modal-info-value" id="modalEmployee"></div>
+                </div>
+                <div class="modal-info">
+                    <div class="modal-info-label">Days Since Last Use:</div>
+                    <div class="modal-info-value" id="modalDays"></div>
+                </div>
+                <div class="modal-actions" id="modalActions"></div>
+            </div>
+            
+            <!-- Confirmation View -->
+            <div id="confirmationView" class="modal-view">
+                <div class="modal-title">Confirm Unassign</div>
+                <div class="confirmation-message" id="confirmationMessage"></div>
+                <div class="modal-actions" id="confirmationActions"></div>
+            </div>
+            
+            <!-- Success View -->
+            <div id="successView" class="modal-view">
+                <div class="modal-title" id="successTitle"></div>
+                <div class="success-message" id="successMessage"></div>
+                <div class="modal-actions" id="successActions"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const lockerData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(analytics?.Groups ?? new List<LockerGroupAnalytics>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        let currentLocker = null;
         
         document.querySelectorAll('.group-button').forEach(button => {
             button.addEventListener('click', function() {
@@ -136,8 +306,10 @@
             list.innerHTML = '';
             
             lockers.forEach(locker => {
-                const lockerDiv = document.createElement('div');
-                lockerDiv.className = 'locker-item ' + (locker.assignedTo ? 'assigned' : 'unassigned');
+                const lockerButton = document.createElement('button');
+                lockerButton.className = 'locker-item ' + (locker.assignedTo ? 'assigned' : 'unassigned');
+                lockerButton.type = 'button';
+                lockerButton.addEventListener('click', () => showLockerModal(locker));
                 
                 const nameDiv = document.createElement('div');
                 nameDiv.className = 'locker-name';
@@ -157,10 +329,10 @@
                 const daysSinceLastUse = locker.daysSinceLastUse ?? 0;
                 daysDiv.textContent = `Days since last use: ${daysSinceLastUse.toFixed(1)}`;
                 
-                lockerDiv.appendChild(nameDiv);
-                lockerDiv.appendChild(infoDiv);
-                lockerDiv.appendChild(daysDiv);
-                list.appendChild(lockerDiv);
+                lockerButton.appendChild(nameDiv);
+                lockerButton.appendChild(infoDiv);
+                lockerButton.appendChild(daysDiv);
+                list.appendChild(lockerButton);
             });
             
             container.classList.add('show');
@@ -170,6 +342,122 @@
             const container = document.getElementById('lockersContainer');
             container.classList.remove('show');
         }
+        
+        function showLockerModal(locker) {
+            currentLocker = locker;
+            showMainView();
+            
+            const modal = document.getElementById('lockerModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalEmployee = document.getElementById('modalEmployee');
+            const modalDays = document.getElementById('modalDays');
+            const modalActions = document.getElementById('modalActions');
+            
+            // Set locker name
+            modalTitle.textContent = locker.name || `Locker ${locker.id}`;
+            
+            // Set assigned employee
+            if (locker.assignedTo) {
+                modalEmployee.textContent = locker.assignedEmployeeName || 'Unknown';
+            } else {
+                modalEmployee.textContent = 'Unassigned';
+            }
+            
+            // Set days since last use
+            const daysSinceLastUse = locker.daysSinceLastUse ?? 0;
+            modalDays.textContent = daysSinceLastUse.toFixed(1);
+            
+            // Set action button
+            modalActions.innerHTML = '';
+            if (locker.assignedTo) {
+                const unassignButton = document.createElement('button');
+                unassignButton.className = 'modal-button unassign';
+                unassignButton.textContent = 'Unassign';
+                unassignButton.type = 'button';
+                unassignButton.addEventListener('click', () => showConfirmationView(locker));
+                modalActions.appendChild(unassignButton);
+            } else {
+                const assignButton = document.createElement('button');
+                assignButton.className = 'modal-button assign';
+                assignButton.textContent = 'Assign';
+                assignButton.type = 'button';
+                // No functionality for now
+                modalActions.appendChild(assignButton);
+            }
+            
+            // Show modal
+            modal.classList.add('show');
+        }
+        
+        function showMainView() {
+            document.getElementById('mainView').classList.add('show');
+            document.getElementById('confirmationView').classList.remove('show');
+            document.getElementById('successView').classList.remove('show');
+        }
+        
+        function showConfirmationView(locker) {
+            document.getElementById('mainView').classList.remove('show');
+            document.getElementById('confirmationView').classList.add('show');
+            document.getElementById('successView').classList.remove('show');
+            
+            const confirmationMessage = document.getElementById('confirmationMessage');
+            const confirmationActions = document.getElementById('confirmationActions');
+            
+            confirmationMessage.textContent = `Are you sure you want to unassign locker "${locker.name || `Locker ${locker.id}`}" from ${locker.assignedEmployeeName || 'Unknown'}?`;
+            
+            confirmationActions.innerHTML = '';
+            
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'modal-button cancel';
+            cancelButton.textContent = 'Cancel';
+            cancelButton.type = 'button';
+            cancelButton.addEventListener('click', () => showMainView());
+            confirmationActions.appendChild(cancelButton);
+            
+            const confirmButton = document.createElement('button');
+            confirmButton.className = 'modal-button confirm';
+            confirmButton.textContent = 'Confirm';
+            confirmButton.type = 'button';
+            confirmButton.addEventListener('click', () => confirmUnassign(locker));
+            confirmationActions.appendChild(confirmButton);
+        }
+        
+        function confirmUnassign(locker) {
+            document.getElementById('mainView').classList.remove('show');
+            document.getElementById('confirmationView').classList.remove('show');
+            document.getElementById('successView').classList.add('show');
+            
+            const successTitle = document.getElementById('successTitle');
+            const successMessage = document.getElementById('successMessage');
+            const successActions = document.getElementById('successActions');
+            
+            successTitle.textContent = locker.name || `Locker ${locker.id}`;
+            successMessage.textContent = `Locker "${locker.name || `Locker ${locker.id}`}" has been unassigned from ${locker.assignedEmployeeName || 'Unknown'}.`;
+            
+            successActions.innerHTML = '';
+            
+            const closeButton = document.createElement('button');
+            closeButton.className = 'modal-button assign';
+            closeButton.textContent = 'Close';
+            closeButton.type = 'button';
+            closeButton.addEventListener('click', closeLockerModal);
+            successActions.appendChild(closeButton);
+            
+            // TODO: Call endpoint to unassign locker
+        }
+        
+        function closeLockerModal() {
+            const modal = document.getElementById('lockerModal');
+            modal.classList.remove('show');
+        }
+        
+        // Close modal handlers
+        document.getElementById('modalClose').addEventListener('click', closeLockerModal);
+        document.getElementById('lockerModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLockerModal();
+            }
+        });
     </script>
 </body>
 </html>
