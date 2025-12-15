@@ -35,10 +35,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             var validGroups = groupConfigurations
                 .Where(g => actualGroupNames.Contains(g.GroupName))
+                .ToList();
+
+            // Create a list to track which groups have custom layouts
+            var groupsWithCustomLayout = validGroups
+                .Where(g => g.GroupLayout != null && g.GroupLayout.Length > 0)
                 .Select(g => g.GroupName)
                 .ToList();
 
-            ViewBag.Groups = validGroups;
+            ViewBag.Groups = validGroups.Select(g => g.GroupName).ToList();
+            ViewBag.GroupsWithCustomLayout = groupsWithCustomLayout;
             ViewBag.LockerAnalytics = analytics;
 
             return View();

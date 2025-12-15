@@ -377,6 +377,7 @@
 
     <script>
         let lockerData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(analytics?.Groups ?? new List<LockerGroupAnalytics>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        let groupsWithCustomLayout = @Html.Raw(System.Text.Json.JsonSerializer.Serialize((ViewBag.GroupsWithCustomLayout as List<string>) ?? new List<string>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
         let currentLocker = null;
         let currentActiveGroupName = null;
         let lockerForAssignment = null; // Track locker when assigning
@@ -462,6 +463,16 @@
             const container = document.getElementById('lockersContainer');
             const title = document.getElementById('containerTitle');
             const list = document.getElementById('lockerList');
+            
+            // Check if this group has a custom layout
+            const hasCustomLayout = Array.isArray(groupsWithCustomLayout) && groupsWithCustomLayout.includes(groupName);
+            
+            if (hasCustomLayout) {
+                title.textContent = `Lockers in ${groupName} (${lockers.length} total)`;
+                list.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 1.2em; color: #666;">Custom layout</div>';
+                container.classList.add('show');
+                return;
+            }
             
             title.textContent = `Lockers in ${groupName} (${lockers.length} total)`;
             list.innerHTML = '';
