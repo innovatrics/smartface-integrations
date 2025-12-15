@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using System.Collections.Generic;
 using System;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json;
+using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {
@@ -209,6 +211,21 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> AssignLocker([FromBody] AssignLockerRequest request)
         {
+            // Log the request body for debugging
+            if (request != null)
+            {
+                var requestJson = JsonSerializer.Serialize(request, new JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+                Log.Information("AssignLocker request body: {RequestBody}", requestJson);
+            }
+            else
+            {
+                Log.Warning("AssignLocker called with null request body");
+            }
+
             var allowChanges = configuration.GetValue<bool>("AeosDashboards:AllowChanges", false);
             if (!allowChanges)
             {

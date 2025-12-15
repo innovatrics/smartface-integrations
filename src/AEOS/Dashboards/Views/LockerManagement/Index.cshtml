@@ -455,6 +455,21 @@
         // Check data availability on page load
         checkDataAvailability();
         
+        // Set up automatic data refresh polling
+        let refreshPeriod = @ViewBag.WebRefreshPeriodMs;
+        if (refreshPeriod > 0) {
+            setInterval(async () => {
+                // Only refresh if we have an active group displayed
+                if (currentActiveGroupName) {
+                    try {
+                        await refreshLockerData();
+                    } catch (error) {
+                        console.error('Error during automatic data refresh:', error);
+                    }
+                }
+            }, refreshPeriod);
+        }
+        
         document.querySelectorAll('.group-button').forEach(button => {
             button.addEventListener('click', function() {
                 const groupName = this.getAttribute('data-group-name');

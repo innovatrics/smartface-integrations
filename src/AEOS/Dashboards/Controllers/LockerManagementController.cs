@@ -49,6 +49,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             var groupConfigDict = validGroups.ToDictionary(g => g.GroupName, g => g);
             ViewBag.GroupConfigurations = groupConfigDict;
             ViewBag.LockerAnalytics = analytics;
+            ViewBag.WebRefreshPeriodMs = configuration.GetValue<int>("AeosDashboards:Web:WebRefreshPeriodMs", 10000);
 
             return View();
         }
