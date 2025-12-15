@@ -39,6 +39,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 .ToList();
 
             ViewBag.Groups = validGroups;
+            ViewBag.LockerAnalytics = analytics;
 
             return View();
         }

@@ -1,5 +1,7 @@
+@using Innovatrics.SmartFace.Integrations.AeosDashboards
 @{
     var groups = ViewBag.Groups as List<string> ?? new List<string>();
+    var analytics = ViewBag.LockerAnalytics as LockerAnalytics;
 }
 <!DOCTYPE html>
 <html>
@@ -21,6 +23,7 @@
             flex-wrap: wrap;
             gap: 15px;
             margin-top: 20px;
+            margin-bottom: 30px;
         }
         .group-button {
             padding: 12px 24px;
@@ -35,6 +38,56 @@
         .group-button:hover {
             background-color: #033d7a;
         }
+        .group-button.active {
+            background-color: #033d7a;
+            border: 2px solid #021B41;
+        }
+        .lockers-container {
+            display: none;
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .lockers-container.show {
+            display: block;
+        }
+        .locker-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .locker-item {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        .locker-item.assigned {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+        .locker-item.unassigned {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        .locker-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .locker-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        .container-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -42,9 +95,82 @@
     <div class="button-container">
         @foreach (var groupName in groups)
         {
-            <button class="group-button">@groupName</button>
+            <button class="group-button" data-group-name="@groupName">@groupName</button>
         }
     </div>
+    
+    <div class="lockers-container" id="lockersContainer">
+        <div class="container-title" id="containerTitle"></div>
+        <div class="locker-list" id="lockerList"></div>
+    </div>
+
+    <script>
+        const lockerData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(analytics?.Groups ?? new List<LockerGroupAnalytics>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        
+        document.querySelectorAll('.group-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const groupName = this.getAttribute('data-group-name');
+                
+                // Remove active class from all buttons
+                document.querySelectorAll('.group-button').forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                // Find the group data
+                const group = lockerData.find(g => g.name === groupName);
+                
+                if (group && group.allLockers) {
+                    displayLockers(groupName, group.allLockers);
+                } else {
+                    hideLockers();
+                }
+            });
+        });
+        
+        function displayLockers(groupName, lockers) {
+            const container = document.getElementById('lockersContainer');
+            const title = document.getElementById('containerTitle');
+            const list = document.getElementById('lockerList');
+            
+            title.textContent = `Lockers in ${groupName} (${lockers.length} total)`;
+            list.innerHTML = '';
+            
+            lockers.forEach(locker => {
+                const lockerDiv = document.createElement('div');
+                lockerDiv.className = 'locker-item ' + (locker.assignedTo ? 'assigned' : 'unassigned');
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'locker-name';
+                nameDiv.textContent = locker.name || `Locker ${locker.id}`;
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'locker-info';
+                
+                if (locker.assignedTo) {
+                    infoDiv.textContent = `Assigned to: ${locker.assignedEmployeeName || 'Unknown'}`;
+                } else {
+                    infoDiv.textContent = 'Unassigned';
+                }
+                
+                const daysDiv = document.createElement('div');
+                daysDiv.className = 'locker-info';
+                const daysSinceLastUse = locker.daysSinceLastUse ?? 0;
+                daysDiv.textContent = `Days since last use: ${daysSinceLastUse.toFixed(1)}`;
+                
+                lockerDiv.appendChild(nameDiv);
+                lockerDiv.appendChild(infoDiv);
+                lockerDiv.appendChild(daysDiv);
+                list.appendChild(lockerDiv);
+            });
+            
+            container.classList.add('show');
+        }
+        
+        function hideLockers() {
+            const container = document.getElementById('lockersContainer');
+            container.classList.remove('show');
+        }
+    </script>
 </body>
 </html>
 
