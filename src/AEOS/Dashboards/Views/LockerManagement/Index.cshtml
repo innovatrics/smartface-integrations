@@ -345,6 +345,7 @@
         let lockerData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(analytics?.Groups ?? new List<LockerGroupAnalytics>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
         let currentLocker = null;
         let currentActiveGroupName = null;
+        let lockerForAssignment = null; // Track locker when assigning
         
         document.querySelectorAll('.group-button').forEach(button => {
             button.addEventListener('click', function() {
@@ -467,6 +468,7 @@
         }
         
         function showEmployeeSearchView(locker) {
+            lockerForAssignment = locker; // Store the locker we're assigning
             document.getElementById('mainView').classList.remove('show');
             document.getElementById('confirmationView').classList.remove('show');
             document.getElementById('successView').classList.remove('show');
@@ -529,6 +531,8 @@
                         filtered.forEach(employee => {
                             const employeeDiv = document.createElement('div');
                             employeeDiv.className = 'employee-item';
+                            employeeDiv.style.cursor = 'pointer';
+                            employeeDiv.addEventListener('click', () => assignLockerToEmployee(employee));
                             
                             const nameDiv = document.createElement('div');
                             nameDiv.className = 'employee-name';
@@ -673,6 +677,123 @@
             closeButton.type = 'button';
             closeButton.addEventListener('click', closeLockerModal);
             successActions.appendChild(closeButton);
+        }
+        
+        async function assignLockerToEmployee(employee) {
+            if (!lockerForAssignment) {
+                return;
+            }
+            
+            // Find the group that contains this locker
+            const group = lockerData.find(g => 
+                g.allLockers && g.allLockers.some(l => l.id === lockerForAssignment.id)
+            );
+            
+            if (!group) {
+                showErrorInEmployeeSearch('Could not find locker group information.');
+                return;
+            }
+            
+            // Check if group has required IDs
+            if (!group.lockerAuthorisationGroupNetworkId || !group.lockerAuthorisationPresetId) {
+                showErrorInEmployeeSearch('Locker group is missing required authorization information.');
+                return;
+            }
+            
+            // Show loading state
+            const resultsDiv = document.getElementById('employeeSearchResults');
+            resultsDiv.innerHTML = '<div class="no-results">Assigning locker...</div>';
+            
+            try {
+                const response = await fetch('/api/lockeranalytics/asign-locker', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        employeeId: employee.id,
+                        lockerId: lockerForAssignment.id,
+                        lockerAuthorisationGroupNetworkId: group.lockerAuthorisationGroupNetworkId,
+                        lockerAuthorisationPresetId: group.lockerAuthorisationPresetId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Success - show success message
+                    document.getElementById('employeeSearchView').classList.remove('show');
+                    document.getElementById('successView').classList.add('show');
+                    
+                    const successTitle = document.getElementById('successTitle');
+                    const successMessage = document.getElementById('successMessage');
+                    const successActions = document.getElementById('successActions');
+                    
+                    successTitle.textContent = lockerForAssignment.name || `Locker ${lockerForAssignment.id}`;
+                    successMessage.className = 'success-message';
+                    const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
+                    successMessage.textContent = `Locker "${lockerForAssignment.name || `Locker ${lockerForAssignment.id}`}" has been successfully assigned to ${employeeName}. Please note that it may take a few seconds for the change to be visible in the system.`;
+                    
+                    successActions.innerHTML = '';
+                    const closeButton = document.createElement('button');
+                    closeButton.className = 'modal-button assign';
+                    closeButton.textContent = 'Close';
+                    closeButton.type = 'button';
+                    closeButton.addEventListener('click', closeLockerModal);
+                    successActions.appendChild(closeButton);
+                    
+                    // Wait a few seconds, then trigger data refresh and update display
+                    setTimeout(async () => {
+                        // First trigger backend data refresh
+                        try {
+                            const refreshResponse = await fetch('/api/lockeranalytics/refresh-data', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (refreshResponse.ok) {
+                                // Then fetch updated data
+                                await refreshLockerData();
+                            } else {
+                                console.error('Failed to trigger data refresh');
+                            }
+                        } catch (error) {
+                            console.error('Error refreshing data:', error);
+                            // Still try to refresh the display with cached data
+                            await refreshLockerData();
+                        }
+                    }, 3000); // Wait 3 seconds before refreshing
+                } else {
+                    // Error response
+                    let errorText = `Failed to assign locker "${lockerForAssignment.name || `Locker ${lockerForAssignment.id}`}".`;
+                    
+                    if (data.error) {
+                        errorText += ` ${data.error}`;
+                    }
+                    if (data.details) {
+                        errorText += ` Details: ${data.details}`;
+                    }
+                    if (data.message) {
+                        errorText += ` ${data.message}`;
+                    }
+                    
+                    showErrorInEmployeeSearch(errorText);
+                }
+            } catch (error) {
+                // Network or other error
+                showErrorInEmployeeSearch(`Failed to assign locker. Error: ${error.message}`);
+            }
+        }
+        
+        function showErrorInEmployeeSearch(errorMessage) {
+            const resultsDiv = document.getElementById('employeeSearchResults');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = errorMessage;
+            resultsDiv.innerHTML = '';
+            resultsDiv.appendChild(errorDiv);
         }
         
         async function refreshLockerData() {

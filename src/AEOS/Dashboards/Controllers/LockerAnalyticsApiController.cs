@@ -289,6 +289,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
                 if (result)
                 {
+                    // Force data refresh after successful assignment
+                    await dataOrchestrator.GetLockersData();
+                    
                     return Ok(new { 
                         success = true,
                         message = $"Locker {request.LockerId} assigned successfully to employee {request.EmployeeId}.",
