@@ -152,6 +152,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
+                    name: "lockerManagement",
+                    pattern: "lockerManagement",
+                    defaults: new { controller = "LockerManagement", action = "Index" });
+                
+                endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=LockerAnalytics}/{action=Index}/{id?}");
                 

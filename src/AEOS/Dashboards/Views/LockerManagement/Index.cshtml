@@ -1,0 +1,50 @@
+@{
+    var groups = ViewBag.Groups as List<string> ?? new List<string>();
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Locker Management</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .group-button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #021B41;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .group-button:hover {
+            background-color: #033d7a;
+        }
+    </style>
+</head>
+<body>
+    <h1>Locker Management</h1>
+    <div class="button-container">
+        @foreach (var groupName in groups)
+        {
+            <button class="group-button">@groupName</button>
+        }
+    </div>
+</body>
+</html>
+

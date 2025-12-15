@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+     width="32px" height="32px" viewBox="0 0 16 16" style="enable-background:new 0 0 16 16;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#021B41;}
+</style>
+<g>
+	<!-- Top dot (right side, original position from logo) -->
+	<path class="st0" d="M10.8,4.6C9,4.6,7.5,6.1,7.5,7.9s1.5,3.3,3.3,3.3s3.3-1.5,3.3-3.3S12.6,4.6,10.8,4.6"/>
+	<!-- Middle dot (left side, original position from logo) -->
+	<path class="st0" d="M3.3,8.8C1.5,8.8,0,10.3,0,12.1s1.5,3.3,3.3,3.3s3.3-1.5,3.3-3.3S5.1,8.8,3.3,8.8"/>
+	<!-- Bottom dot (left side, original position from logo) -->
+	<path class="st0" d="M3.3,0.5C1.5,0.5,0,2,0,3.8s1.5,3.3,3.3,3.3s3.3-1.5,3.3-3.3S5.1,0.5,3.3,0.5"/>
+</g>
+</svg>
+
