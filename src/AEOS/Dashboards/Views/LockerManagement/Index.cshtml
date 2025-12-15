@@ -378,6 +378,7 @@
     <script>
         let lockerData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(analytics?.Groups ?? new List<LockerGroupAnalytics>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
         let groupsWithCustomLayout = @Html.Raw(System.Text.Json.JsonSerializer.Serialize((ViewBag.GroupsWithCustomLayout as List<string>) ?? new List<string>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        let groupConfigurations = @Html.Raw(System.Text.Json.JsonSerializer.Serialize((ViewBag.GroupConfigurations as Dictionary<string, LockerManagementGroupConfiguration>) ?? new Dictionary<string, LockerManagementGroupConfiguration>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
         let currentLocker = null;
         let currentActiveGroupName = null;
         let lockerForAssignment = null; // Track locker when assigning
@@ -469,10 +470,127 @@
             
             if (hasCustomLayout) {
                 title.textContent = `Lockers in ${groupName} (${lockers.length} total)`;
-                list.innerHTML = '<div style="padding: 40px; text-align: center; font-size: 1.2em; color: #666;">Custom layout</div>';
+                list.innerHTML = '';
+                list.className = 'locker-list custom-layout';
+                list.style.display = 'block';
+                
+                // Get the group configuration
+                const groupConfig = groupConfigurations[groupName];
+                if (groupConfig && groupConfig.groupLayout && Array.isArray(groupConfig.groupLayout)) {
+                    groupConfig.groupLayout.forEach(rowItem => {
+                        if (rowItem.row) {
+                            const rowDiv = document.createElement('div');
+                            rowDiv.className = 'custom-layout-row';
+                            rowDiv.style.display = 'flex';
+                            rowDiv.style.gap = '10px';
+                            rowDiv.style.marginBottom = '10px';
+                            rowDiv.style.flexWrap = 'wrap';
+                            
+                            // Split row by comma and create buttons
+                            const items = rowItem.row.split(',').map(item => item.trim()).filter(item => item.length > 0);
+                            
+                            // Track consecutive (s) button count
+                            let consecutiveSmallCount = 0;
+                            
+                            items.forEach((item, index) => {
+                                const button = document.createElement('button');
+                                button.className = 'locker-item custom-layout-button';
+                                
+                                // Check if this is an (s) button or smallspacer (both behave the same for spacing)
+                                const itemLower = item.toLowerCase();
+                                const isSmall = itemLower.startsWith('(s)');
+                                const isSmallSpacer = itemLower === '<smallspacer>';
+                                const isSmallOrSpacer = isSmall || isSmallSpacer;
+                                
+                                // Check if previous item is also an (s) button or smallspacer
+                                const prevItemLower = index > 0 ? items[index - 1].toLowerCase() : '';
+                                const prevIsSmall = prevItemLower.startsWith('(s)');
+                                const prevIsSmallSpacer = prevItemLower === '<smallspacer>';
+                                const prevIsSmallOrSpacer = prevIsSmall || prevIsSmallSpacer;
+                                
+                                // Remove prefixes from display text
+                                let displayText = item;
+                                if (itemLower.startsWith('(xl)')) {
+                                    displayText = item.substring(4).trim(); // Remove "(xl)" prefix
+                                } else if (isSmall) {
+                                    displayText = item.substring(3).trim(); // Remove "(s)" prefix
+                                }
+                                
+                                button.textContent = displayText;
+                                button.type = 'button';
+                                
+                                // Track consecutive (s) buttons and smallspacers (they count together)
+                                if (isSmallOrSpacer) {
+                                    consecutiveSmallCount++;
+                                } else {
+                                    consecutiveSmallCount = 0; // Reset counter when we hit a non-(s) button or smallspacer
+                                }
+                                
+                                // Handle special items like spacers
+                                if (itemLower === '<spacer>') {
+                                    button.style.visibility = 'hidden';
+                                    button.style.minWidth = '40px';
+                                    consecutiveSmallCount = 0; // Reset counter for spacer
+                                } else if (isSmallSpacer) {
+                                    button.style.visibility = 'hidden';
+                                    button.style.minWidth = '40px'; // Same width as (s) button
+                                    button.style.flex = '0 0 40px';
+                                    
+                                    // Apply same gap logic as (s) buttons - if previous is (s) or smallspacer and this is 2nd, 4th, etc.
+                                    if (prevIsSmallOrSpacer && consecutiveSmallCount % 2 === 0) {
+                                        button.style.marginLeft = '-10px'; // Cancel out the 10px gap from rowDiv
+                                    }
+                                } else if (itemLower === '<bigspacer>') {
+                                    button.style.visibility = 'hidden';
+                                    button.style.minWidth = '170px'; // Same width as (xl) button
+                                    button.style.flex = '0 0 170px';
+                                    consecutiveSmallCount = 0; // Reset counter for bigspacer
+                                } else {
+                                    // Default button width
+                                    button.style.minWidth = '80px';
+                                    button.style.padding = '10px';
+                                    
+                                    // Check for size prefixes
+                                    if (item.toLowerCase().startsWith('(xl)')) {
+                                        // Extra large - width of 2 normal buttons + gap (80px + 10px + 80px = 170px)
+                                        button.style.minWidth = '170px';
+                                        button.style.flex = '0 0 170px';
+                                        consecutiveSmallCount = 0; // Reset counter for xl
+                                    } else if (isSmall) {
+                                        // Small - half the width of normal
+                                        button.style.minWidth = '40px';
+                                        button.style.flex = '0 0 40px';
+                                        
+                                        // Remove gap between pairs of (s) buttons or (s) + smallspacer (2nd, 4th, 6th, etc. in consecutive sequence)
+                                        // So: 1st and 2nd have no gap, 3rd and 4th have no gap, but 2nd and 3rd have normal gap
+                                        if (prevIsSmallOrSpacer && consecutiveSmallCount % 2 === 0) {
+                                            // This is the 2nd, 4th, 6th, etc. (s) button or smallspacer in a consecutive sequence
+                                            button.style.marginLeft = '-10px'; // Cancel out the 10px gap from rowDiv
+                                        }
+                                    } else {
+                                        // Normal size
+                                        button.style.flex = '0 0 80px';
+                                        consecutiveSmallCount = 0; // Reset counter for normal buttons
+                                    }
+                                }
+                                
+                                rowDiv.appendChild(button);
+                            });
+                            
+                            list.appendChild(rowDiv);
+                        }
+                    });
+                }
+                
                 container.classList.add('show');
                 return;
             }
+            
+            // Reset list class and style for normal layout
+            list.className = 'locker-list';
+            list.style.display = 'grid'; // Ensure grid layout is restored
+            list.style.gap = '15px';
+            list.style.marginTop = '15px';
             
             title.textContent = `Lockers in ${groupName} (${lockers.length} total)`;
             list.innerHTML = '';
