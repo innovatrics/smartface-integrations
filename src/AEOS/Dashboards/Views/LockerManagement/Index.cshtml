@@ -277,6 +277,28 @@
             text-align: center;
             color: #666;
         }
+        .connection-status {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .connection-status.show {
+            display: block;
+        }
+        .connection-message {
+            font-size: 1.2em;
+            color: #dc3545;
+            margin-bottom: 10px;
+        }
+        .countdown {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #021B41;
+        }
     </style>
 </head>
 <body>
@@ -286,6 +308,11 @@
         {
             <button class="group-button" data-group-name="@groupName">@groupName</button>
         }
+    </div>
+    
+    <div class="connection-status" id="connectionStatus">
+        <div class="connection-message">Not connected, retrying in</div>
+        <div class="countdown" id="countdown">3</div>
     </div>
     
     <div class="lockers-container" id="lockersContainer">
@@ -338,6 +365,13 @@
                     <button type="button" class="modal-button cancel" id="employeeSearchCancel">Cancel</button>
                 </div>
             </div>
+            
+            <!-- Assign Confirmation View -->
+            <div id="assignConfirmationView" class="modal-view">
+                <div class="modal-title">Confirm Assign</div>
+                <div class="confirmation-message" id="assignConfirmationMessage"></div>
+                <div class="modal-actions" id="assignConfirmationActions"></div>
+            </div>
         </div>
     </div>
 
@@ -346,6 +380,62 @@
         let currentLocker = null;
         let currentActiveGroupName = null;
         let lockerForAssignment = null; // Track locker when assigning
+        let retryCountdownInterval = null;
+        
+        // Check if data is available on page load
+        function checkDataAvailability() {
+            const hasData = lockerData && lockerData.length > 0;
+            const hasValidGroups = @((ViewBag.Groups as List<string>)?.Count > 0 ? "true" : "false");
+            
+            if (!hasData || !hasValidGroups) {
+                showConnectionStatus();
+            } else {
+                hideConnectionStatus();
+            }
+        }
+        
+        function showConnectionStatus() {
+            document.getElementById('connectionStatus').classList.add('show');
+            document.querySelector('.button-container').style.display = 'none';
+            document.getElementById('lockersContainer').classList.remove('show');
+            startCountdown();
+        }
+        
+        function hideConnectionStatus() {
+            document.getElementById('connectionStatus').classList.remove('show');
+            document.querySelector('.button-container').style.display = 'flex';
+            if (retryCountdownInterval) {
+                clearInterval(retryCountdownInterval);
+                retryCountdownInterval = null;
+            }
+        }
+        
+        function startCountdown() {
+            let countdown = 3;
+            const countdownElement = document.getElementById('countdown');
+            
+            if (retryCountdownInterval) {
+                clearInterval(retryCountdownInterval);
+            }
+            
+            countdownElement.textContent = countdown;
+            
+            retryCountdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    countdownElement.textContent = countdown;
+                } else {
+                    clearInterval(retryCountdownInterval);
+                    retryCountdownInterval = null;
+                    countdownElement.textContent = '0';
+                    // Reload the page to get fresh data
+                    window.location.reload();
+                }
+            }, 1000);
+        }
+        
+        // Check data availability on page load
+        checkDataAvailability();
         
         document.querySelectorAll('.group-button').forEach(button => {
             button.addEventListener('click', function() {
@@ -465,6 +555,7 @@
             document.getElementById('confirmationView').classList.remove('show');
             document.getElementById('successView').classList.remove('show');
             document.getElementById('employeeSearchView').classList.remove('show');
+            document.getElementById('assignConfirmationView').classList.remove('show');
         }
         
         function showEmployeeSearchView(locker) {
@@ -473,6 +564,10 @@
             document.getElementById('confirmationView').classList.remove('show');
             document.getElementById('successView').classList.remove('show');
             document.getElementById('employeeSearchView').classList.add('show');
+            
+            // Show search elements
+            document.getElementById('employeeSearchInput').style.display = 'block';
+            document.getElementById('employeeSearchButton').style.display = 'block';
             
             // Clear previous search
             document.getElementById('employeeSearchInput').value = '';
@@ -532,7 +627,7 @@
                             const employeeDiv = document.createElement('div');
                             employeeDiv.className = 'employee-item';
                             employeeDiv.style.cursor = 'pointer';
-                            employeeDiv.addEventListener('click', () => assignLockerToEmployee(employee));
+                            employeeDiv.addEventListener('click', () => showAssignConfirmationView(employee));
                             
                             const nameDiv = document.createElement('div');
                             nameDiv.className = 'employee-name';
@@ -563,6 +658,7 @@
             document.getElementById('confirmationView').classList.add('show');
             document.getElementById('successView').classList.remove('show');
             document.getElementById('employeeSearchView').classList.remove('show');
+            document.getElementById('assignConfirmationView').classList.remove('show');
             
             const confirmationMessage = document.getElementById('confirmationMessage');
             const confirmationActions = document.getElementById('confirmationActions');
@@ -592,6 +688,7 @@
             document.getElementById('confirmationView').classList.remove('show');
             document.getElementById('successView').classList.add('show');
             document.getElementById('employeeSearchView').classList.remove('show');
+            document.getElementById('assignConfirmationView').classList.remove('show');
             
             const successTitle = document.getElementById('successTitle');
             const successMessage = document.getElementById('successMessage');
@@ -679,6 +776,42 @@
             successActions.appendChild(closeButton);
         }
         
+        function showAssignConfirmationView(employee) {
+            if (!lockerForAssignment) {
+                return;
+            }
+            
+            document.getElementById('employeeSearchView').classList.remove('show');
+            document.getElementById('assignConfirmationView').classList.add('show');
+            
+            const confirmationMessage = document.getElementById('assignConfirmationMessage');
+            const confirmationActions = document.getElementById('assignConfirmationActions');
+            
+            const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
+            const lockerName = lockerForAssignment.name || `Locker ${lockerForAssignment.id}`;
+            
+            confirmationMessage.textContent = `Are you sure you want to assign locker "${lockerName}" to ${employeeName}?`;
+            
+            confirmationActions.innerHTML = '';
+            
+            const cancelButton = document.createElement('button');
+            cancelButton.className = 'modal-button cancel';
+            cancelButton.textContent = 'Cancel';
+            cancelButton.type = 'button';
+            cancelButton.addEventListener('click', () => {
+                document.getElementById('assignConfirmationView').classList.remove('show');
+                document.getElementById('employeeSearchView').classList.add('show');
+            });
+            confirmationActions.appendChild(cancelButton);
+            
+            const confirmButton = document.createElement('button');
+            confirmButton.className = 'modal-button confirm';
+            confirmButton.textContent = 'Confirm';
+            confirmButton.type = 'button';
+            confirmButton.addEventListener('click', () => assignLockerToEmployee(employee));
+            confirmationActions.appendChild(confirmButton);
+        }
+        
         async function assignLockerToEmployee(employee) {
             if (!lockerForAssignment) {
                 return;
@@ -689,20 +822,43 @@
                 g.allLockers && g.allLockers.some(l => l.id === lockerForAssignment.id)
             );
             
+            // Hide confirmation view and show loading state in success view
+            document.getElementById('assignConfirmationView').classList.remove('show');
+            document.getElementById('successView').classList.add('show');
+            
+            const successTitle = document.getElementById('successTitle');
+            const successMessage = document.getElementById('successMessage');
+            const successActions = document.getElementById('successActions');
+            
+            successTitle.textContent = lockerForAssignment.name || `Locker ${lockerForAssignment.id}`;
+            successMessage.className = 'loading-message';
+            successMessage.textContent = 'Assigning locker...';
+            successActions.innerHTML = '';
+            
             if (!group) {
-                showErrorInEmployeeSearch('Could not find locker group information.');
+                successMessage.className = 'error-message';
+                successMessage.textContent = 'Could not find locker group information.';
+                const closeButton = document.createElement('button');
+                closeButton.className = 'modal-button assign';
+                closeButton.textContent = 'Close';
+                closeButton.type = 'button';
+                closeButton.addEventListener('click', closeLockerModal);
+                successActions.appendChild(closeButton);
                 return;
             }
             
             // Check if group has required IDs
             if (!group.lockerAuthorisationGroupNetworkId || !group.lockerAuthorisationPresetId) {
-                showErrorInEmployeeSearch('Locker group is missing required authorization information.');
+                successMessage.className = 'error-message';
+                successMessage.textContent = 'Locker group is missing required authorization information.';
+                const closeButton = document.createElement('button');
+                closeButton.className = 'modal-button assign';
+                closeButton.textContent = 'Close';
+                closeButton.type = 'button';
+                closeButton.addEventListener('click', closeLockerModal);
+                successActions.appendChild(closeButton);
                 return;
             }
-            
-            // Show loading state
-            const resultsDiv = document.getElementById('employeeSearchResults');
-            resultsDiv.innerHTML = '<div class="no-results">Assigning locker...</div>';
             
             try {
                 const response = await fetch('/api/lockeranalytics/asign-locker', {
@@ -721,15 +877,7 @@
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
-                    // Success - show success message
-                    document.getElementById('employeeSearchView').classList.remove('show');
-                    document.getElementById('successView').classList.add('show');
-                    
-                    const successTitle = document.getElementById('successTitle');
-                    const successMessage = document.getElementById('successMessage');
-                    const successActions = document.getElementById('successActions');
-                    
-                    successTitle.textContent = lockerForAssignment.name || `Locker ${lockerForAssignment.id}`;
+                    // Success - update success message
                     successMessage.className = 'success-message';
                     const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
                     successMessage.textContent = `Locker "${lockerForAssignment.name || `Locker ${lockerForAssignment.id}`}" has been successfully assigned to ${employeeName}. Please note that it may take a few seconds for the change to be visible in the system.`;
@@ -779,15 +927,37 @@
                         errorText += ` ${data.message}`;
                     }
                     
-                    showErrorInEmployeeSearch(errorText);
+                    successMessage.className = 'error-message';
+                    successMessage.textContent = errorText;
+                    
+                    successActions.innerHTML = '';
+                    const closeButton = document.createElement('button');
+                    closeButton.className = 'modal-button assign';
+                    closeButton.textContent = 'Close';
+                    closeButton.type = 'button';
+                    closeButton.addEventListener('click', closeLockerModal);
+                    successActions.appendChild(closeButton);
                 }
             } catch (error) {
                 // Network or other error
-                showErrorInEmployeeSearch(`Failed to assign locker. Error: ${error.message}`);
+                successMessage.className = 'error-message';
+                successMessage.textContent = `Failed to assign locker. Error: ${error.message}`;
+                
+                successActions.innerHTML = '';
+                const closeButton = document.createElement('button');
+                closeButton.className = 'modal-button assign';
+                closeButton.textContent = 'Close';
+                closeButton.type = 'button';
+                closeButton.addEventListener('click', closeLockerModal);
+                successActions.appendChild(closeButton);
             }
         }
         
         function showErrorInEmployeeSearch(errorMessage) {
+            // Show search elements again
+            document.getElementById('employeeSearchInput').style.display = 'block';
+            document.getElementById('employeeSearchButton').style.display = 'block';
+            
             const resultsDiv = document.getElementById('employeeSearchResults');
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
