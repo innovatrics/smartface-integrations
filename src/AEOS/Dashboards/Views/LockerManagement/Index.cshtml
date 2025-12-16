@@ -346,6 +346,7 @@
                 <div class="modal-info">
                     <div class="modal-info-label">Current Assigned Employee:</div>
                     <div class="modal-info-value" id="modalEmployee"></div>
+                    <div class="modal-info-value" id="modalEmployeeEmail" style="font-size: 0.9em; color: #666; margin-top: 4px;"></div>
                 </div>
                 <div class="modal-info">
                     <div class="modal-info-label">Days Since Last Use:</div>
@@ -716,6 +717,7 @@
             const modal = document.getElementById('lockerModal');
             const modalTitle = document.getElementById('modalTitle');
             const modalEmployee = document.getElementById('modalEmployee');
+            const modalEmployeeEmail = document.getElementById('modalEmployeeEmail');
             const modalDays = document.getElementById('modalDays');
             const modalActions = document.getElementById('modalActions');
             
@@ -725,8 +727,18 @@
             // Set assigned employee
             if (locker.assignedTo) {
                 modalEmployee.textContent = locker.assignedEmployeeName || 'Unknown';
+                // Set email address if available
+                if (locker.assignedEmployeeEmail) {
+                    modalEmployeeEmail.textContent = locker.assignedEmployeeEmail;
+                    modalEmployeeEmail.style.display = 'block';
+                } else {
+                    modalEmployeeEmail.textContent = '';
+                    modalEmployeeEmail.style.display = 'none';
+                }
             } else {
                 modalEmployee.textContent = 'Unassigned';
+                modalEmployeeEmail.textContent = '';
+                modalEmployeeEmail.style.display = 'none';
             }
             
             // Set days since last use
