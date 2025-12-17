@@ -747,6 +747,13 @@
             
             // Set action button
             modalActions.innerHTML = '';
+            
+            // Check if the current group allows unlock
+            let allowUnlock = false;
+            if (currentActiveGroupName && groupConfigurations[currentActiveGroupName]) {
+                allowUnlock = groupConfigurations[currentActiveGroupName].allowUnlock === true;
+            }
+            
             if (locker.assignedTo) {
                 const unassignButton = document.createElement('button');
                 unassignButton.className = 'modal-button unassign';
@@ -754,6 +761,16 @@
                 unassignButton.type = 'button';
                 unassignButton.addEventListener('click', () => showConfirmationView(locker));
                 modalActions.appendChild(unassignButton);
+                
+                // Add Unlock button if allowed
+                if (allowUnlock) {
+                    const unlockButton = document.createElement('button');
+                    unlockButton.className = 'modal-button assign';
+                    unlockButton.textContent = 'Unlock';
+                    unlockButton.type = 'button';
+                    unlockButton.addEventListener('click', () => unlockLocker(locker));
+                    modalActions.appendChild(unlockButton);
+                }
             } else {
                 const assignButton = document.createElement('button');
                 assignButton.className = 'modal-button assign';
@@ -765,6 +782,83 @@
             
             // Show modal
             modal.classList.add('show');
+        }
+        
+        async function unlockLocker(locker) {
+            const successView = document.getElementById('successView');
+            const successTitle = document.getElementById('successTitle');
+            const successMessage = document.getElementById('successMessage');
+            const successActions = document.getElementById('successActions');
+            
+            // Show success view with loading state
+            document.getElementById('mainView').classList.remove('show');
+            document.getElementById('confirmationView').classList.remove('show');
+            document.getElementById('employeeSearchView').classList.remove('show');
+            document.getElementById('assignConfirmationView').classList.remove('show');
+            document.getElementById('successView').classList.add('show');
+            
+            successTitle.textContent = locker.name || `Locker ${locker.id}`;
+            successMessage.className = 'loading-message';
+            successMessage.textContent = 'Unlocking locker...';
+            successActions.innerHTML = '';
+            
+            try {
+                const response = await fetch(`/api/lockeranalytics/unlock-locker/${locker.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    successMessage.className = 'success-message';
+                    successMessage.textContent = `Locker "${locker.name || `Locker ${locker.id}`}" has been successfully unlocked.`;
+                    
+                    successActions.innerHTML = '';
+                    const closeButton = document.createElement('button');
+                    closeButton.className = 'modal-button assign';
+                    closeButton.textContent = 'Close';
+                    closeButton.type = 'button';
+                    closeButton.addEventListener('click', closeLockerModal);
+                    successActions.appendChild(closeButton);
+                } else {
+                    successMessage.className = 'error-message';
+                    let errorText = `Failed to unlock locker "${locker.name || `Locker ${locker.id}`}".`;
+                    
+                    if (data.error) {
+                        errorText += ` ${data.error}`;
+                    }
+                    if (data.details) {
+                        errorText += ` Details: ${data.details}`;
+                    }
+                    if (data.message) {
+                        errorText += ` ${data.message}`;
+                    }
+                    
+                    successMessage.textContent = errorText;
+                    
+                    successActions.innerHTML = '';
+                    const closeButton = document.createElement('button');
+                    closeButton.className = 'modal-button assign';
+                    closeButton.textContent = 'Close';
+                    closeButton.type = 'button';
+                    closeButton.addEventListener('click', closeLockerModal);
+                    successActions.appendChild(closeButton);
+                }
+            } catch (error) {
+                successMessage.className = 'error-message';
+                successMessage.textContent = `Failed to unlock locker "${locker.name || `Locker ${locker.id}`}". Error: ${error.message}`;
+                
+                successActions.innerHTML = '';
+                const closeButton = document.createElement('button');
+                closeButton.className = 'modal-button assign';
+                closeButton.textContent = 'Close';
+                closeButton.type = 'button';
+                closeButton.addEventListener('click', closeLockerModal);
+                successActions.appendChild(closeButton);
+            }
         }
         
         function showMainView() {

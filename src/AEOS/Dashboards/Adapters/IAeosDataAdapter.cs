@@ -18,5 +18,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         Task<bool> ReleaseLocker(long lockerId);
         Task<IList<ServiceReference.TemplateInfo>> GetTemplates(string unitOfAuthType);
         Task<bool> AssignLocker(long lockerId, long carrierId, int lockerAuthorisationGroupNetworkId, long lockerAuthorisationPresetId);
+        Task<bool> UnlockLocker(long lockerId);
     }
 }

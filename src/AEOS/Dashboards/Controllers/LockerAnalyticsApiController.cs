@@ -401,6 +401,59 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 return StatusCode(500, new { error = "Failed to refresh locker data", details = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Unlocks a locker by its ID.
+        /// This endpoint is only available when AeosDashboards:AllowChanges is set to true.
+        /// </summary>
+        /// <param name="lockerId">The ID of the locker to unlock.</param>
+        /// <returns>Result of the unlock operation.</returns>
+        /// <response code="200">Locker unlock operation completed successfully.</response>
+        /// <response code="403">Changes are not allowed. Set AeosDashboards:AllowChanges to true.</response>
+        /// <response code="400">Invalid locker ID.</response>
+        /// <response code="500">Error occurred during locker unlock.</response>
+        [HttpPost("unlock-locker/{lockerId}")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UnlockLocker(long lockerId)
+        {
+            var allowChanges = configuration.GetValue<bool>("AeosDashboards:AllowChanges", false);
+            if (!allowChanges)
+            {
+                return StatusCode(403, new { error = "Changes are not allowed. Set AeosDashboards:AllowChanges to true to enable this endpoint." });
+            }
+
+            if (lockerId <= 0)
+            {
+                return BadRequest(new { error = "Invalid locker ID. Locker ID must be greater than 0." });
+            }
+
+            try
+            {
+                var result = await aeosDataAdapter.UnlockLocker(lockerId);
+                
+                if (result)
+                {
+                    return Ok(new { 
+                        success = true, 
+                        message = $"Locker {lockerId} unlocked successfully." 
+                    });
+                }
+                else
+                {
+                    return StatusCode(500, new { 
+                        error = "Failed to unlock locker.", 
+                        message = $"Failed to unlock locker {lockerId}." 
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Failed to unlock locker", details = ex.Message });
+            }
+        }
     }
 
     /// <summary>

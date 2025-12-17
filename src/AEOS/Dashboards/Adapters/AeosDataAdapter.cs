@@ -638,5 +638,23 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             throw;
         }
     }
+
+    public async Task<bool> UnlockLocker(long lockerId)
+    {
+        this.logger.Information($"Unlocking locker with ID: {lockerId}");
+        
+        try
+        {
+            var response = await client.openLockerAsync(lockerId);
+            
+            this.logger.Information($"Locker unlock result for locker ID {lockerId}: {response.LockerActionResult}");
+            return response.LockerActionResult;
+        }
+        catch (Exception ex)
+        {
+            this.logger.Error(ex, $"Error unlocking locker with ID: {lockerId}");
+            throw;
+        }
+    }
 }
 }
