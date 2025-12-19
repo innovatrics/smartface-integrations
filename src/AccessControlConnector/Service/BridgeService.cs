@@ -58,7 +58,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                         await _connectorSemaphore.WaitAsync();
                         try
                         {
-                            await ExecuteConnectorAsync(config, notification);
+                            await ExecuteConnectorAsync(streamConfig, notification);
                         }
                         finally
                         {
