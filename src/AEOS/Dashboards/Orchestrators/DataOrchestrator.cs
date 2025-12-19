@@ -140,10 +140,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                         : null,
                     PreviousAssignedEmployeeIdentifier = previousIdentifier,
                     PreviousAssignedEmployeeEmail = previousEmployee?.Email,
+                    PreviousAssignedEmployeeIdField = previousEmployee?.IdField,
                     NewAssignedTo = null,
                     NewAssignedEmployeeName = null,
                     NewAssignedEmployeeIdentifier = null,
                     NewAssignedEmployeeEmail = null,
+                    NewAssignedEmployeeIdField = null,
                     ChangeTimestamp = DateTime.Now,
                     ChangeType = "Unassigned"
                 });
@@ -157,6 +159,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     ? _AeosAllIdentifiers.FirstOrDefault(i => i.CarrierId == currentEmployee.Id)?.BadgeNumber 
                     : null;
 
+                var previousEmployeeForIdField = previousAssignment.HasValue 
+                    ? _AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value)
+                    : null;
+                
                 changes.Add(new LockerAssignmentChange
                 {
                     LockerId = locker.Id,
@@ -164,22 +170,22 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     GroupName = groupName,
                     PreviousAssignedTo = previousAssignment,
                     PreviousAssignedEmployeeName = previousAssignment.HasValue 
-                        ? (_AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value) is { } prevEmployee
-                            ? $"{prevEmployee.FirstName} {prevEmployee.LastName}" 
+                        ? (previousEmployeeForIdField != null
+                            ? $"{previousEmployeeForIdField.FirstName} {previousEmployeeForIdField.LastName}" 
                             : null)
                         : null,
                     PreviousAssignedEmployeeIdentifier = previousAssignment.HasValue 
                         ? _AeosAllIdentifiers.FirstOrDefault(i => i.CarrierId == previousAssignment.Value)?.BadgeNumber 
                         : null,
-                    PreviousAssignedEmployeeEmail = previousAssignment.HasValue 
-                        ? _AeosAllEmployees.FirstOrDefault(e => e.Id == previousAssignment.Value)?.Email 
-                        : null,
+                    PreviousAssignedEmployeeEmail = previousEmployeeForIdField?.Email,
+                    PreviousAssignedEmployeeIdField = previousEmployeeForIdField?.IdField,
                     NewAssignedTo = currentAssignment,
                     NewAssignedEmployeeName = currentEmployee != null 
                         ? $"{currentEmployee.FirstName} {currentEmployee.LastName}" 
                         : null,
                     NewAssignedEmployeeIdentifier = currentIdentifier,
                     NewAssignedEmployeeEmail = currentEmployee?.Email,
+                    NewAssignedEmployeeIdField = currentEmployee?.IdField,
                     ChangeTimestamp = DateTime.Now,
                     ChangeType = "Assigned"
                 });
@@ -318,6 +324,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                             : null,
                         AssignedEmployeeIdentifier = assignedEmployeeIdentifier,
                         AssignedEmployeeEmail = assignedEmployee?.Email,
+                        AssignedEmployeeIdField = assignedEmployee?.IdField,
                         DaysSinceLastUse = locker.LastUsed != DateTime.MinValue 
                             ? (DateTime.Now - locker.LastUsed).TotalDays 
                             : 0
@@ -537,6 +544,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                         EmployeeName = $"{employee.FirstName} {employee.LastName}",
                         EmployeeEmail = employee.Email,
                         EmployeeIdentifier = employeeIdentifier,
+                        EmployeeIdField = employee.IdField,
                         AssignedLockers = new List<SimplifiedLockerInfo>(),
                         TotalAssignedLockers = 0
                     };

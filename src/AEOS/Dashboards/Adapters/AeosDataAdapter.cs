@@ -27,6 +27,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private string AeosUsername;
         private string AeosPassword;
         private string AeosIntegrationIdentifierType;
+        private string? SharryIdField;
         private Dictionary<string, bool> DefaultTemplates = new();
 
         private AeosWebServiceTypeClient client;
@@ -50,6 +51,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             AeosPassword = configuration.GetValue<string>("AeosDashboards:Aeos:Server:Pass") ?? throw new InvalidOperationException("The AEOS password is not read.");
             AeosServerPageSize = configuration.GetValue<int>("AeosDashboards:Aeos:Server:PageSize", 100); // Default to 100 if not specified
             AeosIntegrationIdentifierType = configuration.GetValue<string>("AeosDashboards:Aeos:Integration:SmartFace:IdentifierType") ?? throw new InvalidOperationException("The AEOS integration identifier type is not read.");
+            SharryIdField = configuration.GetValue<string>("AeosDashboards:Aeos:Integration:Sharry:IdField");
             
             var endpoint = new Uri(AeosEndpoint);
             var endpointBinding = new BasicHttpBinding()
@@ -77,6 +79,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             };
             client.ClientCredentials.UserName.UserName = AeosUsername;
             client.ClientCredentials.UserName.Password = AeosPassword;
+        }
+
+        private string? GetFreefieldValue(EmployeeInfo employeeInfo, string? freefieldName)
+        {
+            if (string.IsNullOrEmpty(freefieldName) || employeeInfo?.Freefield == null)
+            {
+                return null;
+            }
+
+            var freeField = employeeInfo.Freefield.FirstOrDefault(f => f.Name == freefieldName);
+            return freeField?.value;
         }
 
 
@@ -324,11 +337,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 foreach (var employee in employees.EmployeeList.Employee)
                 {
                     this.logger.Debug($"employee.EmployeeInfo.FirstName: {employee.EmployeeInfo.FirstName}, employee.EmployeeInfo.LastName: {employee.EmployeeInfo.LastName}");
+                    var idFieldValue = GetFreefieldValue(employee.EmployeeInfo, SharryIdField);
                     AeosAllMembersReturn.Add(new AeosMember(
                         employee.EmployeeInfo.Id,
                         employee.EmployeeInfo.FirstName,
                         employee.EmployeeInfo.LastName,
-                        employee.EmployeeInfo.Email
+                        employee.EmployeeInfo.Email,
+                        null,
+                        idFieldValue
                     ));
                 }
 
@@ -475,11 +491,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             }
 
             this.logger.Debug($"Found employee - Id: {employee.EmployeeInfo.Id}, Name: {employee.EmployeeInfo.FirstName} {employee.EmployeeInfo.LastName}");
+            var idFieldValue = GetFreefieldValue(employee.EmployeeInfo, SharryIdField);
             result.Add(new AeosMember(
                 employee.EmployeeInfo.Id,
                 employee.EmployeeInfo.FirstName,
                 employee.EmployeeInfo.LastName,
-                employee.EmployeeInfo.Email
+                employee.EmployeeInfo.Email,
+                null,
+                idFieldValue
             ));
         }
 
@@ -510,13 +529,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             return null;
         }
 
-        this.logger.Information($"Found employee - Id: {employee.EmployeeInfo.Id}, Name: {employee.EmployeeInfo.FirstName} {employee.EmployeeInfo.LastName}, Email: {employee.EmployeeInfo.Email}");
-        return new AeosMember(
-            employee.EmployeeInfo.Id,
-            employee.EmployeeInfo.FirstName,
-            employee.EmployeeInfo.LastName,
-            employee.EmployeeInfo.Email
-        );
+            this.logger.Information($"Found employee - Id: {employee.EmployeeInfo.Id}, Name: {employee.EmployeeInfo.FirstName} {employee.EmployeeInfo.LastName}, Email: {employee.EmployeeInfo.Email}");
+            var idFieldValue = GetFreefieldValue(employee.EmployeeInfo, SharryIdField);
+            return new AeosMember(
+                employee.EmployeeInfo.Id,
+                employee.EmployeeInfo.FirstName,
+                employee.EmployeeInfo.LastName,
+                employee.EmployeeInfo.Email,
+                null,
+                idFieldValue
+            );
     }
 
     public async Task<bool> ReleaseLocker(long lockerId)
