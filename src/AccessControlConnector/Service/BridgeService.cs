@@ -52,7 +52,17 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
                 if (streamConfig.Async)
                 {
-                    _ = Task.Run(() => ExecuteConnectorAsync(streamConfig, notification));
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await ExecuteConnectorAsync(streamConfig, notification);
+                        }
+                        catch (Exception ex)
+                        {
+                            _log.Error(ex, "Failed to execute connector for stream {StreamId}", notification.StreamId);
+                        }
+                    });
                 }
                 else
                 {
