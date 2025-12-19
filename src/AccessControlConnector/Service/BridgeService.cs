@@ -18,7 +18,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private readonly AccessControlConnectorFactory _accessControlConnectorFactory;
         private readonly IUserResolverFactory _userResolverFactory;
         private readonly StreamConfig[] _allStreamConfigs;
-        private static readonly SemaphoreSlim _connectorSemaphore = new(5);
 
         public BridgeService(
             ILogger log,
@@ -53,18 +52,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
                 if (streamConfig.Async)
                 {
-                    _ = Task.Run(async () =>
-                    {
-                        await _connectorSemaphore.WaitAsync();
-                        try
-                        {
-                            await ExecuteConnectorAsync(streamConfig, notification);
-                        }
-                        finally
-                        {
-                            _connectorSemaphore.Release();
-                        }
-                    });
+                    _ = Task.Run(() => ExecuteConnectorAsync(streamConfig, notification));
                 }
                 else
                 {
