@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -49,58 +50,23 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             {
                 _log.Debug("Handling access for connector of type {ConnectorType}", streamConfig.Type);
 
-                bool modalityEnabled = notification.Modality switch
+                if (streamConfig.Async)
                 {
-                    Modality.Face => streamConfig.FaceModalityEnabled,
-                    Modality.Palm => streamConfig.PalmModalityEnabled,
-                    Modality.OpticalCode => streamConfig.OpticalCodeModalityEnabled,
-                    _ => false
-                };
-
-                if (!modalityEnabled)
-                {
-                    _log.Warning("Stream config does not apply to modality {Modality} for Stream {StreamId}", notification.Modality, notification.StreamId);
-                    continue;
-                }
-
-                var watchlistExternalIds = streamConfig.WatchlistExternalIds;
-
-                if (watchlistExternalIds != null)
-                {
-                    if (watchlistExternalIds.Length > 0 &&
-                        !watchlistExternalIds.Contains(notification.WatchlistExternalId))
+                    _ = Task.Run(async () =>
                     {
-                        _log.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {StreamId}",
-                            notification.WatchlistExternalId, notification.StreamId);
-
-                        continue;
-                    }
+                        try
+                        {
+                            await ExecuteConnectorAsync(streamConfig, notification);
+                        }
+                        catch (Exception ex)
+                        {
+                            _log.Error(ex, "Failed to execute connector for stream {StreamId}", notification.StreamId);
+                        }
+                    });
                 }
-
-                var accessControlConnector = _accessControlConnectorFactory.Create(streamConfig.Type);
-                string accessControlUser = null;
-
-                if (streamConfig.UserResolver != null)
+                else
                 {
-                    var userResolver = _userResolverFactory.Create(streamConfig.UserResolver);
-
-                    accessControlUser = await userResolver.ResolveUserAsync(notification);
-
-                    _log.Debug("Resolved {WlMemberId} to {AccessControlUser}", notification.WatchlistMemberId, accessControlUser);
-
-                    if (accessControlUser == null)
-                    {
-                        continue;
-                    }
-                }
-
-                await accessControlConnector.OpenAsync(streamConfig, accessControlUser);
-
-                if (streamConfig.NextCallDelayMs is > 0)
-                {
-                    _log.Information("Delay next call for {NextCallDelayMs} ms", streamConfig.NextCallDelayMs);
-
-                    await Task.Delay(streamConfig.NextCallDelayMs.Value);
+                    await ExecuteConnectorAsync(streamConfig, notification);
                 }
             }
         }
@@ -179,6 +145,63 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
 
             return streamConfigs;
+        }
+
+        private async Task ExecuteConnectorAsync(StreamConfig streamConfig, GrantedNotification notification)
+        {
+            bool modalityEnabled = notification.Modality switch
+            {
+                Modality.Face => streamConfig.FaceModalityEnabled,
+                Modality.Palm => streamConfig.PalmModalityEnabled,
+                Modality.OpticalCode => streamConfig.OpticalCodeModalityEnabled,
+                _ => false
+            };
+
+            if (!modalityEnabled)
+            {
+                _log.Warning("Stream config does not apply to modality {Modality} for Stream {StreamId}", notification.Modality, notification.StreamId);
+                return;
+            }
+
+            var watchlistExternalIds = streamConfig.WatchlistExternalIds;
+
+            if (watchlistExternalIds != null)
+            {
+                if (watchlistExternalIds.Length > 0 &&
+                    !watchlistExternalIds.Contains(notification.WatchlistExternalId))
+                {
+                    _log.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {StreamId}",
+                        notification.WatchlistExternalId, notification.StreamId);
+
+                    return;
+                }
+            }
+
+            var accessControlConnector = _accessControlConnectorFactory.Create(streamConfig.Type);
+            string accessControlUser = null;
+
+            if (streamConfig.UserResolver != null)
+            {
+                var userResolver = _userResolverFactory.Create(streamConfig.UserResolver);
+
+                accessControlUser = await userResolver.ResolveUserAsync(notification);
+
+                _log.Debug("Resolved {WlMemberId} to {AccessControlUser}", notification.WatchlistMemberId, accessControlUser);
+
+                if (accessControlUser == null)
+                {
+                    return;
+                }
+            }
+
+            await accessControlConnector.OpenAsync(streamConfig, accessControlUser);
+
+            if (streamConfig.NextCallDelayMs is > 0)
+            {
+                _log.Information("Delay next call for {NextCallDelayMs} ms", streamConfig.NextCallDelayMs);
+
+                await Task.Delay(streamConfig.NextCallDelayMs.Value);
+            }
         }
     }
 }

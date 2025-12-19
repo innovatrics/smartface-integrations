@@ -5,6 +5,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
     public class StreamConfig
     {
         public bool Enabled { get; set; } = true;
+        public bool Async { get; set; } = true;
+        
         public string Type { get; set; }
         public bool FaceModalityEnabled { get; set; } = true;
         public bool PalmModalityEnabled { get; set; } = true;
