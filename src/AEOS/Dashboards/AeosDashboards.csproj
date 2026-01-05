@@ -25,7 +25,7 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Shared\AccessController\AccessController.csproj" />
+    <ProjectReference Include="..\..\Shared\Shared\Shared.csproj" />
     <ProjectReference Include="..\..\Shared\SmartFaceRestApiClient\SmartFaceRestApiClient.csproj" />
     <ProjectReference Include="..\SmartFaceClients\SmartFaceClients.csproj" />
   </ItemGroup>

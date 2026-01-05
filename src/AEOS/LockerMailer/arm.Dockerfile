@@ -16,10 +16,10 @@ ARG MSBUILD_BUILD_OPTIONS
 WORKDIR /source
 
 COPY . .
-RUN dotnet restore src/AEOS/Dashboards/AeosDashboard.csproj
-RUN dotnet publish ${MSBUILD_PUBLISH_OPTIONS} -o /build_output src/AEOS/Dashboards/AeosDashboard.csproj
+RUN dotnet restore src/AEOS/LockerMailer/AeosLockerMailer.csproj
+RUN dotnet publish ${MSBUILD_PUBLISH_OPTIONS} -o /build_output src/AEOS/LockerMailer/AeosLockerMailer.csproj
 
 FROM --platform=${RUNTIME_PLAFTORM} ${DOTNET_RUNTIME_IMAGE} AS tool
 WORKDIR /App
 COPY --from=build /build_output .
-ENTRYPOINT ["dotnet", "AeosDashboard.dll"]
+ENTRYPOINT ["dotnet", "AeosLockerMailer.dll"]

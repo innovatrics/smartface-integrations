@@ -21,12 +21,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private readonly IConfiguration configuration;
         private readonly IHttpClientFactory httpClientFactory;
 
-        private readonly string DataSource;
+        private readonly string? DataSource;
         private string AeosEndpoint;
         private int AeosServerPageSize;
         private string AeosUsername;
         private string AeosPassword;
         private string AeosIntegrationIdentifierType;
+        private string? SharryIdField;
         private Dictionary<string, bool> DefaultTemplates = new();
 
         private AeosWebServiceTypeClient client;
@@ -50,6 +51,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             AeosPassword = configuration.GetValue<string>("AeosDashboards:Aeos:Server:Pass") ?? throw new InvalidOperationException("The AEOS password is not read.");
             AeosServerPageSize = configuration.GetValue<int>("AeosDashboards:Aeos:Server:PageSize", 100); // Default to 100 if not specified
             AeosIntegrationIdentifierType = configuration.GetValue<string>("AeosDashboards:Aeos:Integration:SmartFace:IdentifierType") ?? throw new InvalidOperationException("The AEOS integration identifier type is not read.");
+            SharryIdField = configuration.GetValue<string>("AeosDashboards:Aeos:Integration:Sharry:IdField");
             
             var endpoint = new Uri(AeosEndpoint);
             var endpointBinding = new BasicHttpBinding()
@@ -77,6 +79,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             };
             client.ClientCredentials.UserName.UserName = AeosUsername;
             client.ClientCredentials.UserName.Password = AeosPassword;
+        }
+
+        private string? GetFreefieldValue(EmployeeInfo employeeInfo, string? freefieldName)
+        {
+            if (string.IsNullOrEmpty(freefieldName) || employeeInfo?.Freefield == null)
+            {
+                return null;
+            }
+
+            var freeField = employeeInfo.Freefield.FirstOrDefault(f => f.Name == freefieldName);
+            return freeField?.value;
         }
 
 
@@ -166,7 +179,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 }
             }
 
-            this.logger.Information($"Amount of Lockers found: {LockersTotalCount}");
+            this.logger.Debug($"Amount of Lockers found: {LockersTotalCount}");
             return AeosAllLockers;
         }
 
@@ -224,8 +237,61 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 ));
             }
 
-            this.logger.Information($"Amount of Locker Groups found: {AeosAllGroups.Count}");
+            this.logger.Debug($"Amount of Locker Groups found: {AeosAllGroups.Count}");
             return AeosAllGroups;
+        }
+
+        public async Task<IList<ServiceReference.LockerAuthorisationGroupInfo>> GetLockerAuthorisationGroups()
+        {
+            this.logger.Debug("Receiving Locker Authorisation Groups from AEOS");
+
+            List<ServiceReference.LockerAuthorisationGroupInfo> allAuthGroups = new List<ServiceReference.LockerAuthorisationGroupInfo>();
+
+            var authGroupSearchInfo = new LockerAuthorisationGroupSearchInfo();
+            authGroupSearchInfo.LockerAuthorisationGroupSearch = new LockerAuthorisationGroupSearch();
+            authGroupSearchInfo.SearchRange = new SearchRange();
+            authGroupSearchInfo.SearchRange.startRecordNo = 0;
+            authGroupSearchInfo.SearchRange.nrOfRecords = AeosServerPageSize;
+            authGroupSearchInfo.SearchRange.nrOfRecordsSpecified = true;
+
+            bool allAuthGroupsRetrieved = false;
+            int pageNumber = 0;
+
+            while (!allAuthGroupsRetrieved)
+            {
+                pageNumber += 1;
+                this.logger.Debug($"Receiving Locker Authorisation Groups from AEOS: Page {pageNumber}");
+
+                if (pageNumber > 1)
+                {
+                    authGroupSearchInfo.SearchRange.startRecordNo = (pageNumber - 1) * AeosServerPageSize;
+                }
+
+                var authGroups = await client.findLockerAuthorisationGroupAsync(authGroupSearchInfo);
+
+                if (authGroups?.LockerAuthorisationGroupList?.LockerAuthorisationGroup == null)
+                {
+                    this.logger.Debug("No locker authorisation groups found in the response");
+                    break;
+                }
+
+                foreach (var authGroup in authGroups.LockerAuthorisationGroupList.LockerAuthorisationGroup)
+                {
+                    if (authGroup != null)
+                    {
+                        allAuthGroups.Add(authGroup);
+                        this.logger.Debug($"Processing locker authorisation group - Id: {authGroup.Id}, Name: {authGroup.Name}, LockerGroupCount: {authGroup.LockerGroupIdList?.Length ?? 0}");
+                    }
+                }
+
+                if (authGroups.LockerAuthorisationGroupList.LockerAuthorisationGroup.Length < AeosServerPageSize)
+                {
+                    allAuthGroupsRetrieved = true;
+                }
+            }
+
+            this.logger.Debug($"Amount of Locker Authorisation Groups found: {allAuthGroups.Count}");
+            return allAuthGroups;
         }
 
         public async Task<IList<AeosMember>> GetEmployees()
@@ -271,11 +337,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 foreach (var employee in employees.EmployeeList.Employee)
                 {
                     this.logger.Debug($"employee.EmployeeInfo.FirstName: {employee.EmployeeInfo.FirstName}, employee.EmployeeInfo.LastName: {employee.EmployeeInfo.LastName}");
+                    var idFieldValue = GetFreefieldValue(employee.EmployeeInfo, SharryIdField);
                     AeosAllMembersReturn.Add(new AeosMember(
                         employee.EmployeeInfo.Id,
                         employee.EmployeeInfo.FirstName,
                         employee.EmployeeInfo.LastName,
-                        employee.EmployeeInfo.Email
+                        employee.EmployeeInfo.Email,
+                        null,
+                        idFieldValue
                     ));
                 }
 
@@ -292,7 +361,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     break;
                 }
             }
-            this.logger.Information($"Amount of Employees found: {EmployeesTotalCount}");
+            this.logger.Debug($"Amount of Employees found: {EmployeesTotalCount}");
             return AeosAllMembersReturn;
         }
 
@@ -323,7 +392,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 this.logger.Debug($"identifierType.Id: {type.Id}, identifierType.Name: {type.Name}");
                 AeosAllIdentifierTypes.Add(new AeosIdentifierType(type.Id, type.Name));
             }
-            this.logger.Information($"Amount of Identifier Types found: {AeosAllIdentifierTypes.Count}");
+            this.logger.Debug($"Amount of Identifier Types found: {AeosAllIdentifierTypes.Count}");
             return AeosAllIdentifierTypes;
 
     }
@@ -352,7 +421,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             AeosAllIdentifiers.Add(new AeosIdentifier(identifier.Identifier.Id, identifier.Identifier.BadgeNumber, identifier.Identifier.Blocked, identifier.CarrierId, identifier.Identifier.IdentifierType));
             
         }
-        this.logger.Information($"Amount of Identifiers found: {AeosAllIdentifiers.Count}");
+        this.logger.Debug($"Amount of Identifiers found: {AeosAllIdentifiers.Count}");
         return AeosAllIdentifiers;
     }
 
@@ -422,11 +491,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             }
 
             this.logger.Debug($"Found employee - Id: {employee.EmployeeInfo.Id}, Name: {employee.EmployeeInfo.FirstName} {employee.EmployeeInfo.LastName}");
+            var idFieldValue = GetFreefieldValue(employee.EmployeeInfo, SharryIdField);
             result.Add(new AeosMember(
                 employee.EmployeeInfo.Id,
                 employee.EmployeeInfo.FirstName,
                 employee.EmployeeInfo.LastName,
-                employee.EmployeeInfo.Email
+                employee.EmployeeInfo.Email,
+                null,
+                idFieldValue
             ));
         }
 
@@ -434,7 +506,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         return result;
     }
 
-    public async Task<AeosMember> GetEmployeeByEmail(string email)
+    public async Task<AeosMember?> GetEmployeeByEmail(string email)
     {
         this.logger.Debug($"Searching for employee with email: {email}");
         
@@ -457,13 +529,154 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             return null;
         }
 
-        this.logger.Information($"Found employee - Id: {employee.EmployeeInfo.Id}, Name: {employee.EmployeeInfo.FirstName} {employee.EmployeeInfo.LastName}, Email: {employee.EmployeeInfo.Email}");
-        return new AeosMember(
-            employee.EmployeeInfo.Id,
-            employee.EmployeeInfo.FirstName,
-            employee.EmployeeInfo.LastName,
-            employee.EmployeeInfo.Email
-        );
+            this.logger.Information($"Found employee - Id: {employee.EmployeeInfo.Id}, Name: {employee.EmployeeInfo.FirstName} {employee.EmployeeInfo.LastName}, Email: {employee.EmployeeInfo.Email}");
+            var idFieldValue = GetFreefieldValue(employee.EmployeeInfo, SharryIdField);
+            return new AeosMember(
+                employee.EmployeeInfo.Id,
+                employee.EmployeeInfo.FirstName,
+                employee.EmployeeInfo.LastName,
+                employee.EmployeeInfo.Email,
+                null,
+                idFieldValue
+            );
+    }
+
+    public async Task<bool> ReleaseLocker(long lockerId)
+    {
+        this.logger.Information($"Releasing locker with ID: {lockerId}");
+        
+        try
+        {
+            var response = await client.releaseLockerAsync(lockerId);
+            
+            this.logger.Information($"Locker release result for locker ID {lockerId}: {response.LockerActionResult}");
+            return response.LockerActionResult;
+        }
+        catch (Exception ex)
+        {
+            this.logger.Error(ex, $"Error releasing locker with ID: {lockerId}");
+            throw;
+        }
+    }
+
+    public async Task<IList<ServiceReference.TemplateInfo>> GetTemplates(string unitOfAuthType)
+    {
+        this.logger.Debug($"Receiving Templates from AEOS with UnitOfAuthType: {unitOfAuthType}");
+
+        List<ServiceReference.TemplateInfo> allTemplates = new List<ServiceReference.TemplateInfo>();
+
+        bool allTemplatesRetrieved = false;
+        int pageNumber = 0;
+
+        while (!allTemplatesRetrieved)
+        {
+            pageNumber += 1;
+            this.logger.Debug($"Receiving Templates from AEOS: Page {pageNumber}");
+
+            var templateSearchInfo = new TemplateSearchInfo();
+            templateSearchInfo.TemplateInfo = new TemplateInfo();
+            templateSearchInfo.TemplateInfo.UnitOfAuthType = unitOfAuthType;
+            
+            templateSearchInfo.SearchRange = new SearchRange();
+            templateSearchInfo.SearchRange.startRecordNo = (pageNumber - 1) * AeosServerPageSize;
+            templateSearchInfo.SearchRange.nrOfRecords = AeosServerPageSize;
+            templateSearchInfo.SearchRange.nrOfRecordsSpecified = true;
+
+            var templates = await client.findTemplateAsync(templateSearchInfo);
+
+            if (templates?.TemplateList?.Template == null)
+            {
+                this.logger.Debug("No templates found in the response");
+                break;
+            }
+
+            foreach (var template in templates.TemplateList.Template)
+            {
+                if (template != null)
+                {
+                    allTemplates.Add(template);
+                    var templateItemDetails = template.TemplateItem?
+                        .Where(ti => ti != null && ti.AuthorisationType == AuthSubject.LockerAuthorisationGroup)
+                        .Select(ti => $"SubjectId={ti.SubjectId}, NetworkId={(ti.LockerAuthorisationGroupNetworkIdSpecified ? ti.LockerAuthorisationGroupNetworkId.ToString() : "not specified")}, PresetId={(ti.LockerAuthorisationPresetIdSpecified ? ti.LockerAuthorisationPresetId.ToString() : "not specified")}")
+                        .ToList() ?? new List<string>();
+                    
+                    this.logger.Debug($"Processing template - Id: {template.Id}, Name: {template.Name}, UnitOfAuthType: {template.UnitOfAuthType}, TemplateItemCount: {template.TemplateItem?.Length ?? 0}");
+                    if (templateItemDetails.Any())
+                    {
+                        this.logger.Debug($"  LockerAuthorisationGroup TemplateItems: {string.Join("; ", templateItemDetails)}");
+                    }
+                }
+            }
+
+            if (templates.TemplateList.Template.Length < AeosServerPageSize)
+            {
+                allTemplatesRetrieved = true;
+            }
+        }
+
+        this.logger.Debug($"Amount of Templates found: {allTemplates.Count}");
+        return allTemplates;
+    }
+
+    public async Task<bool> AssignLocker(long lockerId, long carrierId, int lockerAuthorisationGroupNetworkId, long lockerAuthorisationPresetId)
+    {
+        this.logger.Information($"Assigning locker {lockerId} to carrier {carrierId} with NetworkId={lockerAuthorisationGroupNetworkId}, PresetId={lockerAuthorisationPresetId}");
+        
+        try
+        {
+            var lockerAuthorization = new LockerAuthorizationAdd
+            {
+                LockerId = lockerId,
+                CarrierId = carrierId,
+                LockerAuthorisationGroupNetworkId = lockerAuthorisationGroupNetworkId,
+                LockerAuthorisationPresetId = lockerAuthorisationPresetId
+            };
+
+            var response = await client.addCarrierLockerAuthorizationAsync(lockerAuthorization);
+            
+            // Check if the response indicates success
+            // The response contains ProfileResult which should indicate success
+            bool success = response?.ProfileResult != null;
+            
+            if (success)
+            {
+                this.logger.Information($"Locker assignment successful for locker {lockerId} to carrier {carrierId}");
+            }
+            else
+            {
+                this.logger.Warning($"Locker assignment failed for locker {lockerId} to carrier {carrierId} - no ProfileResult in response");
+            }
+            
+            return success;
+        }
+        catch (System.ServiceModel.FaultException<ServiceReference.ErrorInfo> faultEx)
+        {
+            this.logger.Error(faultEx, $"SOAP fault while assigning locker {lockerId} to carrier {carrierId}. Error: {faultEx.Detail?.Message ?? faultEx.Message}");
+            throw new Exception($"Failed to assign locker: {faultEx.Detail?.Message ?? faultEx.Message}", faultEx);
+        }
+        catch (Exception ex)
+        {
+            this.logger.Error(ex, $"Error assigning locker {lockerId} to carrier {carrierId}");
+            throw;
+        }
+    }
+
+    public async Task<bool> UnlockLocker(long lockerId)
+    {
+        this.logger.Information($"Unlocking locker with ID: {lockerId}");
+        
+        try
+        {
+            var response = await client.openLockerAsync(lockerId);
+            
+            this.logger.Information($"Locker unlock result for locker ID {lockerId}: {response.LockerActionResult}");
+            return response.LockerActionResult;
+        }
+        catch (Exception ex)
+        {
+            this.logger.Error(ex, $"Error unlocking locker with ID: {lockerId}");
+            throw;
+        }
     }
 }
 }
