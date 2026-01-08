@@ -87,8 +87,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
                 _logger.Information("Sharry check-in payload: {@Payload}", payload);
 
-                // TODO: Uncomment when valid Sharry API URL and authentication are available
-                // await SendCheckInRequestAsync(payload);
+                if (!string.IsNullOrEmpty(_sharryApiUrl))
+                {
+                    await SendCheckInRequestAsync(payload);
+                }
+                else
+                {
+                     _logger.Warning("Sharry API URL is missing, skipping request.");
+                }
 
                 _logger.Information("Sharry check-in completed for stream {StreamId}", accessControlMapping?.StreamId);
             }
