@@ -17,7 +17,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
         private readonly IConfiguration _configuration;
         private readonly GrpcReaderFactory _grpcReaderFactory;
         private readonly AccessControlConnectorService _accessControlConnectorService;
-        private GrpcNotificationReader _grpcNotificationReader;
+        private GrpcAccessNotificationReader _grpcAccessNotificationReader;
         private System.Timers.Timer _accessControllerPingTimer;
         private System.Timers.Timer _keepAlivePingTimer;
         private DateTime _lastGrpcPing;
@@ -64,7 +64,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             _keepAlivePingTimer?.Dispose();
         }
 
-        private GrpcNotificationReader CreateGrpcReader()
+        private GrpcAccessNotificationReader CreateGrpcReader()
         {
             var grpcHost = _configuration.GetValue<string>("AccessController:Host");
             var grpcPort = _configuration.GetValue<int>("AccessController:Port");
@@ -78,11 +78,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
         {
             _logger.Information("Start receiving gRPC notifications");
 
-            _grpcNotificationReader = CreateGrpcReader();
+            _grpcAccessNotificationReader = CreateGrpcReader();
 
-            _grpcNotificationReader.OnGrpcGrantedNotification += OnGrpcGrantedNotification;
+            _grpcAccessNotificationReader.OnGrpcGrantedNotification += OnGrpcAccessGrantedNotification;
 
-            _grpcNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
+            _grpcAccessNotificationReader.OnGrpcDeniedNotification += async (DeniedNotification notification) =>
             {
                 _logger.Information("Processing 'DENIED' notification {@notification}", new
                 {
@@ -91,7 +91,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                 });
             };
 
-            _grpcNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
+            _grpcAccessNotificationReader.OnGrpcBlockedNotification += async (BlockedNotification notification) =>
             {
                 _logger.Information("Processing 'BLOCKED' notification {@notification}", new
                 {
@@ -102,26 +102,26 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                 });
             };
 
-            _grpcNotificationReader.OnGrpcPing += OnGrpcPing;
+            _grpcAccessNotificationReader.OnGrpcPing += OnGrpcAccessPing;
 
-            _grpcNotificationReader.StartReceiving();
+            _grpcAccessNotificationReader.StartReceiving();
         }
 
         private async Task StopReceivingGrpcNotificationsAsync()
         {
-            _grpcNotificationReader.OnGrpcPing -= OnGrpcPing;
-            _grpcNotificationReader.OnGrpcGrantedNotification -= OnGrpcGrantedNotification;
-            await _grpcNotificationReader.DisposeAsync();
+            _grpcAccessNotificationReader.OnGrpcPing -= OnGrpcAccessPing;
+            _grpcAccessNotificationReader.OnGrpcGrantedNotification -= OnGrpcAccessGrantedNotification;
+            await _grpcAccessNotificationReader.DisposeAsync();
         }
 
-        private Task OnGrpcPing(DateTime sentAt)
+        private Task OnGrpcAccessPing(DateTime sentAt)
         {
             _logger.Debug("gRPC ping received");
             _lastGrpcPing = DateTime.UtcNow;
             return Task.CompletedTask;
         }
 
-        private Task OnGrpcGrantedNotification(GrantedNotification notification)
+        private Task OnGrpcAccessGrantedNotification(GrantedNotification notification)
         {
             _logger.Information("Processing 'GRANTED' notification {@notification}", new
             {

@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 {

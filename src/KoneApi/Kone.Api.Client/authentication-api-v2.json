@@ -1,0 +1,887 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "description" : "This section describes the authentication endpoints used, when generating the access tokens for KONE APIs.\nTo generate access tokens, an application must be created so that client Id and client secret are available.\nThis is necessary, as the token generation uses the client credential flow.\n",
+    "title" : "Authentication API",
+    "version" : "v2"
+  },
+  "servers" : [ {
+    "url" : "https://dev.kone.com"
+  } ],
+  "security" : [ {
+    "OpenID" : [ "" ]
+  } ],
+  "paths" : {
+    "/api/v2/oauth2/token" : {
+      "post" : {
+        "description" : "OAuth 2.0 token endpoint, which needs to be used for authorization when making API calls. If the token is generated without specifying a scope, an application/inventory scope is added automatically to allow listing resources available to the application.",
+        "operationId" : "getAccessToken",
+        "requestBody" : {
+          "content" : {
+            "application/x-www-form-urlencoded" : {
+              "example" : {
+                "grant_type" : "client_credentials",
+                "scope" : "application/inventory callgiving/group:9990000951:1 equipmentstatus/*"
+              },
+              "schema" : {
+                "$ref" : "#/components/schemas/getAccessToken_request"
+              }
+            }
+          },
+          "description" : "Scopes to request",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+                  "token_type" : "Bearer",
+                  "expires_in" : 3600,
+                  "scope" : "call/group:9990000951:1 topology/group:9990000951:1 equipmentstatus/33888065"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/AccessTokenResponse"
+                }
+              }
+            },
+            "description" : "Authenticated successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Scope must have format 'type/resourceId'",
+                  "errors" : [ {
+                    "type" : "invalidFormat",
+                    "bodyPath" : "scope"
+                  } ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "Some of the input values are missing or wrongly formatted"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Invalid authentication",
+                  "errors" : [ {
+                    "type" : "invalid",
+                    "header" : "authorization"
+                  } ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "Authorization header is missing or has credentials that are not valid"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Not allowed to access requested scope callgiving/group:valor",
+                  "errors" : [ {
+                    "type" : "not_allowed",
+                    "header" : "scope"
+                  } ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "The requested scopes are not allowed with the given credentials"
+          },
+          "405" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "HTTP method is not POST"
+          },
+          "415" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Content-type must be application/json",
+                  "errors" : [ {
+                    "type" : "unsupportedValue",
+                    "header" : "content-type"
+                  } ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "Content type is not application/x-www-form-urlencoded"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Internal server error"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "Server side error occurs when processing the request"
+          }
+        },
+        "security" : [ {
+          "BasicAuth" : [ ]
+        } ],
+        "summary" : "Get access token",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/api/v2/oauth2/limited-token" : {
+      "post" : {
+        "description" : "Token endpoint to convert master token to a limited token. Limited tokens are usually set to have a shorter period of life and can be used in case the user is not supposed to be authorized to make API calls for a longer period of time.",
+        "operationId" : "getLimitedAccessToken",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "example" : {
+                "endUserIdentity" : "android-user-xyz",
+                "scopes" : [ "callgiving/group:9990000951:1", "callgiving/group:9990000952:1" ],
+                "maxAgeSeconds" : 60,
+                "singleUse" : false
+              },
+              "schema" : {
+                "$ref" : "#/components/schemas/LimitedTokenRequest"
+              }
+            }
+          },
+          "description" : "Scopes and validity period of the limited token.",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "access_token" : "eyJhbGdfOiJIUzUxMiJ9",
+                  "token_type" : "Bearer",
+                  "expires_in" : 60,
+                  "scope" : "call/group:9990000951:1"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/AccessTokenResponse"
+                }
+              }
+            },
+            "description" : "Limited token generated successfully"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Scope must have format 'type/resourceId'",
+                  "errors" : [ {
+                    "type" : "invalidFormat",
+                    "bodyPath" : "scope"
+                  } ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "If some of the input values are missing or wrongly formatted"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Invalid jwt token",
+                  "errors" : [ {
+                    "type" : "invalid",
+                    "header" : "authorization"
+                  } ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "If authorization header is missing or has jwt token that is not valid"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Not allowed to access requested scope callgiving/building:valor",
+                  "errors" : [ {
+                    "type" : "not_allowed",
+                    "header" : "scope"
+                  } ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "The requested scopes are not allowed wider than in the callers token or trying to use limited token to generate an another one"
+          },
+          "415" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Content-type must be application/json",
+                  "errors" : [ {
+                    "type" : "unsupportedValue",
+                    "header" : "content-type"
+                  } ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "Content type is not application/json"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Internal server error"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "Server error"
+          }
+        },
+        "security" : [ {
+          "OpenID" : [ ]
+        } ],
+        "summary" : "Get limited acces token",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/api/v2/oauth2/.well-known/openid-configuration" : {
+      "get" : {
+        "description" : "Returns the OpenID configuration of the service",
+        "operationId" : "getOpenIdConfiguration",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "issuer" : "https://dev.kone.com/",
+                  "token_endpoint" : "https://dev.kone.com/api/v2/oauth2/token",
+                  "userinfo_endpoint" : "https://dev.kone.com/api/v2/oauth2/userinfo",
+                  "token_endpoint_auth_methods_supported" : [ "client_secret_basic" ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/OpenIdConfiguration"
+                }
+              }
+            },
+            "description" : "OpenID configuration of the service"
+          }
+        },
+        "summary" : "Get OpenID configuration",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/api/v2/oauth2/userinfo" : {
+      "get" : {
+        "description" : "Allows safe testing of the JWT token’s validity and returns the claims within it. Please use this instead of other available services to debug what is inside the JWT token.",
+        "operationId" : "describeToken",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "aud" : "kone-apis",
+                  "sub" : "f0c97c2b-24d7-44e3-9bca-96d9855e16a3",
+                  "org" : "123",
+                  "scope" : "call/group:9990000951:1 topology/group:9990000951:1",
+                  "sandbox" : "false",
+                  "iss" : "https://dev.kone.com/api/v2/",
+                  "exp" : "1612454690",
+                  "iat" : "1612451090"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserInfoResponse"
+                }
+              }
+            },
+            "description" : "Claims of the authentication token"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "Invalid jwt token",
+                  "errors" : [ {
+                    "type" : "invalid",
+                    "header" : "authorization"
+                  } ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            },
+            "description" : "If authorization header is missing or has jwt token that is not valid"
+          }
+        },
+        "security" : [ {
+          "OpenID" : [ ]
+        } ],
+        "summary" : "Describe JWT token",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/api/v2/application/self/resources" : {
+      "get" : {
+        "description" : "Lists all resource identifiers the application is allowed to request access to.",
+        "operationId" : "listResources",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "buildings" : [ {
+                    "id" : "9990000951",
+                    "name" : "Head office",
+                    "desc" : "This building belongs to Head office",
+                    "city" : "Helsinki",
+                    "country" : "Finland",
+                    "zipCode" : 64,
+                    "addressLine1" : "Mannerheimintie 123",
+                    "addressLine2" : "5th floor",
+                    "groups" : [ {
+                      "id" : "9990000951:1",
+                      "name" : "North Entrance lifts",
+                      "desc" : "Group of 4 lifts",
+                      "products" : [ "callgiving", "robotcall" ],
+                      "kens" : [ {
+                        "id" : "33888065",
+                        "name" : "Lift A",
+                        "desc" : "",
+                        "products" : [ "equipmentstatus" ]
+                      } ]
+                    } ],
+                    "apiKens" : [ "33888065" ]
+                  } ],
+                  "equipments" : [ {
+                    "id" : "33888075",
+                    "name" : "Lift B",
+                    "desc" : "",
+                    "city" : "Helsinki",
+                    "country" : "Finland",
+                    "zipCode" : 64,
+                    "addressLine1" : "Mannerheimintie 123",
+                    "addressLine2" : "5th floor",
+                    "products" : [ "serviceinfo", "equipmentstatus" ]
+                  } ]
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceListResponse"
+                }
+              }
+            },
+            "description" : "List of all resource identifiers the application is allowed to access"
+          }
+        },
+        "security" : [ {
+          "OpenID" : [ "application/inventory" ]
+        } ],
+        "summary" : "List resources",
+        "tags" : [ "Inventory" ]
+      }
+    },
+    "/api/v2/application/self/resources/{equipmentId}" : {
+      "get" : {
+        "description" : "Retrieves detailed information about a specific resource accessible to the application, supporting only `ken` type resources.",
+        "operationId" : "ResourceDetails",
+        "parameters" : [ {
+          "description" : "KEN (KONE/ NON-KONE equipment number) for the equipment with `ken:` prefix",
+          "example" : "ken:33888065",
+          "explode" : false,
+          "in" : "path",
+          "name" : "equipmentId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          },
+          "style" : "simple"
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "equipmentId" : "33888065",
+                  "products" : [ "serviceinfo", "rtm" ],
+                  "type" : "ken"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResourceDetails"
+                }
+              }
+            },
+            "description" : "Resource details"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "example" : {
+                  "message" : "User do not have access for specified resource"
+                },
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorMsg"
+                }
+              }
+            },
+            "description" : "User do not have access for specified resource"
+          }
+        },
+        "security" : [ {
+          "OpenID" : [ "application/inventory" ]
+        } ],
+        "summary" : "Resource details",
+        "tags" : [ "Inventory" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "AccessTokenResponse" : {
+        "description" : "Successful token response",
+        "properties" : {
+          "access_token" : {
+            "description" : "OAuth 2.0 Access Token. Do not pass the returned token to any other service or system. Instead, use /api/v2/oauth2/limited-token to create short-lived limited tokens to pass to other users.",
+            "example" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+            "type" : "string"
+          },
+          "token_type" : {
+            "description" : "OAuth 2.0 Token Type value",
+            "enum" : [ "Bearer" ],
+            "type" : "string"
+          },
+          "expires_in" : {
+            "description" : "Expiration time of the Access Token in seconds since the response was generated.",
+            "example" : 3600,
+            "type" : "integer"
+          },
+          "scope" : {
+            "description" : "The actual scopes granted to the application",
+            "example" : "call/group:9990000951:1",
+            "type" : "string"
+          }
+        },
+        "required" : [ "access_token", "expires_in", "scope", "token_type" ],
+        "type" : "object"
+      },
+      "LimitedTokenRequest" : {
+        "description" : "Defines the properties of generated limited token",
+        "properties" : {
+          "endUserIdentity" : {
+            "description" : "Identifier for the user of this token",
+            "type" : "string"
+          },
+          "scopes" : {
+            "description" : "List of scopes to limit access",
+            "items" : {
+              "description" : "Scope consisting of API product identifier and resource identifier, separated by a slash character.",
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "maxAgeSeonds" : {
+            "default" : 300,
+            "description" : "Maximum validity time of the token",
+            "maximum" : 600,
+            "type" : "integer"
+          },
+          "singleUse" : {
+            "type" : "boolean"
+          },
+          "nonce" : {
+            "description" : "OpenID nonce value to associate client session with the token",
+            "type" : "string"
+          }
+        },
+        "required" : [ "endUserIdentity", "scopes" ],
+        "type" : "object"
+      },
+      "UserInfoResponse" : {
+        "description" : "JWT token claims",
+        "properties" : {
+          "iss" : {
+            "description" : "Server that issued the token",
+            "example" : "https://dev.kone.com/",
+            "type" : "string"
+          },
+          "iat" : {
+            "description" : "Token issue time in seconds since epoc",
+            "example" : 1610473188,
+            "maximum" : 4102437600,
+            "minimum" : 1609452000,
+            "type" : "integer"
+          },
+          "aud" : {
+            "description" : "The audience of the token",
+            "example" : "kone-apis",
+            "type" : "string"
+          },
+          "sub" : {
+            "description" : "Client Id of the application that generated the token",
+            "example" : "578eec51-9f69-43be-89dd-c21ba6a4f7f2",
+            "type" : "string"
+          },
+          "exp" : {
+            "description" : "Token expiration time in seconds since epoc",
+            "example" : 1610476788,
+            "maximum" : 4102437600,
+            "minimum" : 1609452000,
+            "type" : "integer"
+          },
+          "scope" : {
+            "description" : "The scopes included in the token",
+            "example" : "call/group:9990000951:1",
+            "type" : "string"
+          },
+          "sandbox" : {
+            "description" : "The type of application.",
+            "type" : "string"
+          },
+          "org" : {
+            "description" : "The id of the organization.",
+            "type" : "string"
+          },
+          "limited" : {
+            "description" : "If set to true means this is a limited token.",
+            "type" : "boolean"
+          },
+          "user" : {
+            "description" : "An identifier for the end user, used in limited tokens",
+            "type" : "string"
+          },
+          "jti" : {
+            "description" : "UUID generated for this token. Can only be used by some APIs and only once.",
+            "example" : "dad13c46-9689-4f72-8951-38f5a4fac17a",
+            "type" : "string"
+          },
+          "nonce" : {
+            "description" : "Text provided when the Id is generated",
+            "example" : "echo",
+            "type" : "string"
+          }
+        },
+        "required" : [ "aud", "exp", "iat", "iss", "org", "sandbox", "scope", "sub" ],
+        "type" : "object"
+      },
+      "ResourceInfo" : {
+        "properties" : {
+          "id" : {
+            "description" : "Type can be one of the following - building, group or ken",
+            "type" : "string"
+          },
+          "name" : {
+            "description" : "Name of the resource to identify easily",
+            "type" : "string"
+          },
+          "desc" : {
+            "description" : "Other information about the resource",
+            "type" : "string"
+          },
+          "products" : {
+            "description" : "List of API products that resource has access to.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "desc", "id", "name", "products" ],
+        "type" : "object"
+      },
+      "ResourceDetails" : {
+        "properties" : {
+          "equipmentId" : {
+            "description" : "KEN (KONE/ NON-KONE equipment number) for the equipment.",
+            "example" : "ken:9990000951",
+            "type" : "string"
+          },
+          "products" : {
+            "description" : "List of API products that resource has access to.",
+            "items" : {
+              "example" : "rtm",
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "type" : {
+            "description" : "Resource type - ken",
+            "type" : "string"
+          }
+        },
+        "required" : [ "equipmentId", "products", "type" ],
+        "type" : "object"
+      },
+      "ResourceListResponse" : {
+        "properties" : {
+          "buildings" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ResourceListResponse_buildings_inner"
+            },
+            "type" : "array"
+          },
+          "equipments" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ResourceListResponse_equipments_inner"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "buildings", "equipments" ],
+        "type" : "object"
+      },
+      "OpenIdConfiguration" : {
+        "description" : "OpenID connect configuration",
+        "properties" : {
+          "issuer" : {
+            "description" : "Issuer of JWT tokens",
+            "example" : "https://dev.kone.com/",
+            "type" : "string"
+          },
+          "token_endpoint" : {
+            "description" : "Location of token endpoint",
+            "example" : "https://dev.kone.com/api/v2/oauth2/token",
+            "type" : "string"
+          },
+          "userinfo_endpoint" : {
+            "description" : "Location of user information endpoint",
+            "example" : "https://dev.kone.com/api/v2/oauth2/userinfo",
+            "type" : "string"
+          },
+          "token_endpoint_auth_methods_supported" : {
+            "description" : "The authentication methods supported by the token endpoint",
+            "example" : [ "client_secret_basic" ],
+            "items" : {
+              "enum" : [ "client_secret_basic" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "issuer", "token_endpoint", "token_endpoint_auth_methods_supported", "userinfo_endpoint" ],
+        "type" : "object"
+      },
+      "ErrorMsg" : {
+        "description" : "Error",
+        "properties" : {
+          "message" : {
+            "description" : "Human readable description of an error",
+            "example" : "User do not have access for specified resource",
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ],
+        "type" : "object"
+      },
+      "Error" : {
+        "description" : "Error",
+        "properties" : {
+          "message" : {
+            "description" : "Human readable description of an error",
+            "example" : "Something went wrong.",
+            "type" : "string"
+          },
+          "errors" : {
+            "description" : "A more detailed list of errors",
+            "items" : {
+              "$ref" : "#/components/schemas/DetailedError"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "message" ],
+        "type" : "object"
+      },
+      "DetailedError" : {
+        "description" : "Detailed error",
+        "properties" : {
+          "type" : {
+            "description" : "Type of the error, for user code to react to",
+            "type" : "string"
+          },
+          "bodyPath" : {
+            "description" : "path of the error in the body object, if request was json then this is a json path",
+            "type" : "string"
+          },
+          "urlPath" : {
+            "description" : "describes where in URL the error was",
+            "type" : "string"
+          },
+          "header" : {
+            "description" : "describes which header was wrong",
+            "type" : "string"
+          }
+        },
+        "required" : [ "type" ],
+        "type" : "object"
+      },
+      "getAccessToken_request" : {
+        "properties" : {
+          "grant_type" : {
+            "description" : "The requested grant type. Currently must be always client_credentials.",
+            "enum" : [ "client_credentials" ],
+            "example" : "client_credentials",
+            "type" : "string"
+          },
+          "scope" : {
+            "description" : "Space separated list of requested scopes. If none provided, the default scope of application/inventory is assigned. When a wildcard scope is requested by using * as the resource identifier the returned token allows access to all resources the application is authorized to use. Note that there is maximum size of the generated token. If you have too many resources, the wildcard resources will exceed the size and you have to request access by specifying the list of resources explicitly.",
+            "example" : "application/inventory callgiving/group:9990000951 equipmentstatus/*",
+            "type" : "string"
+          },
+          "nonce" : {
+            "description" : "OpenID nonce value to associate client session with the token",
+            "type" : "string"
+          }
+        },
+        "required" : [ "grant_type" ]
+      },
+      "ResourceListResponse_buildings_inner_groups_inner_kens_inner" : {
+        "properties" : {
+          "schema" : {
+            "$ref" : "#/components/schemas/ResourceInfo"
+          }
+        },
+        "type" : "object"
+      },
+      "ResourceListResponse_buildings_inner_groups_inner" : {
+        "additionalProperties" : false,
+        "properties" : {
+          "schema" : {
+            "$ref" : "#/components/schemas/ResourceInfo"
+          },
+          "kens" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ResourceListResponse_buildings_inner_groups_inner_kens_inner"
+            },
+            "type" : "array"
+          }
+        },
+        "type" : "object"
+      },
+      "ResourceListResponse_buildings_inner" : {
+        "properties" : {
+          "id" : {
+            "description" : "unique resource Id of the building",
+            "type" : "string"
+          },
+          "name" : {
+            "description" : "Name of the resource to identify easily",
+            "type" : "string"
+          },
+          "desc" : {
+            "description" : "Other information about the resource",
+            "type" : "string"
+          },
+          "city" : {
+            "description" : "City where the resource is located",
+            "type" : "string"
+          },
+          "country" : {
+            "description" : "Country where the resource is located",
+            "type" : "string"
+          },
+          "zipCode" : {
+            "description" : "Zip code where the resource is located",
+            "type" : "string"
+          },
+          "addressLine1" : {
+            "description" : "First line of the address",
+            "type" : "string"
+          },
+          "addressLine2" : {
+            "description" : "Second line of the address",
+            "type" : "string"
+          },
+          "groups" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ResourceListResponse_buildings_inner_groups_inner"
+            },
+            "type" : "array"
+          },
+          "apiKens" : {
+            "items" : {
+              "description" : "Contains kens for the building",
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "type" : "object"
+      },
+      "ResourceListResponse_equipments_inner" : {
+        "properties" : {
+          "id" : {
+            "description" : "unique resource Id of the ken",
+            "type" : "string"
+          },
+          "name" : {
+            "description" : "Name of the resource to identify easily",
+            "type" : "string"
+          },
+          "desc" : {
+            "description" : "Other information about the resource",
+            "type" : "string"
+          },
+          "city" : {
+            "description" : "City where the resource is located",
+            "type" : "string"
+          },
+          "country" : {
+            "description" : "Country where the resource is located",
+            "type" : "string"
+          },
+          "zipCode" : {
+            "description" : "Zip code where the resource is located",
+            "type" : "string"
+          },
+          "addressLine1" : {
+            "description" : "First line of the address",
+            "type" : "string"
+          },
+          "addressLine2" : {
+            "description" : "Second line of the address",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      }
+    },
+    "securitySchemes" : {
+      "BasicAuth" : {
+        "scheme" : "basic",
+        "type" : "http"
+      },
+      "OpenID" : {
+        "openIdConnectUrl" : "/api/v2/oauth2/.well-known/openid-configuration",
+        "type" : "openIdConnect"
+      }
+    }
+  }
+}

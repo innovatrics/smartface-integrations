@@ -24,28 +24,5 @@ namespace System
 
             return value;
         }
-
-        public static string RemoveAll(this string value, string[] removeValues)
-        {
-            for (var i = 0; i < removeValues.Length; i++)
-            {
-                var oldValue = removeValues[i];
-
-                var j = -1;
-
-                do
-                {
-                    j = value.IndexOf(oldValue);
-
-                    if (j > -1)
-                    {
-                        value = value.Remove(j, oldValue.Length);
-                    }
-                }
-                while (j > -1);
-            }
-
-            return value;
-        }
     }
 }
