@@ -34,7 +34,7 @@ namespace Kone.Api.Client.Clients.Extensions
             {
                 await koneBuildingApi.PlaceLandingCallWithPositionUpdatesAsync(
                     destinationAreaId: destinationAreaId,
-                    isDirectionUp: false,
+                    isDirectionUp: isDirectionUp,
                     positionUpdated: m =>
                     {
                         positionUpdates.Add(m);
