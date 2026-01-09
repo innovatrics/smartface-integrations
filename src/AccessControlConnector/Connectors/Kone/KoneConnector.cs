@@ -40,7 +40,7 @@ namespace AccessControlConnector.Connectors.Kone
 
         public async Task OpenAsync(StreamConfig streamConfig, string accessControlUserId = null)
         {
-            var maxStateUpdateWaitTime = TimeSpan.FromSeconds(3);
+            var maxStateUpdateWaitTime = TimeSpan.FromSeconds(5);
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
             var areaId = streamConfig.DestinationArea;
