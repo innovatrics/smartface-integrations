@@ -23,9 +23,9 @@ To deploy application, follow these steps
 
 - navigate to root of this repo
 - run following commands
-- `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.0.3 .`
-- `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.0.3 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
-- `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.0.3`
+- `docker build -f src/AccessControlConnector/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.0.4 .`
+- `docker tag registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.0.4 registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
+- `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:1.0.4`
 - `docker push registry.gitlab.com/innovatrics/smartface/integrations-access-control-connector:latest`
 
 ### Deploy to Docker (ARM)

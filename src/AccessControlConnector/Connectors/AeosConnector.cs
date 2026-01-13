@@ -48,6 +48,22 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
         public async Task OpenAsync(StreamConfig streamConfig, string accessControlUserId = null)
         {
+            if(string.IsNullOrEmpty(accessControlUserId))
+            {
+                _logger.Information("AccessControlUserId is not set, skipping OpenAsync");
+                return;
+            }
+            if(string.IsNullOrEmpty(streamConfig.Host) || streamConfig.Port == null)
+            {
+                _logger.Warning("Host or Port is not set, skipping OpenAsync");
+                return;
+            }
+            if(streamConfig.Schema != "http" && streamConfig.Schema != "https")
+            {
+                _logger.Warning("Schema is not set, skipping OpenAsync");
+                return;
+            }
+
             _logger.Information($"Sending ipBadge to {streamConfig.Host}:{streamConfig.Port}");
 
             try
