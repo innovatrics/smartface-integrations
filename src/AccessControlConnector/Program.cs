@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +9,7 @@ using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Services;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
 {
@@ -57,9 +58,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
             return logger;
         }
 
-        private static IServiceCollection ConfigureServices(IServiceCollection services, ILogger logger)
+        private static IServiceCollection ConfigureServices(IServiceCollection services, ILogger logger, IConfiguration configuration)
         {
             services.AddHttpClient();
+            services.AddAccessControlTelemetry(configuration);
 
             services.AddSingleton(logger);
 
@@ -98,7 +100,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    ConfigureServices(services, logger);
+                    ConfigureServices(services, logger, configurationRoot);
                 })
                 .UseSerilog(logger)
                 .UseSystemd()

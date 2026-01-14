@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -6,7 +7,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Trace;
 using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.NN
@@ -96,11 +99,31 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.N
 
             this.logger.Information($"{nameof(SendOpenToAccessPointAsync)} to {requestUri}");
 
-            var httpResponse = await httpClient.SendAsync(httpRequest);
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ExternalCallSpanName,
+                ActivityKind.Client);
 
-            httpResponse.EnsureSuccessStatusCode();
+            activity?.SetTag("http.method", "GET");
+            activity?.SetTag("http.url", $"{scheme ?? "http"}://{host}:{port}/api/accesspoint/grantaccess");
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "2N.IpIntercom");
 
-            this.logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            try
+            {
+                var httpResponse = await httpClient.SendAsync(httpRequest);
+
+                activity?.SetTag("http.status_code", (int)httpResponse.StatusCode);
+
+                httpResponse.EnsureSuccessStatusCode();
+
+                this.logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            }
+            catch (HttpRequestException ex)
+            {
+                activity?.RecordException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
+                throw;
+            }
         }
 
         private async Task SendOpenToSwitchAsync(string scheme, string host, int? port, string username, string password, string @switch, string action, string @params)
@@ -121,11 +144,31 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.N
 
             this.logger.Information($"{nameof(SendOpenToSwitchAsync)} to {requestUri}");
 
-            var httpResponse = await httpClient.SendAsync(httpRequest);
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ExternalCallSpanName,
+                ActivityKind.Client);
 
-            httpResponse.EnsureSuccessStatusCode();
+            activity?.SetTag("http.method", "GET");
+            activity?.SetTag("http.url", $"{scheme ?? "http"}://{host}:{port}/api/switch/ctrl");
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "2N.IpIntercom");
 
-            this.logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            try
+            {
+                var httpResponse = await httpClient.SendAsync(httpRequest);
+
+                activity?.SetTag("http.status_code", (int)httpResponse.StatusCode);
+
+                httpResponse.EnsureSuccessStatusCode();
+
+                this.logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            }
+            catch (HttpRequestException ex)
+            {
+                activity?.RecordException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
+                throw;
+            }
         }
 
         private async Task SendOpenToControlAsync(string scheme, string host, int? port, string username, string password, string reader, string action)
@@ -146,11 +189,31 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.N
 
             this.logger.Information($"{nameof(SendOpenToControlAsync)} to {requestUri}");
 
-            var httpResponse = await httpClient.SendAsync(httpRequest);
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ExternalCallSpanName,
+                ActivityKind.Client);
 
-            httpResponse.EnsureSuccessStatusCode();
+            activity?.SetTag("http.method", "GET");
+            activity?.SetTag("http.url", $"{scheme ?? "http"}://{host}:{port}/api/io/ctrl");
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "2N.IpIntercom");
 
-            this.logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            try
+            {
+                var httpResponse = await httpClient.SendAsync(httpRequest);
+
+                activity?.SetTag("http.status_code", (int)httpResponse.StatusCode);
+
+                httpResponse.EnsureSuccessStatusCode();
+
+                this.logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            }
+            catch (HttpRequestException ex)
+            {
+                activity?.RecordException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
+                throw;
+            }
         }
     }
 }

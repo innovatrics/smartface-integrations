@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -7,7 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models.InnerRange;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Trace;
 using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange
@@ -204,11 +207,31 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
             }
 
-            var httpResponse = await httpClient.SendAsync(httpRequest);
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ExternalCallSpanName,
+                ActivityKind.Client);
 
-            httpResponse.EnsureSuccessStatusCode();
+            activity?.SetTag("http.method", "GET");
+            activity?.SetTag("http.url", $"{schema ?? "http"}://{host}:{port}/CardBadge");
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "InnerRange.Integriti22");
 
-            _logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            try
+            {
+                var httpResponse = await httpClient.SendAsync(httpRequest);
+
+                activity?.SetTag("http.status_code", (int)httpResponse.StatusCode);
+
+                httpResponse.EnsureSuccessStatusCode();
+
+                _logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            }
+            catch (HttpRequestException ex)
+            {
+                activity?.RecordException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
+                throw;
+            }
         }
     }
 }
