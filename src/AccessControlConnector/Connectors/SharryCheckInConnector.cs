@@ -60,8 +60,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
                 var sharryId = GetValue(userData, "Sharry_Id");
                 var memberId = GetValue(userData, "MemberId");
-                var qrToken = GetValue(userData, "Integrity_QR_Token");
-                var faceToken = GetValue(userData, "Integrity_Face_Token");
+                var qrTokenHex = GetValue(userData, "Integriti_QR_Token");
+                var faceTokenHex = GetValue(userData, "Integriti_Face_Token");
+
+                var qrToken = ConvertHexToDecimal(qrTokenHex);
+                var faceToken = ConvertHexToDecimal(faceTokenHex);
 
                 // Validate required fields
                 if (string.IsNullOrEmpty(sharryId))
@@ -127,6 +130,30 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             }
 
             return dict.TryGetValue(key, out var value) ? value : null;
+        }
+
+        private string ConvertHexToDecimal(string hexValue)
+        {
+            if (string.IsNullOrEmpty(hexValue))
+            {
+                return null;
+            }
+
+            try
+            {
+                var cleanHex = hexValue.StartsWith("0x", StringComparison.OrdinalIgnoreCase) 
+                    ? hexValue.Substring(2) 
+                    : hexValue;
+
+                var decimalValue = Convert.ToInt64(cleanHex, 16);
+                _logger.Debug("Converted hex value {HexValue} to decimal {DecimalValue}", hexValue, decimalValue);
+                return decimalValue.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, "Failed to convert hex value {HexValue} to decimal, returning original value", hexValue);
+                return hexValue;
+            }
         }
     }
 }

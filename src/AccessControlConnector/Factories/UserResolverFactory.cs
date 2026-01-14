@@ -54,7 +54,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                     return new AeosUserResolver(_logger, _configuration, _httpClientFactory, type);
 
                 case WATCHLIST_MEMBER_DATA:
-                    // Parse label keys from type string (e.g., "WATCHLIST_MEMBER_DATA:Sharry_Id,Integrity_QR_Token")
+                    // Parse label keys from type string (e.g., "WATCHLIST_MEMBER_DATA:Sharry_Id,Integriti_QR_Token")
                     var labelKeys = ParseLabelKeys(type);
                     return new WatchlistMemberDataResolver(_logger, labelKeys);
             }
@@ -86,7 +86,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
         private string[] ParseLabelKeys(string type)
         {
-            // Format: "WATCHLIST_MEMBER_DATA:Sharry_Id,Integrity_QR_Token,Integrity_Face_Token"
+            // Format: "WATCHLIST_MEMBER_DATA:Sharry_Id,Integriti_QR_Token,Integriti_Face_Token"
             var parts = type.Split(':');
             if (parts.Length < 2)
             {
