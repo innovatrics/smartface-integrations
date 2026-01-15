@@ -35,13 +35,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             return Task.CompletedTask;
         }
 
-        public async Task OpenAsync(AccessControlMapping accessControlMapping, string accessControlUserId = null)
+        public async Task OpenAsync(StreamConfig streamConfig, string accessControlUserId = null)
         {
             try
             {
-                _logger.Information("Processing Sharry check-in for stream {StreamId}", accessControlMapping?.StreamId);
+                _logger.Information("Processing Sharry check-in for stream {StreamId}", streamConfig?.StreamId);
 
-                var doorId = accessControlMapping?.StreamId.ToString();
+                var doorId = streamConfig?.StreamId.ToString();
 
                 // Parse the data from the UserResolver (passed as JSON string with MemberId + labels)
                 System.Collections.Generic.Dictionary<string, string> userData = null;
@@ -69,13 +69,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 // Validate required fields
                 if (string.IsNullOrEmpty(sharryId))
                 {
-                    _logger.Information("Sharry check-in skipped: SharryId is missing for stream {StreamId}", accessControlMapping?.StreamId);
+                    _logger.Information("Sharry check-in skipped: SharryId is missing for stream {StreamId}", streamConfig?.StreamId);
                     return;
                 }
 
                 if (string.IsNullOrEmpty(qrToken) && string.IsNullOrEmpty(faceToken))
                 {
-                    _logger.Information("Sharry check-in skipped: Both QrToken and FaceToken are missing for stream {StreamId}", accessControlMapping?.StreamId);
+                    _logger.Information("Sharry check-in skipped: Both QrToken and FaceToken are missing for stream {StreamId}", streamConfig?.StreamId);
                     return;
                 }
 
@@ -99,11 +99,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                      _logger.Warning("Sharry API URL is missing, skipping request.");
                 }
 
-                _logger.Information("Sharry check-in completed for stream {StreamId}", accessControlMapping?.StreamId);
+                _logger.Information("Sharry check-in completed for stream {StreamId}", streamConfig?.StreamId);
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Failed to process Sharry check-in for stream {StreamId}", accessControlMapping?.StreamId);
+                _logger.Error(ex, "Failed to process Sharry check-in for stream {StreamId}", streamConfig?.StreamId);
                 throw;
             }
         }
