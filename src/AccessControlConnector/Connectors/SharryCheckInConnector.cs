@@ -16,6 +16,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         private readonly IHttpClientFactory _httpClientFactory;
 
         private readonly string _sharryApiUrl;
+        private readonly string _sharryAppToken;
+        private readonly string _sharryApiToken;
 
         public SharryCheckInConnector(
             ILogger logger,
@@ -28,6 +30,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
 
             _sharryApiUrl = _configuration.GetValue<string>("SharryConfiguration:ApiUrl");
+            _sharryAppToken = _configuration.GetValue<string>("SharryConfiguration:AppToken");
+            _sharryApiToken = _configuration.GetValue<string>("SharryConfiguration:ApiToken");
         }
 
         public Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null, string username = null, string password = null)
@@ -114,9 +118,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             var json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            // TODO: Add authentication headers when auth mechanism is defined
+            var requestUrl = $"{_sharryApiUrl}?app-token={_sharryAppToken}&api-token={_sharryApiToken}";
 
-            var response = await httpClient.PostAsync(_sharryApiUrl, content);
+            var response = await httpClient.PostAsync(requestUrl, content);
             response.EnsureSuccessStatusCode();
 
             _logger.Information("Sharry API responded with status {StatusCode}", response.StatusCode);
