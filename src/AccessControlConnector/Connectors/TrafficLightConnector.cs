@@ -1,10 +1,13 @@
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Trace;
 using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
@@ -38,16 +41,37 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
-            var result = await httpClient.SendAsync(httpRequest);
-            string resultContent = await result.Content.ReadAsStringAsync();
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ExternalCallSpanName,
+                ActivityKind.Client);
 
-            if (result.IsSuccessStatusCode)
+            activity?.SetTag("http.method", "POST");
+            activity?.SetTag("http.url", requestUri);
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "TrafficLight");
+
+            try
             {
-                this.logger.Information("OK");
+                var result = await httpClient.SendAsync(httpRequest);
+
+                activity?.SetTag("http.status_code", (int)result.StatusCode);
+
+                string resultContent = await result.Content.ReadAsStringAsync();
+
+                if (result.IsSuccessStatusCode)
+                {
+                    this.logger.Information("OK");
+                }
+                else
+                {
+                    this.logger.Error("Fail with {statusCode}", result.StatusCode);
+                }
             }
-            else
+            catch (HttpRequestException ex)
             {
-                this.logger.Error("Fail with {statusCode}", result.StatusCode);
+                activity?.RecordException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
+                throw;
             }
         }
 

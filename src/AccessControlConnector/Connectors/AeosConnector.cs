@@ -1,10 +1,13 @@
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
+using OpenTelemetry.Trace;
 using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
@@ -99,6 +102,15 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 messageBytes[messageBytes.Length - 2] = checksum;
                 messageBytes[messageBytes.Length - 1] = 0x03;
 
+                using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                    AccessControlTelemetry.ExternalCallSpanName,
+                    ActivityKind.Client);
+
+                activity?.SetTag("network.protocol", "tcp");
+                activity?.SetTag("network.peer.address", streamConfig.Host);
+                activity?.SetTag("network.peer.port", streamConfig.Port);
+                activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "AEOS");
+
                 try
                 {
                     _logger.Debug($"Sending {messageBytes.Length} bytes to socket");
@@ -119,6 +131,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 }
                 catch (SocketException se)
                 {
+                    activity?.RecordException(se);
+                    activity?.SetStatus(ActivityStatusCode.Error, se.Message);
+                    activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "SocketException");
                     _logger.Error($"SocketException: {se.Message}, Code {se.SocketErrorCode}");
                     _socket?.Shutdown(SocketShutdown.Both);
                     _socket?.Dispose();
@@ -126,6 +141,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 }
                 catch (Exception e)
                 {
+                    activity?.RecordException(e);
+                    activity?.SetStatus(ActivityStatusCode.Error, e.Message);
+                    activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, e.GetType().Name);
                     _logger.Error("Unexpected exception : {0}", e.ToString());
                 }
 

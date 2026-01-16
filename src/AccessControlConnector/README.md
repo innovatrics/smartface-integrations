@@ -205,3 +205,92 @@ Semantics:
   - 2002: call elevator DOWN
 - Area: floor/area identifier to call to (destination or state activation target, depending on action).
 - Terminal: elevator terminal/car number.
+
+## OpenTelemetry Tracing
+
+AccessControlConnector supports OpenTelemetry tracing for end-to-end request latency monitoring. This enables you to:
+
+- Measure request lifetime (start → end) inside AccessControlConnector
+- Separate "our processing time" from "waiting on external system time"
+- Compare connectors and endpoints consistently
+- Export traces to standard monitoring tools (Grafana Tempo, Jaeger, Honeycomb, Datadog, etc.)
+
+### Configuration
+
+Tracing is controlled via environment variables (disabled by default):
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OTEL_TRACES_EXPORTER` | Exporter type: `otlp` (enable) or `none` (disable) | `none` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector endpoint | `http://localhost:4317` |
+| `OTEL_SERVICE_NAME` | Service name in traces | `access-control-connector` |
+| `OTEL_TRACES_SAMPLER` | Sampling strategy | SDK default |
+| `OTEL_TRACES_SAMPLER_ARG` | Sampler argument (e.g., ratio) | SDK default |
+| `DEPLOYMENT_ENVIRONMENT` | Environment tag (dev/staging/prod) | `development` |
+
+### Enabling Tracing
+
+Add the following environment variables to your docker-compose or deployment:
+
+```yaml
+access-control-connector:
+  image: ${REGISTRY}integrations-access-control-connector:latest
+  environment:
+    # ... existing configuration ...
+    # OpenTelemetry Tracing
+    - OTEL_TRACES_EXPORTER=otlp
+    - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    - OTEL_SERVICE_NAME=access-control-connector
+    - OTEL_TRACES_SAMPLER=parentbased_traceidratio
+    - OTEL_TRACES_SAMPLER_ARG=0.1
+    - DEPLOYMENT_ENVIRONMENT=production
+```
+
+### Span Hierarchy
+
+Each request produces the following span hierarchy:
+
+```
+access_control.request (root, measures total request time)
+├── ac.stream.id: "<stream-guid>"
+│
+└── access_control.connector.handle (measures connector processing time)
+    ├── ac.connector.name: "INNERRANGE_INTEGRITI_22"
+    ├── ac.connector.type: "InnerRange"
+    │
+    └── access_control.external.call (measures external system wait time)
+        ├── http.method: "GET"
+        ├── http.status_code: 200
+        └── http.url: "http://host:port/endpoint"
+```
+
+### Span Attributes
+
+| Attribute | Description |
+|-----------|-------------|
+| `ac.stream.id` | SmartFace stream identifier |
+| `ac.connector.name` | Connector type (e.g., INNERRANGE_INTEGRITI_22) |
+| `ac.connector.type` | Connector family (e.g., InnerRange, AXIS, KONE) |
+| `ac.error.type` | Error type on failures |
+| `http.method` | HTTP method for HTTP-based connectors |
+| `http.status_code` | HTTP response status code |
+| `http.url` | Target URL (sanitized, no credentials) |
+| `network.protocol` | Protocol for non-HTTP connectors (tcp, websocket) |
+
+### Testing with Jaeger
+
+To quickly test tracing locally with Jaeger:
+
+```bash
+# Start Jaeger all-in-one
+docker run -d --name jaeger \
+  -p 16686:16686 \
+  -p 4317:4317 \
+  jaegertracing/all-in-one:latest
+
+# Configure AccessControlConnector
+export OTEL_TRACES_EXPORTER=otlp
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+
+# View traces at http://localhost:16686
+```

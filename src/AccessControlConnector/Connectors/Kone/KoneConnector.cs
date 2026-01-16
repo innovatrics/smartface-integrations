@@ -1,10 +1,13 @@
-﻿using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
 using Kone.Api.Client;
+using OpenTelemetry.Trace;
 using Serilog;
 
 namespace AccessControlConnector.Connectors.Kone
@@ -50,10 +53,29 @@ namespace AccessControlConnector.Connectors.Kone
             _log.Information("Sending landing call with Id {Id} to area {areaId}, direction up: {isDirectionUp}",
                 landingCallId, areaId, isDirectionUp);
 
-            var landingCallTask = _koneApiGateWay.SendLandingCallToAreaIfNotInProgressAsync(areaId, isDirectionUp, maxStateUpdateWaitTime,
-                cts.Token);
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ExternalCallSpanName,
+                ActivityKind.Client);
 
-            await _ab.SendAsync((landingCallId, landingCallTask), CancellationToken.None);
+            activity?.SetTag("network.protocol", "websocket");
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "KONE");
+            activity?.SetTag("kone.area_id", areaId);
+            activity?.SetTag("kone.direction_up", isDirectionUp);
+
+            try
+            {
+                var landingCallTask = _koneApiGateWay.SendLandingCallToAreaIfNotInProgressAsync(areaId, isDirectionUp, maxStateUpdateWaitTime,
+                    cts.Token);
+
+                await _ab.SendAsync((landingCallId, landingCallTask), CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                activity?.RecordException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, ex.GetType().Name);
+                throw;
+            }
         }
 
         public Task SendKeepAliveAsync(string schema, string host, int? port, int? channel = null, string accessControlUserId = null,

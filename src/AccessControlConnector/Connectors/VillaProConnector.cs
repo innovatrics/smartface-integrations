@@ -1,9 +1,12 @@
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
+using OpenTelemetry.Trace;
 using Serilog;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -58,25 +61,35 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
         public async Task TicketPassAsync(string deviceId, string ticketId, string authToken, string systToken)
         {
+            _logger.Information($"VillaProConnector: Initiating ticket pass for device {deviceId} with ticket {ticketId}");
+            
+            var client = CreateHttpClient();
+            var url = $"{baseUrl}/devices/{deviceId}/ticket_pass/";
+            
+            var request = new HttpRequestMessage(HttpMethod.Put, url);
+            request.Headers.Add("auth-token", authToken);
+            request.Headers.Add("syst-token", systToken);
+            
+            var content = new StringContent(
+                JsonConvert.SerializeObject(new { ticket_id = ticketId }),
+                Encoding.UTF8,
+                "application/json");
+            
+            request.Content = content;
+
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ExternalCallSpanName,
+                ActivityKind.Client);
+
+            activity?.SetTag("http.method", "PUT");
+            activity?.SetTag("http.url", $"{baseUrl}/devices/ticket_pass/");
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "VillaPro");
+
             try
             {
-                _logger.Information($"VillaProConnector: Initiating ticket pass for device {deviceId} with ticket {ticketId}");
-                
-                var client = CreateHttpClient();
-                var url = $"{baseUrl}/devices/{deviceId}/ticket_pass/";
-                
-                var request = new HttpRequestMessage(HttpMethod.Put, url);
-                request.Headers.Add("auth-token", authToken);
-                request.Headers.Add("syst-token", systToken);
-                
-                var content = new StringContent(
-                    JsonConvert.SerializeObject(new { ticket_id = ticketId }),
-                    Encoding.UTF8,
-                    "application/json");
-                
-                request.Content = content;
-                
                 var response = await client.SendAsync(request);
+
+                activity?.SetTag("http.status_code", (int)response.StatusCode);
                 
                 if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
@@ -95,8 +108,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                     throw new Exception($"Ticket pass failed with status code {response.StatusCode}: {errorContent}");
                 }
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
             {
+                activity?.RecordException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
                 _logger.Error(ex, $"VillaProConnector: Error during ticket pass for device {deviceId} with ticket {ticketId}");
                 throw;
             }
