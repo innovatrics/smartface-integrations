@@ -24,7 +24,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         private readonly IHttpClientFactory _httpClientFactory;
 
         private string authToken;
-        private string systToken;
         private string baseUrl;
 
         public VillaProConnector(ILogger logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
@@ -34,12 +33,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         
             authToken = configuration.GetValue<string>("VillaProConfiguration:AuthToken") ?? throw new InvalidOperationException("authToken is required");
-            systToken = configuration.GetValue<string>("VillaProConfiguration:SystToken") ?? throw new InvalidOperationException("systToken is required");
             baseUrl = configuration.GetValue<string>("VillaProConfiguration:BaseUrl") ?? throw new InvalidOperationException("baseUrl is required");
 
-            _logger.Information($"VillaProConnector: {authToken} - {systToken} - {baseUrl}");
+            _logger.Information($"VillaProConnector: {authToken} - {baseUrl}");
             
-            if (string.IsNullOrEmpty(authToken) || string.IsNullOrEmpty(systToken) || string.IsNullOrEmpty(baseUrl))
+            if (string.IsNullOrEmpty(authToken) || string.IsNullOrEmpty(baseUrl))
             {
                 _logger.Error("VillaProConnector: Missing required configuration values");
                 throw new InvalidOperationException("Missing required configuration values");
@@ -55,11 +53,29 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
         {
             _logger.Information($"Initiating OpenAsync: VillaProConnector: {streamConfig.Username}({accessControlUserId}), using stream mapping: {streamConfig.StreamId}, for the gate: {streamConfig.TargetId}");
             
+            // Parse TargetId {deviceId|sysToken}
+            var targetIdParts = streamConfig.TargetId.Split('|');
+
+            if (targetIdParts.Length != 2)
+            {
+                _logger.Error($"VillaProConnector: Invalid targetId format. TargetId: {streamConfig.TargetId}");
+                throw new InvalidOperationException("Invalid targetId format");
+            }
+
+            var deviceId = targetIdParts[0];
+            var sysToken = targetIdParts[1];
+
+            if (string.IsNullOrEmpty(deviceId) || string.IsNullOrEmpty(sysToken))
+            {
+                _logger.Error($"VillaProConnector: Invalid deviceId or sysToken. DeviceId: {deviceId}, SysToken: {sysToken}");
+                throw new InvalidOperationException("Invalid deviceId or sysToken");
+            }
+
             // Implementation for opening the gate
-            await TicketPassAsync(streamConfig.TargetId, accessControlUserId, authToken, systToken);
+            await TicketPassAsync(deviceId, accessControlUserId, authToken, sysToken);
         }
 
-        public async Task TicketPassAsync(string deviceId, string ticketId, string authToken, string systToken)
+        private async Task TicketPassAsync(string deviceId, string ticketId, string authToken, string systToken)
         {
             _logger.Information($"VillaProConnector: Initiating ticket pass for device {deviceId} with ticket {ticketId}");
             

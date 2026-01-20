@@ -86,7 +86,8 @@ Add following pattern to existing docker compose, depending on the integrations 
       # VillaPro Gate #2
       - StreamConfig__5__Type=VILLA_PRO_CONNECTOR
       - StreamConfig__5__StreamId=2e49f358-bebb-42b6-03e9-08db6e4030a1
-      - StreamConfig__5__TargetId=001-575
+      #{deviceId|sysToken}
+      - StreamConfig__5__TargetId=001-575|b8942727-c090-4d1d-8bf9-2d6dcc501ea9
       - StreamConfig__5__UserResolver=WATCHLIST_MEMBER_LABEL_TOKEN_VILLAPRO
       # NEDAP Aeos Controller #1
       - StreamConfig__6__Type=AEOS_CONNECTOR
@@ -117,7 +118,6 @@ Add following pattern to existing docker compose, depending on the integrations 
       - MyQConfiguration__BypassSslValidation=true
        # VillaPro Integration Configuration (Optional)
       - VillaProConfiguration__AuthToken=
-      - VillaProConfiguration__SystToken=
       - VillaProConfiguration__BaseUrl=
       # General AEOS NEDAP Configuration
       - AeosConfiguration__LabelName=LOCKERS
