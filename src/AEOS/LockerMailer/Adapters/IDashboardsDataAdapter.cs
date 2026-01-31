@@ -9,5 +9,14 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
     {
         Task<EmailSummaryResponse> GetEmailSummaryAssignmentChanges();
         Task<List<GroupInfo>> GetGroups();
+        Task<LockerReleaseResult> ReleaseLockerAsync(int lockerId);
+    }
+
+    public class LockerReleaseResult
+    {
+        public bool Success { get; set; }
+        public int StatusCode { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public int LockerId { get; set; }
     }
 }
