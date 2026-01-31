@@ -678,5 +678,83 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             throw;
         }
     }
+
+    public async Task<IList<LockerAccessEvent>> GetLockerAccessEvents(DateTime fromDateTime)
+    {
+        this.logger.Information($"Retrieving locker access events from: {fromDateTime:yyyy-MM-ddTHH:mm:ssZ}");
+        
+        const long LockerAccessEventTypeId = 236;
+        List<LockerAccessEvent> allEvents = new List<LockerAccessEvent>();
+        
+        bool allEventsRetrieved = false;
+        int pageNumber = 0;
+        
+        while (!allEventsRetrieved)
+        {
+            pageNumber += 1;
+            this.logger.Debug($"Receiving Locker Access Events from AEOS: Page {pageNumber}");
+            
+            var eventSearchInfo = new EventSearchInfo();
+            eventSearchInfo.EventSearch = new EventSearch();
+            eventSearchInfo.EventSearch.EventType = new long[] { LockerAccessEventTypeId };
+            eventSearchInfo.EventSearch.FromDateTime = fromDateTime;
+            
+            eventSearchInfo.SearchRange = new SearchRange();
+            eventSearchInfo.SearchRange.startRecordNo = (pageNumber - 1) * AeosServerPageSize;
+            eventSearchInfo.SearchRange.nrOfRecords = AeosServerPageSize;
+            eventSearchInfo.SearchRange.nrOfRecordsSpecified = true;
+            
+            try
+            {
+                var events = await client.findEventAsync(eventSearchInfo);
+                
+                if (events?.EventList?.Event == null)
+                {
+                    this.logger.Debug("No events found in the response");
+                    break;
+                }
+                
+                foreach (var evt in events.EventList.Event)
+                {
+                    if (evt == null)
+                    {
+                        continue;
+                    }
+                    
+                    var lockerAccessEvent = new LockerAccessEvent(
+                        evt.Id,
+                        evt.EventTypeId,
+                        evt.EventTypeName,
+                        evt.DateTime,
+                        evt.HostName,
+                        evt.AccesspointName,
+                        evt.IdentifierIdSpecified ? evt.IdentifierId : null,
+                        evt.Identifier,
+                        evt.CarrierIdSpecified ? evt.CarrierId : null,
+                        evt.CarrierFullName,
+                        evt.IntValueSpecified ? evt.IntValue : null,
+                        evt.Attribute
+                    );
+                    
+                    allEvents.Add(lockerAccessEvent);
+                    
+                    this.logger.Debug($"Processing event - Id: {evt.Id}, DateTime: {evt.DateTime}, AccesspointName: {evt.AccesspointName}, CarrierFullName: {evt.CarrierFullName}");
+                }
+                
+                if (events.EventList.Event.Length < AeosServerPageSize)
+                {
+                    allEventsRetrieved = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, $"Error retrieving locker access events from page {pageNumber}");
+                throw;
+            }
+        }
+        
+        this.logger.Information($"Retrieved {allEvents.Count} locker access events from {fromDateTime:yyyy-MM-ddTHH:mm:ssZ}");
+        return allEvents;
+    }
 }
 }
