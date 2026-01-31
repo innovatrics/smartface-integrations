@@ -73,12 +73,12 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
         .locker-item.assigned {
-            border-color: #28a745;
-            background-color: #d4edda;
-        }
-        .locker-item.unassigned {
             border-color: #dc3545;
             background-color: #f8d7da;
+        }
+        .locker-item.unassigned {
+            border-color: #28a745;
+            background-color: #d4edda;
         }
         .locker-name {
             font-weight: bold;
@@ -100,6 +100,27 @@
         .layout-toggle-button:hover {
             background-color: #0056b3;
             margin-bottom: 3px;
+        }
+        .refresh-button {
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .refresh-button:hover {
+            background-color: #218838;
+        }
+        .refresh-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
         .container-title {
             font-size: 1.2em;
@@ -330,7 +351,10 @@
     <div class="lockers-container" id="lockersContainer">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <div class="container-title" id="containerTitle"></div>
-            <button id="layoutToggle" class="layout-toggle-button" style="display: none;">Switch to Default View</button>
+            <div class="header-buttons">
+                <button id="refreshButton" class="refresh-button">Refresh</button>
+                <button id="layoutToggle" class="layout-toggle-button" style="display: none;">Switch to Default View</button>
+            </div>
         </div>
         <div class="locker-list" id="lockerList"></div>
     </div>
@@ -499,6 +523,39 @@
                 // Toggle the view state
                 useCustomLayout[currentActiveGroupName] = !useCustomLayout[currentActiveGroupName];
                 displayLockers(currentActiveGroupName, group.allLockers);
+            }
+        });
+        
+        // Refresh button event listener
+        document.getElementById('refreshButton').addEventListener('click', async function() {
+            const button = this;
+            const originalText = button.textContent;
+            
+            // Disable button and show loading state
+            button.disabled = true;
+            button.textContent = 'Refreshing...';
+            
+            try {
+                // First trigger backend data refresh from AEOS
+                const refreshResponse = await fetch('/api/lockeranalytics/refresh-data', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (refreshResponse.ok) {
+                    // Then fetch updated data and refresh the view
+                    await refreshLockerData();
+                } else {
+                    console.error('Failed to trigger data refresh from AEOS');
+                }
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+            } finally {
+                // Re-enable button and restore text
+                button.disabled = false;
+                button.textContent = originalText;
             }
         });
         
@@ -750,8 +807,10 @@
             
             // Check if the current group allows unlock
             let allowUnlock = false;
+            let allowUnlockWhenUnassigned = false;
             if (currentActiveGroupName && groupConfigurations[currentActiveGroupName]) {
                 allowUnlock = groupConfigurations[currentActiveGroupName].allowUnlock === true;
+                allowUnlockWhenUnassigned = groupConfigurations[currentActiveGroupName].allowUnlockWhenUnassigned === true;
             }
             
             if (locker.assignedTo) {
@@ -778,6 +837,16 @@
                 assignButton.type = 'button';
                 assignButton.addEventListener('click', () => showEmployeeSearchView(locker));
                 modalActions.appendChild(assignButton);
+                
+                // Add Unlock button for unassigned lockers if allowed
+                if (allowUnlockWhenUnassigned) {
+                    const unlockButton = document.createElement('button');
+                    unlockButton.className = 'modal-button assign';
+                    unlockButton.textContent = 'Unlock';
+                    unlockButton.type = 'button';
+                    unlockButton.addEventListener('click', () => unlockLocker(locker));
+                    modalActions.appendChild(unlockButton);
+                }
             }
             
             // Show modal
