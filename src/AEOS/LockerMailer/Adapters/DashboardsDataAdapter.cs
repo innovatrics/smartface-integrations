@@ -277,5 +277,57 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 return result;
             }
         }
+
+        public async Task<List<LockerAccessEvent>> GetAccessedLockersAsync(DateTime? fromDateTime = null)
+        {
+            try
+            {
+                var baseUrl = $"{DashboardsHost}:{DashboardsPort}";
+                var endpoint = $"{baseUrl}/api/lockeranalytics/accessedLockers";
+                
+                if (fromDateTime.HasValue)
+                {
+                    var dateTimeStr = fromDateTime.Value.ToString("o"); // ISO 8601 format
+                    endpoint = $"{endpoint}?dateTime={Uri.EscapeDataString(dateTimeStr)}";
+                }
+                
+                this.logger.Information($"Fetching accessed lockers from Dashboards API. Calling endpoint: GET {endpoint}");
+                
+                var response = await httpClient.GetAsync(endpoint);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    this.logger.Error($"API returned error status {response.StatusCode}: {errorContent}");
+                    return new List<LockerAccessEvent>();
+                }
+                
+                var content = await response.Content.ReadAsStringAsync();
+                this.logger.Debug($"Received accessed lockers response: {content}");
+                
+                var result = JsonSerializer.Deserialize<List<LockerAccessEvent>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                
+                this.logger.Information($"Successfully retrieved {result?.Count ?? 0} locker access events");
+                return result ?? new List<LockerAccessEvent>();
+            }
+            catch (HttpRequestException ex)
+            {
+                this.logger.Error(ex, "HTTP request failed when calling accessedLockers API");
+                return new List<LockerAccessEvent>();
+            }
+            catch (JsonException ex)
+            {
+                this.logger.Error(ex, "Failed to deserialize accessedLockers response from Dashboards API");
+                return new List<LockerAccessEvent>();
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "Unexpected error occurred while fetching accessed lockers");
+                return new List<LockerAccessEvent>();
+            }
+        }
     }
 }

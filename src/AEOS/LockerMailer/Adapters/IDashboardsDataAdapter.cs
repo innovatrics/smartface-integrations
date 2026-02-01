@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using ServiceReference;
@@ -10,6 +11,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         Task<EmailSummaryResponse> GetEmailSummaryAssignmentChanges();
         Task<List<GroupInfo>> GetGroups();
         Task<LockerReleaseResult> ReleaseLockerAsync(int lockerId);
+        Task<List<LockerAccessEvent>> GetAccessedLockersAsync(DateTime? fromDateTime = null);
     }
 
     public class LockerReleaseResult
