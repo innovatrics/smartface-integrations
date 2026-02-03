@@ -131,9 +131,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 }
                 catch (SocketException se)
                 {
-                    activity?.RecordException(se);
-                    activity?.SetStatus(ActivityStatusCode.Error, se.Message);
-                    activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "SocketException");
+                    activity?.AddException(se);
+                    activity?.SetStatus(ActivityStatusCode.Error);
+
                     _logger.Error($"SocketException: {se.Message}, Code {se.SocketErrorCode}");
                     _socket?.Shutdown(SocketShutdown.Both);
                     _socket?.Dispose();
@@ -141,17 +141,14 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
                 }
                 catch (Exception e)
                 {
-                    activity?.RecordException(e);
-                    activity?.SetStatus(ActivityStatusCode.Error, e.Message);
-                    activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, e.GetType().Name);
+                    activity?.AddException(e);
+                    activity?.SetStatus(ActivityStatusCode.Error);
                     _logger.Error("Unexpected exception : {0}", e.ToString());
                 }
-
             }
-
             catch (Exception e)
             {
-                _logger.Error(e.ToString());
+                _logger.Error(e, "Open failed");
             }
 
         }

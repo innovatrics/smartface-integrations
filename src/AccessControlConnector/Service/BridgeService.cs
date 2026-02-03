@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using AccessControlConnector.Connectors;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Serilog;
@@ -11,7 +12,6 @@ using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
-using OpenTelemetry.Trace;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
@@ -37,23 +37,36 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _allStreamConfigs = LoadStreamConfig(configuration);
         }
 
-        public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
+        public async Task ProcessGrantedNotificationAsync(GrantedNotification grantedNotification)
         {
-            ArgumentNullException.ThrowIfNull(notification);
+            ArgumentNullException.ThrowIfNull(grantedNotification);
 
             using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
-                AccessControlTelemetry.RequestSpanName,
-                ActivityKind.Server);
+                AccessControlTelemetry.GrantedOperationName,
+                ActivityKind.Consumer,
+                parentContext: grantedNotification.ActivityContext);
 
-            activity?.SetTag(AccessControlTelemetry.StreamIdAttribute, notification.StreamId);
+            activity?.SetTag(AccessControlTelemetry.StreamIdAttribute, grantedNotification.StreamId);
 
             try
             {
-                var streamConfigs = GetStreamConfigsForStream(notification.StreamId);
+                var streamConfigs = GetStreamConfigsForStream(grantedNotification.StreamId);
 
-                if (streamConfigs.Length == 0)
+                // harmless dummy connector for easier local debug of connector infra
+                if (DummyConnector.Enabled)
                 {
-                    _log.Warning("Granted notification for Stream {StreamId} has no AccessConnector configuration", notification.StreamId);
+                    streamConfigs.Add(new StreamConfig
+                    {
+                        Enabled = true,
+                        Async = true,
+                        Type = AccessControlConnectorTypes.DUMMY_CONNECTOR,
+                        StreamId = Guid.Parse(grantedNotification.StreamId)
+                    });
+                }
+
+                if (streamConfigs.Count == 0)
+                {
+                    _log.Warning("Granted grantedNotification for Stream {StreamId} has no AccessConnector configuration", grantedNotification.StreamId);
                     return;
                 }
 
@@ -67,23 +80,23 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                         {
                             try
                             {
-                                await ExecuteConnectorAsync(streamConfig, notification);
+                                await ExecuteConnectorAsync(streamConfig, grantedNotification);
                             }
                             catch (Exception ex)
                             {
-                                _log.Error(ex, "Failed to execute connector for stream {StreamId}", notification.StreamId);
+                                _log.Error(ex, "Failed to execute connector for stream {StreamId}", grantedNotification.StreamId);
                             }
                         });
                     }
                     else
                     {
-                        await ExecuteConnectorAsync(streamConfig, notification);
+                        await ExecuteConnectorAsync(streamConfig, grantedNotification);
                     }
                 }
             }
             catch (Exception ex)
             {
-                activity?.RecordException(ex);
+                activity?.AddException(ex);
                 activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                 throw;
             }
@@ -118,7 +131,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
-        private StreamConfig[] GetStreamConfigsForStream(string streamId)
+        private List<StreamConfig> GetStreamConfigsForStream(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
             {
@@ -127,7 +140,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             return _allStreamConfigs
                         .Where(w => w.StreamId == streamGuid)
-                        .ToArray();
+                        .ToList();
         }
 
         private StreamConfig[] LoadStreamConfig(IConfiguration configuration)
@@ -152,11 +165,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             streamConfigs = streamConfigs.Where(x => x.Enabled).ToArray();
 
-            if (!streamConfigs.Any())
-            {
-                throw new InvalidOperationException("No enabled connectors configured in StreamConfig");
-            }
-
             foreach (var streamConfig in streamConfigs)
             {
                 _log.Information("Stream [{streamId}] for {Type} with face: {FaceModalityEnabled} palm: {PalmModalityEnabled} opticalCode: {OpticalCodeModalityEnabled}", streamConfig.StreamId, streamConfig.Type, streamConfig.FaceModalityEnabled ? 1 : 0, streamConfig.PalmModalityEnabled ? 1 : 0, streamConfig.OpticalCodeModalityEnabled ? 1 : 0);
@@ -168,11 +176,10 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
         private async Task ExecuteConnectorAsync(StreamConfig streamConfig, GrantedNotification notification)
         {
             using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
-                AccessControlTelemetry.ConnectorHandleSpanName,
-                ActivityKind.Internal);
+                AccessControlTelemetry.ConnectorHandleOperationName);
 
             activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, streamConfig.Type);
-            activity?.SetTag(AccessControlTelemetry.ConnectorTypeAttribute, GetConnectorFamily(streamConfig.Type));
+            activity?.SetTag(AccessControlTelemetry.ConnectorTypeAttribute, GetConnectorType(streamConfig.Type));
             activity?.SetTag(AccessControlTelemetry.StreamIdAttribute, notification.StreamId);
 
             try
@@ -233,14 +240,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
             catch (Exception ex)
             {
-                activity?.RecordException(ex);
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, ex.GetType().Name);
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
                 throw;
             }
         }
 
-        private static string GetConnectorFamily(string connectorType)
+        private static string GetConnectorType(string connectorType)
         {
             if (string.IsNullOrEmpty(connectorType))
             {

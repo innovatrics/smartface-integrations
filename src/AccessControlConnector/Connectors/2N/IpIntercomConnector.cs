@@ -119,9 +119,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.N
             }
             catch (HttpRequestException ex)
             {
-                activity?.RecordException(ex);
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
                 throw;
             }
         }
@@ -164,9 +163,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.N
             }
             catch (HttpRequestException ex)
             {
-                activity?.RecordException(ex);
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
                 throw;
             }
         }
@@ -209,9 +207,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.N
             }
             catch (HttpRequestException ex)
             {
-                activity?.RecordException(ex);
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
                 throw;
             }
         }

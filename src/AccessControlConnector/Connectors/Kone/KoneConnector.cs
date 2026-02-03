@@ -71,9 +71,8 @@ namespace AccessControlConnector.Connectors.Kone
             }
             catch (Exception ex)
             {
-                activity?.RecordException(ex);
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, ex.GetType().Name);
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
                 throw;
             }
         }
