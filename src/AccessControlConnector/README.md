@@ -221,7 +221,7 @@ Tracing is controlled via environment variables (disabled by default):
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OTEL_TRACES_EXPORTER` | Exporter type: `otlp` (enable) or `none` (disable) | `none` |
+| `Tracing__Enabled` | Enable Tracing | `false` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector endpoint | `http://localhost:4317` |
 | `OTEL_SERVICE_NAME` | Service name in traces | `access-control-connector` |
 | `OTEL_TRACES_SAMPLER` | Sampling strategy | SDK default |
@@ -238,7 +238,7 @@ access-control-connector:
   environment:
     # ... existing configuration ...
     # OpenTelemetry Tracing
-    - OTEL_TRACES_EXPORTER=otlp
+    - Tracing__Enabled=true
     - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     - OTEL_SERVICE_NAME=access-control-connector
     - OTEL_TRACES_SAMPLER=parentbased_traceidratio
@@ -289,7 +289,7 @@ docker run -d --name jaeger \
   jaegertracing/all-in-one:latest
 
 # Configure AccessControlConnector
-export OTEL_TRACES_EXPORTER=otlp
+export Tracing__Enabled=true
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
 
 # View traces at http://localhost:16686

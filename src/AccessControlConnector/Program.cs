@@ -61,7 +61,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector
         private static IServiceCollection ConfigureServices(IServiceCollection services, ILogger logger, IConfiguration configuration)
         {
             services.AddHttpClient();
-            services.AddAccessControlTelemetry(configuration);
+            services.AddTelemetry(configuration);
 
             services.AddSingleton(logger);
 
