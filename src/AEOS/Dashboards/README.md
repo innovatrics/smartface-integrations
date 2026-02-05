@@ -16,17 +16,17 @@ To run the application locally, follow these steps
 ### Deploy to Docker
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AEOS/Dashboards/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.2 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.2 registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.2`
+ - `docker build -f src/AEOS/Dashboards/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.3 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.3 registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.3`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest`
 
 ### Deploy to Docker on Arm
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AEOS/Dashboards/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.2-arm .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.2-arm registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest-arm`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.2-arm`
+ - `docker build -f src/AEOS/Dashboards/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.3-arm .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.3-arm registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest-arm`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:1.3-arm`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeosdashboards:latest-arm`
 
 ## Usage
