@@ -953,6 +953,11 @@
             document.getElementById('employeeSearchInput').value = '';
             document.getElementById('employeeSearchResults').innerHTML = '';
             
+            // Focus the search input
+            setTimeout(() => {
+                document.getElementById('employeeSearchInput').focus();
+            }, 100);
+            
             // Set up search button
             const searchButton = document.getElementById('employeeSearchButton');
             searchButton.onclick = () => searchEmployees();

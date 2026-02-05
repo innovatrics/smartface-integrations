@@ -593,6 +593,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     { "time", DateTime.Now.ToString("HH:mm") },
                     { "source", mockChange.LockerName },
                     { "group", mockChange.GroupName },
+                    { "lockergroup", mockChange.GroupName },
                     { "canceltime", templateCancelTime },
                     { "lockercount", mockChange.TotalAssignedLockers.ToString() },
                     { "lockerlist", lockerList }
@@ -600,7 +601,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
 
                 // Build HTML from Keila template blocks with placeholder replacement
                 var sb = new System.Text.StringBuilder();
-                sb.Append("<html><body>");
+                sb.Append("<!DOCTYPE html><html><body>");
 
                 if (campaign.JsonBody?.Blocks != null)
                 {
@@ -612,6 +613,8 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     }
                 }
 
+                // Add hidden element to prevent Gmail from clipping the email
+                sb.Append($"<div style=\"display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;\">&#847; {DateTime.UtcNow.Ticks}</div>");
                 sb.Append("</body></html>");
                 var htmlEmail = sb.ToString();
 
@@ -667,6 +670,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                 { "time", DateTime.Now.ToString("HH:mm") },
                 { "source", change.LockerName },
                 { "group", change.GroupName },
+                { "lockergroup", change.GroupName },
                 { "canceltime", templateCancelTime },
                 { "lockercount", change.TotalAssignedLockers.ToString() },
                 { "lockerlist", lockerList } // This is the key replacement for the bulk email
