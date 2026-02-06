@@ -16,7 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
         private readonly IConfiguration configuration;
         private readonly GrpcReaderFactory grpcReaderFactory;
         private readonly IBridge bridge;
-        private GrpcNotificationReader grpcNotificationReader;
+        private GrpcAccessNotificationReader grpcNotificationReader;
         private System.Timers.Timer timerPing;
         private DateTime lastGrpcPing;
 
@@ -87,7 +87,7 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
             this.timerPing?.Dispose();
         }
 
-        private GrpcNotificationReader CreateGrpcReader()
+        private GrpcAccessNotificationReader CreateGrpcReader()
         {
             var grpcHost = this.configuration.GetValue<string>("AccessController:Host");
             var grpcPort = this.configuration.GetValue<int>("AccessController:Port");
