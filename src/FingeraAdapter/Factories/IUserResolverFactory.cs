@@ -1,4 +1,4 @@
-using Innovatrics.SmartFace.Integrations.FingeraAdapter.Resolvers;
+using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 
 namespace Innovatrics.SmartFace.Integrations.FingeraAdapter.Factories
 {

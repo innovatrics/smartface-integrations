@@ -1,4 +1,4 @@
-using Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers;
+using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 {

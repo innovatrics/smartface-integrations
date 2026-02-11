@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
+using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers

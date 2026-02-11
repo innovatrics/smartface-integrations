@@ -3,13 +3,13 @@ using System.Linq;
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-using Innovatrics.SmartFace.Integrations.FingeraAdapter.Resolvers;
+using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 
 namespace Innovatrics.SmartFace.Integrations.FingeraAdapter.Factories
 {
     public class UserResolverFactory : IUserResolverFactory
     {
-        public const string WATCHLIST_MEMBER_LABEL_TYPE = "WATCHLIST_MEMBER_LABEL";
+        private const string WATCHLIST_MEMBER_LABEL_TYPE = WatchlistMemberLabelUserResolver.WATCHLIST_MEMBER_LABEL_TYPE;
         
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;

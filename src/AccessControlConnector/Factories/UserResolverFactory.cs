@@ -4,15 +4,14 @@ using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
-using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.InnerRange;
+using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 {
     public class UserResolverFactory : IUserResolverFactory
     {
-        public const string WATCHLIST_MEMBER_LABEL_TYPE = "WATCHLIST_MEMBER_LABEL";
+        private const string WATCHLIST_MEMBER_LABEL_TYPE = WatchlistMemberLabelUserResolver.WATCHLIST_MEMBER_LABEL_TYPE;
         public const string AEOS_USER = "AEOS_USER";
         public const string WATCHLIST_MEMBER_DATA = "WATCHLIST_MEMBER_DATA";
         

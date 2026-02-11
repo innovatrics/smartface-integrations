@@ -6,12 +6,13 @@ using Serilog;
 using Innovatrics.SmartFace.Models.API;
 using System.Linq;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
-using Innovatrics.SmartFace.Integrations.FingeraAdapter.Factories;
 
-namespace Innovatrics.SmartFace.Integrations.FingeraAdapter.Resolvers
+namespace Innovatrics.SmartFace.Integrations.AccessController.Resolvers
 {
     public class WatchlistMemberLabelUserResolver : IUserResolver
     {
+        public const string WATCHLIST_MEMBER_LABEL_TYPE = "WATCHLIST_MEMBER_LABEL";
+
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
@@ -64,9 +65,9 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter.Resolvers
                 normalizedLabelKey = labelKey.Substring("LABEL_".Length);
             }
 
-            if (labelKey.StartsWith($"{UserResolverFactory.WATCHLIST_MEMBER_LABEL_TYPE}_", StringComparison.OrdinalIgnoreCase))
+            if (labelKey.StartsWith($"{WATCHLIST_MEMBER_LABEL_TYPE}_", StringComparison.OrdinalIgnoreCase))
             {
-                normalizedLabelKey = labelKey.Substring($"{UserResolverFactory.WATCHLIST_MEMBER_LABEL_TYPE}_".Length);
+                normalizedLabelKey = labelKey.Substring($"{WATCHLIST_MEMBER_LABEL_TYPE}_".Length);
             }
 
             var labelParts = normalizedLabelKey
