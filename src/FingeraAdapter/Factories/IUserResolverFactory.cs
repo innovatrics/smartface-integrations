@@ -1,6 +1,6 @@
 using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 
-namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
+namespace Innovatrics.SmartFace.Integrations.FingeraAdapter.Factories
 {
     public interface IUserResolverFactory
     {

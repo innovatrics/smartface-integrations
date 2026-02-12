@@ -3,17 +3,13 @@ using System.Linq;
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Serilog;
-
 using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
-using Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers;
 
-namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
+namespace Innovatrics.SmartFace.Integrations.FingeraAdapter.Factories
 {
     public class UserResolverFactory : IUserResolverFactory
     {
         private const string WATCHLIST_MEMBER_LABEL_TYPE = WatchlistMemberLabelUserResolver.WATCHLIST_MEMBER_LABEL_TYPE;
-        public const string AEOS_USER = "AEOS_USER";
-        public const string WATCHLIST_MEMBER_DATA = "WATCHLIST_MEMBER_DATA";
         
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
@@ -48,14 +44,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case WATCHLIST_MEMBER_LABEL_TYPE:
                     return new WatchlistMemberLabelUserResolver(_logger, _configuration, _httpClientFactory, type);
-
-                case AEOS_USER:
-                    return new AeosUserResolver(_logger, _configuration, _httpClientFactory, type);
-
-                case WATCHLIST_MEMBER_DATA:
-                    // Parse label keys from type string (e.g., "WATCHLIST_MEMBER_DATA:Sharry_Id,Integriti_QR_Token")
-                    var labelKeys = ParseLabelKeys(type);
-                    return new WatchlistMemberDataResolver(_logger, labelKeys);
             }
         }
 
@@ -75,26 +63,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
                 normalizedType = WATCHLIST_MEMBER_LABEL_TYPE;
             }
 
-            // Extract base type before any colon
-            var baseType = normalizedType.Split(':')[0];
+            _logger.Information("Normalized type {type} to {normalizedType}", type, normalizedType);
 
-            _logger.Information("Normalized type {type} to {normalizedType}", type, baseType);
-
-            return baseType;
-        }
-
-        private string[] ParseLabelKeys(string type)
-        {
-            // Format: "WATCHLIST_MEMBER_DATA:Sharry_Id,Integriti_QR_Token,Integriti_Face_Token"
-            var parts = type.Split(':');
-            if (parts.Length < 2)
-            {
-                return Array.Empty<string>();
-            }
-
-            return parts[1].Split(',', StringSplitOptions.RemoveEmptyEntries)
-                          .Select(k => k.Trim())
-                          .ToArray();
+            return normalizedType;
         }
     }
 }

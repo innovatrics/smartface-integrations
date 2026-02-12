@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +7,7 @@ using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
+using Innovatrics.SmartFace.Integrations.FingeraAdapter.Factories;
 
 namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
 {
@@ -65,6 +66,7 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
             services.AddSingleton<GrpcStreamSubscriberFactory>();
             services.AddSingleton<GrpcReaderFactory>();
 
+            services.AddSingleton<IUserResolverFactory, UserResolverFactory>();
             services.AddSingleton<IFingeraAdapter, FingeraAdapter>();
             services.AddSingleton<IBridge, Bridge>();
 
