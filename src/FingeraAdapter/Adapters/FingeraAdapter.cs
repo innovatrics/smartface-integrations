@@ -25,7 +25,7 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
             this.httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
-        public async Task OpenAsync(string stationId, int? userId, DateTime timestamp, long score, string type = "camera", byte[] image = null)
+        public async Task OpenAsync(string stationId, string userId, DateTime timestamp, long score, string type = "camera", byte[] image = null)
         {
             var httpClient = this.httpClientFactory.CreateClient();
 
@@ -36,7 +36,9 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
                 throw new InvalidOperationException("Fingera server must be configured");
             }
 
-            var requestUrl = $"{fingeraServer}/scserver?type={type}&score={score}&station_id={stationId}&user_id={userId}&timestamp={timestamp:o}";
+            var userIdParam = this.configuration.GetValue<string>("Fingera:UserIdParam", "user_id");
+
+            var requestUrl = $"{fingeraServer}/scserver?type={type}&score={score}&station_id={stationId}&{userIdParam}={userId}&timestamp={timestamp:o}";
 
             HttpContent content;
 

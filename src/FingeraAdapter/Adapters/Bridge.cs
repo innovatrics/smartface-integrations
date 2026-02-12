@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.FingeraAdapter.Models;
+using Innovatrics.SmartFace.Integrations.FingeraAdapter.Factories;
 
 namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
 {
@@ -14,16 +15,19 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
         private readonly ILogger logger;
         private readonly IConfiguration configuration;
         private readonly IFingeraAdapter fingeraAdapter;
+        private readonly IUserResolverFactory userResolverFactory;
 
         public Bridge(
             ILogger logger,
             IConfiguration configuration,
-            IFingeraAdapter fingeraAdapter
+            IFingeraAdapter fingeraAdapter,
+            IUserResolverFactory userResolverFactory
         )
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.fingeraAdapter = fingeraAdapter ?? throw new ArgumentNullException(nameof(fingeraAdapter));
+            this.userResolverFactory = userResolverFactory ?? throw new ArgumentNullException(nameof(userResolverFactory));
         }
 
         public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
@@ -33,11 +37,24 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
                 throw new ArgumentNullException(nameof(notification));
             }
 
-            var fingeraUserId = this.parseWatchlistId(notification.WatchlistMemberExternalId);
+            string fingeraUserId = null;
+            var userResolverType = this.configuration.GetValue<string>("Fingera:UserResolver");
+
+            if (userResolverType != null)
+            {
+                var userResolver = this.userResolverFactory.Create(userResolverType);
+                fingeraUserId = await userResolver.ResolveUserAsync(notification);
+
+                this.logger.Debug("Resolved {WlMemberId} to {FingeraUserId}", notification.WatchlistMemberId, fingeraUserId);
+            }
+            else
+            {
+                fingeraUserId = this.parseWatchlistId(notification.WatchlistMemberExternalId);
+            }
 
             if (fingeraUserId == null)
             {
-                this.logger.Error("Failed to parse Fingera user ID from notification. Source {source}", notification.WatchlistMemberExternalId);
+                this.logger.Error("Failed to resolve Fingera user ID from notification. WatchlistMemberId {memberId}", notification.WatchlistMemberId);
                 return;
             }
 
@@ -64,7 +81,7 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
             );
         }
 
-        private int? parseWatchlistId(string input)
+        private string parseWatchlistId(string input)
         {
             var regexPattern = this.configuration.GetValue<string>("Fingera:UserIdRegEx", @"(?<=innovatrics_)\d+");
 
@@ -74,7 +91,7 @@ namespace Innovatrics.SmartFace.Integrations.FingeraAdapter
 
             if (match.Success)
             {
-                return int.Parse(match.Groups[0].Value);
+                return match.Groups[0].Value;
             }
 
             return null;

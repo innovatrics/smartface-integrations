@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.Linq;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
+using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 {
