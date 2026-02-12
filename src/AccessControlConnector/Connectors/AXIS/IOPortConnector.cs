@@ -87,9 +87,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
             }
             catch (HttpRequestException ex)
             {
-                activity?.RecordException(ex);
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
                 throw;
             }
         }

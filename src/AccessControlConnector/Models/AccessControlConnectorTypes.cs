@@ -16,5 +16,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Models
         public const string AEOS_CONNECTOR              = "AEOS_CONNECTOR";
         public const string KONE_CONNECTOR              = "KONE_CONNECTOR";
         public const string SHARRY_CHECK_IN_CONNECTOR   = "SHARRY_CHECK_IN_CONNECTOR";
+
+        // Internal for easier debug/evaluation of processing
+        public const string DUMMY_CONNECTOR   = "DUMMY";
     }
 }

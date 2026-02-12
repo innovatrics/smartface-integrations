@@ -44,6 +44,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
 
             var grantedNotification = new GrantedNotification
             {
+                ActivityContext = accessNotification.ActivityContext,
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
                 FaceId = accessNotification.FaceId,
@@ -68,6 +69,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
 
             var blockedNotification = new BlockedNotification
             {
+                ActivityContext = accessNotification.ActivityContext,
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
                 FaceId = accessNotification.FaceId,
@@ -89,6 +91,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Utils
 
             var deniedNotification = new DeniedNotification
             {
+                ActivityContext = accessNotification.ActivityContext,
                 StreamId = accessNotification.StreamId,
                 TrackletId = accessNotification.TrackletId,
                 FaceId = accessNotification.FaceId,

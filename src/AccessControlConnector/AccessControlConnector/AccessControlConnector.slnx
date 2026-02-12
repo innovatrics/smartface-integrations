@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../../KoneApi/Kone.Api.Client/Kone.Api.Client.csproj" />
+  <Project Path="../../Shared/AccessController/AccessController.csproj" />
+  <Project Path="../../Shared/Shared/Shared.csproj" />
+  <Project Path="../AccessControlConnector.csproj" />
+</Solution>

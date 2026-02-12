@@ -1,15 +1,19 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AccessController.Telemetry;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Innovatrics.Smartface;
 using Polly;
+using OpenTelemetry.Context.Propagation;
 
 namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
 {
     public class GrpcStreamSubscriber : IGrpcStreamSubscriber
     {
+        private readonly TraceContextPropagator _traceContextPropagator = new();
         private readonly CancellationTokenSource cancellationTokenSource = new();
         private readonly TimeSpan GRPC_TIMEOUT = TimeSpan.FromSeconds(10);
 
@@ -88,9 +92,15 @@ namespace Innovatrics.SmartFace.Integrations.AccessController.Clients.Grpc
 
             await policy.ExecuteAndCaptureAsync(async (CancellationToken cancellationToken) =>
             {
-                await foreach (var message in stream.ReadAllAsync(cts.Token))
+                await foreach (var accessNotification in stream.ReadAllAsync(cts.Token))
                 {
-                    OnMessageReceived?.Invoke(this, message);
+                    var extractedActivityContext = _traceContextPropagator
+                        .ExtractFromDictionary(accessNotification.Headers)
+                        .ActivityContext;
+
+                    accessNotification.ActivityContext = extractedActivityContext;
+
+                    OnMessageReceived?.Invoke(this, accessNotification);
                     cts.CancelAfter(GRPC_TIMEOUT);
                 }
             }, cancellationToken);

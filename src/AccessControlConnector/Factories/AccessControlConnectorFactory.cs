@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using AccessControlConnector.Connectors;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors;
@@ -75,6 +76,9 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories
 
                 case AccessControlConnectorTypes.KONE_CONNECTOR:
                     return KoneConnectorFactory.Create(_logger, _configuration);
+
+                case AccessControlConnectorTypes.DUMMY_CONNECTOR:
+                    return new DummyConnector();
 
                 default:
                     throw new NotImplementedException($"Access Connector of type {accessConnectorType} not supported");

@@ -10,15 +10,16 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry
 {
     public static class TelemetryServiceExtensions
     {
-        public static IServiceCollection AddAccessControlTelemetry(
-            this IServiceCollection services,
+        public static IServiceCollection AddTelemetry(this IServiceCollection services,
             IConfiguration configuration)
         {
-            var exporter = Environment.GetEnvironmentVariable("OTEL_TRACES_EXPORTER") ?? "none";
+            var tracingConfig = configuration
+                .GetSection(TracingConfig.SECTION_NAME)
+                .Get<TracingConfig>();
 
-            if (exporter.Equals("none", StringComparison.OrdinalIgnoreCase))
+            if (!tracingConfig.Enabled)
             {
-                return services; // No-op when disabled
+                return services;
             }
 
             services.AddOpenTelemetry()

@@ -126,9 +126,8 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             }
             catch (HttpRequestException ex)
             {
-                activity?.RecordException(ex);
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                activity?.SetTag(AccessControlTelemetry.ErrorTypeAttribute, "HttpRequestException");
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
                 _logger.Error(ex, $"VillaProConnector: Error during ticket pass for device {deviceId} with ticket {ticketId}");
                 throw;
             }
