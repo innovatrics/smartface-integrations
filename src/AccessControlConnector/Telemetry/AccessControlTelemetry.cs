@@ -8,7 +8,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry
         public const string ActivitySourceName = "Innovatrics.SmartFace.AccessControlConnector";
 
         // Span names
-        public const string GrantedOperationName = "access_control.ganted.process";
+        public const string GrantedOperationName = "access_control.granted.process";
         public const string ConnectorHandleOperationName = "access_control.connector.handle";
         public const string ExternalCallSpanName = "access_control.external.call";
 
