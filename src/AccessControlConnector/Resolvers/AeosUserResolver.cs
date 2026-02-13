@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using System.Linq;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
+using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 {
@@ -13,10 +14,13 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
         private readonly ILogger _logger;
         private readonly IConfiguration _configuration;
 
-        private readonly string _labelName;
+        private readonly string _labelNameFaceToken ;
+        private readonly string _labelNameQRToken;
+        private readonly bool _labelStrictUsageMode;
         private string _returnedValue;
         private string _watchlistMemberId;
-        private string _aeoslabel;
+        private string _aeoslabelFaceToken;
+        private string _aeoslabelQRToken;
 
         public AeosUserResolver(
             ILogger logger,
@@ -28,14 +32,17 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-            _labelName = _configuration.GetValue<string>("AeosConfiguration:LabelName");
-            if (string.IsNullOrEmpty(_labelName))
+            _labelNameFaceToken = _configuration.GetValue<string>("AeosConfiguration:FaceTokenLabelName");
+            _labelNameQRToken = _configuration.GetValue<string>("AeosConfiguration:QRTokenLabelName");
+            _labelStrictUsageMode = _configuration.GetValue<bool>("AeosConfiguration:LabelStrictUsageMode", false);
+            if (string.IsNullOrEmpty(_labelNameFaceToken) && string.IsNullOrEmpty(_labelNameQRToken) && _labelStrictUsageMode)
             {
-                _logger.Error("AeosConfiguration:LabelName is not set in the configuration");
-                throw new ArgumentException("AeosConfiguration:LabelName is not set in the configuration");
+                _logger.Error("AeosConfiguration:FaceTokenLabelName and AecosConfiguration:QRTokenLabelName are not set in the configuration and LabelStrictUsageMode is enabled");
+                throw new ArgumentException("AeosConfiguration:FaceTokenLabelName and AecosConfiguration:QRTokenLabelName are not set in the configuration and LabelStrictUsageMode is enabled");
             }
-            _logger.Information("AeosUserResolver: {labelName}", _labelName);
-
+            _logger.Information("AeosUserResolver: FaceTokenLabelName: {labelNameFaceToken}", _labelNameFaceToken);
+            _logger.Information("AeosUserResolver: QRTokenLabelName: {labelNameQRToken}", _labelNameQRToken);
+            _logger.Information("AeosUserResolver: LabelStrictUsageMode: {labelStrictUsageMode}", _labelStrictUsageMode);
         }
 
         public async Task<string> ResolveUserAsync(GrantedNotification notification)
@@ -50,37 +57,56 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers
 
             if (notification.WatchlistMemberLabels != null)
             {
-                _aeoslabel = notification.WatchlistMemberLabels?
-                                        .Where(w => w.Key.ToUpper() == _labelName)
+                _aeoslabelFaceToken = notification.WatchlistMemberLabels?
+                                        .Where(w => w.Key.ToUpper() == _labelNameFaceToken)
+                                        .Select(s => s.Value)
+                                        .SingleOrDefault();
+                _aeoslabelQRToken = notification.WatchlistMemberLabels?
+                                        .Where(w => w.Key.ToUpper() == _labelNameQRToken)
                                         .Select(s => s.Value)
                                         .SingleOrDefault();
             }
 
-            if (_aeoslabel != null)
+            if (_aeoslabelFaceToken != null)
             {
-                _logger.Information("AEOS Label {aeoslabel} is available and will be used as clientId", _aeoslabel);
-                _returnedValue = _aeoslabel;
+                _logger.Information("AEOS Label {aeoslabelFaceToken} is available and will be used as clientId", _aeoslabelFaceToken);
+                _returnedValue = _aeoslabelFaceToken;
+                return _returnedValue;
+            }
+            else if (_aeoslabelFaceToken == null && _aeoslabelQRToken != null)
+            {
+                _logger.Information("AEOS Label {aeoslabelFaceToken} is not available, but AEOS Label {aeoslabelQRToken} is available and will be used as clientId", _aeoslabelFaceToken, _aeoslabelQRToken);
+                _returnedValue = _aeoslabelQRToken;
+                return _returnedValue;
             }
             else
             {
-                _logger.Information("AEOS Label {aeoslabel} is not available, we will check for WatchlistMemberId", _aeoslabel);
-
-                if (notification.WatchlistMemberId != null)
+                if (_labelStrictUsageMode)
                 {
-                    _logger.Information("WatchlistMemberId {WatchlistMemberId} is available and will be used as clientId", 
-                        notification.WatchlistMemberId);
-
-                    _returnedValue = notification.WatchlistMemberId;
+                    _logger.Information("Skipping user resolution for {watchlistMemberId} ({watchlistMemberName}).", notification.WatchlistMemberId, notification.WatchlistMemberDisplayName);
+                    return null;
                 }
                 else
                 {
-                    _logger.Error("No valid client ID found - both values for AEOS Label and WatchlistMemberId are either null or empty");
-                    throw new ArgumentException("No valid client ID found - both values for Label and WatchlistMemberId are either null or empty");
+                    _logger.Information("AEOS Label {aeoslabelFaceToken} and {aeoslabelQRToken} are not available, we will check for WatchlistMemberId", _aeoslabelFaceToken, _aeoslabelQRToken);
+                    
+                    if (notification.WatchlistMemberId != null)
+                    {
+                        _logger.Information("WatchlistMemberId {WatchlistMemberId} is available and will be used as clientId", 
+                            notification.WatchlistMemberId);
+
+                        _returnedValue = notification.WatchlistMemberId;
+                    }
+                    else
+                    {
+                        _logger.Error("No valid client ID found - both values for AEOS Label and WatchlistMemberId are either null or empty");
+                        throw new ArgumentException("No valid client ID found - both values for Label and WatchlistMemberId are either null or empty");
+                    }
                 }
-            }
 
             return _returnedValue;
         }
 
     }
+}
 }

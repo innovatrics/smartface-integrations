@@ -1,14 +1,17 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using AccessControlConnector.Connectors;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Serilog;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 {
@@ -34,40 +37,68 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             _allStreamConfigs = LoadStreamConfig(configuration);
         }
 
-        public async Task ProcessGrantedNotificationAsync(GrantedNotification notification)
+        public async Task ProcessGrantedNotificationAsync(GrantedNotification grantedNotification)
         {
-            ArgumentNullException.ThrowIfNull(notification);
+            ArgumentNullException.ThrowIfNull(grantedNotification);
 
-            var streamConfigs = GetStreamConfigsForStream(notification.StreamId);
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.GrantedOperationName,
+                ActivityKind.Consumer,
+                parentContext: grantedNotification.ActivityContext);
 
-            if (streamConfigs.Length == 0)
+            activity?.SetTag(AccessControlTelemetry.StreamIdAttribute, grantedNotification.StreamId);
+
+            try
             {
-                _log.Warning("Granted notification for Stream {StreamId} has no AccessConnector configuration", notification.StreamId);
-                return;
-            }
+                var streamConfigs = GetStreamConfigsForStream(grantedNotification.StreamId);
 
-            foreach (var streamConfig in streamConfigs)
-            {
-                _log.Debug("Handling access for connector of type {ConnectorType}", streamConfig.Type);
-
-                if (streamConfig.Async)
+                // harmless dummy connector for easier local debug of connector infra
+                if (DummyConnector.Enabled)
                 {
-                    _ = Task.Run(async () =>
+                    streamConfigs.Add(new StreamConfig
                     {
-                        try
-                        {
-                            await ExecuteConnectorAsync(streamConfig, notification);
-                        }
-                        catch (Exception ex)
-                        {
-                            _log.Error(ex, "Failed to execute connector for stream {StreamId}", notification.StreamId);
-                        }
+                        Enabled = true,
+                        Async = true,
+                        Type = AccessControlConnectorTypes.DUMMY_CONNECTOR,
+                        StreamId = Guid.Parse(grantedNotification.StreamId)
                     });
                 }
-                else
+
+                if (streamConfigs.Count == 0)
                 {
-                    await ExecuteConnectorAsync(streamConfig, notification);
+                    _log.Warning("Granted grantedNotification for Stream {StreamId} has no AccessConnector configuration", grantedNotification.StreamId);
+                    return;
                 }
+
+                foreach (var streamConfig in streamConfigs)
+                {
+                    _log.Debug("Handling access for connector of type {ConnectorType}", streamConfig.Type);
+
+                    if (streamConfig.Async)
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await ExecuteConnectorAsync(streamConfig, grantedNotification);
+                            }
+                            catch (Exception ex)
+                            {
+                                _log.Error(ex, "Failed to execute connector for stream {StreamId}", grantedNotification.StreamId);
+                            }
+                        });
+                    }
+                    else
+                    {
+                        await ExecuteConnectorAsync(streamConfig, grantedNotification);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                throw;
             }
         }
 
@@ -100,7 +131,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
             }
         }
 
-        private StreamConfig[] GetStreamConfigsForStream(string streamId)
+        private List<StreamConfig> GetStreamConfigsForStream(string streamId)
         {
             if (!Guid.TryParse(streamId, out var streamGuid))
             {
@@ -109,7 +140,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             return _allStreamConfigs
                         .Where(w => w.StreamId == streamGuid)
-                        .ToArray();
+                        .ToList();
         }
 
         private StreamConfig[] LoadStreamConfig(IConfiguration configuration)
@@ -134,11 +165,6 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
             streamConfigs = streamConfigs.Where(x => x.Enabled).ToArray();
 
-            if (!streamConfigs.Any())
-            {
-                throw new InvalidOperationException("No enabled connectors configured in StreamConfig");
-            }
-
             foreach (var streamConfig in streamConfigs)
             {
                 _log.Information("Stream [{streamId}] for {Type} with face: {FaceModalityEnabled} palm: {PalmModalityEnabled} opticalCode: {OpticalCodeModalityEnabled}", streamConfig.StreamId, streamConfig.Type, streamConfig.FaceModalityEnabled ? 1 : 0, streamConfig.PalmModalityEnabled ? 1 : 0, streamConfig.OpticalCodeModalityEnabled ? 1 : 0);
@@ -149,59 +175,124 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
 
         private async Task ExecuteConnectorAsync(StreamConfig streamConfig, GrantedNotification notification)
         {
-            bool modalityEnabled = notification.Modality switch
-            {
-                Modality.Face => streamConfig.FaceModalityEnabled,
-                Modality.Palm => streamConfig.PalmModalityEnabled,
-                Modality.OpticalCode => streamConfig.OpticalCodeModalityEnabled,
-                _ => false
-            };
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ConnectorHandleOperationName);
 
-            if (!modalityEnabled)
-            {
-                _log.Warning("Stream config does not apply to modality {Modality} for Stream {StreamId}", notification.Modality, notification.StreamId);
-                return;
-            }
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, streamConfig.Type);
+            activity?.SetTag(AccessControlTelemetry.ConnectorTypeAttribute, GetConnectorType(streamConfig.Type));
+            activity?.SetTag(AccessControlTelemetry.StreamIdAttribute, notification.StreamId);
 
-            var watchlistExternalIds = streamConfig.WatchlistExternalIds;
-
-            if (watchlistExternalIds != null)
+            try
             {
-                if (watchlistExternalIds.Length > 0 &&
-                    !watchlistExternalIds.Contains(notification.WatchlistExternalId))
+                bool modalityEnabled = notification.Modality switch
                 {
-                    _log.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {StreamId}",
-                        notification.WatchlistExternalId, notification.StreamId);
+                    Modality.Face => streamConfig.FaceModalityEnabled,
+                    Modality.Palm => streamConfig.PalmModalityEnabled,
+                    Modality.OpticalCode => streamConfig.OpticalCodeModalityEnabled,
+                    _ => false
+                };
 
+                if (!modalityEnabled)
+                {
+                    _log.Warning("Stream config does not apply to modality {Modality} for Stream {StreamId}", notification.Modality, notification.StreamId);
                     return;
                 }
-            }
 
-            var accessControlConnector = _accessControlConnectorFactory.Create(streamConfig.Type);
-            string accessControlUser = null;
+                var watchlistExternalIds = streamConfig.WatchlistExternalIds;
 
-            if (streamConfig.UserResolver != null)
-            {
-                var userResolver = _userResolverFactory.Create(streamConfig.UserResolver);
-
-                accessControlUser = await userResolver.ResolveUserAsync(notification);
-
-                _log.Debug("Resolved {WlMemberId} to {AccessControlUser}", notification.WatchlistMemberId, accessControlUser);
-
-                if (accessControlUser == null)
+                if (watchlistExternalIds != null)
                 {
-                    return;
+                    if (watchlistExternalIds.Length > 0 &&
+                        !watchlistExternalIds.Contains(notification.WatchlistExternalId))
+                    {
+                        _log.Warning("Watchlist {watchlistExternalId} has no right to enter through this gate {StreamId}",
+                            notification.WatchlistExternalId, notification.StreamId);
+
+                        return;
+                    }
+                }
+
+                var accessControlConnector = _accessControlConnectorFactory.Create(streamConfig.Type);
+                string accessControlUser = null;
+
+                if (streamConfig.UserResolver != null)
+                {
+                    var userResolver = _userResolverFactory.Create(streamConfig.UserResolver);
+
+                    accessControlUser = await userResolver.ResolveUserAsync(notification);
+
+                    _log.Debug("Resolved {WlMemberId} to {AccessControlUser}", notification.WatchlistMemberId, accessControlUser);
+
+                    if (accessControlUser == null)
+                    {
+                        return;
+                    }
+                }
+
+                await accessControlConnector.OpenAsync(streamConfig, accessControlUser);
+
+                if (streamConfig.NextCallDelayMs is > 0)
+                {
+                    _log.Information("Delay next call for {NextCallDelayMs} ms", streamConfig.NextCallDelayMs);
+
+                    await Task.Delay(streamConfig.NextCallDelayMs.Value);
                 }
             }
-
-            await accessControlConnector.OpenAsync(streamConfig, accessControlUser);
-
-            if (streamConfig.NextCallDelayMs is > 0)
+            catch (Exception ex)
             {
-                _log.Information("Delay next call for {NextCallDelayMs} ms", streamConfig.NextCallDelayMs);
-
-                await Task.Delay(streamConfig.NextCallDelayMs.Value);
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
+                throw;
             }
+        }
+
+        private static string GetConnectorType(string connectorType)
+        {
+            if (string.IsNullOrEmpty(connectorType))
+            {
+                return "Unknown";
+            }
+
+            var normalizedType = connectorType.ToUpperInvariant();
+
+            if (normalizedType.Contains("INNERRANGE") || normalizedType.Contains("INTEGRITI"))
+            {
+                return "InnerRange";
+            }
+            if (normalizedType.Contains("AXIS"))
+            {
+                return "AXIS";
+            }
+            if (normalizedType.Contains("KONE"))
+            {
+                return "KONE";
+            }
+            if (normalizedType.Contains("ADVANTECH"))
+            {
+                return "Advantech";
+            }
+            if (normalizedType.Contains("2N") || normalizedType.Contains("NN"))
+            {
+                return "2N";
+            }
+            if (normalizedType.Contains("MYQ"))
+            {
+                return "MyQ";
+            }
+            if (normalizedType.Contains("VILLA"))
+            {
+                return "VillaPro";
+            }
+            if (normalizedType.Contains("AEOS"))
+            {
+                return "AEOS";
+            }
+            if (normalizedType.Contains("TRAFFIC"))
+            {
+                return "TrafficLight";
+            }
+
+            return "Other";
         }
     }
 }

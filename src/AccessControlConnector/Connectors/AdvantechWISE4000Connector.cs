@@ -1,10 +1,13 @@
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Trace;
 using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
@@ -62,16 +65,36 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
 
             httpRequestMessage.Content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
-            var httpRequest = await httpClient.SendAsync(httpRequestMessage);
-            string resultContent = await httpRequest.Content.ReadAsStringAsync();
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ExternalCallSpanName,
+                ActivityKind.Client);
 
-            if (httpRequest.IsSuccessStatusCode)
+            activity?.SetTag("http.method", "POST");
+            activity?.SetTag("http.url", requestUri);
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "Advantech.WISE4000");
+
+            try
             {
-                _logger.Information("OK");
+                var httpRequest = await httpClient.SendAsync(httpRequestMessage);
+
+                activity?.SetTag("http.status_code", (int)httpRequest.StatusCode);
+
+                string resultContent = await httpRequest.Content.ReadAsStringAsync();
+
+                if (httpRequest.IsSuccessStatusCode)
+                {
+                    _logger.Information("OK");
+                }
+                else
+                {
+                    _logger.Error("Fail with {statusCode}", httpRequest.StatusCode);
+                }
             }
-            else
+            catch (HttpRequestException ex)
             {
-                _logger.Error("Fail with {statusCode}", httpRequest.StatusCode);
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
+                throw;
             }
         }
 

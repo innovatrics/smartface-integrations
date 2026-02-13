@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -6,7 +7,9 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Trace;
 using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.AXIS
@@ -75,11 +78,30 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.A
 
             _logger.Information("SendOpenAsync to {url} with {body}", requestUri, jsonContent);
 
-            var httpResponse = await httpClient.SendAsync(httpRequest);
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ExternalCallSpanName,
+                ActivityKind.Client);
 
-            httpResponse.EnsureSuccessStatusCode();
+            activity?.SetTag("http.method", "POST");
+            activity?.SetTag("http.url", requestUri);
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "AXIS.A1001");
 
-            _logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            try
+            {
+                var httpResponse = await httpClient.SendAsync(httpRequest);
+
+                activity?.SetTag("http.status_code", (int)httpResponse.StatusCode);
+
+                httpResponse.EnsureSuccessStatusCode();
+
+                _logger.Information("Status {httpStatus}", (int)httpResponse.StatusCode);
+            }
+            catch (HttpRequestException ex)
+            {
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
+                throw;
+            }
         }
     }
 }

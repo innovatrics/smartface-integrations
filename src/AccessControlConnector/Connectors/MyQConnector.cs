@@ -1,9 +1,12 @@
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Models;
+using Innovatrics.SmartFace.Integrations.AccessControlConnector.Telemetry;
+using OpenTelemetry.Trace;
 using Serilog;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -185,14 +188,34 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors
             string apiUrl = $"{myQSchema}://{myQHostname}:{myQPort}/api/v3/printers/unlock";
             var payload = new { sn = printer, account = userToken };
 
-            var response = await client.PostAsync(apiUrl, new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
-            if (response.IsSuccessStatusCode)
+            using var activity = AccessControlTelemetry.ActivitySource.StartActivity(
+                AccessControlTelemetry.ExternalCallSpanName,
+                ActivityKind.Client);
+
+            activity?.SetTag("http.method", "POST");
+            activity?.SetTag("http.url", apiUrl);
+            activity?.SetTag(AccessControlTelemetry.ConnectorNameAttribute, "MyQ");
+
+            try
             {
-                this.logger.Information($"Printer {printer} unlocked on streamId {streamId}");
+                var response = await client.PostAsync(apiUrl, new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json"));
+
+                activity?.SetTag("http.status_code", (int)response.StatusCode);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    this.logger.Information($"Printer {printer} unlocked on streamId {streamId}");
+                }
+                else
+                {
+                    this.logger.Warning($"Unlocking failed for printer {printer}. Status: {response.StatusCode}, Message: {await response.Content.ReadAsStringAsync()}");
+                }
             }
-            else
+            catch (HttpRequestException ex)
             {
-                this.logger.Warning($"Unlocking failed for printer {printer}. Status: {response.StatusCode}, Message: {await response.Content.ReadAsStringAsync()}");
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
+                throw;
             }
         }
     }
