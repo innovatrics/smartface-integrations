@@ -213,5 +213,121 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 return new List<GroupInfo>();
             }
         }
+
+        public async Task<LockerReleaseResult> ReleaseLockerAsync(int lockerId)
+        {
+            var result = new LockerReleaseResult { LockerId = lockerId };
+            
+            try
+            {
+                var baseUrl = $"{DashboardsHost}:{DashboardsPort}";
+                var endpoint = $"{baseUrl}/api/lockeranalytics/release-locker/{lockerId}";
+                
+                this.logger.Information($"Releasing locker {lockerId} via Dashboards API. Calling endpoint: POST {endpoint}");
+                
+                var response = await httpClient.PostAsync(endpoint, null);
+                result.StatusCode = (int)response.StatusCode;
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    result.Success = true;
+                    result.Message = $"Locker {lockerId} successfully released";
+                    this.logger.Information($"[Locker Release] SUCCESS - Locker ID: {lockerId}, Status Code: {result.StatusCode}");
+                }
+                else
+                {
+                    result.Success = false;
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    result.Message = $"Failed to release locker {lockerId}: {errorContent}";
+                    
+                    // Log specific error codes as per requirements
+                    switch (result.StatusCode)
+                    {
+                        case 400:
+                            this.logger.Error($"[Locker Release] FAILED - Bad Request - Locker ID: {lockerId}, Status Code: 400, Details: {errorContent}");
+                            break;
+                        case 403:
+                            this.logger.Error($"[Locker Release] FAILED - Forbidden - Locker ID: {lockerId}, Status Code: 403, Details: {errorContent}");
+                            break;
+                        case 500:
+                            this.logger.Error($"[Locker Release] FAILED - Internal Server Error - Locker ID: {lockerId}, Status Code: 500, Details: {errorContent}");
+                            break;
+                        default:
+                            this.logger.Error($"[Locker Release] FAILED - Locker ID: {lockerId}, Status Code: {result.StatusCode}, Details: {errorContent}");
+                            break;
+                    }
+                }
+                
+                return result;
+            }
+            catch (HttpRequestException ex)
+            {
+                result.Success = false;
+                result.StatusCode = 0;
+                result.Message = $"HTTP request failed for locker {lockerId}: {ex.Message}";
+                this.logger.Error(ex, $"[Locker Release] FAILED - HTTP Error - Locker ID: {lockerId}, Exception: {ex.Message}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.StatusCode = 0;
+                result.Message = $"Unexpected error releasing locker {lockerId}: {ex.Message}";
+                this.logger.Error(ex, $"[Locker Release] FAILED - Unexpected Error - Locker ID: {lockerId}, Exception: {ex.Message}");
+                return result;
+            }
+        }
+
+        public async Task<List<LockerAccessEvent>> GetAccessedLockersAsync(DateTime? fromDateTime = null)
+        {
+            try
+            {
+                var baseUrl = $"{DashboardsHost}:{DashboardsPort}";
+                var endpoint = $"{baseUrl}/api/lockeranalytics/accessedLockers";
+                
+                if (fromDateTime.HasValue)
+                {
+                    var dateTimeStr = fromDateTime.Value.ToString("o"); // ISO 8601 format
+                    endpoint = $"{endpoint}?dateTime={Uri.EscapeDataString(dateTimeStr)}";
+                }
+                
+                this.logger.Information($"Fetching accessed lockers from Dashboards API. Calling endpoint: GET {endpoint}");
+                
+                var response = await httpClient.GetAsync(endpoint);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    this.logger.Error($"API returned error status {response.StatusCode}: {errorContent}");
+                    return new List<LockerAccessEvent>();
+                }
+                
+                var content = await response.Content.ReadAsStringAsync();
+                this.logger.Debug($"Received accessed lockers response: {content}");
+                
+                var result = JsonSerializer.Deserialize<List<LockerAccessEvent>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                
+                this.logger.Information($"Successfully retrieved {result?.Count ?? 0} locker access events");
+                return result ?? new List<LockerAccessEvent>();
+            }
+            catch (HttpRequestException ex)
+            {
+                this.logger.Error(ex, "HTTP request failed when calling accessedLockers API");
+                return new List<LockerAccessEvent>();
+            }
+            catch (JsonException ex)
+            {
+                this.logger.Error(ex, "Failed to deserialize accessedLockers response from Dashboards API");
+                return new List<LockerAccessEvent>();
+            }
+            catch (Exception ex)
+            {
+                this.logger.Error(ex, "Unexpected error occurred while fetching accessed lockers");
+                return new List<LockerAccessEvent>();
+            }
+        }
     }
 }

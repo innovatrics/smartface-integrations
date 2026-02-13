@@ -16,17 +16,17 @@ To run the application locally, follow these steps
 ### Deploy to Docker
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AEOS/LockerMailer/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.1 .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.1 registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:latest`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.1`
+ - `docker build -f src/AEOS/LockerMailer/Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.3 .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.3 registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:latest`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.3`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:latest`
 
 ### Deploy to Docker on Arm
 - navigate to the root of this repo
 - run the following commands
- - `docker build -f src/AEOS/LockerMailer/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.1-arm .`
- - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.1-arm registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:latest-arm`
- - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.1-arm`
+ - `docker build -f src/AEOS/LockerMailer/arm.Dockerfile -t registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.3-arm .`
+ - `docker tag registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.3-arm registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:latest-arm`
+ - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:1.3-arm`
  - `docker push registry.gitlab.com/innovatrics/smartface/integrations-aeoslockermailer:latest-arm`
 
 ## Usage

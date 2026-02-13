@@ -112,4 +112,23 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.DataModels
         public DateTime ChangeTimestamp { get; set; }
         public string ChangeType { get; set; } = string.Empty;
     }
+
+    /// <summary>
+    /// Represents a locker access event from the Dashboards API.
+    /// </summary>
+    public class LockerAccessEvent
+    {
+        public long Id { get; set; }
+        public long EventTypeId { get; set; }
+        public string? EventTypeName { get; set; }
+        public DateTime DateTime { get; set; }
+        public string? HostName { get; set; }
+        public string? AccesspointName { get; set; }
+        public long? IdentifierId { get; set; }
+        public string? Identifier { get; set; }
+        public long? CarrierId { get; set; }
+        public string? CarrierFullName { get; set; }
+        public int? IntValue { get; set; }
+        public string? Attribute { get; set; }
+    }
 }

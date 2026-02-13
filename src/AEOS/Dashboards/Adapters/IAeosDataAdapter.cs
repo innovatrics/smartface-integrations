@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using ServiceReference;
@@ -19,5 +20,6 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         Task<IList<ServiceReference.TemplateInfo>> GetTemplates(string unitOfAuthType);
         Task<bool> AssignLocker(long lockerId, long carrierId, int lockerAuthorisationGroupNetworkId, long lockerAuthorisationPresetId);
         Task<bool> UnlockLocker(long lockerId);
+        Task<IList<LockerAccessEvent>> GetLockerAccessEvents(DateTime fromDateTime);
     }
 }

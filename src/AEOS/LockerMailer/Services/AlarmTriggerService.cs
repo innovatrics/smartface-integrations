@@ -83,6 +83,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     var templateId = template.GetValue<string>("templateId");
                     var templateAlarm = template.GetValue<string>("templateAlarm");
                     var templateCheckGroup = template.GetValue<string>("templateCheckGroup");
+                    var autoReleaseLockers = template.GetValue<bool>("autoReleaseLockers", false);
                     
                     if (!string.IsNullOrEmpty(templateId) && !string.IsNullOrEmpty(templateAlarm))
                     {
@@ -90,9 +91,10 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                         {
                             TemplateId = templateId,
                             TemplateAlarm = templateAlarm,
-                            TemplateCheckGroup = templateCheckGroup ?? string.Empty
+                            TemplateCheckGroup = templateCheckGroup ?? string.Empty,
+                            AutoReleaseLockers = autoReleaseLockers
                         });
-                        logger.Debug($"Loaded template configuration: {templateId} with alarm {templateAlarm}");
+                        logger.Debug($"Loaded template configuration: {templateId} with alarm {templateAlarm}, autoReleaseLockers: {autoReleaseLockers}");
                     }
                 }
             }
@@ -440,6 +442,17 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                             
                             // Create a single bulk email with all locker information
                             await SendBulkEmailToReceptionist(template, assignedLockers, keilaCampaigns);
+                            
+                            // Release lockers if autoReleaseLockers is enabled
+                            if (template.AutoReleaseLockers)
+                            {
+                                logger.Information($"[Locker Release] Auto-release enabled for lockers-flow_5. Starting release of {assignedLockers.Count} lockers...");
+                                await ReleaseLockers(assignedLockers);
+                            }
+                            else
+                            {
+                                logger.Information($"[Locker Release] Auto-release is disabled for lockers-flow_5. Skipping locker release.");
+                            }
                         }
                         else
                         {
@@ -459,6 +472,50 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
             catch (Exception ex)
             {
                 logger.Error(ex, $"Error processing lockers-flow_5 bulk email");
+            }
+        }
+
+        private async Task ReleaseLockers(List<LockerInfo> lockers)
+        {
+            var successCount = 0;
+            var failureCount = 0;
+            var results = new List<LockerReleaseResult>();
+
+            logger.Information($"[Locker Release] Beginning release of {lockers.Count} lockers...");
+
+            foreach (var locker in lockers)
+            {
+                try
+                {
+                    logger.Information($"[Locker Release] Attempting to release locker '{locker.Name}' (ID: {locker.Id}) assigned to '{locker.AssignedEmployeeName}'");
+                    
+                    var result = await dashboardsDataAdapter.ReleaseLockerAsync(locker.Id);
+                    results.Add(result);
+
+                    if (result.Success)
+                    {
+                        successCount++;
+                        logger.Information($"[Locker Release] Successfully released locker '{locker.Name}' (ID: {locker.Id})");
+                    }
+                    else
+                    {
+                        failureCount++;
+                        logger.Warning($"[Locker Release] Failed to release locker '{locker.Name}' (ID: {locker.Id}) - Status: {result.StatusCode}, Message: {result.Message}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failureCount++;
+                    logger.Error(ex, $"[Locker Release] Exception while releasing locker '{locker.Name}' (ID: {locker.Id})");
+                }
+            }
+
+            // Summary log
+            logger.Information($"[Locker Release] Release operation completed. Total: {lockers.Count}, Successful: {successCount}, Failed: {failureCount}");
+            
+            if (failureCount > 0)
+            {
+                logger.Warning($"[Locker Release] {failureCount} locker(s) could not be released. Check previous logs for details.");
             }
         }
 
@@ -536,6 +593,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     { "time", DateTime.Now.ToString("HH:mm") },
                     { "source", mockChange.LockerName },
                     { "group", mockChange.GroupName },
+                    { "lockergroup", mockChange.GroupName },
                     { "canceltime", templateCancelTime },
                     { "lockercount", mockChange.TotalAssignedLockers.ToString() },
                     { "lockerlist", lockerList }
@@ -543,7 +601,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
 
                 // Build HTML from Keila template blocks with placeholder replacement
                 var sb = new System.Text.StringBuilder();
-                sb.Append("<html><body>");
+                sb.Append("<!DOCTYPE html><html><body>");
 
                 if (campaign.JsonBody?.Blocks != null)
                 {
@@ -555,6 +613,8 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     }
                 }
 
+                // Add hidden element to prevent Gmail from clipping the email
+                sb.Append($"<div style=\"display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;\">&#847; {DateTime.UtcNow.Ticks}</div>");
                 sb.Append("</body></html>");
                 var htmlEmail = sb.ToString();
 
@@ -610,6 +670,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                 { "time", DateTime.Now.ToString("HH:mm") },
                 { "source", change.LockerName },
                 { "group", change.GroupName },
+                { "lockergroup", change.GroupName },
                 { "canceltime", templateCancelTime },
                 { "lockercount", change.TotalAssignedLockers.ToString() },
                 { "lockerlist", lockerList } // This is the key replacement for the bulk email
@@ -677,5 +738,6 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
         public string TemplateId { get; set; } = string.Empty;
         public string TemplateAlarm { get; set; } = string.Empty;
         public string TemplateCheckGroup { get; set; } = string.Empty;
+        public bool AutoReleaseLockers { get; set; } = false;
     }
 }

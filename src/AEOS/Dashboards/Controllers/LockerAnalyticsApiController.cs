@@ -454,6 +454,55 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 return StatusCode(500, new { error = "Failed to unlock locker", details = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Returns locker access events from the specified date/time.
+        /// </summary>
+        /// <param name="dateTime">The date/time to search from in ISO 8601 format (e.g., 2026-01-31T00:00:00Z). If not provided, defaults to today at 00:00:00.</param>
+        /// <returns>List of locker access events.</returns>
+        /// <response code="200">Returns the list of locker access events.</response>
+        /// <response code="400">Invalid date/time format.</response>
+        /// <response code="500">Error occurred while retrieving locker access events.</response>
+        [HttpGet("accessedLockers")]
+        [ProducesResponseType(typeof(IList<LockerAccessEvent>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAccessedLockers([FromQuery] string? dateTime = null)
+        {
+            DateTime fromDateTime;
+            
+            if (string.IsNullOrWhiteSpace(dateTime))
+            {
+                // Default to today at 00:00:00
+                fromDateTime = DateTime.Today;
+            }
+            else
+            {
+                // Try to parse the provided date/time
+                if (!DateTime.TryParse(dateTime, null, System.Globalization.DateTimeStyles.RoundtripKind, out fromDateTime))
+                {
+                    return BadRequest(new { 
+                        error = "Invalid date/time format.", 
+                        details = "Please provide a valid ISO 8601 date/time format (e.g., 2026-01-31T00:00:00Z).",
+                        providedValue = dateTime
+                    });
+                }
+            }
+
+            try
+            {
+                var events = await aeosDataAdapter.GetLockerAccessEvents(fromDateTime);
+                return Ok(events);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to retrieve locker access events");
+                return StatusCode(500, new { 
+                    error = "Failed to retrieve locker access events", 
+                    details = ex.Message 
+                });
+            }
+        }
     }
 
     /// <summary>
