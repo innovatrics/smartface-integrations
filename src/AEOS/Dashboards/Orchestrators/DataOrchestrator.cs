@@ -63,7 +63,22 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             var currentCheckTime = DateTime.Now;
             var changes = new List<LockerAssignmentChange>();
 
-            logger.Information($"GetAssignmentChanges called. Last check time: {_lastAssignmentCheckTime}, Total lockers: {_AeosAllLockers?.Count ?? 0}");
+            logger.Information($"GetAssignmentChanges called. Last check time: {_lastAssignmentCheckTime}, Initial data loaded: {initialAeosDataLoaded}, Total lockers: {_AeosAllLockers?.Count ?? 0}");
+
+            // Until the first successful AEOS sync, _AeosAllLockers is empty. Treating that as the
+            // baseline causes the next poll (after data loads) to report every existing assignment
+            // as new — duplicate "Assigned" emails after each container/process restart.
+            if (!initialAeosDataLoaded)
+            {
+                logger.Debug("GetAssignmentChanges: skipping baseline and compare until initial AEOS data is loaded.");
+                return Task.FromResult(new AssignmentChangesResponse
+                {
+                    LastCheckTime = _lastAssignmentCheckTime ?? currentCheckTime,
+                    CurrentCheckTime = currentCheckTime,
+                    Changes = changes,
+                    TotalChanges = 0
+                });
+            }
 
             // If this is the first call, initialize the previous assignments and return empty changes
             if (!_lastAssignmentCheckTime.HasValue)

@@ -146,7 +146,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
         /// <summary>
         /// Returns changes in locker assignments since the last time this endpoint was called.
-        /// If this is the first call since application start, no changes will be returned.
+        /// If this is the first call since application start (after the initial AEOS data sync has completed), no changes will be returned.
         /// </summary>
         /// <returns>List of assignment changes with employee details including email addresses</returns>
         [HttpGet("email-summary/assignment-changes")]
