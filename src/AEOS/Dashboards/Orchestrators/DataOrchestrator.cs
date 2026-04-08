@@ -21,7 +21,10 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private readonly IConfiguration configuration;
         private readonly IAeosDataAdapter aeosDataAdapter;
         private LockerAnalytics currentAnalytics = new LockerAnalytics();
+        private volatile bool initialAeosDataLoaded;
         private string AeosIntegrationIdentifierType;
+
+        public bool IsInitialAeosDataLoaded => initialAeosDataLoaded;
 
         
         private IList<AeosMember> _AeosAllEmployees = new List<AeosMember>();
@@ -405,6 +408,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                         $" - Last used: {locker.LastUsed:yyyy-MM-dd HH:mm:ss} ({locker.DaysSinceLastUse:F1} days ago)");
                 }
             }
+
+            initialAeosDataLoaded = true;
         }
 
         public Task<IList<AeosMember>> GetEmployees()

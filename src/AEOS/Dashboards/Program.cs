@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +8,7 @@ using Serilog;
 using System.Net.Http;
 using Innovatrics.SmartFace.Integrations.Shared.Logging;
 using Innovatrics.SmartFace.Integrations.Shared.Extensions;
+using Innovatrics.SmartFace.Integrations.AeosDashboards.AnalyticsReporting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -67,6 +68,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private static IServiceCollection ConfigureServices(IServiceCollection services, Serilog.ILogger logger, IConfiguration configuration)
         {
             services.AddHttpClient();
+            services.AddHttpClient(AnalyticsReportingHostedService.HttpClientName);
             services.AddSmartFaceGraphQLClient()
                             .ConfigureHttpClient((serviceProvider, httpClient) =>
                             {});
@@ -74,6 +76,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             services.AddSingleton<IAeosDataAdapter, AeosDataAdapter>();
             services.AddSingleton<IDataOrchestrator, DataOrchestrator>();
             services.AddHostedService<MainHostedService>();
+            services.AddHostedService<AnalyticsReportingHostedService>();
             
             // Add MVC services with proper configuration
             services.AddControllersWithViews()
