@@ -155,9 +155,13 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
             }
 
             // Step 4: Process each authorized event
+            // Track lockers already processed in this batch to avoid duplicate releases/emails
+            // when AEOS returns multiple events for the same physical locker access
+            var lockersProcessedInBatch = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var accessEvent in authorizedEvents)
             {
-                // Skip if already processed
+                // Skip if this event ID was already processed in a previous polling cycle
                 lock (lockObject)
                 {
                     if (processedEventIds.Contains(accessEvent.Id))
@@ -167,9 +171,27 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     }
                 }
 
+                // Skip if we already processed a different event for the same locker in this batch
+                if (!string.IsNullOrEmpty(accessEvent.AccesspointName) &&
+                    lockersProcessedInBatch.Contains(accessEvent.AccesspointName))
+                {
+                    logger.Information($"[LockerPickupService] Locker '{accessEvent.AccesspointName}' already processed in this batch (event {accessEvent.Id}) - skipping duplicate");
+
+                    lock (lockObject)
+                    {
+                        processedEventIds.Add(accessEvent.Id);
+                    }
+                    continue;
+                }
+
                 try
                 {
                     await ProcessLockerPickupEvent(accessEvent, groups);
+
+                    if (!string.IsNullOrEmpty(accessEvent.AccesspointName))
+                    {
+                        lockersProcessedInBatch.Add(accessEvent.AccesspointName);
+                    }
                     
                     // Mark as processed
                     lock (lockObject)
