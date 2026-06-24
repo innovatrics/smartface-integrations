@@ -1,5 +1,8 @@
 # Change Log
 
+## 2026-06-24 - AeosDashboards
+Added "Change Room Gents" and "Change Room Ladies" locker groups to the Locker Management dashboard (default grid view; unlock + unassign enabled) so reception can manage changing-room lockers, using the same flow as the courier/food groups.
+
 ## 2026-06-24 - LockerMailer
 Added a daily **Idle Locker Report**: at a configured time (default 09:00) it emails a table of assigned changing-room lockers (`Change Room Gents` / `Change Room Ladies`) not opened in more than `IdleDays` (default 14) to a dedicated recipient list. New `IdleLockerReportService` + `LockerMailer:IdleLockerReport` config section. Reuses the existing Dashboards data source and SMTP sender; does not release lockers.
 
