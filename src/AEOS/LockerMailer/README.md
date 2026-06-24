@@ -145,6 +145,37 @@ The application configuration is stored in `appsettings.json`:
 }
 ```
 
+### Idle Locker Report (daily unused-locker email)
+
+In addition to the alarm-driven flows above, the service sends a **once-per-day report** of
+assigned lockers that have not been opened for a while — e.g. so reception can reclaim unused
+changing-room lockers. It reuses the Dashboards data source and the SMTP sender and does **not**
+release any lockers.
+
+Configured under `LockerMailer:IdleLockerReport`:
+
+```json
+"IdleLockerReport": {
+    "Enabled": true,
+    "TriggerTime": "09:00",
+    "IdleDays": 14,
+    "CheckGroups": ["Change Room Gents", "Change Room Ladies"],
+    "Recipients": ["reception@biometricshouse.com", "peter.novak@innovatrics.com"]
+}
+```
+
+| Key | Meaning |
+|---|---|
+| `Enabled` | Master switch. When `false` the report service does nothing. |
+| `TriggerTime` | Local time of day (`HH:mm`) the report is sent, once per day. |
+| `IdleDays` | Lockers idle for strictly more than this many days are reported. |
+| `CheckGroups` | Locker group names to inspect. |
+| `Recipients` | Email addresses the report is sent to. |
+
+Only **assigned** lockers are reported. Each row shows the locker name, the assignee, and how long
+since it was last opened (e.g. "2 months 3 days ago"). If no lockers qualify, no email is sent.
+Honors the global `LockerMailer:DebugMode` (logs the HTML instead of sending).
+
 ### Configuration Options
 
   sf-station:
