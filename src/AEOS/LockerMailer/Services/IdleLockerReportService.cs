@@ -41,6 +41,11 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
         // Guards against sending more than once on the same day.
         private DateTime? lastSentDate;
 
+        // After TriggerTime, keep retrying a failed run for up to this many minutes before
+        // giving up for the day. Bounds retries so a long outage can't spin forever, while a
+        // brief Dashboards/SMTP blip no longer silently drops the day's report.
+        private const double RetryWindowMinutes = 60;
+
         public IdleLockerReportService(
             ILogger logger,
             IConfiguration configuration,
@@ -108,14 +113,22 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                 try
                 {
                     var now = DateTime.Now;
-                    var withinWindow = Math.Abs((now.TimeOfDay - triggerTime).TotalMinutes) <= 1.0;
+                    // Fire only at or after the configured time (never early), and keep retrying
+                    // within the retry window until a run actually succeeds.
+                    var minutesSinceTrigger = (now.TimeOfDay - triggerTime).TotalMinutes;
+                    var withinWindow = minutesSinceTrigger >= 0 && minutesSinceTrigger <= RetryWindowMinutes;
                     var alreadySentToday = lastSentDate.HasValue && lastSentDate.Value.Date == now.Date;
 
                     if (withinWindow && !alreadySentToday)
                     {
-                        logger.Information($"[IdleLockerReportService] Trigger time reached ({now:HH:mm}) - building idle locker report");
-                        await BuildAndSendReport();
-                        lastSentDate = now;
+                        logger.Information($"[IdleLockerReportService] Running idle locker report ({now:HH:mm})");
+                        // Only mark the day done when the run completed (report sent, or genuinely
+                        // nothing to report after a successful fetch). On a transient failure
+                        // lastSentDate stays unset so the next loop retries within the window.
+                        if (await BuildAndSendReport())
+                        {
+                            lastSentDate = now;
+                        }
                     }
 
                     await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
@@ -135,14 +148,19 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
             }
         }
 
-        private async Task BuildAndSendReport()
+        /// <summary>
+        /// Builds and sends the report. Returns true when the day is "done" — report sent, or
+        /// genuinely nothing to report after a successful fetch. Returns false on a transient
+        /// failure (no groups fetched, or every send failed) so the caller retries within the window.
+        /// </summary>
+        private async Task<bool> BuildAndSendReport()
         {
             // 1. Pull all groups (with per-locker last-used data) from the Dashboards API.
             var groups = await dashboardsDataAdapter.GetGroups();
             if (!groups.Any())
             {
-                logger.Warning("[IdleLockerReportService] No groups returned from Dashboards API - skipping report");
-                return;
+                logger.Warning("[IdleLockerReportService] No groups returned from Dashboards API - will retry");
+                return false;
             }
 
             // 2. Collect assigned lockers in the configured groups that are idle beyond the threshold.
@@ -158,7 +176,10 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
 
                 var matches = group.AllLockers
                     .Where(l => l.AssignedTo.HasValue && !string.IsNullOrWhiteSpace(l.AssignedEmployeeName))
-                    .Where(l => l.DaysSinceLastUse > idleDays)
+                    // Idle beyond the threshold, OR assigned but never opened: upstream maps a
+                    // never-used locker to LastUsed=null with DaysSinceLastUse=0, which would
+                    // otherwise slip past the threshold even though it is the most idle case.
+                    .Where(l => l.LastUsed == null || l.DaysSinceLastUse > idleDays)
                     .Select(l => new IdleLockerRow
                     {
                         LockerName = l.Name,
@@ -172,8 +193,8 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
 
             if (!idleLockers.Any())
             {
-                logger.Information($"[IdleLockerReportService] No assigned lockers idle for more than {idleDays} days in [{string.Join(", ", checkGroups)}] - no email sent");
-                return;
+                logger.Information($"[IdleLockerReportService] No assigned lockers idle beyond {idleDays} days in [{string.Join(", ", checkGroups)}] - nothing to send");
+                return true;
             }
 
             // Most idle first - the most actionable rows are at the top.
@@ -190,10 +211,12 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
             if (debugMode)
             {
                 logger.Information("[IdleLockerReportService] DebugMode enabled - email not sent. Generated HTML:\n" + htmlBody);
-                return;
+                return true;
             }
 
-            // 4. Send to each configured recipient.
+            // 4. Send to each configured recipient. Track successes so that a total failure
+            //    (e.g. SMTP down) reports back as "not done" and the caller retries.
+            var sentCount = 0;
             foreach (var recipient in recipients)
             {
                 if (string.IsNullOrWhiteSpace(recipient))
@@ -217,6 +240,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     };
 
                     await smtpMailAdapter.SendAsync(recipient, subject, htmlBody, loggingData);
+                    sentCount++;
                     logger.Information($"[IdleLockerReportService] Idle locker report sent to {recipient} ({idleLockers.Count} locker(s))");
                 }
                 catch (Exception ex)
@@ -224,6 +248,14 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     logger.Error(ex, $"[IdleLockerReportService] Failed to send idle locker report to {recipient}");
                 }
             }
+
+            if (sentCount == 0)
+            {
+                logger.Warning("[IdleLockerReportService] Idle locker report reached no recipients - will retry");
+                return false;
+            }
+
+            return true;
         }
 
         private string BuildHtml(List<IdleLockerRow> rows, DateTime today)
@@ -273,22 +305,19 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                 return "Today";
             }
 
-            // Calendar-accurate years / months / days difference.
-            int years = now.Year - last.Year;
-            int months = now.Month - last.Month;
-            int days = now.Day - last.Day;
-
-            if (days < 0)
+            // Calendar-accurate years / months / days difference. Anchor on `last` and add whole
+            // months, then count the leftover days. AddMonths clamps short months (e.g. Jan 30 +
+            // 1 month = Feb 28), which avoids the negative-borrow bug a manual day subtraction hits.
+            int totalMonths = (now.Year - last.Year) * 12 + (now.Month - last.Month);
+            var anchor = last.AddMonths(totalMonths);
+            if (anchor > now)
             {
-                months--;
-                var previousMonth = now.AddMonths(-1);
-                days += DateTime.DaysInMonth(previousMonth.Year, previousMonth.Month);
+                totalMonths--;
+                anchor = last.AddMonths(totalMonths);
             }
-            if (months < 0)
-            {
-                years--;
-                months += 12;
-            }
+            int years = totalMonths / 12;
+            int months = totalMonths % 12;
+            int days = (now.Date - anchor.Date).Days;
 
             var parts = new List<string>();
             if (years > 0) parts.Add($"{years} year{(years == 1 ? "" : "s")}");
