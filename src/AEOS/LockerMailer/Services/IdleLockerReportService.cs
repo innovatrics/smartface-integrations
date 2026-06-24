@@ -165,6 +165,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
 
             // 2. Collect assigned lockers in the configured groups that are idle beyond the threshold.
             var idleLockers = new List<IdleLockerRow>();
+            var matchedGroups = 0;
             foreach (var groupName in checkGroups)
             {
                 var group = groups.FirstOrDefault(g => g.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase));
@@ -174,12 +175,15 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     continue;
                 }
 
+                matchedGroups++;
+
                 var matches = group.AllLockers
                     .Where(l => l.AssignedTo.HasValue && !string.IsNullOrWhiteSpace(l.AssignedEmployeeName))
-                    // Idle beyond the threshold, OR assigned but never opened: upstream maps a
-                    // never-used locker to LastUsed=null with DaysSinceLastUse=0, which would
-                    // otherwise slip past the threshold even though it is the most idle case.
-                    .Where(l => l.LastUsed == null || l.DaysSinceLastUse > idleDays)
+                    // Strictly more than the idle threshold. Never-opened lockers (LastUsed null,
+                    // DaysSinceLastUse 0 upstream) are intentionally NOT reported: with no assignment
+                    // timestamp we cannot tell a freshly-assigned locker from a long-idle one, so
+                    // flagging every just-assigned locker would be a daily false positive.
+                    .Where(l => l.DaysSinceLastUse > idleDays)
                     .Select(l => new IdleLockerRow
                     {
                         LockerName = l.Name,
@@ -189,6 +193,12 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                     });
 
                 idleLockers.AddRange(matches);
+            }
+
+            if (matchedGroups == 0)
+            {
+                logger.Warning($"[IdleLockerReportService] None of the configured groups [{string.Join(", ", checkGroups)}] were present in the Dashboards response - will retry");
+                return false;
             }
 
             if (!idleLockers.Any())
