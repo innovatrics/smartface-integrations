@@ -114,7 +114,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
                 {
                     var now = DateTime.Now;
                     // Fire only at or after the configured time (never early), and keep retrying
-                    // within the retry window until a run actually succeeds.
+                    // within the retry window until a run actually succeeds. The window is same-day
+                    // only, so TriggerTime should be earlier than (24:00 minus RetryWindowMinutes);
+                    // the 09:00 default is well clear of midnight.
                     var minutesSinceTrigger = (now.TimeOfDay - triggerTime).TotalMinutes;
                     var withinWindow = minutesSinceTrigger >= 0 && minutesSinceTrigger <= RetryWindowMinutes;
                     var alreadySentToday = lastSentDate.HasValue && lastSentDate.Value.Date == now.Date;
@@ -177,7 +179,9 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer.Services
 
                 matchedGroups++;
 
-                var matches = group.AllLockers
+                // AllLockers can be null if the API returns "allLockers": null (other services in
+                // this repo access it defensively too) - treat a null list as an empty group.
+                var matches = (group.AllLockers ?? new List<LockerInfo>())
                     .Where(l => l.AssignedTo.HasValue && !string.IsNullOrWhiteSpace(l.AssignedEmployeeName))
                     // Strictly more than the idle threshold. Never-opened lockers (LastUsed null,
                     // DaysSinceLastUse 0 upstream) are intentionally NOT reported: with no assignment
