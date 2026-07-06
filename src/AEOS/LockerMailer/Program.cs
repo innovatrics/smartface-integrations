@@ -74,6 +74,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             services.AddHostedService<MainHostedService>();
             services.AddHostedService<Services.AlarmTriggerService>();
             services.AddHostedService<Services.LockerPickupService>();
+            services.AddHostedService<Services.IdleLockerReportService>();
 
             return services;
         }
