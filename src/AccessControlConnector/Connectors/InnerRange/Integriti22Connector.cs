@@ -176,7 +176,7 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Connectors.I
 
             string requestUri;
 
-            if (!string.IsNullOrEmpty(doorName) && !string.IsNullOrEmpty(controller))
+            if ((!string.IsNullOrEmpty(doorName) || !string.IsNullOrEmpty(doorId)) && !string.IsNullOrEmpty(controller))
             {
                 if (!string.IsNullOrEmpty(doorId))
                 {
