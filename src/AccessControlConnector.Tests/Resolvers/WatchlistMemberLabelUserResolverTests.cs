@@ -8,6 +8,7 @@ using Xunit;
 using NSubstitute;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
+using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Resolvers
 {

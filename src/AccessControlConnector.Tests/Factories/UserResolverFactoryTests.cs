@@ -7,6 +7,7 @@ using Innovatrics.SmartFace.Integrations.AccessControlConnector.Factories;
 using Serilog.Core;
 using NSubstitute;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers;
+using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Factories
 {
