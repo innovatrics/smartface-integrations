@@ -328,11 +328,20 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 }
                 catch (ApiException e)
                 {
-                    var root = JObject.Parse(e.Response);
-                    _logger.Debug($"Status Code: {e.StatusCode}, {root["detail"]}");
+                    string detail = null;
+                    try
+                    {
+                        detail = (string)JObject.Parse(e.Response)?["detail"];
+                    }
+                    catch
+                    {
+                        // response body is not JSON — fall through to the generic detail below
+                    }
+                    detail ??= $"registration failed with HTTP {e.StatusCode}";
+                    _logger.Debug($"Status Code: {e.StatusCode}, {detail}");
 
                     SupportingData SupportData = new SupportingData(await _aeosDataAdapter.GetFreefieldDefinitionId(), await _aeosDataAdapter.GetBadgeIdentifierType());
-                    var BiometricStatusUpdated = await _aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {root["detail"]}", SupportData);
+                    var BiometricStatusUpdated = await _aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {detail}", SupportData);
 
                     restAPIexception = true;
                     return false;

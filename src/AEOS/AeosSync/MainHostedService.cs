@@ -43,25 +43,34 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             while(!cancellationToken.IsCancellationRequested)
             {
-                
+
                 try
                 {
                     await this.bridge.Synchronize();
-                    this.logger.Debug("Waiting for {SyncPeriodMs}ms for another sync.", SyncPeriodMs);    
-                    await Task.Delay(SyncPeriodMs,cancellationToken);
                 }
 
                 catch (OperationCanceledException)
                 {
                     this.logger.Information($"The Service is being shut.");
+                    break;
                 }
 
                 catch (Exception e)
                 {
-                    this.logger.Error(e,"The sync tool failed unexpectedly.");
+                    this.logger.Error(e,"The sync tool failed unexpectedly. Next sync attempt in {SyncPeriodMs}ms.", SyncPeriodMs);
                 }
 
-            }           
+                try
+                {
+                    this.logger.Debug("Waiting for {SyncPeriodMs}ms for another sync.", SyncPeriodMs);
+                    await Task.Delay(SyncPeriodMs,cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    this.logger.Information($"The Service is being shut.");
+                }
+
+            }
             
         }
 

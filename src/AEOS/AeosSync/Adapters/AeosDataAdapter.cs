@@ -33,6 +33,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private bool AutoBiometryEnablement;
         private string AutoBiometryPrefix;
         private string BiometricEnrollmentStatus;
+        private int BiometricEnrollmentStatusMaxLength;
         private Dictionary<string, bool> DefaultTemplates = new();
 
         private AeosWebServiceTypeClient client;
@@ -58,6 +59,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             AutoBiometryEnablement = configuration.GetValue<bool>("AeosSync:Aeos:AutoBiometryEnablement");
             AutoBiometryPrefix = configuration.GetValue<string>("AeosSync:Aeos:AutoBiometryPrefix");
             BiometricEnrollmentStatus = configuration.GetValue<string>("AeosSync:Aeos:Integration:BiometricEnrollmentStatus");
+            // 30 = the default length of an AEOS freefield definition; values longer than the
+            // definition's configured length are rejected with FreeFieldLengthValidationException.
+            BiometricEnrollmentStatusMaxLength = configuration.GetValue<int>("AeosSync:Aeos:Integration:BiometricEnrollmentStatusMaxLength", 30);
 
             if (DataSource == null)
             {
@@ -291,16 +295,27 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 addIdentifier.IdentifierAdd.IdentifierType = badgeIdentifierType;
                 addIdentifier.IdentifierAdd.BadgeNumber = member.SmartFaceId;
 
-                var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
+                try
+                {
+                    var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
 
-                if (addIdentifierResponse.IdentifierResult.Id != 0)
-                {
-                    _logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - SUCCESS");
-                    return true;
+                    if (addIdentifierResponse.IdentifierResult.Id != 0)
+                    {
+                        _logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - SUCCESS");
+                        return true;
+                    }
+                    else
+                    {
+                        _logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - FAIL");
+                        return false;
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    _logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - FAIL");
+                    // e.g. FaultException<ErrorInfo>: MaximumNumberOfTokensException — report it on the
+                    // employee's status freefield and fail this employee only.
+                    _logger.Error(e, $"Adding identifier to registered user {AeosExtensions.JoinNames(member.FirstName, member.LastName, FirstNameOrder)} - FAIL");
+                    await UpdateBiometricStatus(addEmployeeResponse.EmployeeResult.Id, $"Not Enabled - {e.Message}");
                     return false;
                 }
             }
@@ -362,45 +377,71 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 var response = await this.GetEmployeeByAeosId(memberId);
                 if (response != null)
                 {
-                    var updateEmployee = new changeEmployee();
-                    updateEmployee.EmployeeChange = new EmployeeInfo();
-                    updateEmployee.EmployeeChange.Id = response.Id;
-                    updateEmployee.EmployeeChange.IdSpecified = true;
-                    updateEmployee.EmployeeChange.FirstName = response.FirstName;
-                    updateEmployee.EmployeeChange.LastName = response.LastName;
-                    updateEmployee.EmployeeChange.Freefield = new FreeFieldInfo[1];
-                    updateEmployee.EmployeeChange.Freefield[0] = new FreeFieldInfo();
-                    updateEmployee.EmployeeChange.Freefield[0].DefinitionId = FreefieldDefinitionId;
-                    updateEmployee.EmployeeChange.Freefield[0].Name = SmartFaceIdFreefield;
-                    updateEmployee.EmployeeChange.Freefield[0].value = AutoBiometryPrefix + response.SmartFaceId;
+                    var smartFaceId = AutoBiometryPrefix + response.SmartFaceId;
 
-                    var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
-                    if (updateEmployeeResponse == null)
+                    try
                     {
-                        _logger.Warning($"It was not possible to add SmartFaceId.");
-                        return false;
-                    }
-                    else
-                    {
-                        var addIdentifier = new assignToken();
-                        addIdentifier.IdentifierAdd = new CarrierIdentifierData();
-                        addIdentifier.IdentifierAdd.CarrierId = response.Id;
-                        addIdentifier.IdentifierAdd.IdentifierType = badgeIdentifierType;
-                        addIdentifier.IdentifierAdd.BadgeNumber = AutoBiometryPrefix + response.SmartFaceId;
-
-                        var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
-                        if (addIdentifierResponse.IdentifierResult.Id != 0)
+                        // Assign the badge token BEFORE writing the SmartFaceId freefield. The token is the
+                        // call that fails on real-world limits (e.g. MaximumNumberOfTokensException when the
+                        // carrier already holds the maximum number of tokens); doing it first means a failure
+                        // leaves the employee fully untouched instead of half-enabled (freefield set, no badge)
+                        // — a state the sync would treat as enabled forever.
+                        if (!await CarrierHasBadgeToken(response.Id, badgeIdentifierType, smartFaceId))
                         {
+                            var addIdentifier = new assignToken();
+                            addIdentifier.IdentifierAdd = new CarrierIdentifierData();
+                            addIdentifier.IdentifierAdd.CarrierId = response.Id;
+                            addIdentifier.IdentifierAdd.IdentifierType = badgeIdentifierType;
+                            addIdentifier.IdentifierAdd.BadgeNumber = smartFaceId;
+
+                            var addIdentifierResponse = await client.assignTokenAsync(addIdentifier.IdentifierAdd);
+                            if (addIdentifierResponse.IdentifierResult.Id == 0)
+                            {
+                                _logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - FAIL");
+                                await UpdateBiometricStatus(memberId, "Not Enabled - badge token assignment failed");
+                                return false;
+                            }
                             _logger.Debug($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - SUCCESS");
-                            return true;
                         }
                         else
                         {
-                            _logger.Error($"Adding identifier to registered user {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} - FAIL");
+                            _logger.Debug($"User {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} already has the badge token {smartFaceId}, skipping assignment.");
+                        }
+
+                        // If this write fails, the already-assigned token is found again on the next cycle
+                        // (see CarrierHasBadgeToken above), so retrying is idempotent.
+                        var updateEmployee = new changeEmployee();
+                        updateEmployee.EmployeeChange = new EmployeeInfo();
+                        updateEmployee.EmployeeChange.Id = response.Id;
+                        updateEmployee.EmployeeChange.IdSpecified = true;
+                        updateEmployee.EmployeeChange.FirstName = response.FirstName;
+                        updateEmployee.EmployeeChange.LastName = response.LastName;
+                        updateEmployee.EmployeeChange.Freefield = new FreeFieldInfo[1];
+                        updateEmployee.EmployeeChange.Freefield[0] = new FreeFieldInfo();
+                        updateEmployee.EmployeeChange.Freefield[0].DefinitionId = FreefieldDefinitionId;
+                        updateEmployee.EmployeeChange.Freefield[0].Name = SmartFaceIdFreefield;
+                        updateEmployee.EmployeeChange.Freefield[0].value = smartFaceId;
+
+                        var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
+                        if (updateEmployeeResponse == null)
+                        {
+                            _logger.Warning($"It was not possible to add SmartFaceId.");
+                            await UpdateBiometricStatus(memberId, "Not Enabled - SmartFaceId freefield write failed");
                             return false;
                         }
-                    }
 
+                        return true;
+                    }
+                    catch (Exception e)
+                    {
+                        // Typically FaultException<ErrorInfo> from AEOS (MaximumNumberOfTokensException,
+                        // FreeFieldLengthValidationException, ...). Report it on the employee's
+                        // BiometricEnrollmentStatus freefield so failed employees can be filtered in AEOS,
+                        // and skip the employee instead of aborting the whole sync cycle.
+                        _logger.Error(e, $"Enabling biometry failed for {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} with AEOS id {memberId}. The employee is skipped.");
+                        await UpdateBiometricStatus(memberId, $"Not Enabled - {e.Message}");
+                        return false;
+                    }
                 }
                 else
                 {
@@ -413,6 +454,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 return false;
             }
 
+        }
+
+        private async Task<bool> CarrierHasBadgeToken(long carrierId, long badgeIdentifierType, string badgeNumber)
+        {
+            var carrierTokens = await client.findCarrierTokenAsync(carrierId);
+            return carrierTokens?.IdentifierList?.Any(t => t.IdentifierType == badgeIdentifierType && t.BadgeNumber == badgeNumber) == true;
         }
 
         public async Task<AeosMember> GetEmployeeByAeosId(long employeeId)
@@ -692,6 +739,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             if (response != null)
             {
                 _logger.Debug($"GetEmployeeByAeosId response was NOT null");
+
+                // AEOS rejects values longer than the freefield definition's configured length
+                // (FreeFieldLengthValidationException), so clamp the status to a known-safe size.
+                var statusValue = TruncateFreefieldValue(biometricStatus, BiometricEnrollmentStatusMaxLength);
+
                 var updateEmployee = new changeEmployee();
                 updateEmployee.EmployeeChange = new EmployeeInfo();
                 updateEmployee.EmployeeChange.Id = response.Id;
@@ -702,18 +754,29 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 updateEmployee.EmployeeChange.Freefield[0] = new FreeFieldInfo();
                 updateEmployee.EmployeeChange.Freefield[0].DefinitionId = biometricStatusFreefield;
                 updateEmployee.EmployeeChange.Freefield[0].Name = BiometricEnrollmentStatus;
-                updateEmployee.EmployeeChange.Freefield[0].value = biometricStatus;
+                updateEmployee.EmployeeChange.Freefield[0].value = statusValue;
 
-                var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
-                if (updateEmployeeResponse == null)
+                try
                 {
-                    _logger.Warning($"It was not possible to change the Biometric Enrollment Status for {response.FirstName} {response.LastName} with id {response.SmartFaceId}.");
-                    return false;
+                    var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
+                    if (updateEmployeeResponse == null)
+                    {
+                        _logger.Warning($"It was not possible to change the Biometric Enrollment Status for {response.FirstName} {response.LastName} with id {response.SmartFaceId}.");
+                        return false;
+                    }
+                    else
+                    {
+                        _logger.Debug($"The {BiometricEnrollmentStatus} was updated to {statusValue}");
+                        return true;
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    _logger.Debug($"The {BiometricEnrollmentStatus} was updated to {biometricStatus}");
-                    return true;
+                    // A failed status write must never abort the sync cycle — it is diagnostics, not sync data.
+                    // If this happens even after truncation, the freefield in AEOS is defined shorter than
+                    // AeosSync:Aeos:Integration:BiometricEnrollmentStatusMaxLength — lower the setting or widen the field.
+                    _logger.Error(e, $"Writing {BiometricEnrollmentStatus}='{statusValue}' failed for employee with AEOS id {userId}.");
+                    return false;
                 }
             }
             else
@@ -724,13 +787,29 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
         }
 
+        private static string TruncateFreefieldValue(string value, int maxLength)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+            value = value.Replace("\r", " ").Replace("\n", " ");
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+        }
+
         public async Task<bool> UpdateBiometricStatusWithSFMember(SmartFaceMember member, string biometricStatus, SupportingData supportData)
         {
 
             if(DataSource == "AEOS")
             {
-                _logger.Debug($"AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix) {AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix)}");
-                var updatedBiometricStatus = await UpdateBiometricStatus(long.Parse(AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix)), biometricStatus);
+                var rawAeosId = AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix);
+                _logger.Debug($"AeosExtensions.idRemovePrefix(member.Id, AutoBiometryPrefix) {rawAeosId}");
+                if (!long.TryParse(rawAeosId, out var aeosId))
+                {
+                    _logger.Warning($"Cannot update the biometric status for SF member {member.Id}: '{rawAeosId}' is not a numeric AEOS employee id.");
+                    return false;
+                }
+                var updatedBiometricStatus = await UpdateBiometricStatus(aeosId, biometricStatus);
                 return updatedBiometricStatus;
             }
             else
