@@ -91,7 +91,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync.Clients
                         skip: $skip,
                         take: $take,
                         order: { id: ASC },
-                        where: { watchlists: { all: { id: { eq: $watchlistId } } } }
+                        where: { watchlists: { some: { id: { eq: $watchlistId } } } }
                     ) {
                         items {
                             id

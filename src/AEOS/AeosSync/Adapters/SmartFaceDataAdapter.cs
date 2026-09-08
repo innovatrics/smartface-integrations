@@ -181,7 +181,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             _logger.Debug($"SF: {wm.Id} {imageDataId} {wm.DisplayName}, {wm.Note}:{imageDataId}");
                             _logger.Debug($"Trying user {wm.Id}-{wm.FullName}:{wm.DisplayName}, {wm.Note}");
 
-                            smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
+                            smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId?.ToString()));
                         }
 
                     }
@@ -220,7 +220,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         foreach (var wm in watchlistMembers.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet?.Faces?.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == FaceType.Regular)?.ImageDataId;
-                            if (KeepPhotoUpToDate)
+                            if (KeepPhotoUpToDate && imageDataId != null)
                             {
                                 var imageDataBytes = await GetImageData(imageDataId.ToString());
                                 if (imageDataBytes != null)
@@ -234,7 +234,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             }
                             else
                             {
-                                smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
+                                smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId?.ToString()));
                             }
                         }
                         if (watchlistMembers.WatchlistMembers.PageInfo?.HasNextPage == false)
