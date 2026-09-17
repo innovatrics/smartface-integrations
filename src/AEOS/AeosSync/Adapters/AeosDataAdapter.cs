@@ -36,6 +36,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private int BiometricEnrollmentStatusMaxLength;
         private Dictionary<string, bool> DefaultTemplates = new();
 
+        // Last logged auto-biometry failure per AEOS employee id. An employee that cannot be
+        // enabled (e.g. carrier at the AEOS token limit) fails identically every sync cycle;
+        // log it at Error only when it appears or changes, at Debug while it persists.
+        private readonly Dictionary<long, string> enableBiometryFailureLogState = new();
+
         private AeosWebServiceTypeClient client;
 
         public AeosDataAdapter(
@@ -430,6 +435,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             return false;
                         }
 
+                        enableBiometryFailureLogState.Remove(memberId);
                         return true;
                     }
                     catch (Exception e)
@@ -438,7 +444,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         // FreeFieldLengthValidationException, ...). Report it on the employee's
                         // BiometricEnrollmentStatus freefield so failed employees can be filtered in AEOS,
                         // and skip the employee instead of aborting the whole sync cycle.
-                        _logger.Error(e, $"Enabling biometry failed for {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} with AEOS id {memberId}. The employee is skipped.");
+                        var message = $"Enabling biometry failed for {AeosExtensions.JoinNames(response.FirstName, response.LastName, FirstNameOrder)} with AEOS id {memberId} and will be retried every cycle: {e.Message}";
+                        if (enableBiometryFailureLogState.TryGetValue(memberId, out var lastFailure) && lastFailure == e.Message)
+                        {
+                            _logger.Debug(message);
+                        }
+                        else
+                        {
+                            enableBiometryFailureLogState[memberId] = e.Message;
+                            _logger.Error(e, message);
+                        }
                         await UpdateBiometricStatus(memberId, $"Not Enabled - {e.Message}");
                         return false;
                     }
@@ -735,21 +750,36 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
             _logger.Debug($"biometricStatusFreefield: {biometricStatusFreefield}, userId: {userId}, BiometricEnrollmentStatus: {BiometricEnrollmentStatus}");
 
-            var response = await this.GetEmployeeByAeosId(userId);
-            if (response != null)
+            var employeeSearch = new EmployeeSearchInfo();
+            employeeSearch.EmployeeInfo = new EmployeeSearchInfoEmployeeInfo();
+            employeeSearch.EmployeeInfo.Id = userId;
+            employeeSearch.EmployeeInfo.IdSpecified = true;
+            var foundEmployees = await client.findEmployeeAsync(employeeSearch);
+
+            if (foundEmployees.EmployeeList.Employee.Count() > 0)
             {
-                _logger.Debug($"GetEmployeeByAeosId response was NOT null");
+                var employeeInfo = foundEmployees.EmployeeList.Employee[0].EmployeeInfo;
 
                 // AEOS rejects values longer than the freefield definition's configured length
                 // (FreeFieldLengthValidationException), so clamp the status to a known-safe size.
                 var statusValue = TruncateFreefieldValue(biometricStatus, BiometricEnrollmentStatusMaxLength);
 
+                // Skip the write when the freefield already holds this value: a permanently failing
+                // employee would otherwise be rewritten with the identical status every sync cycle,
+                // flooding the AEOS carrier-change audit trail.
+                var currentValue = employeeInfo.GetFreefieldValue(BiometricEnrollmentStatus);
+                if (currentValue == statusValue)
+                {
+                    _logger.Debug($"The {BiometricEnrollmentStatus} for employee with AEOS id {userId} is already '{statusValue}', skipping the write.");
+                    return true;
+                }
+
                 var updateEmployee = new changeEmployee();
                 updateEmployee.EmployeeChange = new EmployeeInfo();
-                updateEmployee.EmployeeChange.Id = response.Id;
+                updateEmployee.EmployeeChange.Id = employeeInfo.Id;
                 updateEmployee.EmployeeChange.IdSpecified = true;
-                updateEmployee.EmployeeChange.FirstName = response.FirstName;
-                updateEmployee.EmployeeChange.LastName = response.LastName;
+                updateEmployee.EmployeeChange.FirstName = employeeInfo.FirstName;
+                updateEmployee.EmployeeChange.LastName = employeeInfo.LastName;
                 updateEmployee.EmployeeChange.Freefield = new FreeFieldInfo[1];
                 updateEmployee.EmployeeChange.Freefield[0] = new FreeFieldInfo();
                 updateEmployee.EmployeeChange.Freefield[0].DefinitionId = biometricStatusFreefield;
@@ -761,7 +791,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     var updateEmployeeResponse = await client.changeEmployeeAsync(updateEmployee.EmployeeChange);
                     if (updateEmployeeResponse == null)
                     {
-                        _logger.Warning($"It was not possible to change the Biometric Enrollment Status for {response.FirstName} {response.LastName} with id {response.SmartFaceId}.");
+                        _logger.Warning($"It was not possible to change the Biometric Enrollment Status for {employeeInfo.FirstName} {employeeInfo.LastName} with id {userId}.");
                         return false;
                     }
                     else
@@ -781,7 +811,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
             else
             {
-                _logger.Debug($"GetEmployeeByAeosId response was null");
+                _logger.Debug($"No employee with AEOS id {userId} was found for the biometric status update.");
                 return false;
             }
 

@@ -40,6 +40,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private Dictionary<string, bool> SmartFaceSyncedWatchlists = new();
         private bool KeepPhotoUpToDate;
 
+        // Last logged registration failure per member id. A member with an unusable photo fails
+        // registration again on every sync cycle; log the reason at Warning only when it appears
+        // or changes, and at Debug while it persists, so the log is not flooded with repeats.
+        private readonly Dictionary<string, string> registrationFailureLogState = new();
+
         private string AeosWatchlistName;
 
         public SmartFaceDataAdapter(
@@ -317,7 +322,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                     if (restAPIresult.Id == null)
                     {
-                        _logger.Warning($"User {member.FullName} was not registered.");
+                        LogRegistrationFailure(member, "registration issue");
 
                         SupportingData SupportData = new SupportingData(await _aeosDataAdapter.GetFreefieldDefinitionId(), await _aeosDataAdapter.GetBadgeIdentifierType());
                         var BiometricStatusUpdated = await _aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Not Enabled - registration issue", SupportData);
@@ -338,7 +343,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         // response body is not JSON — fall through to the generic detail below
                     }
                     detail ??= $"registration failed with HTTP {e.StatusCode}";
-                    _logger.Debug($"Status Code: {e.StatusCode}, {detail}");
+                    LogRegistrationFailure(member, detail);
 
                     SupportingData SupportData = new SupportingData(await _aeosDataAdapter.GetFreefieldDefinitionId(), await _aeosDataAdapter.GetBadgeIdentifierType());
                     var BiometricStatusUpdated = await _aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {detail}", SupportData);
@@ -349,6 +354,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 if (restAPIexception == false)
                 {
+                    registrationFailureLogState.Remove(member.Id);
                     return true;
                 }
 
@@ -362,6 +368,18 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
 
             return true;
+        }
+
+        private void LogRegistrationFailure(SmartFaceMember member, string detail)
+        {
+            var message = $"User {member.FullName} with id {member.Id} was not registered in SmartFace: {detail}. It will be retried every sync cycle until the photo in AEOS is fixed or the user is excluded.";
+            if (registrationFailureLogState.TryGetValue(member.Id, out var lastDetail) && lastDetail == detail)
+            {
+                _logger.Debug(message);
+                return;
+            }
+            registrationFailureLogState[member.Id] = detail;
+            _logger.Warning(message);
         }
 
         public async Task<bool> UpdateEmployee(SmartFaceMember member, bool keepPhotoUpToDate)
