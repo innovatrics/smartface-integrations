@@ -40,13 +40,16 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
          
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
+            this.logger.Information("Synchronization runs in polling mode: a full sync is executed every {SyncPeriodMs}ms.", SyncPeriodMs);
 
             while(!cancellationToken.IsCancellationRequested)
             {
 
                 try
                 {
+                    var syncStartedAt = DateTime.UtcNow;
                     await this.bridge.Synchronize();
+                    this.logger.Information("Sync poll completed in {ElapsedMs}ms. Next poll in {SyncPeriodMs}ms.", (long)(DateTime.UtcNow - syncStartedAt).TotalMilliseconds, SyncPeriodMs);
                 }
 
                 catch (OperationCanceledException)
