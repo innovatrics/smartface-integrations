@@ -64,16 +64,18 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             AutoBiometryEnablement = configuration.GetValue<bool>("AeosSync:Aeos:AutoBiometryEnablement");
             AutoBiometryPrefix = configuration.GetValue<string>("AeosSync:Aeos:AutoBiometryPrefix");
             BiometricEnrollmentStatus = configuration.GetValue<string>("AeosSync:Aeos:Integration:BiometricEnrollmentStatus");
-            // The status value (incl. the SF validation-failure reason) is capped at 100 characters;
-            // the BiometricEnrollmentStatus freefield in AEOS must be defined at least this long,
-            // otherwise AEOS rejects the write with FreeFieldLengthValidationException (non-fatal,
-            // but the status is then not stored). NOTE: a freshly created AEOS freefield defaults
-            // to length 30 — widen it, or lower this setting to match the field.
-            BiometricEnrollmentStatusMaxLength = configuration.GetValue<int>("AeosSync:Aeos:Integration:BiometricEnrollmentStatusMaxLength", 100);
-            if (BiometricEnrollmentStatusMaxLength > 100)
+            // The status value (incl. the SF validation-failure reason) is capped at this many
+            // characters; the BiometricEnrollmentStatus freefield in AEOS must be defined at least
+            // this long, otherwise AEOS rejects the write with FreeFieldLengthValidationException
+            // (non-fatal, but the status is then not stored). 255 = the maximum length an AEOS
+            // freefield definition can be given (writes fault at 256). NOTE: a freshly created AEOS
+            // freefield defaults to length 30 — widen it to 255 (Maintenance -> Free fields), or
+            // lower this setting to match the field's real length.
+            BiometricEnrollmentStatusMaxLength = configuration.GetValue<int>("AeosSync:Aeos:Integration:BiometricEnrollmentStatusMaxLength", 255);
+            if (BiometricEnrollmentStatusMaxLength > 255)
             {
-                _logger.Warning($"BiometricEnrollmentStatusMaxLength {BiometricEnrollmentStatusMaxLength} exceeds the supported maximum, using 100.");
-                BiometricEnrollmentStatusMaxLength = 100;
+                _logger.Warning($"BiometricEnrollmentStatusMaxLength {BiometricEnrollmentStatusMaxLength} exceeds the AEOS freefield maximum, using 255.");
+                BiometricEnrollmentStatusMaxLength = 255;
             }
 
             if (DataSource == null)
