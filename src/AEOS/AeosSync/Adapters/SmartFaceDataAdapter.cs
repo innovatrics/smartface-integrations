@@ -40,7 +40,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private Dictionary<string, bool> SmartFaceSyncedWatchlists = new();
         private bool KeepPhotoUpToDate;
 
+        // Last logged registration failure per member id. A member with an unusable photo fails
+        // registration again on every sync cycle; log the reason at Warning only when it appears
+        // or changes, and at Debug while it persists, so the log is not flooded with repeats.
+        private readonly Dictionary<string, string> registrationFailureLogState = new();
+
         private string AeosWatchlistName;
+        private string PhotoHashLabel;
 
         public SmartFaceDataAdapter(
             ILogger logger,
@@ -71,6 +77,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             ConfidenceThreshold = configuration.GetValue<int>("AeosSync:SmartFace:Import:FaceDetectorConfig:ConfidenceThreshold");
             configuration.Bind("AeosSync:SmartFace:Export:SyncedWatchlists", SmartFaceSyncedWatchlists);
             KeepPhotoUpToDate = configuration.GetValue<bool>("AeosSync:Aeos:KeepPhotoUpToDate");
+            PhotoHashLabel = configuration.GetValue<string>("AeosSync:SmartFace:Import:PhotoHashLabel") ?? "AeosPhotoHash";
 
             if (SmartFaceSetPageSize <= 0)
             {
@@ -97,6 +104,60 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 throw new InvalidOperationException("The ConfidenceThreshold needs to be a positive value.");
             }
 
+        }
+
+        private static IDictionary<string, string> ToLabelDictionary(MemberLabel[] labels)
+        {
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (labels != null)
+            {
+                foreach (var label in labels)
+                {
+                    if (label != null && !string.IsNullOrEmpty(label.Key))
+                    {
+                        result[label.Key] = label.Value;
+                    }
+                }
+            }
+            return result;
+        }
+
+        private string GetPhotoHash(IDictionary<string, string> labels)
+        {
+            if (labels != null && labels.TryGetValue(PhotoHashLabel, out var value))
+            {
+                return value;
+            }
+            return null;
+        }
+
+        // Rebuilds the REST label collection from the member's existing labels, setting (or
+        // removing) only our own PhotoHashLabel. Labels written by other systems (e.g. the
+        // AccessControlConnector, which resolves users by label) must survive the upsert.
+        private ICollection<Label> BuildLabels(SmartFaceMember member)
+        {
+            var merged = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (member.Labels != null)
+            {
+                foreach (var kv in member.Labels)
+                {
+                    if (!string.IsNullOrEmpty(kv.Key))
+                    {
+                        merged[kv.Key] = kv.Value;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(member.PhotoHash))
+            {
+                merged[PhotoHashLabel] = member.PhotoHash;
+            }
+            else
+            {
+                merged.Remove(PhotoHashLabel);
+            }
+
+            return merged.Select(kv => new Label { Key = kv.Key, Value = kv.Value }).ToList();
         }
 
         public async Task<IList<SmartFaceMember>> GetEmployees()
@@ -153,7 +214,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     {
 
                         var imageDataId = wm.Tracklet?.Faces?.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == FaceType.Regular)?.ImageDataId;
-                        
+                        var labels = ToLabelDictionary(wm.Labels);
+                        var photoHash = GetPhotoHash(labels);
+
                         if (KeepPhotoUpToDate)
                         {
                             if (imageDataId != null)
@@ -165,13 +228,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                                 {
 
                                     _logger.Debug($"{wm.Id}, {wm.FullName}, {wm.DisplayName}, {imageDataBytes}, {wm.Note},{imageDataId}");
-                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, wm.Note, imageDataId.ToString()));
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, photoHash, imageDataId.ToString(), wm.Note, labels));
 
                                 }
                                 else
                                 {
                                     _logger.Debug($"{wm.Id}, {wm.FullName}, {wm.DisplayName}, {imageDataBytes}, {wm.Note},{imageDataId}");
-                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, photoHash, imageDataId.ToString(), wm.Note, labels));
                                 }
 
                             }
@@ -181,7 +244,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             _logger.Debug($"SF: {wm.Id} {imageDataId} {wm.DisplayName}, {wm.Note}:{imageDataId}");
                             _logger.Debug($"Trying user {wm.Id}-{wm.FullName}:{wm.DisplayName}, {wm.Note}");
 
-                            smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
+                            smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, photoHash, imageDataId?.ToString(), wm.Note, labels));
                         }
 
                     }
@@ -220,21 +283,23 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         foreach (var wm in watchlistMembers.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet?.Faces?.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == FaceType.Regular)?.ImageDataId;
-                            if (KeepPhotoUpToDate)
+                            var labels = ToLabelDictionary(wm.Labels);
+                            var photoHash = GetPhotoHash(labels);
+                            if (KeepPhotoUpToDate && imageDataId != null)
                             {
                                 var imageDataBytes = await GetImageData(imageDataId.ToString());
                                 if (imageDataBytes != null)
                                 {
-                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, wm.Note, imageDataId.ToString()));
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, photoHash, imageDataId.ToString(), wm.Note, labels));
                                 }
                                 else
                                 {
-                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, photoHash, imageDataId.ToString(), wm.Note, labels));
                                 }
                             }
                             else
                             {
-                                smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
+                                smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, photoHash, imageDataId?.ToString(), wm.Note, labels));
                             }
                         }
                         if (watchlistMembers.WatchlistMembers.PageInfo?.HasNextPage == false)
@@ -294,6 +359,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 WatchlistMemberAdd.FullName = member.FullName;
                 WatchlistMemberAdd.DisplayName = member.DisplayName;
                 WatchlistMemberAdd.Note = member.Note;
+                WatchlistMemberAdd.Labels = BuildLabels(member);
 
                 WatchlistMemberAdd.WatchlistIds.Add(watchlistId);
                 WatchlistMemberAdd.KeepAutoLearnPhotos = KeepAutoLearnPhotos;
@@ -317,7 +383,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                     if (restAPIresult.Id == null)
                     {
-                        _logger.Warning($"User {member.FullName} was not registered.");
+                        LogRegistrationFailure(member, "registration issue");
 
                         SupportingData SupportData = new SupportingData(await _aeosDataAdapter.GetFreefieldDefinitionId(), await _aeosDataAdapter.GetBadgeIdentifierType());
                         var BiometricStatusUpdated = await _aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, "Not Enabled - registration issue", SupportData);
@@ -328,11 +394,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 }
                 catch (ApiException e)
                 {
-                    var root = JObject.Parse(e.Response);
-                    _logger.Debug($"Status Code: {e.StatusCode}, {root["detail"]}");
+                    var detail = ExtractApiErrorDetail(e);
+                    LogRegistrationFailure(member, detail);
 
                     SupportingData SupportData = new SupportingData(await _aeosDataAdapter.GetFreefieldDefinitionId(), await _aeosDataAdapter.GetBadgeIdentifierType());
-                    var BiometricStatusUpdated = await _aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {root["detail"]}", SupportData);
+                    var BiometricStatusUpdated = await _aeosDataAdapter.UpdateBiometricStatusWithSFMember(member, $"Not Enabled - {detail}", SupportData);
 
                     restAPIexception = true;
                     return false;
@@ -340,6 +406,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
                 if (restAPIexception == false)
                 {
+                    registrationFailureLogState.Remove(member.Id);
                     return true;
                 }
 
@@ -355,6 +422,109 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             return true;
         }
 
+        // Pulls the reason a registration was refused out of the SF REST error response
+        // (RFC 7807 problem details), so it can be logged and written to the employee's
+        // BiometricEnrollmentStatus freefield in AEOS. Prefers 'detail' (e.g. 'No face
+        // detected...'), falls back to 'title', and appends the per-field validation
+        // 'errors' dictionary, which names the exact check that failed.
+        private static string ExtractApiErrorDetail(ApiException e)
+        {
+            string detail = null;
+            try
+            {
+                var problem = JObject.Parse(e.Response);
+
+                // A face-validation refusal (HTTP 422) has only a generic detail ("Face validation
+                // failed.") — the failed checks are listed in the FaceValidationErrors extension,
+                // e.g. {attributeName: "YawAngle", attributeValue: 8.6, rangeMin: -20, rangeMax: 20}.
+                // Translate them into a compact reason like "YawAngle 8.6>20, FaceQuality 850<1000".
+                if ((problem?["extensions"]?["FaceValidationErrors"] ?? problem?["FaceValidationErrors"]) is JArray conditions && conditions.Count > 0)
+                {
+                    detail = string.Join(", ", conditions.Select(DescribeFailedCondition));
+                }
+
+                if (string.IsNullOrWhiteSpace(detail))
+                {
+                    detail = (string)problem?["detail"];
+                }
+                // The 'errors' validation dictionary usually repeats 'detail', so it is only
+                // used as a fallback when 'detail' and 'title' carry nothing.
+                if (string.IsNullOrWhiteSpace(detail) && problem?["errors"] is JObject errors && errors.HasValues)
+                {
+                    detail = string.Join("; ", errors.Properties()
+                        .Select(p => $"{p.Name}: {string.Join(" ", p.Value.Values<string>())}"));
+                }
+                if (string.IsNullOrWhiteSpace(detail))
+                {
+                    detail = (string)problem?["title"];
+                }
+            }
+            catch
+            {
+                // response body is not JSON — fall through to the generic detail below
+            }
+            if (string.IsNullOrWhiteSpace(detail))
+            {
+                detail = $"registration failed with HTTP {e.StatusCode}";
+            }
+            return detail;
+        }
+
+        private static string DescribeFailedCondition(JToken condition)
+        {
+            var name = (string)condition["attributeName"] ?? "unknown";
+            var value = ToDouble(condition["attributeValue"]);
+            if (value == null)
+            {
+                return $"{name} missing";
+            }
+            var min = ToDouble(condition["rangeMin"]) ?? double.NegativeInfinity;
+            var max = ToDouble(condition["rangeMax"]) ?? double.PositiveInfinity;
+            if (value < min)
+            {
+                return $"{name} {FormatNumber(value.Value)}<{FormatNumber(min)}";
+            }
+            if (value > max)
+            {
+                return $"{name} {FormatNumber(value.Value)}>{FormatNumber(max)}";
+            }
+            return name;
+        }
+
+        // rangeMin/rangeMax are serialized as the strings "Infinity"/"-Infinity" for open bounds.
+        private static double? ToDouble(JToken token)
+        {
+            if (token == null || token.Type == JTokenType.Null)
+            {
+                return null;
+            }
+            if (token.Type == JTokenType.String)
+            {
+                var s = (string)token;
+                if (s == "Infinity") return double.PositiveInfinity;
+                if (s == "-Infinity") return double.NegativeInfinity;
+                return double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed) ? parsed : null;
+            }
+            return (double?)token;
+        }
+
+        private static string FormatNumber(double value)
+        {
+            return value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        private void LogRegistrationFailure(SmartFaceMember member, string detail)
+        {
+            var message = $"User {member.FullName} with id {member.Id} was not registered in SmartFace: {detail}. It will be retried every sync cycle until the photo in AEOS is fixed or the user is excluded.";
+            if (registrationFailureLogState.TryGetValue(member.Id, out var lastDetail) && lastDetail == detail)
+            {
+                _logger.Debug(message);
+                return;
+            }
+            registrationFailureLogState[member.Id] = detail;
+            _logger.Warning(message);
+        }
+
         public async Task<bool> UpdateEmployee(SmartFaceMember member, bool keepPhotoUpToDate)
         {
             _logger.Information($"Updating Employee > {member.FullName};{member.Id}");
@@ -367,6 +537,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             updateEmployee.FullName = member.FullName;
             updateEmployee.DisplayName = member.DisplayName;
             updateEmployee.Note = member.Note;
+            updateEmployee.Labels = BuildLabels(member);
 
             var restAPIresult = await restAPI.WatchlistMembersPUTAsync(updateEmployee);
 

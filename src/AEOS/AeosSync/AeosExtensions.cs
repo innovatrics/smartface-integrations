@@ -145,9 +145,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         {
             if (keepPhotoUpToDate)
             {
-                if (aeosMember.ImageData != null && smartFaceMember.Note != null)
+                if (aeosMember.ImageData != null && !string.IsNullOrEmpty(smartFaceMember.PhotoHash))
                 {
-                    if (getImageHash(aeosMember.ImageData).SequenceEqual(smartFaceMember.Note))
+                    if (string.Equals(getImageHash(aeosMember.ImageData), smartFaceMember.PhotoHash, StringComparison.OrdinalIgnoreCase))
                     {
                         return true;
                     }
@@ -172,8 +172,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
 
             if (imageData != null)
             {
-                byte[] tmpHash = new MD5CryptoServiceProvider().ComputeHash(imageData);
-                return Encoding.Default.GetString(tmpHash);
+                using var md5 = MD5.Create();
+                return Convert.ToHexString(md5.ComputeHash(imageData));
             }
             else
             {

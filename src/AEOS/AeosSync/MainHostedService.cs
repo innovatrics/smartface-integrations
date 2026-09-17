@@ -40,28 +40,40 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
          
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
+            this.logger.Information("Synchronization runs in polling mode: a full sync is executed every {SyncPeriodMs}ms.", SyncPeriodMs);
 
             while(!cancellationToken.IsCancellationRequested)
             {
-                
+
                 try
                 {
+                    var syncStartedAt = DateTime.UtcNow;
                     await this.bridge.Synchronize();
-                    this.logger.Debug("Waiting for {SyncPeriodMs}ms for another sync.", SyncPeriodMs);    
-                    await Task.Delay(SyncPeriodMs,cancellationToken);
+                    this.logger.Information("Sync poll completed in {ElapsedMs}ms. Next poll in {SyncPeriodMs}ms.", (long)(DateTime.UtcNow - syncStartedAt).TotalMilliseconds, SyncPeriodMs);
                 }
 
                 catch (OperationCanceledException)
                 {
                     this.logger.Information($"The Service is being shut.");
+                    break;
                 }
 
                 catch (Exception e)
                 {
-                    this.logger.Error(e,"The sync tool failed unexpectedly.");
+                    this.logger.Error(e,"The sync tool failed unexpectedly. Next sync attempt in {SyncPeriodMs}ms.", SyncPeriodMs);
                 }
 
-            }           
+                try
+                {
+                    this.logger.Debug("Waiting for {SyncPeriodMs}ms for another sync.", SyncPeriodMs);
+                    await Task.Delay(SyncPeriodMs,cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    this.logger.Information($"The Service is being shut.");
+                }
+
+            }
             
         }
 
