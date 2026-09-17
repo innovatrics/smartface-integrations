@@ -333,16 +333,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 }
                 catch (ApiException e)
                 {
-                    string detail = null;
-                    try
-                    {
-                        detail = (string)JObject.Parse(e.Response)?["detail"];
-                    }
-                    catch
-                    {
-                        // response body is not JSON — fall through to the generic detail below
-                    }
-                    detail ??= $"registration failed with HTTP {e.StatusCode}";
+                    var detail = ExtractApiErrorDetail(e);
                     LogRegistrationFailure(member, detail);
 
                     SupportingData SupportData = new SupportingData(await _aeosDataAdapter.GetFreefieldDefinitionId(), await _aeosDataAdapter.GetBadgeIdentifierType());
@@ -368,6 +359,97 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             }
 
             return true;
+        }
+
+        // Pulls the reason a registration was refused out of the SF REST error response
+        // (RFC 7807 problem details), so it can be logged and written to the employee's
+        // BiometricEnrollmentStatus freefield in AEOS. Prefers 'detail' (e.g. 'No face
+        // detected...'), falls back to 'title', and appends the per-field validation
+        // 'errors' dictionary, which names the exact check that failed.
+        private static string ExtractApiErrorDetail(ApiException e)
+        {
+            string detail = null;
+            try
+            {
+                var problem = JObject.Parse(e.Response);
+
+                // A face-validation refusal (HTTP 422) has only a generic detail ("Face validation
+                // failed.") — the failed checks are listed in the FaceValidationErrors extension,
+                // e.g. {attributeName: "YawAngle", attributeValue: 8.6, rangeMin: -20, rangeMax: 20}.
+                // Translate them into a compact reason like "YawAngle 8.6>20, FaceQuality 850<1000".
+                if ((problem?["extensions"]?["FaceValidationErrors"] ?? problem?["FaceValidationErrors"]) is JArray conditions && conditions.Count > 0)
+                {
+                    detail = string.Join(", ", conditions.Select(DescribeFailedCondition));
+                }
+
+                if (string.IsNullOrWhiteSpace(detail))
+                {
+                    detail = (string)problem?["detail"];
+                }
+                // The 'errors' validation dictionary usually repeats 'detail', so it is only
+                // used as a fallback when 'detail' and 'title' carry nothing.
+                if (string.IsNullOrWhiteSpace(detail) && problem?["errors"] is JObject errors && errors.HasValues)
+                {
+                    detail = string.Join("; ", errors.Properties()
+                        .Select(p => $"{p.Name}: {string.Join(" ", p.Value.Values<string>())}"));
+                }
+                if (string.IsNullOrWhiteSpace(detail))
+                {
+                    detail = (string)problem?["title"];
+                }
+            }
+            catch
+            {
+                // response body is not JSON — fall through to the generic detail below
+            }
+            if (string.IsNullOrWhiteSpace(detail))
+            {
+                detail = $"registration failed with HTTP {e.StatusCode}";
+            }
+            return detail;
+        }
+
+        private static string DescribeFailedCondition(JToken condition)
+        {
+            var name = (string)condition["attributeName"] ?? "unknown";
+            var value = ToDouble(condition["attributeValue"]);
+            if (value == null)
+            {
+                return $"{name} missing";
+            }
+            var min = ToDouble(condition["rangeMin"]) ?? double.NegativeInfinity;
+            var max = ToDouble(condition["rangeMax"]) ?? double.PositiveInfinity;
+            if (value < min)
+            {
+                return $"{name} {FormatNumber(value.Value)}<{FormatNumber(min)}";
+            }
+            if (value > max)
+            {
+                return $"{name} {FormatNumber(value.Value)}>{FormatNumber(max)}";
+            }
+            return name;
+        }
+
+        // rangeMin/rangeMax are serialized as the strings "Infinity"/"-Infinity" for open bounds.
+        private static double? ToDouble(JToken token)
+        {
+            if (token == null || token.Type == JTokenType.Null)
+            {
+                return null;
+            }
+            if (token.Type == JTokenType.String)
+            {
+                var s = (string)token;
+                if (s == "Infinity") return double.PositiveInfinity;
+                if (s == "-Infinity") return double.NegativeInfinity;
+                return double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed) ? parsed : null;
+            }
+            return (double?)token;
+        }
+
+        private static string FormatNumber(double value)
+        {
+            return value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
         }
 
         private void LogRegistrationFailure(SmartFaceMember member, string detail)
