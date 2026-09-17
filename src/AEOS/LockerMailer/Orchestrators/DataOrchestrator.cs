@@ -420,7 +420,7 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             // 6# lockers-flow_6 (handled by AlarmTriggerService)
             // 7# lockers-flow_7 (handled by assignment changes - Assigned)
             // 8# lockers-flow_8 (handled by assignment changes - Unassigned)
-            // 9#
+            // 9# lockers-flow_9 (handled by LockerPickupService, not this method)
 
         }
 
