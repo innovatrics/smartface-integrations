@@ -25,7 +25,6 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
         private readonly IDashboardsDataAdapter dashboardsDataAdapter;
         private readonly string lockersFlow1CheckGroup = string.Empty;
         private readonly string lockersFlow2CheckGroup = string.Empty;
-        private readonly string[] lockersFlow10CheckGroups = new string[0];
         private readonly string[] lockersFlow7CheckGroups = new string[0];
         private readonly string[] lockersFlow8CheckGroups = new string[0];
         private string cancelTime = "18:00"; // Default value
@@ -179,33 +178,6 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             catch (Exception ex)
             {
                 this.logger.Error(ex, "Failed to load lockers-flow_2 templateCheckGroup from configuration");
-            }
-            try
-            {
-                var templatesSection = configuration.GetSection("LockerMailer:Templates");
-                foreach (var template in templatesSection.GetChildren())
-                {
-                    var templateId = template.GetValue<string>("templateId");
-                    if (!string.IsNullOrEmpty(templateId) && templateId.Equals("lockers-flow_10", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var checkGroups = template.GetSection("templateCheckGroups").Get<string[]>();
-                        this.lockersFlow10CheckGroups = checkGroups ?? new string[0];
-                        break;
-                    }
-                }
-
-                if (this.lockersFlow10CheckGroups.Any())
-                {
-                    this.logger.Debug($"Loaded lockers-flow_10 check groups from configuration: [{string.Join(", ", this.lockersFlow10CheckGroups)}]");
-                }
-                else
-                {
-                    this.logger.Warning("No templateCheckGroups configured for lockers-flow_10; trigger will be skipped.");
-                }
-            }
-            catch (Exception ex)
-            {
-                this.logger.Error(ex, "Failed to load lockers-flow_10 templateCheckGroups from configuration");
             }
 
             // Load lockers-flow_7 templateCheckGroups from configuration
@@ -392,28 +364,6 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
                 return chosenFlowTemplate;
             }
 
-        // 10# lockers-flow_10
-            // If the information says that you have been newly assigned a locker
-            // from the locker group BIKE, trigger this event
-            // (for now: just log that it was triggered).
-            else if (
-                change != null &&
-                change.ChangeType.Equals("Assigned", StringComparison.OrdinalIgnoreCase) &&
-                change.NewAssignedTo.HasValue &&
-                this.lockersFlow10CheckGroups.Any() &&
-                this.lockersFlow10CheckGroups.Any(group => string.Equals(change.GroupName, group, StringComparison.OrdinalIgnoreCase))
-            )
-            {
-                chosenFlowTemplate = "lockers-flow_10";
-
-                logger.Information(
-                    $"[Trigger] lockers-flow_10 matched for locker '{change.LockerName}' in group '{change.GroupName}' " +
-                    $"for employee '{change.NewAssignedEmployeeName}' (ID: {change.NewAssignedTo}) at {change.ChangeTimestamp}. {chosenFlowTemplate}"
-                );
-
-                return chosenFlowTemplate;
-            }
-
         // 7# lockers-flow_7
             // If the information says that you have been newly assigned a locker
             // from any of the configured locker groups, trigger this event
@@ -471,7 +421,6 @@ namespace Innovatrics.SmartFace.Integrations.LockerMailer
             // 7# lockers-flow_7 (handled by assignment changes - Assigned)
             // 8# lockers-flow_8 (handled by assignment changes - Unassigned)
             // 9# lockers-flow_9 (handled by LockerPickupService, not this method)
-            // 10# lockers-flow_10 (handled by assignment changes - Assigned)
 
         }
 
