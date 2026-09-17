@@ -167,7 +167,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                                     {
                                         _logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated as the image does not match");
                                         _logger.Debug($"SFMember.ImageDataId: {SFMember.ImageDataId}");
-                                        EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, FoundAeosMember.ImageData, AeosExtensions.getImageHash(FoundAeosMember.ImageData), SFMember.ImageDataId));
+                                        EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, FoundAeosMember.ImageData, AeosExtensions.getImageHash(FoundAeosMember.ImageData), SFMember.ImageDataId, labels: SFMember.Labels));
                                     }
                                     
                                 }
@@ -177,13 +177,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                                     {
                                         _logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated as there is a difference in user data. Image preserved.");
                                         _logger.Debug($"SFMember.ImageDataId: {SFMember.ImageDataId}");
-                                        EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, FoundAeosMember.ImageData, AeosExtensions.getImageHash(FoundAeosMember.ImageData), SFMember.ImageDataId));
+                                        EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, FoundAeosMember.ImageData, AeosExtensions.getImageHash(FoundAeosMember.ImageData), SFMember.ImageDataId, labels: SFMember.Labels));
                                     }
                                     else
                                     {
                                         _logger.Information($"User {SFMember.FullName} with id {SFMember.Id} needs to be updated as there is a difference in user data. No image.");
                                         _logger.Debug($"SFMember.ImageDataId: {SFMember.ImageDataId}");
-                                        EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, null, AeosExtensions.getImageHash(null), SFMember.ImageDataId));
+                                        EmployeesToBeUpdatedSmartFace.Add(new SmartFaceMember(FoundAeosMember.SmartFaceId, joinedNames, joinedNames, null, AeosExtensions.getImageHash(null), SFMember.ImageDataId, labels: SFMember.Labels));
                                     }
                                     
                                 }
@@ -287,21 +287,26 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             }
                             else
                             {
-                                if (Member.SmartFaceId == null || Member.SmartFaceId == "@NotEnabled")
+                                var missingSmartFaceId = Member.SmartFaceId == null || Member.SmartFaceId == "@NotEnabled";
+                                var missingPhoto = Member.ImageData == null;
+
+                                if (missingSmartFaceId && missingPhoto)
                                 {
                                     LogMemberCondition($"nosfid:{Member.Id}",
-                                        $"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} does not have SmartFace Id defined as a custom field. This user will not be migrated.",
+                                        $"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} does not have an user photo, therefore no SmartFace Id could be assigned into the custom field. This user will not be migrated.",
                                         m => _logger.Warning(m));
                                 }
-
-                                if (Member.ImageData == null)
+                                else if (missingSmartFaceId)
                                 {
-                                    if (NoImageWarningNotification)
-                                    {
-                                        LogMemberCondition($"nophoto:{Member.Id}",
-                                            $"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} does not have an user photo. This user will not be migrated.",
-                                            m => _logger.Warning(m));
-                                    }
+                                    LogMemberCondition($"nosfid:{Member.Id}",
+                                        $"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} does not have SmartFace Id defined as a custom field and it was not assigned automatically. This user will not be migrated.",
+                                        m => _logger.Warning(m));
+                                }
+                                else if (missingPhoto && NoImageWarningNotification)
+                                {
+                                    LogMemberCondition($"nophoto:{Member.Id}",
+                                        $"Aeos Member {Member.FirstName} {Member.LastName} with id {Member.Id} does not have an user photo. This user will not be migrated.",
+                                        m => _logger.Warning(m));
                                 }
 
                             }

@@ -23,6 +23,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync.Clients
         public string DisplayName { get; set; }
         public string Note { get; set; }
         public Tracklet Tracklet { get; set; }
+        public MemberLabel[] Labels { get; set; }
+    }
+
+    public class MemberLabel
+    {
+        public string Key { get; set; }
+        public string Value { get; set; }
     }
 
     public class Tracklet

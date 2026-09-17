@@ -38,6 +38,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync.Clients
                             fullName
                             displayName
                             note
+                            labels { key value }
                             tracklet {
                                 faces(where: { faceType: { eq: REGULAR } }) {
                                     createdAt
@@ -98,6 +99,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync.Clients
                             fullName
                             displayName
                             note
+                            labels { key value }
                             tracklet {
                                 faces(where: { faceType: { eq: REGULAR } }) {
                                     createdAt

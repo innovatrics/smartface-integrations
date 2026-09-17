@@ -46,6 +46,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
         private readonly Dictionary<string, string> registrationFailureLogState = new();
 
         private string AeosWatchlistName;
+        private string PhotoHashLabel;
 
         public SmartFaceDataAdapter(
             ILogger logger,
@@ -76,6 +77,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             ConfidenceThreshold = configuration.GetValue<int>("AeosSync:SmartFace:Import:FaceDetectorConfig:ConfidenceThreshold");
             configuration.Bind("AeosSync:SmartFace:Export:SyncedWatchlists", SmartFaceSyncedWatchlists);
             KeepPhotoUpToDate = configuration.GetValue<bool>("AeosSync:Aeos:KeepPhotoUpToDate");
+            PhotoHashLabel = configuration.GetValue<string>("AeosSync:SmartFace:Import:PhotoHashLabel") ?? "AeosPhotoHash";
 
             if (SmartFaceSetPageSize <= 0)
             {
@@ -102,6 +104,60 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 throw new InvalidOperationException("The ConfidenceThreshold needs to be a positive value.");
             }
 
+        }
+
+        private static IDictionary<string, string> ToLabelDictionary(MemberLabel[] labels)
+        {
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (labels != null)
+            {
+                foreach (var label in labels)
+                {
+                    if (label != null && !string.IsNullOrEmpty(label.Key))
+                    {
+                        result[label.Key] = label.Value;
+                    }
+                }
+            }
+            return result;
+        }
+
+        private string GetPhotoHash(IDictionary<string, string> labels)
+        {
+            if (labels != null && labels.TryGetValue(PhotoHashLabel, out var value))
+            {
+                return value;
+            }
+            return null;
+        }
+
+        // Rebuilds the REST label collection from the member's existing labels, setting (or
+        // removing) only our own PhotoHashLabel. Labels written by other systems (e.g. the
+        // AccessControlConnector, which resolves users by label) must survive the upsert.
+        private ICollection<Label> BuildLabels(SmartFaceMember member)
+        {
+            var merged = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (member.Labels != null)
+            {
+                foreach (var kv in member.Labels)
+                {
+                    if (!string.IsNullOrEmpty(kv.Key))
+                    {
+                        merged[kv.Key] = kv.Value;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(member.PhotoHash))
+            {
+                merged[PhotoHashLabel] = member.PhotoHash;
+            }
+            else
+            {
+                merged.Remove(PhotoHashLabel);
+            }
+
+            return merged.Select(kv => new Label { Key = kv.Key, Value = kv.Value }).ToList();
         }
 
         public async Task<IList<SmartFaceMember>> GetEmployees()
@@ -158,7 +214,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                     {
 
                         var imageDataId = wm.Tracklet?.Faces?.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == FaceType.Regular)?.ImageDataId;
-                        
+                        var labels = ToLabelDictionary(wm.Labels);
+                        var photoHash = GetPhotoHash(labels);
+
                         if (KeepPhotoUpToDate)
                         {
                             if (imageDataId != null)
@@ -170,13 +228,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                                 {
 
                                     _logger.Debug($"{wm.Id}, {wm.FullName}, {wm.DisplayName}, {imageDataBytes}, {wm.Note},{imageDataId}");
-                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, wm.Note, imageDataId.ToString()));
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, photoHash, imageDataId.ToString(), wm.Note, labels));
 
                                 }
                                 else
                                 {
                                     _logger.Debug($"{wm.Id}, {wm.FullName}, {wm.DisplayName}, {imageDataBytes}, {wm.Note},{imageDataId}");
-                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, photoHash, imageDataId.ToString(), wm.Note, labels));
                                 }
 
                             }
@@ -186,7 +244,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                             _logger.Debug($"SF: {wm.Id} {imageDataId} {wm.DisplayName}, {wm.Note}:{imageDataId}");
                             _logger.Debug($"Trying user {wm.Id}-{wm.FullName}:{wm.DisplayName}, {wm.Note}");
 
-                            smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId?.ToString()));
+                            smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, photoHash, imageDataId?.ToString(), wm.Note, labels));
                         }
 
                     }
@@ -225,21 +283,23 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                         foreach (var wm in watchlistMembers.WatchlistMembers.Items)
                         {
                             var imageDataId = wm.Tracklet?.Faces?.OrderBy(f => f.CreatedAt).FirstOrDefault(f => f.FaceType == FaceType.Regular)?.ImageDataId;
+                            var labels = ToLabelDictionary(wm.Labels);
+                            var photoHash = GetPhotoHash(labels);
                             if (KeepPhotoUpToDate && imageDataId != null)
                             {
                                 var imageDataBytes = await GetImageData(imageDataId.ToString());
                                 if (imageDataBytes != null)
                                 {
-                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, wm.Note, imageDataId.ToString()));
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, imageDataBytes, photoHash, imageDataId.ToString(), wm.Note, labels));
                                 }
                                 else
                                 {
-                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId.ToString()));
+                                    smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, photoHash, imageDataId.ToString(), wm.Note, labels));
                                 }
                             }
                             else
                             {
-                                smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, wm.Note, imageDataId?.ToString()));
+                                smartFaceAllMembers.Add(new SmartFaceMember(wm.Id, wm.FullName, wm.DisplayName, null, photoHash, imageDataId?.ToString(), wm.Note, labels));
                             }
                         }
                         if (watchlistMembers.WatchlistMembers.PageInfo?.HasNextPage == false)
@@ -299,6 +359,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
                 WatchlistMemberAdd.FullName = member.FullName;
                 WatchlistMemberAdd.DisplayName = member.DisplayName;
                 WatchlistMemberAdd.Note = member.Note;
+                WatchlistMemberAdd.Labels = BuildLabels(member);
 
                 WatchlistMemberAdd.WatchlistIds.Add(watchlistId);
                 WatchlistMemberAdd.KeepAutoLearnPhotos = KeepAutoLearnPhotos;
@@ -476,6 +537,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosSync
             updateEmployee.FullName = member.FullName;
             updateEmployee.DisplayName = member.DisplayName;
             updateEmployee.Note = member.Note;
+            updateEmployee.Labels = BuildLabels(member);
 
             var restAPIresult = await restAPI.WatchlistMembersPUTAsync(updateEmployee);
 
