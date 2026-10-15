@@ -404,19 +404,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 return explained;
             }
 
+            if (live == null)
+            {
+                // The assignment was not confirmed and the read-back failed: AEOS may still have applied it.
+                return StatusCode(500, new {
+                    error = "AEOS did not confirm the assignment.",
+                    details = assignError?.Message,
+                    message = "Refresh the page to see whether the locker is assigned before trying again.",
+                    assignmentUnconfirmed = true
+                });
+            }
+
             if (assignError != null)
             {
-                if (live == null)
-                {
-                    // Neither the assignment nor the read-back answered: AEOS may still have applied it.
-                    return StatusCode(500, new {
-                        error = "AEOS did not confirm the assignment.",
-                        details = assignError.Message,
-                        message = "Refresh the page to see whether the locker is assigned before trying again.",
-                        assignmentUnconfirmed = true
-                    });
-                }
-
                 return StatusCode(500, new {
                     error = "Failed to assign locker",
                     details = assignError.Message,

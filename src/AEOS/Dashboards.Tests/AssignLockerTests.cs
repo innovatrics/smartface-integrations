@@ -185,6 +185,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
         }
 
         [Fact]
+        public async Task Assignment_that_returns_false_is_reported_as_unconfirmed_when_the_read_back_fails()
+        {
+            aeos.AssignLocker(CourierLocker, Employee, NetworkId, PresetId).Returns(false);
+            aeos.GetLiveLockerState(CourierLocker).ThrowsAsync(new Exception("AEOS unreachable"));
+
+            var (status, body) = Read(await Assign(CourierLocker));
+
+            Assert.Equal(500, status);
+            Assert.True(body.GetProperty("assignmentUnconfirmed").GetBoolean());
+            Assert.Equal("AEOS did not confirm the assignment.", body.GetProperty("error").GetString());
+        }
+
+        [Fact]
         public async Task Assignment_that_returns_false_keeps_the_original_error_for_a_free_locker()
         {
             aeos.AssignLocker(CourierLocker, Employee, NetworkId, PresetId).Returns(false);
