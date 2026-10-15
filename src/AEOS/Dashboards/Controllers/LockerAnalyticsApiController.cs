@@ -376,10 +376,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             if (releasedHeldLocker)
             {
                 await TryRefreshLockersData();
+                // The assignment may have taken effect even though AEOS did not answer, so do not claim it failed.
                 return StatusCode(500, new {
-                    error = "Failed to assign locker",
+                    error = "The locker was released in AEOS, but AEOS did not confirm the assignment.",
                     details = assignError?.Message,
-                    message = "The locker was released in AEOS, but the assignment still failed.",
+                    message = "Refresh the page to see whether the locker is assigned before trying again.",
                     releasedHeldLocker = true
                 });
             }

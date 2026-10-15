@@ -23,6 +23,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
         private readonly IDataOrchestrator orchestrator = Substitute.For<IDataOrchestrator>();
         private readonly IAeosDataAdapter aeos = Substitute.For<IAeosDataAdapter>();
         private readonly LockerAnalyticsApiController controller;
+        private readonly IConfiguration configuration;
 
         public AssignLockerTests()
         {
@@ -31,7 +32,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
             analytics.Groups.Add(Group("All Personal", PersonalLocker, "1N-301"));
             orchestrator.GetLockerAnalytics().Returns(analytics);
 
-            var configuration = new ConfigurationBuilder()
+            configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     ["AeosDashboards:AllowChanges"] = "true",
@@ -326,6 +327,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
 
             Assert.Equal(500, status);
             Assert.True(body.GetProperty("releasedHeldLocker").GetBoolean());
+            Assert.Equal("The locker was released in AEOS, but AEOS did not confirm the assignment.", body.GetProperty("error").GetString());
+            Assert.Equal("Refresh the page to see whether the locker is assigned before trying again.", body.GetProperty("message").GetString());
             Assert.Equal("Failed to assign locker: Add locker authorizations failed", body.GetProperty("details").GetString());
         }
 
@@ -352,7 +355,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
             var first = Assign(CourierLocker, releaseIfHeld: true);
             await WaitUntil(() => aeos.ReceivedCalls().Any(c => c.GetMethodInfo().Name == nameof(IAeosDataAdapter.ReleaseLocker)));
 
-            var second = Assign(CourierLocker, releaseIfHeld: true);
+            // Each HTTP request gets its own controller instance; the lock must hold across them.
+            var otherController = new LockerAnalyticsApiController(orchestrator, configuration, aeos);
+            var second = otherController.AssignLocker(new AssignLockerRequest { EmployeeId = Employee, LockerId = CourierLocker, ReleaseIfHeld = true });
             await Task.Delay(200);
             Assert.Equal(1, reads); // B has not read the locker while A holds it
 

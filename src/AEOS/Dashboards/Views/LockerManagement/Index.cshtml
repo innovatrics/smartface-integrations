@@ -422,6 +422,7 @@
         let currentLocker = null;
         let currentActiveGroupName = null;
         let lockerForAssignment = null; // Track locker when assigning
+        let modalSession = 0; // Changes whenever the locker modal opens or closes
         let retryCountdownInterval = null;
         let useCustomLayout = {}; // Track view state per group (true = custom, false = default)
         
@@ -768,6 +769,7 @@
         }
         
         function showLockerModal(locker) {
+            modalSession++;
             currentLocker = locker;
             showMainView();
             
@@ -1205,8 +1207,9 @@
         }
         
         async function assignLockerToEmployee(employee, releaseIfHeld = false) {
-            // The locker this request is about; lockerForAssignment changes when another Assign starts
+            // The locker and modal this request belongs to; both change when the receptionist moves on
             const locker = lockerForAssignment;
+            const session = modalSession;
             if (!locker) {
                 return;
             }
@@ -1318,7 +1321,7 @@
                 } else if (response.status === 409 && data.code === 'LOCKER_HELD' && !releaseIfHeld) {
                     // AEOS still holds the locker without an owner: offer to release it and assign again,
                     // unless the modal has meanwhile moved on to another assignment
-                    if (lockerForAssignment !== locker) {
+                    if (session !== modalSession || lockerForAssignment !== locker) {
                         return;
                     }
                     const lockerName = locker.name || `Locker ${locker.id}`;
@@ -1341,14 +1344,17 @@
                     releaseAndAssignButton.textContent = 'Release & assign';
                     releaseAndAssignButton.type = 'button';
                     releaseAndAssignButton.addEventListener('click', () => {
-                        if (lockerForAssignment === locker) {
+                        if (session === modalSession && lockerForAssignment === locker) {
                             assignLockerToEmployee(employee, true);
                         }
                     });
                     successActions.appendChild(releaseAndAssignButton);
                 } else {
                     // Error response
-                    let errorText = `Failed to assign locker "${locker.name || `Locker ${locker.id}`}".`;
+                    // After a confirmed release the assignment may still have taken effect: do not say it failed
+                    let errorText = data.releasedHeldLocker
+                        ? `Locker "${locker.name || `Locker ${locker.id}`}":`
+                        : `Failed to assign locker "${locker.name || `Locker ${locker.id}`}".`;
                     
                     if (data.error) {
                         errorText += ` ${data.error}`;
@@ -1474,6 +1480,7 @@
         }
         
         function closeLockerModal() {
+            modalSession++;
             const modal = document.getElementById('lockerModal');
             modal.classList.remove('show');
         }
