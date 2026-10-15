@@ -16,6 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         Task<IList<AeosIdentifierType>> GetIdentifierTypes();
         Task<IList<AeosIdentifier>> GetIdentifiersPerType(long identifierType);
         Task<IList<AeosMember>> GetEmployeesByIdentifier(string identifier);
+        Task<LiveLockerState?> GetLiveLockerState(long lockerId);
         Task<bool> ReleaseLocker(long lockerId);
         Task<IList<ServiceReference.TemplateInfo>> GetTemplates(string unitOfAuthType);
         Task<bool> AssignLocker(long lockerId, long carrierId, int lockerAuthorisationGroupNetworkId, long lockerAuthorisationPresetId);

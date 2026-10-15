@@ -422,6 +422,8 @@
         let currentLocker = null;
         let currentActiveGroupName = null;
         let lockerForAssignment = null; // Track locker when assigning
+        let modalSession = 0; // Changes whenever the locker modal opens or closes
+        let assignAttempt = 0; // Changes with every assignment request
         let retryCountdownInterval = null;
         let useCustomLayout = {}; // Track view state per group (true = custom, false = default)
         
@@ -768,6 +770,7 @@
         }
         
         function showLockerModal(locker) {
+            modalSession++;
             currentLocker = locker;
             showMainView();
             
@@ -1204,14 +1207,19 @@
             confirmationActions.appendChild(confirmButton);
         }
         
-        async function assignLockerToEmployee(employee) {
-            if (!lockerForAssignment) {
+        async function assignLockerToEmployee(employee, releaseIfHeld = false, heldSince = null) {
+            // The locker and modal this request belongs to; both change when the receptionist moves on
+            const locker = lockerForAssignment;
+            const session = modalSession;
+            if (!locker) {
                 return;
             }
+            const attempt = ++assignAttempt;
+            const isCurrent = () => attempt === assignAttempt && session === modalSession && lockerForAssignment === locker;
             
             // Find the group that contains this locker
             const group = lockerData.find(g => 
-                g.allLockers && g.allLockers.some(l => l.id === lockerForAssignment.id)
+                g.allLockers && g.allLockers.some(l => l.id === locker.id)
             );
             
             // Hide confirmation view and show loading state in success view
@@ -1222,7 +1230,7 @@
             const successMessage = document.getElementById('successMessage');
             const successActions = document.getElementById('successActions');
             
-            successTitle.textContent = lockerForAssignment.name || `Locker ${lockerForAssignment.id}`;
+            successTitle.textContent = locker.name || `Locker ${locker.id}`;
             successMessage.className = 'loading-message';
             successMessage.textContent = 'Assigning locker...';
             successActions.innerHTML = '';
@@ -1260,30 +1268,34 @@
                     },
                     body: JSON.stringify({
                         employeeId: employee.id,
-                        lockerId: lockerForAssignment.id,
+                        lockerId: locker.id,
                         lockerAuthorisationGroupNetworkId: group.lockerAuthorisationGroupNetworkId,
-                        lockerAuthorisationPresetId: group.lockerAuthorisationPresetId
+                        lockerAuthorisationPresetId: group.lockerAuthorisationPresetId,
+                        releaseIfHeld: releaseIfHeld,
+                        heldSince: heldSince
                     })
                 });
                 
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
-                    // Success - update success message
-                    successMessage.className = 'success-message';
-                    const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
-                    successMessage.textContent = `Locker "${lockerForAssignment.name || `Locker ${lockerForAssignment.id}`}" has been successfully assigned to ${employeeName}. Please note that it may take a few seconds for the change to be visible in the system.`;
-                    
-                    successActions.innerHTML = '';
-                    const closeButton = document.createElement('button');
-                    closeButton.className = 'modal-button assign';
-                    closeButton.textContent = 'Close';
-                    closeButton.type = 'button';
-                    closeButton.addEventListener('click', closeLockerModal);
-                    successActions.appendChild(closeButton);
+                    // Success - update success message, unless the modal has moved on
+                    if (isCurrent()) {
+                        successMessage.className = 'success-message';
+                        const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
+                        successMessage.textContent = `Locker "${locker.name || `Locker ${locker.id}`}" has been successfully assigned to ${employeeName}. Please note that it may take a few seconds for the change to be visible in the system.`;
+                        
+                        successActions.innerHTML = '';
+                        const closeButton = document.createElement('button');
+                        closeButton.className = 'modal-button assign';
+                        closeButton.textContent = 'Close';
+                        closeButton.type = 'button';
+                        closeButton.addEventListener('click', closeLockerModal);
+                        successActions.appendChild(closeButton);
+                    }
                     
                     // Set locker button to yellow (pending state)
-                    setLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
+                    setLockerButtonPending(locker.id, locker.name);
                     
                     // Wait a few seconds, then trigger data refresh and update display
                     setTimeout(async () => {
@@ -1300,21 +1312,58 @@
                                 // Then fetch updated data
                                 await refreshLockerData();
                                 // Clear pending state after refresh
-                                clearLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
+                                clearLockerButtonPending(locker.id, locker.name);
                             } else {
                                 console.error('Failed to trigger data refresh');
-                                clearLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
+                                clearLockerButtonPending(locker.id, locker.name);
                             }
                         } catch (error) {
                             console.error('Error refreshing data:', error);
                             // Still try to refresh the display with cached data
                             await refreshLockerData();
-                            clearLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
+                            clearLockerButtonPending(locker.id, locker.name);
                         }
                     }, 3000); // Wait 3 seconds before refreshing
+                } else if (response.status === 409 && data.code === 'LOCKER_HELD' && !releaseIfHeld) {
+                    // AEOS still holds the locker without an owner: offer to release it and assign again,
+                    // unless the modal has meanwhile moved on to another assignment
+                    if (!isCurrent()) {
+                        return;
+                    }
+                    const lockerName = locker.name || `Locker ${locker.id}`;
+                    const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
+                    const heldSince = data.lastUsed ? ` since ${new Date(data.lastUsed).toLocaleDateString()}` : '';
+
+                    successMessage.className = 'error-message';
+                    successMessage.textContent = `Locker "${lockerName}" cannot be assigned yet: AEOS still holds it as in use${heldSince}, although nobody is assigned to it. Release it and assign it to ${employeeName}?`;
+
+                    successActions.innerHTML = '';
+                    const cancelButton = document.createElement('button');
+                    cancelButton.className = 'modal-button cancel';
+                    cancelButton.textContent = 'Cancel';
+                    cancelButton.type = 'button';
+                    cancelButton.addEventListener('click', closeLockerModal);
+                    successActions.appendChild(cancelButton);
+
+                    const releaseAndAssignButton = document.createElement('button');
+                    releaseAndAssignButton.className = 'modal-button confirm';
+                    releaseAndAssignButton.textContent = 'Release & assign';
+                    releaseAndAssignButton.type = 'button';
+                    releaseAndAssignButton.addEventListener('click', () => {
+                        if (isCurrent()) {
+                            assignLockerToEmployee(employee, true, data.lastUsed);
+                        }
+                    });
+                    successActions.appendChild(releaseAndAssignButton);
                 } else {
                     // Error response
-                    let errorText = `Failed to assign locker "${lockerForAssignment.name || `Locker ${lockerForAssignment.id}`}".`;
+                    if (!isCurrent()) {
+                        return;
+                    }
+                    // When AEOS did not confirm the assignment it may still have taken effect: do not say it failed
+                    let errorText = data.assignmentUnconfirmed
+                        ? `Locker "${locker.name || `Locker ${locker.id}`}":`
+                        : `Failed to assign locker "${locker.name || `Locker ${locker.id}`}".`;
                     
                     if (data.error) {
                         errorText += ` ${data.error}`;
@@ -1338,9 +1387,12 @@
                     successActions.appendChild(closeButton);
                 }
             } catch (error) {
-                // Network or other error
+                // Network or other error: the server may still have assigned (and released) the locker
+                if (!isCurrent()) {
+                    return;
+                }
                 successMessage.className = 'error-message';
-                successMessage.textContent = `Failed to assign locker. Error: ${error.message}`;
+                successMessage.textContent = `Could not confirm the assignment of locker "${locker.name || `Locker ${locker.id}`}" (${error.message}). Refresh the page to see whether it is assigned before trying again.`;
                 
                 successActions.innerHTML = '';
                 const closeButton = document.createElement('button');
@@ -1440,6 +1492,7 @@
         }
         
         function closeLockerModal() {
+            modalSession++;
             const modal = document.getElementById('lockerModal');
             modal.classList.remove('show');
         }

@@ -541,6 +541,43 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             );
     }
 
+    /// <summary>
+    /// findLocker search for the one locker with <paramref name="lockerId"/>.
+    /// </summary>
+    public static LockerSearchInfo BuildLiveLockerSearch(long lockerId)
+    {
+        var lockerSearch = new LockerSearchInfo();
+        lockerSearch.LockerSearch = new LockerSearch();
+        lockerSearch.LockerSearch.Id = lockerId;
+        lockerSearch.LockerSearch.IdSpecified = true;
+        lockerSearch.SearchRange = new SearchRange();
+        lockerSearch.SearchRange.startRecordNo = 0;
+        // More than one record, so a search that ignored the id filter is detected instead of
+        // returning some other locker as the only result.
+        lockerSearch.SearchRange.nrOfRecords = 2;
+        lockerSearch.SearchRange.nrOfRecordsSpecified = true;
+        return lockerSearch;
+    }
+
+    public async Task<LiveLockerState?> GetLiveLockerState(long lockerId)
+    {
+        this.logger.Debug($"Reading live state of locker with ID: {lockerId}");
+
+        var response = await client.findLockerAsync(BuildLiveLockerSearch(lockerId));
+        var state = LiveLockerState.FromAeos(response?.LockerList?.Locker, lockerId);
+
+        if (state == null)
+        {
+            this.logger.Warning($"AEOS returned no unique locker with ID {lockerId} ({response?.LockerList?.Locker?.Length ?? 0} records)");
+        }
+        else
+        {
+            this.logger.Information($"Live state of locker {lockerId}: AssignedTo={state.AssignedTo?.ToString() ?? "none"}, LastUsed={state.LastUsed?.ToString("yyyy-MM-dd") ?? "none"}");
+        }
+
+        return state;
+    }
+
     public async Task<bool> ReleaseLocker(long lockerId)
     {
         this.logger.Information($"Releasing locker with ID: {lockerId}");
