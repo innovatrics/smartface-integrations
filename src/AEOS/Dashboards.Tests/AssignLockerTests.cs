@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -163,6 +164,20 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
         }
 
         [Fact]
+        public async Task Rejected_assignment_keeps_the_original_error_when_AEOS_does_not_return_the_locker()
+        {
+            AssignFails(CourierLocker);
+            aeos.GetLiveLockerState(CourierLocker).Returns((LiveLockerState?)null);
+
+            var (status, body) = Read(await Assign(CourierLocker));
+
+            Assert.Equal(500, status);
+            Assert.Null(Code(body));
+            Assert.Equal("Failed to assign locker: Add locker authorizations failed", body.GetProperty("details").GetString());
+            await aeos.DidNotReceiveWithAnyArgs().ReleaseLocker(default);
+        }
+
+        [Fact]
         public async Task Assignment_that_returns_false_keeps_the_original_error_for_a_free_locker()
         {
             aeos.AssignLocker(CourierLocker, Employee, NetworkId, PresetId).Returns(false);
@@ -312,6 +327,53 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
             Assert.Equal(500, status);
             Assert.True(body.GetProperty("releasedHeldLocker").GetBoolean());
             Assert.Equal("Failed to assign locker: Add locker authorizations failed", body.GetProperty("details").GetString());
+        }
+
+        [Fact]
+        public async Task Concurrent_release_and_assign_on_one_locker_releases_it_only_once()
+        {
+            // A reads the locker as held and releases it; B arrives while A's release is in flight.
+            // B must wait for A, then see A's assignment and leave it alone.
+            var releaseInFlight = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var reads = 0;
+            aeos.GetLiveLockerState(CourierLocker).Returns(_ =>
+            {
+                reads++;
+                return reads switch
+                {
+                    1 => Held(CourierLocker),              // A, before releasing
+                    2 => Free(CourierLocker),              // A, verifying its release
+                    _ => AssignedTo(CourierLocker, Employee) // B, after A assigned
+                };
+            });
+            aeos.ReleaseLocker(CourierLocker).Returns(releaseInFlight.Task);
+            aeos.AssignLocker(CourierLocker, Employee, NetworkId, PresetId).Returns(true);
+
+            var first = Assign(CourierLocker, releaseIfHeld: true);
+            await WaitUntil(() => aeos.ReceivedCalls().Any(c => c.GetMethodInfo().Name == nameof(IAeosDataAdapter.ReleaseLocker)));
+
+            var second = Assign(CourierLocker, releaseIfHeld: true);
+            await Task.Delay(200);
+            Assert.Equal(1, reads); // B has not read the locker while A holds it
+
+            releaseInFlight.SetResult(true);
+            var (firstStatus, _) = Read(await first);
+            var (secondStatus, secondBody) = Read(await second);
+
+            Assert.Equal(200, firstStatus);
+            Assert.Equal(409, secondStatus);
+            Assert.Equal("LOCKER_ALREADY_ASSIGNED", Code(secondBody));
+            await aeos.Received(1).ReleaseLocker(CourierLocker);
+            await aeos.Received(1).AssignLocker(CourierLocker, Employee, NetworkId, PresetId);
+        }
+
+        private static async Task WaitUntil(Func<bool> condition)
+        {
+            for (var i = 0; i < 500 && !condition(); i++)
+            {
+                await Task.Delay(10);
+            }
+            Assert.True(condition(), "condition not reached");
         }
 
         [Fact]

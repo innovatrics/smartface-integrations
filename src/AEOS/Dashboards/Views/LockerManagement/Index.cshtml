@@ -1205,13 +1205,15 @@
         }
         
         async function assignLockerToEmployee(employee, releaseIfHeld = false) {
-            if (!lockerForAssignment) {
+            // The locker this request is about; lockerForAssignment changes when another Assign starts
+            const locker = lockerForAssignment;
+            if (!locker) {
                 return;
             }
             
             // Find the group that contains this locker
             const group = lockerData.find(g => 
-                g.allLockers && g.allLockers.some(l => l.id === lockerForAssignment.id)
+                g.allLockers && g.allLockers.some(l => l.id === locker.id)
             );
             
             // Hide confirmation view and show loading state in success view
@@ -1222,7 +1224,7 @@
             const successMessage = document.getElementById('successMessage');
             const successActions = document.getElementById('successActions');
             
-            successTitle.textContent = lockerForAssignment.name || `Locker ${lockerForAssignment.id}`;
+            successTitle.textContent = locker.name || `Locker ${locker.id}`;
             successMessage.className = 'loading-message';
             successMessage.textContent = 'Assigning locker...';
             successActions.innerHTML = '';
@@ -1260,7 +1262,7 @@
                     },
                     body: JSON.stringify({
                         employeeId: employee.id,
-                        lockerId: lockerForAssignment.id,
+                        lockerId: locker.id,
                         lockerAuthorisationGroupNetworkId: group.lockerAuthorisationGroupNetworkId,
                         lockerAuthorisationPresetId: group.lockerAuthorisationPresetId,
                         releaseIfHeld: releaseIfHeld
@@ -1273,7 +1275,7 @@
                     // Success - update success message
                     successMessage.className = 'success-message';
                     const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
-                    successMessage.textContent = `Locker "${lockerForAssignment.name || `Locker ${lockerForAssignment.id}`}" has been successfully assigned to ${employeeName}. Please note that it may take a few seconds for the change to be visible in the system.`;
+                    successMessage.textContent = `Locker "${locker.name || `Locker ${locker.id}`}" has been successfully assigned to ${employeeName}. Please note that it may take a few seconds for the change to be visible in the system.`;
                     
                     successActions.innerHTML = '';
                     const closeButton = document.createElement('button');
@@ -1284,7 +1286,7 @@
                     successActions.appendChild(closeButton);
                     
                     // Set locker button to yellow (pending state)
-                    setLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
+                    setLockerButtonPending(locker.id, locker.name);
                     
                     // Wait a few seconds, then trigger data refresh and update display
                     setTimeout(async () => {
@@ -1301,26 +1303,30 @@
                                 // Then fetch updated data
                                 await refreshLockerData();
                                 // Clear pending state after refresh
-                                clearLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
+                                clearLockerButtonPending(locker.id, locker.name);
                             } else {
                                 console.error('Failed to trigger data refresh');
-                                clearLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
+                                clearLockerButtonPending(locker.id, locker.name);
                             }
                         } catch (error) {
                             console.error('Error refreshing data:', error);
                             // Still try to refresh the display with cached data
                             await refreshLockerData();
-                            clearLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
+                            clearLockerButtonPending(locker.id, locker.name);
                         }
                     }, 3000); // Wait 3 seconds before refreshing
                 } else if (response.status === 409 && data.code === 'LOCKER_HELD' && !releaseIfHeld) {
-                    // AEOS still holds the locker without an owner: offer to release it and assign again
-                    const lockerName = lockerForAssignment.name || `Locker ${lockerForAssignment.id}`;
+                    // AEOS still holds the locker without an owner: offer to release it and assign again,
+                    // unless the modal has meanwhile moved on to another assignment
+                    if (lockerForAssignment !== locker) {
+                        return;
+                    }
+                    const lockerName = locker.name || `Locker ${locker.id}`;
                     const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
                     const heldSince = data.lastUsed ? ` since ${new Date(data.lastUsed).toLocaleDateString()}` : '';
 
                     successMessage.className = 'error-message';
-                    successMessage.textContent = `Locker "${lockerName}" cannot be assigned yet: AEOS still holds it as in use${heldSince}, although nobody is assigned to it. Release it and assign it to ${employeeName}? Releasing does not open the locker.`;
+                    successMessage.textContent = `Locker "${lockerName}" cannot be assigned yet: AEOS still holds it as in use${heldSince}, although nobody is assigned to it. Release it and assign it to ${employeeName}?`;
 
                     successActions.innerHTML = '';
                     const cancelButton = document.createElement('button');
@@ -1334,11 +1340,15 @@
                     releaseAndAssignButton.className = 'modal-button confirm';
                     releaseAndAssignButton.textContent = 'Release & assign';
                     releaseAndAssignButton.type = 'button';
-                    releaseAndAssignButton.addEventListener('click', () => assignLockerToEmployee(employee, true));
+                    releaseAndAssignButton.addEventListener('click', () => {
+                        if (lockerForAssignment === locker) {
+                            assignLockerToEmployee(employee, true);
+                        }
+                    });
                     successActions.appendChild(releaseAndAssignButton);
                 } else {
                     // Error response
-                    let errorText = `Failed to assign locker "${lockerForAssignment.name || `Locker ${lockerForAssignment.id}`}".`;
+                    let errorText = `Failed to assign locker "${locker.name || `Locker ${locker.id}`}".`;
                     
                     if (data.error) {
                         errorText += ` ${data.error}`;

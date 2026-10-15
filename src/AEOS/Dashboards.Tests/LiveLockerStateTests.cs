@@ -103,6 +103,15 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
         }
 
         [Fact]
+        public void Single_record_with_another_id_gives_no_state()
+        {
+            // The one record AEOS sent back is some other locker: never treat it as the requested one.
+            var state = LiveLockerState.FromAeos(new[] { Locker(101, lastUsed: SeptemberSecond) }, 204);
+
+            Assert.Null(state);
+        }
+
+        [Fact]
         public void Result_with_the_requested_id_twice_gives_no_state()
         {
             var state = LiveLockerState.FromAeos(new[] { Locker(204), Locker(204, lastUsed: SeptemberSecond) }, 204);

@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
+using System.Collections.Concurrent;
+using System.Threading;
 using Serilog;
 
 namespace Innovatrics.SmartFace.Integrations.AeosDashboards
@@ -296,83 +298,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     });
                 }
 
-                // AEOS rejects every assignment of a locker it still holds without an owner, so such a
-                // locker is released first - but only when the caller confirmed it (ReleaseIfHeld).
-                var releasedHeldLocker = false;
-                if (request.ReleaseIfHeld)
-                {
-                    var (refusal, released) = await ReleaseHeldLockerBeforeAssign(request.LockerId, lockerGroup.Name);
-                    if (refusal != null)
-                    {
-                        return refusal;
-                    }
-                    releasedHeldLocker = released;
-                }
-
-                // Attempt to assign the locker
-                bool result;
-                Exception? assignError = null;
+                // One assignment per locker at a time: two confirmed "Release & assign" requests
+                // must not release each other's fresh assignment. The dashboard runs as a single
+                // instance; writes by other AEOS clients are not covered by this lock.
+                var assignLock = LockerAssignLocks.GetOrAdd(request.LockerId, _ => new SemaphoreSlim(1, 1));
+                await assignLock.WaitAsync();
                 try
                 {
-                    result = await aeosDataAdapter.AssignLocker(
-                        request.LockerId,
-                        request.EmployeeId,
-                        networkId,
-                        presetId
-                    );
+                    return await AssignWhileHoldingLockerLock(request, lockerGroup.Name, networkId, presetId);
                 }
-                catch (Exception ex)
+                finally
                 {
-                    result = false;
-                    assignError = ex;
+                    assignLock.Release();
                 }
-
-                if (result)
-                {
-                    // Force data refresh after successful assignment
-                    await TryRefreshLockersData();
-
-                    return Ok(new {
-                        success = true,
-                        message = $"Locker {request.LockerId} assigned successfully to employee {request.EmployeeId}.",
-                        lockerId = request.LockerId,
-                        employeeId = request.EmployeeId,
-                        networkId = networkId,
-                        presetId = presetId,
-                        releasedHeldLocker = releasedHeldLocker
-                    });
-                }
-
-                if (releasedHeldLocker)
-                {
-                    await TryRefreshLockersData();
-                    return StatusCode(500, new {
-                        error = "Failed to assign locker",
-                        details = assignError?.Message,
-                        message = "The locker was released in AEOS, but the assignment still failed.",
-                        releasedHeldLocker = true
-                    });
-                }
-
-                var explained = await ExplainFailedAssignment(request.LockerId, lockerGroup.Name);
-                if (explained != null)
-                {
-                    return explained;
-                }
-
-                if (assignError != null)
-                {
-                    return StatusCode(500, new {
-                        error = "Failed to assign locker",
-                        details = assignError.Message,
-                        innerException = assignError.InnerException?.Message
-                    });
-                }
-
-                return StatusCode(500, new {
-                    error = "Failed to assign locker.",
-                    message = "The assignment operation did not complete successfully. The locker may already be assigned or the operation may have failed."
-                });
             }
             catch (Exception ex)
             {
@@ -382,6 +320,89 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     innerException = ex.InnerException?.Message
                 });
             }
+        }
+
+        private static readonly ConcurrentDictionary<long, SemaphoreSlim> LockerAssignLocks = new ConcurrentDictionary<long, SemaphoreSlim>();
+
+        private async Task<IActionResult> AssignWhileHoldingLockerLock(AssignLockerRequest request, string groupName, int networkId, long presetId)
+        {
+            // AEOS rejects every assignment of a locker it still holds without an owner, so such a
+            // locker is released first - but only when the caller confirmed it (ReleaseIfHeld).
+            var releasedHeldLocker = false;
+            if (request.ReleaseIfHeld)
+            {
+                var (refusal, released) = await ReleaseHeldLockerBeforeAssign(request.LockerId, groupName);
+                if (refusal != null)
+                {
+                    return refusal;
+                }
+                releasedHeldLocker = released;
+            }
+
+            // Attempt to assign the locker
+            bool result;
+            Exception? assignError = null;
+            try
+            {
+                result = await aeosDataAdapter.AssignLocker(
+                    request.LockerId,
+                    request.EmployeeId,
+                    networkId,
+                    presetId
+                );
+            }
+            catch (Exception ex)
+            {
+                result = false;
+                assignError = ex;
+            }
+
+            if (result)
+            {
+                // Force data refresh after successful assignment
+                await TryRefreshLockersData();
+
+                return Ok(new {
+                    success = true,
+                    message = $"Locker {request.LockerId} assigned successfully to employee {request.EmployeeId}.",
+                    lockerId = request.LockerId,
+                    employeeId = request.EmployeeId,
+                    networkId = networkId,
+                    presetId = presetId,
+                    releasedHeldLocker = releasedHeldLocker
+                });
+            }
+
+            if (releasedHeldLocker)
+            {
+                await TryRefreshLockersData();
+                return StatusCode(500, new {
+                    error = "Failed to assign locker",
+                    details = assignError?.Message,
+                    message = "The locker was released in AEOS, but the assignment still failed.",
+                    releasedHeldLocker = true
+                });
+            }
+
+            var explained = await ExplainFailedAssignment(request.LockerId, groupName);
+            if (explained != null)
+            {
+                return explained;
+            }
+
+            if (assignError != null)
+            {
+                return StatusCode(500, new {
+                    error = "Failed to assign locker",
+                    details = assignError.Message,
+                    innerException = assignError.InnerException?.Message
+                });
+            }
+
+            return StatusCode(500, new {
+                error = "Failed to assign locker.",
+                message = "The assignment operation did not complete successfully. The locker may already be assigned or the operation may have failed."
+            });
         }
 
         // Error codes the Locker Management page reacts to.
@@ -502,7 +523,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 await TryRefreshLockersData();
                 return (StatusCode(500, new {
                     code = LockerReleaseFailedCode,
-                    error = "Releasing the locker in AEOS failed, so it was not assigned. Refresh the page before trying again.",
+                    error = "AEOS did not confirm the release of the locker, so it was not assigned. Refresh the page before trying again.",
                     details = ex.Message
                 }), false);
             }
