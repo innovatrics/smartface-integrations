@@ -476,6 +476,13 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 }), false);
             }
 
+            if (!heldSince.HasValue)
+            {
+                return (BadRequest(new {
+                    error = "heldSince is required with releaseIfHeld: send the lastUsed date of the LOCKER_HELD answer that was confirmed."
+                }), false);
+            }
+
             LiveLockerState? live;
             try
             {
@@ -515,7 +522,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             }
 
             // Release only the hold the receptionist confirmed, not one that started since.
-            if (heldSince.HasValue && live.LastUsed!.Value.Date != heldSince.Value.Date)
+            if (live.LastUsed!.Value.Date != heldSince.Value.Date)
             {
                 return (Conflict(new {
                     code = LockerHoldChangedCode,
@@ -809,8 +816,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         public bool ReleaseIfHeld { get; set; }
 
         /// <summary>
-        /// With ReleaseIfHeld: the lastUsed date of the LOCKER_HELD answer the caller confirmed. The
-        /// locker is released only while AEOS still reports that date (otherwise 409 LOCKER_HOLD_CHANGED).
+        /// Required with ReleaseIfHeld: the lastUsed date of the LOCKER_HELD answer the caller confirmed.
+        /// The locker is released only while AEOS still reports that date (otherwise 409 LOCKER_HOLD_CHANGED).
         /// </summary>
         public DateTime? HeldSince { get; set; }
     }

@@ -1279,18 +1279,20 @@
                 const data = await response.json();
                 
                 if (response.ok && data.success) {
-                    // Success - update success message
-                    successMessage.className = 'success-message';
-                    const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
-                    successMessage.textContent = `Locker "${locker.name || `Locker ${locker.id}`}" has been successfully assigned to ${employeeName}. Please note that it may take a few seconds for the change to be visible in the system.`;
-                    
-                    successActions.innerHTML = '';
-                    const closeButton = document.createElement('button');
-                    closeButton.className = 'modal-button assign';
-                    closeButton.textContent = 'Close';
-                    closeButton.type = 'button';
-                    closeButton.addEventListener('click', closeLockerModal);
-                    successActions.appendChild(closeButton);
+                    // Success - update success message, unless the modal has moved on
+                    if (isCurrent()) {
+                        successMessage.className = 'success-message';
+                        const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
+                        successMessage.textContent = `Locker "${locker.name || `Locker ${locker.id}`}" has been successfully assigned to ${employeeName}. Please note that it may take a few seconds for the change to be visible in the system.`;
+                        
+                        successActions.innerHTML = '';
+                        const closeButton = document.createElement('button');
+                        closeButton.className = 'modal-button assign';
+                        closeButton.textContent = 'Close';
+                        closeButton.type = 'button';
+                        closeButton.addEventListener('click', closeLockerModal);
+                        successActions.appendChild(closeButton);
+                    }
                     
                     // Set locker button to yellow (pending state)
                     setLockerButtonPending(locker.id, locker.name);
@@ -1355,6 +1357,9 @@
                     successActions.appendChild(releaseAndAssignButton);
                 } else {
                     // Error response
+                    if (!isCurrent()) {
+                        return;
+                    }
                     // After a confirmed release the assignment may still have taken effect: do not say it failed
                     let errorText = data.releasedHeldLocker
                         ? `Locker "${locker.name || `Locker ${locker.id}`}":`
@@ -1382,9 +1387,12 @@
                     successActions.appendChild(closeButton);
                 }
             } catch (error) {
-                // Network or other error
+                // Network or other error: the server may still have assigned (and released) the locker
+                if (!isCurrent()) {
+                    return;
+                }
                 successMessage.className = 'error-message';
-                successMessage.textContent = `Failed to assign locker. Error: ${error.message}`;
+                successMessage.textContent = `Could not confirm the assignment of locker "${locker.name || `Locker ${locker.id}`}" (${error.message}). Refresh the page to see whether it is assigned before trying again.`;
                 
                 successActions.innerHTML = '';
                 const closeButton = document.createElement('button');

@@ -56,8 +56,9 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
         private static LiveLockerState Held(long id) => new LiveLockerState(id, null, HeldSince);
         private static LiveLockerState AssignedTo(long id, long carrier) => new LiveLockerState(id, carrier, HeldSince);
 
+        // A confirmed retry carries the hold date it confirmed, as the page sends it.
         private Task<IActionResult> Assign(long lockerId, bool releaseIfHeld = false, DateTime? heldSince = null) =>
-            controller.AssignLocker(new AssignLockerRequest { EmployeeId = Employee, LockerId = lockerId, ReleaseIfHeld = releaseIfHeld, HeldSince = heldSince });
+            controller.AssignLocker(new AssignLockerRequest { EmployeeId = Employee, LockerId = lockerId, ReleaseIfHeld = releaseIfHeld, HeldSince = heldSince ?? (releaseIfHeld ? HeldSince : null) });
 
         private static (int Status, JsonElement Body) Read(IActionResult result)
         {
@@ -472,7 +473,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
                 // Another receptionist assigns the same locker to someone else. Each HTTP request gets its
                 // own controller instance; the lock must hold across them and must be per locker.
                 var otherController = new LockerAnalyticsApiController(orchestrator, configuration, aeos);
-                second = otherController.AssignLocker(new AssignLockerRequest { EmployeeId = OtherEmployee, LockerId = CourierLocker, ReleaseIfHeld = true });
+                second = otherController.AssignLocker(new AssignLockerRequest { EmployeeId = OtherEmployee, LockerId = CourierLocker, ReleaseIfHeld = true, HeldSince = HeldSince });
                 await Task.Delay(200);
                 readsWhileFirstHeldTheLock = reads;
             }
@@ -501,6 +502,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
                 await Task.Delay(10);
             }
             Assert.True(condition(), "condition not reached");
+        }
+
+        [Fact]
+        public async Task Release_and_assign_without_heldSince_is_refused_before_touching_AEOS()
+        {
+            var request = new AssignLockerRequest { EmployeeId = Employee, LockerId = CourierLocker, ReleaseIfHeld = true, HeldSince = null };
+
+            var (status, _) = Read(await controller.AssignLocker(request));
+
+            Assert.Equal(400, status);
+            await aeos.DidNotReceiveWithAnyArgs().GetLiveLockerState(default);
+            await aeos.DidNotReceiveWithAnyArgs().ReleaseLocker(default);
+            await aeos.DidNotReceiveWithAnyArgs().AssignLocker(default, default, default, default);
         }
 
         [Fact]
