@@ -1360,8 +1360,8 @@
                     if (!isCurrent()) {
                         return;
                     }
-                    // After a confirmed release the assignment may still have taken effect: do not say it failed
-                    let errorText = data.releasedHeldLocker
+                    // When AEOS did not confirm the assignment it may still have taken effect: do not say it failed
+                    let errorText = data.assignmentUnconfirmed
                         ? `Locker "${locker.name || `Locker ${locker.id}`}":`
                         : `Failed to assign locker "${locker.name || `Locker ${locker.id}`}".`;
                     

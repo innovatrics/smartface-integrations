@@ -393,7 +393,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     error = "The locker was released in AEOS, but AEOS did not confirm the assignment.",
                     details = assignError?.Message,
                     message = "Refresh the page to see whether the locker is assigned before trying again.",
-                    releasedHeldLocker = true
+                    releasedHeldLocker = true,
+                    assignmentUnconfirmed = true
                 });
             }
 
@@ -405,6 +406,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             if (assignError != null)
             {
+                if (live == null)
+                {
+                    // Neither the assignment nor the read-back answered: AEOS may still have applied it.
+                    return StatusCode(500, new {
+                        error = "AEOS did not confirm the assignment.",
+                        details = assignError.Message,
+                        message = "Refresh the page to see whether the locker is assigned before trying again.",
+                        assignmentUnconfirmed = true
+                    });
+                }
+
                 return StatusCode(500, new {
                     error = "Failed to assign locker",
                     details = assignError.Message,

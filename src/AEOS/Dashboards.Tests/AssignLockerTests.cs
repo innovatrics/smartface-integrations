@@ -150,11 +150,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
 
             Assert.Equal(500, status);
             Assert.Null(Code(body));
+            Assert.False(body.TryGetProperty("assignmentUnconfirmed", out _)); // read back as not assigned: it did fail
             Assert.Equal("Failed to assign locker: something else", body.GetProperty("details").GetString());
         }
 
         [Fact]
-        public async Task Rejected_assignment_keeps_the_original_error_when_the_live_read_fails()
+        public async Task Rejected_assignment_is_reported_as_unconfirmed_when_the_live_read_fails()
         {
             AssignFails(CourierLocker);
             aeos.GetLiveLockerState(CourierLocker).ThrowsAsync(new Exception("AEOS unreachable"));
@@ -162,12 +163,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
             var (status, body) = Read(await Assign(CourierLocker));
 
             Assert.Equal(500, status);
+            Assert.True(body.GetProperty("assignmentUnconfirmed").GetBoolean());
+            Assert.Equal("AEOS did not confirm the assignment.", body.GetProperty("error").GetString());
             Assert.Equal("Failed to assign locker: Add locker authorizations failed", body.GetProperty("details").GetString());
             await aeos.DidNotReceiveWithAnyArgs().ReleaseLocker(default);
         }
 
         [Fact]
-        public async Task Rejected_assignment_keeps_the_original_error_when_AEOS_does_not_return_the_locker()
+        public async Task Rejected_assignment_is_reported_as_unconfirmed_when_AEOS_does_not_return_the_locker()
         {
             AssignFails(CourierLocker);
             aeos.GetLiveLockerState(CourierLocker).Returns((LiveLockerState?)null);
@@ -176,6 +179,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
 
             Assert.Equal(500, status);
             Assert.Null(Code(body));
+            Assert.True(body.GetProperty("assignmentUnconfirmed").GetBoolean());
             Assert.Equal("Failed to assign locker: Add locker authorizations failed", body.GetProperty("details").GetString());
             await aeos.DidNotReceiveWithAnyArgs().ReleaseLocker(default);
         }
@@ -329,6 +333,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
 
             Assert.Equal(500, status);
             Assert.True(body.GetProperty("releasedHeldLocker").GetBoolean());
+            Assert.True(body.GetProperty("assignmentUnconfirmed").GetBoolean());
             Assert.Equal("The locker was released in AEOS, but AEOS did not confirm the assignment.", body.GetProperty("error").GetString());
             Assert.Equal("Refresh the page to see whether the locker is assigned before trying again.", body.GetProperty("message").GetString());
             Assert.Equal("Failed to assign locker: Add locker authorizations failed", body.GetProperty("details").GetString());
