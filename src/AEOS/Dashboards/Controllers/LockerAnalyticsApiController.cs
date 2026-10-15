@@ -296,43 +296,266 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                     });
                 }
 
+                // AEOS rejects every assignment of a locker it still holds without an owner, so such a
+                // locker is released first - but only when the caller confirmed it (ReleaseIfHeld).
+                var releasedHeldLocker = false;
+                if (request.ReleaseIfHeld)
+                {
+                    var (refusal, released) = await ReleaseHeldLockerBeforeAssign(request.LockerId, lockerGroup.Name);
+                    if (refusal != null)
+                    {
+                        return refusal;
+                    }
+                    releasedHeldLocker = released;
+                }
+
                 // Attempt to assign the locker
-                var result = await aeosDataAdapter.AssignLocker(
-                    request.LockerId,
-                    request.EmployeeId,
-                    networkId,
-                    presetId
-                );
+                bool result;
+                Exception? assignError = null;
+                try
+                {
+                    result = await aeosDataAdapter.AssignLocker(
+                        request.LockerId,
+                        request.EmployeeId,
+                        networkId,
+                        presetId
+                    );
+                }
+                catch (Exception ex)
+                {
+                    result = false;
+                    assignError = ex;
+                }
 
                 if (result)
                 {
                     // Force data refresh after successful assignment
-                    await dataOrchestrator.GetLockersData();
-                    
-                    return Ok(new { 
+                    await TryRefreshLockersData();
+
+                    return Ok(new {
                         success = true,
                         message = $"Locker {request.LockerId} assigned successfully to employee {request.EmployeeId}.",
                         lockerId = request.LockerId,
                         employeeId = request.EmployeeId,
                         networkId = networkId,
-                        presetId = presetId
+                        presetId = presetId,
+                        releasedHeldLocker = releasedHeldLocker
                     });
                 }
-                else
+
+                if (releasedHeldLocker)
                 {
-                    return StatusCode(500, new { 
-                        error = "Failed to assign locker.",
-                        message = "The assignment operation did not complete successfully. The locker may already be assigned or the operation may have failed."
+                    await TryRefreshLockersData();
+                    return StatusCode(500, new {
+                        error = "Failed to assign locker",
+                        details = assignError?.Message,
+                        message = "The locker was released in AEOS, but the assignment still failed.",
+                        releasedHeldLocker = true
                     });
                 }
+
+                var explained = await ExplainFailedAssignment(request.LockerId, lockerGroup.Name);
+                if (explained != null)
+                {
+                    return explained;
+                }
+
+                if (assignError != null)
+                {
+                    return StatusCode(500, new {
+                        error = "Failed to assign locker",
+                        details = assignError.Message,
+                        innerException = assignError.InnerException?.Message
+                    });
+                }
+
+                return StatusCode(500, new {
+                    error = "Failed to assign locker.",
+                    message = "The assignment operation did not complete successfully. The locker may already be assigned or the operation may have failed."
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { 
+                return StatusCode(500, new {
                     error = "Failed to assign locker",
                     details = ex.Message,
                     innerException = ex.InnerException?.Message
                 });
+            }
+        }
+
+        // Error codes the Locker Management page reacts to.
+        private const string LockerHeldCode = "LOCKER_HELD";
+        private const string LockerAlreadyAssignedCode = "LOCKER_ALREADY_ASSIGNED";
+        private const string LockerStateUnknownCode = "LOCKER_STATE_UNKNOWN";
+        private const string LockerReleaseFailedCode = "LOCKER_RELEASE_FAILED";
+        private const string LockerReleaseRejectedCode = "LOCKER_RELEASE_REJECTED";
+        private const string LockerStillHeldCode = "LOCKER_STILL_HELD";
+
+        /// <summary>
+        /// After AEOS rejected an assignment, reads the locker's live state to tell the caller why.
+        /// Returns null when the live state does not explain the failure.
+        /// </summary>
+        private async Task<IActionResult?> ExplainFailedAssignment(long lockerId, string groupName)
+        {
+            LiveLockerState? live;
+            try
+            {
+                live = await aeosDataAdapter.GetLiveLockerState(lockerId);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Could not read the live state of locker {LockerId} after a failed assignment", lockerId);
+                return null;
+            }
+
+            if (live == null)
+            {
+                return null;
+            }
+
+            if (live.IsHeldWithoutOwner && IsLockerManagementGroup(groupName))
+            {
+                Log.Warning("Locker {LockerId} is held in AEOS without an owner since {LastUsed:yyyy-MM-dd}; the assignment was rejected", lockerId, live.LastUsed);
+                return Conflict(new {
+                    code = LockerHeldCode,
+                    error = $"AEOS still holds this locker as in use (since {live.LastUsed:yyyy-MM-dd}) although nobody is assigned to it, so it rejects the assignment.",
+                    message = "Release the locker, then assign it again.",
+                    lastUsed = live.LastUsed
+                });
+            }
+
+            if (live.IsAssigned)
+            {
+                await TryRefreshLockersData();
+                return Conflict(new {
+                    code = LockerAlreadyAssignedCode,
+                    error = "AEOS reports this locker as already assigned.",
+                    message = "Refresh the page to see the current assignment."
+                });
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Releases a locker that AEOS holds without an owner, after checking its live state, and
+        /// verifies that the release took effect. Returns a refusal to send back to the caller, or
+        /// null when the assignment may go ahead; Released tells whether a release happened.
+        /// </summary>
+        private async Task<(IActionResult? Refusal, bool Released)> ReleaseHeldLockerBeforeAssign(long lockerId, string groupName)
+        {
+            if (!IsLockerManagementGroup(groupName))
+            {
+                return (BadRequest(new {
+                    error = "Releasing a held locker is only allowed for groups configured in Locker Management."
+                }), false);
+            }
+
+            LiveLockerState? live;
+            try
+            {
+                live = await aeosDataAdapter.GetLiveLockerState(lockerId);
+            }
+            catch (Exception ex)
+            {
+                return (StatusCode(500, new {
+                    code = LockerStateUnknownCode,
+                    error = "Could not read the current state of the locker from AEOS. Nothing was released or assigned.",
+                    details = ex.Message
+                }), false);
+            }
+
+            if (live == null)
+            {
+                return (StatusCode(500, new {
+                    code = LockerStateUnknownCode,
+                    error = "AEOS did not return the locker. Nothing was released or assigned."
+                }), false);
+            }
+
+            if (live.IsAssigned)
+            {
+                await TryRefreshLockersData();
+                return (Conflict(new {
+                    code = LockerAlreadyAssignedCode,
+                    error = "AEOS reports this locker as already assigned, so it was not released.",
+                    message = "Refresh the page to see the current assignment."
+                }), false);
+            }
+
+            if (!live.IsHeldWithoutOwner)
+            {
+                // Already free: nothing to release.
+                return (null, false);
+            }
+
+            Log.Warning("Releasing locker {LockerId}, held in AEOS without an owner since {LastUsed:yyyy-MM-dd}, before assigning it", lockerId, live.LastUsed);
+
+            bool released;
+            try
+            {
+                released = await aeosDataAdapter.ReleaseLocker(lockerId);
+            }
+            catch (Exception ex)
+            {
+                await TryRefreshLockersData();
+                return (StatusCode(500, new {
+                    code = LockerReleaseFailedCode,
+                    error = "Releasing the locker in AEOS failed, so it was not assigned. Refresh the page before trying again.",
+                    details = ex.Message
+                }), false);
+            }
+
+            if (!released)
+            {
+                return (Conflict(new {
+                    code = LockerReleaseRejectedCode,
+                    error = "AEOS refused to release the locker, so it was not assigned."
+                }), false);
+            }
+
+            LiveLockerState? after;
+            try
+            {
+                after = await aeosDataAdapter.GetLiveLockerState(lockerId);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Could not verify the release of locker {LockerId}", lockerId);
+                after = null;
+            }
+
+            if (after == null || after.IsAssigned || after.IsHeldWithoutOwner)
+            {
+                await TryRefreshLockersData();
+                return (Conflict(new {
+                    code = LockerStillHeldCode,
+                    error = "The locker was released in AEOS, but its state could not be confirmed as free, so it was not assigned.",
+                    message = "Refresh the page and assign it again."
+                }), true);
+            }
+
+            return (null, true);
+        }
+
+        private bool IsLockerManagementGroup(string groupName)
+        {
+            var groupConfigurations = configuration.GetSection("AeosDashboards:LockerManagement:GroupConfiguration")
+                .Get<List<LockerManagementGroupConfiguration>>() ?? new List<LockerManagementGroupConfiguration>();
+
+            return groupConfigurations.Any(g => g.GroupName == groupName);
+        }
+
+        private async Task TryRefreshLockersData()
+        {
+            try
+            {
+                await dataOrchestrator.GetLockersData();
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Refreshing locker data from AEOS failed");
             }
         }
 
@@ -529,5 +752,12 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// The Locker Authorisation Preset ID. If not provided, will be looked up from the locker group.
         /// </summary>
         public long? LockerAuthorisationPresetId { get; set; }
+
+        /// <summary>
+        /// Release the locker first when AEOS still holds it as in use without an assigned carrier
+        /// (an earlier attempt answered 409 with code LOCKER_HELD). Only honoured for groups
+        /// configured in Locker Management. Defaults to false.
+        /// </summary>
+        public bool ReleaseIfHeld { get; set; }
     }
 } 

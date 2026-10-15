@@ -1204,7 +1204,7 @@
             confirmationActions.appendChild(confirmButton);
         }
         
-        async function assignLockerToEmployee(employee) {
+        async function assignLockerToEmployee(employee, releaseIfHeld = false) {
             if (!lockerForAssignment) {
                 return;
             }
@@ -1262,7 +1262,8 @@
                         employeeId: employee.id,
                         lockerId: lockerForAssignment.id,
                         lockerAuthorisationGroupNetworkId: group.lockerAuthorisationGroupNetworkId,
-                        lockerAuthorisationPresetId: group.lockerAuthorisationPresetId
+                        lockerAuthorisationPresetId: group.lockerAuthorisationPresetId,
+                        releaseIfHeld: releaseIfHeld
                     })
                 });
                 
@@ -1312,6 +1313,29 @@
                             clearLockerButtonPending(lockerForAssignment.id, lockerForAssignment.name);
                         }
                     }, 3000); // Wait 3 seconds before refreshing
+                } else if (response.status === 409 && data.code === 'LOCKER_HELD' && !releaseIfHeld) {
+                    // AEOS still holds the locker without an owner: offer to release it and assign again
+                    const lockerName = lockerForAssignment.name || `Locker ${lockerForAssignment.id}`;
+                    const employeeName = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
+                    const heldSince = data.lastUsed ? ` since ${new Date(data.lastUsed).toLocaleDateString()}` : '';
+
+                    successMessage.className = 'error-message';
+                    successMessage.textContent = `Locker "${lockerName}" cannot be assigned yet: AEOS still holds it as in use${heldSince}, although nobody is assigned to it. Release it and assign it to ${employeeName}? Releasing does not open the locker.`;
+
+                    successActions.innerHTML = '';
+                    const cancelButton = document.createElement('button');
+                    cancelButton.className = 'modal-button cancel';
+                    cancelButton.textContent = 'Cancel';
+                    cancelButton.type = 'button';
+                    cancelButton.addEventListener('click', closeLockerModal);
+                    successActions.appendChild(cancelButton);
+
+                    const releaseAndAssignButton = document.createElement('button');
+                    releaseAndAssignButton.className = 'modal-button confirm';
+                    releaseAndAssignButton.textContent = 'Release & assign';
+                    releaseAndAssignButton.type = 'button';
+                    releaseAndAssignButton.addEventListener('click', () => assignLockerToEmployee(employee, true));
+                    successActions.appendChild(releaseAndAssignButton);
                 } else {
                     // Error response
                     let errorText = `Failed to assign locker "${lockerForAssignment.name || `Locker ${lockerForAssignment.id}`}".`;
