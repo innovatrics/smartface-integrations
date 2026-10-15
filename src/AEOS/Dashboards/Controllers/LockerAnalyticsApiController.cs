@@ -331,7 +331,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             var releasedHeldLocker = false;
             if (request.ReleaseIfHeld)
             {
-                var (refusal, released) = await ReleaseHeldLockerBeforeAssign(request.LockerId, groupName);
+                var (refusal, released) = await ReleaseHeldLockerBeforeAssign(request.LockerId, groupName, request.HeldSince);
                 if (refusal != null)
                 {
                     return refusal;
@@ -357,22 +357,34 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 assignError = ex;
             }
 
-            if (result)
+            if (!result)
             {
-                // Force data refresh after successful assignment
-                await TryRefreshLockersData();
-
-                return Ok(new {
-                    success = true,
-                    message = $"Locker {request.LockerId} assigned successfully to employee {request.EmployeeId}.",
-                    lockerId = request.LockerId,
-                    employeeId = request.EmployeeId,
-                    networkId = networkId,
-                    presetId = presetId,
-                    releasedHeldLocker = releasedHeldLocker
-                });
+                // AEOS may have applied the assignment without confirming it (e.g. a timeout), so read the
+                // locker back before telling the caller anything.
+                var live = await TryGetLiveLockerState(request.LockerId);
+                if (live?.AssignedTo != request.EmployeeId)
+                {
+                    return await DescribeFailedAssignment(groupName, live, releasedHeldLocker, assignError);
+                }
+                Log.Warning("AEOS did not confirm assigning locker {LockerId} to {EmployeeId}, but it reads back as assigned to them", request.LockerId, request.EmployeeId);
             }
 
+            // Force data refresh after successful assignment
+            await TryRefreshLockersData();
+
+            return Ok(new {
+                success = true,
+                message = $"Locker {request.LockerId} assigned successfully to employee {request.EmployeeId}.",
+                lockerId = request.LockerId,
+                employeeId = request.EmployeeId,
+                networkId = networkId,
+                presetId = presetId,
+                releasedHeldLocker = releasedHeldLocker
+            });
+        }
+
+        private async Task<IActionResult> DescribeFailedAssignment(string groupName, LiveLockerState? live, bool releasedHeldLocker, Exception? assignError)
+        {
             if (releasedHeldLocker)
             {
                 await TryRefreshLockersData();
@@ -385,7 +397,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 });
             }
 
-            var explained = await ExplainFailedAssignment(request.LockerId, groupName);
+            var explained = await ExplainFailedAssignment(live, groupName);
             if (explained != null)
             {
                 return explained;
@@ -413,24 +425,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         private const string LockerReleaseFailedCode = "LOCKER_RELEASE_FAILED";
         private const string LockerReleaseRejectedCode = "LOCKER_RELEASE_REJECTED";
         private const string LockerStillHeldCode = "LOCKER_STILL_HELD";
+        private const string LockerHoldChangedCode = "LOCKER_HOLD_CHANGED";
 
         /// <summary>
-        /// After AEOS rejected an assignment, reads the locker's live state to tell the caller why.
-        /// Returns null when the live state does not explain the failure.
+        /// After AEOS rejected an assignment, uses the locker's live state to tell the caller why.
+        /// Returns null when the live state is unknown or does not explain the failure.
         /// </summary>
-        private async Task<IActionResult?> ExplainFailedAssignment(long lockerId, string groupName)
+        private async Task<IActionResult?> ExplainFailedAssignment(LiveLockerState? live, string groupName)
         {
-            LiveLockerState? live;
-            try
-            {
-                live = await aeosDataAdapter.GetLiveLockerState(lockerId);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(ex, "Could not read the live state of locker {LockerId} after a failed assignment", lockerId);
-                return null;
-            }
-
             if (live == null)
             {
                 return null;
@@ -438,11 +440,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
 
             if (live.IsHeldWithoutOwner && IsLockerManagementGroup(groupName))
             {
-                Log.Warning("Locker {LockerId} is held in AEOS without an owner since {LastUsed:yyyy-MM-dd}; the assignment was rejected", lockerId, live.LastUsed);
+                Log.Warning("Locker {LockerId} is held in AEOS without an owner since {LastUsed:yyyy-MM-dd}; the assignment was rejected", live.Id, live.LastUsed);
                 return Conflict(new {
                     code = LockerHeldCode,
                     error = $"AEOS still holds this locker as in use (since {live.LastUsed:yyyy-MM-dd}) although nobody is assigned to it, so it rejects the assignment.",
-                    message = "Release the locker, then assign it again.",
+                    message = "Assign it again; the page then offers to release it first.",
                     lastUsed = live.LastUsed
                 });
             }
@@ -465,7 +467,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// verifies that the release took effect. Returns a refusal to send back to the caller, or
         /// null when the assignment may go ahead; Released tells whether a release happened.
         /// </summary>
-        private async Task<(IActionResult? Refusal, bool Released)> ReleaseHeldLockerBeforeAssign(long lockerId, string groupName)
+        private async Task<(IActionResult? Refusal, bool Released)> ReleaseHeldLockerBeforeAssign(long lockerId, string groupName, DateTime? heldSince)
         {
             if (!IsLockerManagementGroup(groupName))
             {
@@ -510,6 +512,17 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             {
                 // Already free: nothing to release.
                 return (null, false);
+            }
+
+            // Release only the hold the receptionist confirmed, not one that started since.
+            if (heldSince.HasValue && live.LastUsed!.Value.Date != heldSince.Value.Date)
+            {
+                return (Conflict(new {
+                    code = LockerHoldChangedCode,
+                    error = $"AEOS now holds this locker since {live.LastUsed:yyyy-MM-dd}, not since the date you confirmed, so nothing was released or assigned.",
+                    message = "Assign it again to see the current state.",
+                    lastUsed = live.LastUsed
+                }), false);
             }
 
             Log.Warning("Releasing locker {LockerId}, held in AEOS without an owner since {LastUsed:yyyy-MM-dd}, before assigning it", lockerId, live.LastUsed);
@@ -567,6 +580,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
                 .Get<List<LockerManagementGroupConfiguration>>() ?? new List<LockerManagementGroupConfiguration>();
 
             return groupConfigurations.Any(g => g.GroupName == groupName);
+        }
+
+        private async Task<LiveLockerState?> TryGetLiveLockerState(long lockerId)
+        {
+            try
+            {
+                return await aeosDataAdapter.GetLiveLockerState(lockerId);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "Could not read the live state of locker {LockerId}", lockerId);
+                return null;
+            }
         }
 
         private async Task TryRefreshLockersData()
@@ -781,5 +807,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         /// configured in Locker Management. Defaults to false.
         /// </summary>
         public bool ReleaseIfHeld { get; set; }
+
+        /// <summary>
+        /// With ReleaseIfHeld: the lastUsed date of the LOCKER_HELD answer the caller confirmed. The
+        /// locker is released only while AEOS still reports that date (otherwise 409 LOCKER_HOLD_CHANGED).
+        /// </summary>
+        public DateTime? HeldSince { get; set; }
     }
 } 

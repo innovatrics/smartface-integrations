@@ -423,6 +423,7 @@
         let currentActiveGroupName = null;
         let lockerForAssignment = null; // Track locker when assigning
         let modalSession = 0; // Changes whenever the locker modal opens or closes
+        let assignAttempt = 0; // Changes with every assignment request
         let retryCountdownInterval = null;
         let useCustomLayout = {}; // Track view state per group (true = custom, false = default)
         
@@ -1206,13 +1207,15 @@
             confirmationActions.appendChild(confirmButton);
         }
         
-        async function assignLockerToEmployee(employee, releaseIfHeld = false) {
+        async function assignLockerToEmployee(employee, releaseIfHeld = false, heldSince = null) {
             // The locker and modal this request belongs to; both change when the receptionist moves on
             const locker = lockerForAssignment;
             const session = modalSession;
             if (!locker) {
                 return;
             }
+            const attempt = ++assignAttempt;
+            const isCurrent = () => attempt === assignAttempt && session === modalSession && lockerForAssignment === locker;
             
             // Find the group that contains this locker
             const group = lockerData.find(g => 
@@ -1268,7 +1271,8 @@
                         lockerId: locker.id,
                         lockerAuthorisationGroupNetworkId: group.lockerAuthorisationGroupNetworkId,
                         lockerAuthorisationPresetId: group.lockerAuthorisationPresetId,
-                        releaseIfHeld: releaseIfHeld
+                        releaseIfHeld: releaseIfHeld,
+                        heldSince: heldSince
                     })
                 });
                 
@@ -1321,7 +1325,7 @@
                 } else if (response.status === 409 && data.code === 'LOCKER_HELD' && !releaseIfHeld) {
                     // AEOS still holds the locker without an owner: offer to release it and assign again,
                     // unless the modal has meanwhile moved on to another assignment
-                    if (session !== modalSession || lockerForAssignment !== locker) {
+                    if (!isCurrent()) {
                         return;
                     }
                     const lockerName = locker.name || `Locker ${locker.id}`;
@@ -1344,8 +1348,8 @@
                     releaseAndAssignButton.textContent = 'Release & assign';
                     releaseAndAssignButton.type = 'button';
                     releaseAndAssignButton.addEventListener('click', () => {
-                        if (session === modalSession && lockerForAssignment === locker) {
-                            assignLockerToEmployee(employee, true);
+                        if (isCurrent()) {
+                            assignLockerToEmployee(employee, true, data.lastUsed);
                         }
                     });
                     successActions.appendChild(releaseAndAssignButton);

@@ -16,6 +16,7 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
         private const long CourierLocker = 204;   // in "Courier Items", a Locker Management group
         private const long PersonalLocker = 301;  // in "All Personal", not managed by Locker Management
         private const long Employee = 77;
+        private const long OtherEmployee = 88;
         private const int NetworkId = 3;
         private const long PresetId = 9;
         private static readonly DateTime HeldSince = new DateTime(2026, 9, 2);
@@ -55,8 +56,8 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
         private static LiveLockerState Held(long id) => new LiveLockerState(id, null, HeldSince);
         private static LiveLockerState AssignedTo(long id, long carrier) => new LiveLockerState(id, carrier, HeldSince);
 
-        private Task<IActionResult> Assign(long lockerId, bool releaseIfHeld = false) =>
-            controller.AssignLocker(new AssignLockerRequest { EmployeeId = Employee, LockerId = lockerId, ReleaseIfHeld = releaseIfHeld });
+        private Task<IActionResult> Assign(long lockerId, bool releaseIfHeld = false, DateTime? heldSince = null) =>
+            controller.AssignLocker(new AssignLockerRequest { EmployeeId = Employee, LockerId = lockerId, ReleaseIfHeld = releaseIfHeld, HeldSince = heldSince });
 
         private static (int Status, JsonElement Body) Read(IActionResult result)
         {
@@ -333,6 +334,115 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
         }
 
         [Fact]
+        public async Task Release_and_assign_does_not_assign_when_someone_else_got_the_locker_right_after_the_release()
+        {
+            aeos.GetLiveLockerState(CourierLocker).Returns(Held(CourierLocker), AssignedTo(CourierLocker, 55));
+            aeos.ReleaseLocker(CourierLocker).Returns(true);
+
+            var (status, body) = Read(await Assign(CourierLocker, releaseIfHeld: true));
+
+            Assert.Equal(409, status);
+            Assert.Equal("LOCKER_STILL_HELD", Code(body));
+            await aeos.DidNotReceiveWithAnyArgs().AssignLocker(default, default, default, default);
+        }
+
+        [Fact]
+        public async Task Release_and_assign_releases_when_the_hold_is_the_one_the_receptionist_confirmed()
+        {
+            aeos.GetLiveLockerState(CourierLocker).Returns(Held(CourierLocker), Free(CourierLocker));
+            aeos.ReleaseLocker(CourierLocker).Returns(true);
+            aeos.AssignLocker(CourierLocker, Employee, NetworkId, PresetId).Returns(true);
+
+            var (status, _) = Read(await Assign(CourierLocker, releaseIfHeld: true, heldSince: HeldSince));
+
+            Assert.Equal(200, status);
+            await aeos.Received(1).ReleaseLocker(CourierLocker);
+        }
+
+        [Fact]
+        public async Task Release_and_assign_does_not_release_a_hold_that_started_after_the_confirmation()
+        {
+            aeos.GetLiveLockerState(CourierLocker).Returns(Held(CourierLocker));
+
+            var (status, body) = Read(await Assign(CourierLocker, releaseIfHeld: true, heldSince: HeldSince.AddDays(-5)));
+
+            Assert.Equal(409, status);
+            Assert.Equal("LOCKER_HOLD_CHANGED", Code(body));
+            Assert.Equal(HeldSince, body.GetProperty("lastUsed").GetDateTime());
+            await aeos.DidNotReceiveWithAnyArgs().ReleaseLocker(default);
+            await aeos.DidNotReceiveWithAnyArgs().AssignLocker(default, default, default, default);
+        }
+
+        [Fact]
+        public async Task Unconfirmed_assignment_that_reads_back_as_done_is_a_success()
+        {
+            AssignFails(CourierLocker, "The request channel timed out");
+            aeos.GetLiveLockerState(CourierLocker).Returns(AssignedTo(CourierLocker, Employee));
+
+            var (status, body) = Read(await Assign(CourierLocker));
+
+            Assert.Equal(200, status);
+            Assert.True(body.GetProperty("success").GetBoolean());
+        }
+
+        [Fact]
+        public async Task Unconfirmed_assignment_after_a_release_that_reads_back_as_done_is_a_success()
+        {
+            aeos.GetLiveLockerState(CourierLocker).Returns(Held(CourierLocker), Free(CourierLocker), AssignedTo(CourierLocker, Employee));
+            aeos.ReleaseLocker(CourierLocker).Returns(true);
+            AssignFails(CourierLocker, "The request channel timed out");
+
+            var (status, body) = Read(await Assign(CourierLocker, releaseIfHeld: true));
+
+            Assert.Equal(200, status);
+            Assert.True(body.GetProperty("releasedHeldLocker").GetBoolean());
+        }
+
+        [Theory]
+        [InlineData(DateTimeKind.Unspecified)]
+        [InlineData(DateTimeKind.Local)]
+        [InlineData(DateTimeKind.Utc)]
+        public async Task LOCKER_HELD_lastUsed_sent_back_by_the_page_as_heldSince_lets_the_release_through(DateTimeKind kind)
+        {
+            // ASP.NET Core serialises with the web defaults; the page posts data.lastUsed back unchanged.
+            var web = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+            var heldSince = DateTime.SpecifyKind(HeldSince, kind);
+            AssignFails(CourierLocker);
+            aeos.GetLiveLockerState(CourierLocker).Returns(new LiveLockerState(CourierLocker, null, heldSince));
+
+            var heldAnswer = JsonSerializer.Serialize(((ObjectResult)await Assign(CourierLocker)).Value, web);
+            var lastUsed = JsonDocument.Parse(heldAnswer).RootElement.GetProperty("lastUsed").GetString();
+            var pageBody = "{\"employeeId\":" + Employee + ",\"lockerId\":" + CourierLocker + ",\"lockerAuthorisationGroupNetworkId\":" + NetworkId
+                + ",\"lockerAuthorisationPresetId\":" + PresetId + ",\"releaseIfHeld\":true,\"heldSince\":\"" + lastUsed + "\"}";
+            var request = JsonSerializer.Deserialize<AssignLockerRequest>(pageBody, web)!;
+
+            aeos.ClearReceivedCalls();
+            aeos.GetLiveLockerState(CourierLocker).Returns(new LiveLockerState(CourierLocker, null, heldSince), Free(CourierLocker));
+            aeos.ReleaseLocker(CourierLocker).Returns(true);
+            aeos.AssignLocker(CourierLocker, Employee, NetworkId, PresetId).Returns(true);
+
+            var (status, _) = Read(await controller.AssignLocker(request));
+
+            Assert.True(request.ReleaseIfHeld);
+            Assert.Equal(HeldSince.Date, request.HeldSince?.Date); // the date check really ran
+            Assert.Equal(200, status);
+            await aeos.Received(1).ReleaseLocker(CourierLocker);
+        }
+
+        [Fact]
+        public void Plain_assign_body_from_the_page_binds_without_release()
+        {
+            var body = "{\"employeeId\":77,\"lockerId\":204,\"lockerAuthorisationGroupNetworkId\":3,\"lockerAuthorisationPresetId\":9,\"releaseIfHeld\":false,\"heldSince\":null}";
+
+            var request = JsonSerializer.Deserialize<AssignLockerRequest>(body, new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+
+            Assert.False(request.ReleaseIfHeld);
+            Assert.Null(request.HeldSince);
+            Assert.Equal(204, request.LockerId);
+            Assert.Equal(77, request.EmployeeId);
+        }
+
+        [Fact]
         public async Task Concurrent_release_and_assign_on_one_locker_releases_it_only_once()
         {
             // A reads the locker as held and releases it; B arrives while A's release is in flight.
@@ -353,23 +463,35 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
             aeos.AssignLocker(CourierLocker, Employee, NetworkId, PresetId).Returns(true);
 
             var first = Assign(CourierLocker, releaseIfHeld: true);
-            await WaitUntil(() => aeos.ReceivedCalls().Any(c => c.GetMethodInfo().Name == nameof(IAeosDataAdapter.ReleaseLocker)));
+            Task<IActionResult>? second = null;
+            int readsWhileFirstHeldTheLock;
+            try
+            {
+                await WaitUntil(() => aeos.ReceivedCalls().Any(c => c.GetMethodInfo().Name == nameof(IAeosDataAdapter.ReleaseLocker)));
 
-            // Each HTTP request gets its own controller instance; the lock must hold across them.
-            var otherController = new LockerAnalyticsApiController(orchestrator, configuration, aeos);
-            var second = otherController.AssignLocker(new AssignLockerRequest { EmployeeId = Employee, LockerId = CourierLocker, ReleaseIfHeld = true });
-            await Task.Delay(200);
-            Assert.Equal(1, reads); // B has not read the locker while A holds it
+                // Another receptionist assigns the same locker to someone else. Each HTTP request gets its
+                // own controller instance; the lock must hold across them and must be per locker.
+                var otherController = new LockerAnalyticsApiController(orchestrator, configuration, aeos);
+                second = otherController.AssignLocker(new AssignLockerRequest { EmployeeId = OtherEmployee, LockerId = CourierLocker, ReleaseIfHeld = true });
+                await Task.Delay(200);
+                readsWhileFirstHeldTheLock = reads;
+            }
+            finally
+            {
+                // Always let A finish: a failure above must not leave the locker's lock held for other tests.
+                releaseInFlight.TrySetResult(true);
+            }
 
-            releaseInFlight.SetResult(true);
             var (firstStatus, _) = Read(await first);
-            var (secondStatus, secondBody) = Read(await second);
+            var (secondStatus, secondBody) = Read(await second!);
 
+            Assert.Equal(1, readsWhileFirstHeldTheLock); // B did not read the locker while A held it
             Assert.Equal(200, firstStatus);
             Assert.Equal(409, secondStatus);
             Assert.Equal("LOCKER_ALREADY_ASSIGNED", Code(secondBody));
             await aeos.Received(1).ReleaseLocker(CourierLocker);
             await aeos.Received(1).AssignLocker(CourierLocker, Employee, NetworkId, PresetId);
+            await aeos.DidNotReceive().AssignLocker(CourierLocker, OtherEmployee, NetworkId, PresetId);
         }
 
         private static async Task WaitUntil(Func<bool> condition)

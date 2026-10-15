@@ -128,6 +128,19 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards.Tests
         }
 
         [Fact]
+        public void Live_locker_search_asks_AEOS_for_that_id_and_more_than_one_record()
+        {
+            var search = AeosDataAdapter.BuildLiveLockerSearch(204);
+
+            Assert.True(search.LockerSearch.IdSpecified);
+            Assert.Equal(204, search.LockerSearch.Id);
+            Assert.False(search.LockerSearch.FreeLockersSpecified);
+            Assert.Equal(0, search.SearchRange.startRecordNo);
+            Assert.True(search.SearchRange.nrOfRecordsSpecified);
+            Assert.True(search.SearchRange.nrOfRecords > 1);
+        }
+
+        [Fact]
         public void The_requested_locker_is_picked_out_of_a_longer_result()
         {
             var state = LiveLockerState.FromAeos(new[] { Locker(101), Locker(204, lastUsed: SeptemberSecond) }, 204);

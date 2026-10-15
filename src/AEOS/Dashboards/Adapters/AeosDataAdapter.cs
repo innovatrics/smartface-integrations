@@ -541,10 +541,11 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
             );
     }
 
-    public async Task<LiveLockerState?> GetLiveLockerState(long lockerId)
+    /// <summary>
+    /// findLocker search for the one locker with <paramref name="lockerId"/>.
+    /// </summary>
+    public static LockerSearchInfo BuildLiveLockerSearch(long lockerId)
     {
-        this.logger.Debug($"Reading live state of locker with ID: {lockerId}");
-
         var lockerSearch = new LockerSearchInfo();
         lockerSearch.LockerSearch = new LockerSearch();
         lockerSearch.LockerSearch.Id = lockerId;
@@ -555,8 +556,14 @@ namespace Innovatrics.SmartFace.Integrations.AeosDashboards
         // returning some other locker as the only result.
         lockerSearch.SearchRange.nrOfRecords = 2;
         lockerSearch.SearchRange.nrOfRecordsSpecified = true;
+        return lockerSearch;
+    }
 
-        var response = await client.findLockerAsync(lockerSearch);
+    public async Task<LiveLockerState?> GetLiveLockerState(long lockerId)
+    {
+        this.logger.Debug($"Reading live state of locker with ID: {lockerId}");
+
+        var response = await client.findLockerAsync(BuildLiveLockerSearch(lockerId));
         var state = LiveLockerState.FromAeos(response?.LockerList?.Locker, lockerId);
 
         if (state == null)
