@@ -7,6 +7,7 @@ using Serilog;
 using Xunit;
 using NSubstitute;
 using Innovatrics.SmartFace.Integrations.AccessControlConnector.Resolvers;
+using Innovatrics.SmartFace.Integrations.AccessController.Resolvers;
 using Innovatrics.SmartFace.Integrations.AccessController.Notifications;
 
 namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Resolvers
