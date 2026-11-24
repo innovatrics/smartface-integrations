@@ -135,6 +135,27 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Tests.Connec
             Assert.Equal(LogEventLevel.Information, skipped.Level);
         }
 
+        [Fact]
+        public async Task The_default_state_window_outlasts_a_DNS_retry_while_connecting()
+        {
+            // A failed DNS lookup of the KONE host (4 s with docker's resolver), the retry delay (1 s) and connecting again put
+            // the first call state about 6 s after sending. The default window must still be waiting then.
+            var api = Api(async (callStateReceived, ct) =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(6), ct);
+                callStateReceived?.Invoke("{\"callType\":\"monitor\",\"subtopic\":\"call_state/42/served\"}");
+            });
+            var sink = new CollectingSink();
+            var log = new LoggerConfiguration().MinimumLevel.Verbose().WriteTo.Sink(sink).CreateLogger();
+
+            await new KoneConnector(new KoneApiGateWay(api, log), log)
+                .OpenAsync(new StreamConfig { DestinationArea = 1000, IsDirectionUp = true });
+            var outcome = await sink.WaitForOutcomeAsync(TimeSpan.FromSeconds(30));
+
+            Assert.Equal(Finished, outcome.MessageTemplate.Text);
+            Assert.DoesNotContain(sink.Events, e => e.Level >= LogEventLevel.Warning);
+        }
+
         [Theory]
         [InlineData(5000, 5000)]
         [InlineData(5000, 6000)]

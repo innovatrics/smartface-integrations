@@ -3,7 +3,9 @@ using Kone.Api.Client.Exceptions;
 using Newtonsoft.Json;
 using Serilog;
 using System.Collections.Concurrent;
+using System.Net.Sockets;
 using System.Net.WebSockets;
+using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -20,6 +22,9 @@ namespace Kone.Api.Client.Clients
 
         private const string PingTcsId = "ping";
 
+        /// <summary>How long to wait before connecting again when the KONE host name could not be resolved.</summary>
+        public static readonly TimeSpan DefaultNameResolutionRetryDelay = TimeSpan.FromSeconds(1);
+
         public event Action<string>? MessageSend;
         public event Func<string, Task>? MessageReceived;
 
@@ -28,22 +33,39 @@ namespace Kone.Api.Client.Clients
         private readonly string _buildingId;
         private readonly string _groupId;
         private readonly string _endpoint;
+        private readonly TimeSpan _nameResolutionRetryDelay;
+        private readonly HttpMessageInvoker? _webSocketInvoker;
 
         private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _pendingResponse = new();
 
         private static readonly RandomNumberGenerator Rng = RandomNumberGenerator.Create();
 
+        /// <param name="nameResolutionRetryDelay">How long to wait before connecting once more when the KONE host name
+        /// could not be resolved (default 1 s). If the request's token is cancelled while connecting again, the DNS
+        /// exception is thrown rather than an OperationCanceledException, because the request was never sent; except
+        /// for the call monitor of a call KONE already accepted, which keeps the cancellation.</param>
+        /// <param name="webSocketInvoker">Sends the websocket handshake instead of the handler ClientWebSocket creates
+        /// itself, for example in tests. The caller keeps it and disposes it.</param>
         public KoneBuildingApiClient(ILogger log,
             KoneAuthApiClient koneAuthApiClient,
             string buildingId,
             string groupId,
-            string endpoint = "wss://dev.kone.com/stream-v2")
+            string endpoint = "wss://dev.kone.com/stream-v2",
+            TimeSpan? nameResolutionRetryDelay = null,
+            HttpMessageInvoker? webSocketInvoker = null)
         {
             _log = log ?? throw new ArgumentNullException(nameof(log));
             _koneAuthApiClient = koneAuthApiClient ?? throw new ArgumentNullException(nameof(koneAuthApiClient));
             _buildingId = buildingId ?? throw new ArgumentNullException(nameof(buildingId));
             _groupId = groupId ?? throw new ArgumentNullException(nameof(groupId));
             _endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
+            _nameResolutionRetryDelay = nameResolutionRetryDelay ?? DefaultNameResolutionRetryDelay;
+            _webSocketInvoker = webSocketInvoker;
+
+            if (_nameResolutionRetryDelay < TimeSpan.Zero)
+            {
+                throw new ArgumentOutOfRangeException(nameof(nameResolutionRetryDelay), "nameResolutionRetryDelay must not be negative");
+            }
         }
 
         public Task<PingResponse> PingAsync(CancellationToken cancellationToken)
@@ -220,10 +242,28 @@ namespace Kone.Api.Client.Clients
                     }
                 };
 
-                await SendMessageAndWaitForResponseAsync(monitorReqId, monitorReq,
-                    (r, _) => Task.FromResult(new LiftCallResponse()),
-                    cancellationToken,
-                    OnResponseMessage);
+                try
+                {
+                    await SendMessageAndWaitForResponseAsync(monitorReqId, monitorReq,
+                        (r, _) => Task.FromResult(new LiftCallResponse()),
+                        cancellationToken,
+                        OnResponseMessage,
+                        callAlreadyPlaced: true);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    // KONE accepted the call, so the lift was called: only its call states cannot be followed. Anything
+                    // but a plain cancellation ends here, so an accepted call is never reported as failed.
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        _log.Information("KONE accepted the call (session {SessionId}); its call monitor was cancelled", sessionId);
+                    }
+                    else
+                    {
+                        _log.Warning(e, "KONE accepted the call (session {SessionId}), but its call monitor failed; its call states are not followed",
+                            sessionId);
+                    }
+                }
 
                 return response;
             }
@@ -345,10 +385,28 @@ namespace Kone.Api.Client.Clients
                     }
                 };
 
-                await SendMessageAndWaitForResponseAsync(monitorReqId, monitorReq,
-                    (r, _) => Task.FromResult(new LiftCallResponse()),
-                    cancellationToken,
-                    OnResponseMessage);
+                try
+                {
+                    await SendMessageAndWaitForResponseAsync(monitorReqId, monitorReq,
+                        (r, _) => Task.FromResult(new LiftCallResponse()),
+                        cancellationToken,
+                        OnResponseMessage,
+                        callAlreadyPlaced: true);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    // KONE accepted the call, so the lift was called: only its call states cannot be followed. Anything
+                    // but a plain cancellation ends here, so an accepted call is never reported as failed.
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        _log.Information("KONE accepted the call (session {SessionId}); its call monitor was cancelled", sessionId);
+                    }
+                    else
+                    {
+                        _log.Warning(e, "KONE accepted the call (session {SessionId}), but its call monitor failed; its call states are not followed",
+                            sessionId);
+                    }
+                }
 
                 return response;
             }
@@ -385,16 +443,24 @@ namespace Kone.Api.Client.Clients
             object request,
             Func<string, ClientWebSocket, Task<TResponse>> responseDeserializerFunc,
             CancellationToken cancellationToken,
-            Action<string>? onResponseMessage = null)
+            Action<string>? onResponseMessage = null,
+            bool callAlreadyPlaced = false)
         {
             ArgumentNullException.ThrowIfNull(requestId);
             ArgumentNullException.ThrowIfNull(request);
             ArgumentNullException.ThrowIfNull(responseDeserializerFunc);
 
+            using var ws = await CreatedConnectedWebSocketAsync(cancellationToken, callAlreadyPlaced);
+
+            // Stamp a call when it is really sent (this replaces the time set when the request was built): connecting can
+            // take seconds when a DNS lookup is retried
+            if (request is LiftCallRequest { payload: { } payload })
+            {
+                payload.time = DateTime.UtcNow.ToString("o");
+            }
+
             var jsonRequest = SerializeToJson(request);
             var bytes = Encoding.UTF8.GetBytes(jsonRequest);
-
-            using var ws = await CreatedConnectedWebSocketAsync(cancellationToken);
 
             var tcs = new TaskCompletionSource<string>();
             _pendingResponse.TryAdd(requestId, tcs);
@@ -449,7 +515,52 @@ namespace Kone.Api.Client.Clients
             return Task.FromResult(response);
         }
 
-        private async Task<ClientWebSocket> CreatedConnectedWebSocketAsync(CancellationToken cancellationToken)
+        // Connects once more when the KONE host name could not be resolved. The internal DNS servers of a site can fail
+        // the lookup of dev.kone.com now and then, right when its short TTL (60 s) expires, and the next lookup succeeds.
+        // Only connecting (the token request and the websocket handshake) is retried, and every request is sent after
+        // connecting, so a retry never sends anything twice.
+        // If the retry is cancelled (for example by the caller's no-update window), the request was never sent: the DNS
+        // failure is rethrown, because a cancellation would read as "KONE did not answer". The call monitor
+        // (callAlreadyPlaced) connects after KONE accepted the call, so there the cancellation goes through and the call
+        // ends as "no call state", not as a failed call.
+        private async Task<ClientWebSocket> CreatedConnectedWebSocketAsync(CancellationToken cancellationToken,
+            bool callAlreadyPlaced)
+        {
+            ExceptionDispatchInfo nameResolutionFailure;
+
+            try
+            {
+                return await ConnectWebSocketAsync(cancellationToken);
+            }
+            catch (Exception e) when (IsNameResolutionFailure(e) && !cancellationToken.IsCancellationRequested)
+            {
+                nameResolutionFailure = ExceptionDispatchInfo.Capture(e);
+                _log.Warning("Could not resolve the KONE host ({Error}) for the {Connection}; connecting again in {RetryDelay}",
+                    NameResolutionErrorOf(e), callAlreadyPlaced ? "call monitor" : "request", _nameResolutionRetryDelay);
+            }
+
+            try
+            {
+                await Task.Delay(_nameResolutionRetryDelay, cancellationToken);
+                return await ConnectWebSocketAsync(cancellationToken);
+            }
+            catch (Exception e) when (cancellationToken.IsCancellationRequested && IsCancellation(e))
+            {
+                _log.Debug(e, "Connecting again to KONE was cancelled");
+
+                if (callAlreadyPlaced)
+                {
+                    _log.Information("KONE accepted the call; stopped connecting its call monitor again: cancelled");
+                    throw;
+                }
+
+                _log.Information("Stopped connecting again to KONE: cancelled before the request was sent");
+                nameResolutionFailure.Throw();
+                throw;
+            }
+        }
+
+        private async Task<ClientWebSocket> ConnectWebSocketAsync(CancellationToken cancellationToken)
         {
             var accessToken = (await _koneAuthApiClient.GetCallGivingAccessTokenAsync(_buildingId,
                 _groupId, cancellationToken)).Access_token;
@@ -459,8 +570,61 @@ namespace Kone.Api.Client.Clients
             var uri = new Uri($"{_endpoint}?accessToken={Uri.EscapeDataString(accessToken)}");
 
             _log.Debug("Connecting to websocket at {Uri}", uri);
-            await webSocket.ConnectAsync(uri, cancellationToken);
+
+            try
+            {
+                await webSocket.ConnectAsync(uri, _webSocketInvoker, cancellationToken);
+            }
+            catch
+            {
+                webSocket.Dispose();
+                throw;
+            }
+
             return webSocket;
+        }
+
+        // A failed DNS lookup anywhere in the exception chain: the name does not resolve (HostNotFound; NoData on
+        // Windows), or the DNS servers gave no usable answer (TryAgain)
+        private static bool IsNameResolutionFailure(Exception exception)
+        {
+            for (Exception? e = exception; e != null; e = e.InnerException)
+            {
+                if (e is SocketException { SocketErrorCode: SocketError.HostNotFound or SocketError.TryAgain or SocketError.NoData })
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // A cancellation anywhere in the exception chain (ClientWebSocket may wrap one)
+        private static bool IsCancellation(Exception exception)
+        {
+            for (Exception? e = exception; e != null; e = e.InnerException)
+            {
+                if (e is OperationCanceledException)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // The HttpRequestException message names the host, e.g. "Name or service not known (dev.kone.com:443)"
+        private static string NameResolutionErrorOf(Exception exception)
+        {
+            for (Exception? e = exception; e != null; e = e.InnerException)
+            {
+                if (e is HttpRequestException)
+                {
+                    return e.Message;
+                }
+            }
+
+            return exception.GetBaseException().Message;
         }
 
         private string SerializeToJson(object request)

@@ -21,15 +21,16 @@ namespace AccessControlConnector.Connectors.Kone
         private readonly TimeSpan _maxStateUpdateWaitTime;
 
         /// <param name="landingCallTimeout">How long to wait for a landing call to be served (default 15 s).</param>
-        /// <param name="maxStateUpdateWaitTime">How long to wait for the first call state from KONE (default 5 s); must be
-        /// shorter than landingCallTimeout.</param>
+        /// <param name="maxStateUpdateWaitTime">How long to wait for the first call state from KONE, counted from when the
+        /// call is started, so it includes connecting (default <see cref="KoneApiGateWay.DefaultMaxUpdateWaitTime"/>,
+        /// 10 s: room for one DNS retry while connecting); must be shorter than landingCallTimeout.</param>
         public KoneConnector(KoneApiGateWay koneApiGateWay, ILogger log,
             TimeSpan? landingCallTimeout = null, TimeSpan? maxStateUpdateWaitTime = null)
         {
             _koneApiGateWay = koneApiGateWay ?? throw new ArgumentNullException(nameof(koneApiGateWay));
             _log = log ?? throw new ArgumentNullException(nameof(log));
             _landingCallTimeout = landingCallTimeout ?? TimeSpan.FromSeconds(15);
-            _maxStateUpdateWaitTime = maxStateUpdateWaitTime ?? TimeSpan.FromSeconds(5);
+            _maxStateUpdateWaitTime = maxStateUpdateWaitTime ?? KoneApiGateWay.DefaultMaxUpdateWaitTime;
 
             if (_landingCallTimeout <= TimeSpan.Zero || _maxStateUpdateWaitTime <= TimeSpan.Zero)
             {

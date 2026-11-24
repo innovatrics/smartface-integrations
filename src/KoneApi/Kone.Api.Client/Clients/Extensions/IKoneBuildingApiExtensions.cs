@@ -14,6 +14,9 @@ namespace Kone.Api.Client.Clients.Extensions
         /// </summary>
         /// <returns>The call state messages received; empty if none arrived within maxUpdateWaitTime.</returns>
         /// <exception cref="KoneCallException">KONE reported the call as cancelled.</exception>
+        /// <exception cref="HttpRequestException">KONE could not be reached (also a WebSocketException). This includes a DNS
+        /// failure whose retry was cut short by the no-update window: the call was never sent, so no states are returned
+        /// for it.</exception>
         /// <exception cref="OperationCanceledException">The caller's token was cancelled after call states had
         /// arrived and before the call was served.</exception>
         public static async Task<string[]> PlaceLandingCallUntilServedOrNoUpdateForAsync(this IKoneBuildingApi koneBuildingApi,

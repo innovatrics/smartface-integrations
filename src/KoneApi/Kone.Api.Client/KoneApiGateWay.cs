@@ -6,6 +6,13 @@ namespace Kone.Api.Client
 {
     public class KoneApiGateWay
     {
+        /// <summary>
+        /// The recommended maxUpdateWaitTime: 10 s. It counts from when the call is started, so it includes connecting
+        /// to KONE, which takes about 6 s when a DNS lookup of the KONE host fails (after 4 s with docker's resolver) and
+        /// the client connects again after <see cref="Clients.KoneBuildingApiClient.DefaultNameResolutionRetryDelay"/>.
+        /// </summary>
+        public static readonly TimeSpan DefaultMaxUpdateWaitTime = TimeSpan.FromSeconds(10);
+
         private readonly IKoneBuildingApi _koneBuildingApi;
         private readonly ILogger _log;
 
