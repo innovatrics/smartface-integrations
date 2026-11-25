@@ -11,15 +11,20 @@ namespace Kone.Api.Client.Clients
 
         public const string DefaultScope = "application/inventory";
 
-        private readonly HttpClient _httpClientForOAuth = new();
+        private readonly HttpClient _httpClientForOAuth;
         private readonly Oauth2Client _oauth2Client;
 
-        private readonly HttpClient _httpClientForSelf = new();
+        private readonly HttpClient _httpClientForSelf;
 
-        public KoneAuthApiClient(string clientId, string clientSecret)
+        /// <param name="httpMessageHandler">Sends the HTTP requests instead of the default handler, for example in tests.
+        /// The caller keeps it and disposes it.</param>
+        public KoneAuthApiClient(string clientId, string clientSecret, HttpMessageHandler? httpMessageHandler = null)
         {
             ArgumentNullException.ThrowIfNull(clientId);
             ArgumentNullException.ThrowIfNull(clientSecret);
+
+            _httpClientForOAuth = httpMessageHandler == null ? new HttpClient() : new HttpClient(httpMessageHandler, disposeHandler: false);
+            _httpClientForSelf = httpMessageHandler == null ? new HttpClient() : new HttpClient(httpMessageHandler, disposeHandler: false);
 
             var basic = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{clientId}:{clientSecret}"));
             _httpClientForOAuth.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basic);
