@@ -4,141 +4,624 @@
     var analytics = ViewBag.LockerAnalytics as LockerAnalytics;
 }
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Locker Management</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght%40300..700&amp;family=Geist+Mono:wght%40400..500&amp;display=swap">
     <style>
+        /* Design tokens (Tricsy, light). Without network access the fonts fall back to the system stacks below. */
+        :root {
+            --surface: #FFF9F2;
+            --surface-sunk: #F9F2E8;
+            --paper: #F6EFE4;
+            --ink: #14120F;
+            --ink-secondary: #4A4239;
+            --ink-muted: #766D63;
+            --line: #E4DCD0;
+            --line-strong: #D8CFC1;
+            --hatch: #EDE5D9;
+            --accent: #14120F;
+            --accent-hover: #332E27;
+            --on-accent: #FFF9F2;
+            --chart-1: #201C18;
+            --chart-track: #F0E9DD;
+            --positive: #00A96E;
+            --positive-tint: #DEF0E4;
+            --positive-ink: #007A50;
+            --negative: #D9455C;
+            --negative-tint: #F8E3DF;
+            --negative-ink: #C62841;
+            --warning: #B87400;
+            --warning-ink: #9A6100;
+            --scrim: rgba(20, 18, 15, 0.48);
+            --ease: cubic-bezier(.16, 1, .3, 1);
+            --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+            /* Icons (Lucide, ISC licence), drawn with currentColor through a CSS mask */
+            --i-refresh: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3Cpath d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'/%3E%3Cpath d='M8 16H3v5'/%3E%3C/svg%3E");
+            --i-list: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12h.01'/%3E%3Cpath d='M3 18h.01'/%3E%3Cpath d='M3 6h.01'/%3E%3Cpath d='M8 12h13'/%3E%3Cpath d='M8 18h13'/%3E%3Cpath d='M8 6h13'/%3E%3C/svg%3E");
+            --i-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='7' height='7' x='3' y='3' rx='1'/%3E%3Crect width='7' height='7' x='14' y='3' rx='1'/%3E%3Crect width='7' height='7' x='14' y='14' rx='1'/%3E%3Crect width='7' height='7' x='3' y='14' rx='1'/%3E%3C/svg%3E");
+            --i-user-plus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cline x1='19' x2='19' y1='8' y2='14'/%3E%3Cline x1='22' x2='16' y1='11' y2='11'/%3E%3C/svg%3E");
+            --i-user-minus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cline x1='22' x2='16' y1='11' y2='11'/%3E%3C/svg%3E");
+            --i-unlock: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='11' x='3' y='11' rx='2' ry='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 9.9-1'/%3E%3C/svg%3E");
+            --i-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+            --i-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E");
+            --i-warning: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3'/%3E%3Cpath d='M12 9v4'/%3E%3Cpath d='M12 17h.01'/%3E%3C/svg%3E");
+            --i-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4'/%3E%3Cpath d='M12 8h.01'/%3E%3C/svg%3E");
+            --i-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E");
+            --i-error: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' x2='12' y1='8' y2='12'/%3E%3Cline x1='12' x2='12.01' y1='16' y2='16'/%3E%3C/svg%3E");
+            --i-loader: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12a9 9 0 1 1-6.219-8.56'/%3E%3C/svg%3E");
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        html, body {
+            margin: 0;
+        }
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: var(--font-sans);
+            font-size: 16px;
+            line-height: 1.55;
+            color: var(--ink);
+            background-color: var(--paper);
+            -webkit-font-smoothing: antialiased;
         }
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
+        :focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 2px;
         }
+        .wrap {
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding-left: 48px;
+            padding-right: 48px;
+        }
+        .eyebrow {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            line-height: 1.4;
+            letter-spacing: .145em;
+            text-transform: uppercase;
+            color: var(--ink-muted);
+        }
+        .spec {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.5;
+            letter-spacing: .02em;
+            color: var(--ink-secondary);
+        }
+
+        /* Top bar */
+        .topbar {
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--line);
+        }
+        .topbar-inner {
+            min-height: 64px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .brand-logo {
+            display: block;
+            width: 135px;
+            height: 24px;
+            color: var(--ink);
+        }
+        .brand-divider {
+            width: 1px;
+            height: 24px;
+            background-color: var(--line-strong);
+        }
+        .brand-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            background-color: var(--positive-tint);
+            color: var(--positive-ink);
+            font: 500 11px/1.4 var(--font-mono);
+            letter-spacing: .145em;
+            text-transform: uppercase;
+        }
+        .status-badge::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            background-color: var(--positive);
+        }
+        .status-badge.is-offline {
+            background-color: var(--negative-tint);
+            color: var(--negative-ink);
+        }
+        .status-badge.is-offline::before {
+            background-color: var(--negative);
+        }
+
+        /* Group tabs */
         .button-container {
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 20px;
-            margin-bottom: 30px;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--line);
+        }
+        .tabs-inner {
+            display: flex;
+            gap: 32px;
+            overflow-x: auto;
         }
         .group-button {
-            padding: 12px 24px;
-            font-size: 16px;
-            background-color: #021B41;
-            color: white;
-            border: none;
-            border-radius: 4px;
+            appearance: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 0 14px;
+            background: none;
+            border: 0;
+            border-bottom: 2px solid transparent;
+            font: 500 14px/1.2 var(--font-sans);
+            color: var(--ink-secondary);
+            white-space: nowrap;
             cursor: pointer;
-            transition: background-color 0.3s;
         }
         .group-button:hover {
-            background-color: #033d7a;
+            color: var(--ink);
         }
         .group-button.active {
-            background-color: #033d7a;
-            border: 2px solid #021B41;
+            color: var(--ink);
+            border-bottom-color: var(--ink);
+        }
+        .count {
+            padding: 3px 6px;
+            border: 1px solid var(--line-strong);
+            font: 400 11px/1 var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            color: var(--ink-muted);
+        }
+        .count:empty {
+            display: none;
+        }
+        .group-button.active .count {
+            border-color: var(--ink);
+            color: var(--ink);
+        }
+
+        /* Page body */
+        .main {
+            flex-grow: 1;
+            padding-top: 48px;
+            padding-bottom: 64px;
         }
         .lockers-container {
             display: none;
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-top: 20px;
         }
         .lockers-container.show {
             display: block;
         }
-        .locker-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+        .group-placeholder {
+            padding: 48px 32px;
+            background-color: var(--surface);
+            border: 1px solid var(--line);
+            text-align: center;
+            color: var(--ink-muted);
         }
-        .locker-item {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background-color: #f8f9fa;
-            cursor: pointer;
-            text-align: left;
-            transition: transform 0.2s, box-shadow 0.2s;
+        .connection-status.show ~ .group-placeholder,
+        .lockers-container.show ~ .group-placeholder {
+            display: none;
         }
-        .locker-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        .group-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 24px;
         }
-        .locker-item.assigned {
-            border-color: #dc3545;
-            background-color: #f8d7da;
+        .group-title-block {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        .locker-item.unassigned {
-            border-color: #28a745;
-            background-color: #d4edda;
-        }
-        .locker-name {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .locker-info {
-            font-size: 0.9em;
-            color: #666;
-        }
-        .layout-toggle-button {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .layout-toggle-button:hover {
-            background-color: #0056b3;
-            margin-bottom: 3px;
-        }
-        .refresh-button {
-            padding: 8px 16px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .refresh-button:hover {
-            background-color: #218838;
-        }
-        .refresh-button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
+        .container-title {
+            margin: 0;
+            font-size: 40px;
+            font-weight: 600;
+            line-height: 1.1;
+            letter-spacing: -.035em;
+            text-wrap: balance;
         }
         .header-buttons {
             display: flex;
-            gap: 10px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        /* Buttons */
+        .btn,
+        .modal-button {
+            appearance: none;
+            display: inline-flex;
             align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 12px 20px;
+            border: 1px solid var(--accent);
+            border-radius: 0;
+            background-color: var(--accent);
+            color: var(--on-accent);
+            font: 500 14px/1.2 var(--font-sans);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background-color 200ms var(--ease), border-color 200ms var(--ease);
         }
-        .container-title {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #333;
+        .btn:hover,
+        .modal-button:hover {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+            transition-duration: 120ms;
         }
-        /* Modal styles */
+        .btn:active:not(:disabled),
+        .modal-button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        .btn:disabled,
+        .modal-button:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+        .btn--secondary,
+        .modal-button.cancel,
+        .modal-button.secondary {
+            background-color: var(--surface);
+            border-color: var(--line-strong);
+            color: var(--ink);
+        }
+        .btn--secondary:hover,
+        .modal-button.cancel:hover,
+        .modal-button.secondary:hover {
+            background-color: var(--surface-sunk);
+            border-color: var(--line-strong);
+        }
+        .modal-button.unassign,
+        .modal-button.confirm {
+            background-color: var(--negative);
+            border-color: var(--negative);
+            color: var(--surface);
+        }
+        .modal-button.unassign:hover,
+        .modal-button.confirm:hover {
+            background-color: var(--negative-ink);
+            border-color: var(--negative-ink);
+        }
+        /* Confirming an assignment is not destructive: primary, not red */
+        #assignConfirmationActions .modal-button.confirm {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: var(--on-accent);
+        }
+        #assignConfirmationActions .modal-button.confirm:hover {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+        [data-icon]::before {
+            content: "";
+            flex: 0 0 auto;
+            width: 16px;
+            height: 16px;
+            background-color: currentColor;
+            -webkit-mask: var(--icon) center / contain no-repeat;
+            mask: var(--icon) center / contain no-repeat;
+        }
+        [data-icon="refresh"] { --icon: var(--i-refresh); }
+        [data-icon="list"] { --icon: var(--i-list); }
+        [data-icon="grid"] { --icon: var(--i-grid); }
+        [data-icon="assign"] { --icon: var(--i-user-plus); }
+        [data-icon="unassign"] { --icon: var(--i-user-minus); }
+        [data-icon="unlock"] { --icon: var(--i-unlock); }
+        [data-icon="search"] { --icon: var(--i-search); }
+        .refresh-button:disabled::before {
+            --icon: var(--i-loader);
+            animation: spin 1s linear infinite;
+        }
+
+        /* Metrics */
+        .metrics {
+            margin-top: 32px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+            gap: 1px;
+            background-color: var(--line);
+            border: 1px solid var(--line);
+        }
+        .metric-card {
+            padding: 24px 24px 28px;
+            background-color: var(--surface);
+        }
+        .metric-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .metric {
+            margin-top: 12px;
+            font-size: 44px;
+            font-weight: 600;
+            line-height: 1.1;
+            letter-spacing: -.03em;
+            font-variant-numeric: tabular-nums;
+        }
+        .metric-unit {
+            margin-left: 4px;
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 0;
+            color: var(--ink-muted);
+        }
+        .meter {
+            margin-top: 16px;
+            height: 4px;
+            background-color: var(--chart-track);
+        }
+        .meter-fill {
+            width: 0;
+            height: 100%;
+            background-color: var(--chart-1);
+            transition: width 400ms var(--ease);
+        }
+        .sw {
+            display: inline-block;
+            flex: 0 0 auto;
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--line-strong);
+            background-color: var(--surface);
+        }
+        .sw.is-assigned {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+        .sw.is-pending {
+            border-bottom: 2px solid var(--warning);
+        }
+        .sw.is-missing {
+            background: repeating-linear-gradient(45deg, var(--hatch) 0 2px, transparent 2px 6px) var(--surface-sunk);
+            border-color: var(--line);
+        }
+
+        /* Locker panel */
+        .panel {
+            margin-top: 24px;
+            background-color: var(--surface);
+            border: 1px solid var(--line);
+        }
+        .panel-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px 32px;
+            padding: 12px 32px;
+            background-color: var(--surface-sunk);
+        }
+        .panel-bar:first-child {
+            border-bottom: 1px solid var(--line);
+        }
+        .panel-foot {
+            border-top: 1px solid var(--line);
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 24px;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-item[hidden] {
+            display: none;
+        }
+        .panel-hint {
+            color: var(--ink-muted);
+        }
+        .panel-body {
+            padding: 32px;
+            overflow-x: auto;
+        }
+        .locker-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        /* Default view: one card per locker */
+        .locker-card {
+            appearance: none;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+            min-height: 120px;
+            padding: 16px 20px 20px;
+            background-color: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 0;
+            color: var(--ink);
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 200ms var(--ease);
+        }
+        .locker-card:hover {
+            border-color: var(--ink);
+            transition-duration: 120ms;
+        }
+        .locker-card:active {
+            transform: translateY(1px);
+        }
+        .locker-card.pending {
+            border-color: var(--warning);
+            box-shadow: inset 0 -2px 0 var(--warning);
+        }
+        .locker-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .locker-card .locker-name {
+            font: 500 16px/1.3 var(--font-mono);
+            letter-spacing: .02em;
+            font-variant-numeric: tabular-nums;
+            overflow-wrap: anywhere;
+        }
+        .locker-who {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .locker-who.is-muted {
+            color: var(--ink-muted);
+        }
+        .locker-days {
+            margin-top: auto;
+            color: var(--ink-muted);
+        }
+        .state {
+            flex: 0 0 auto;
+            padding: 4px 6px;
+            border: 1px solid var(--line-strong);
+            font: 500 11px/1 var(--font-mono);
+            letter-spacing: .145em;
+            text-transform: uppercase;
+            color: var(--ink-secondary);
+        }
+        .state.is-assigned {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: var(--on-accent);
+        }
+
+        /* Custom layout: the locker map */
+        .locker-list.custom-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: max-content;
+        }
+        .layout-row {
+            display: flex;
+            gap: 8px;
+        }
+        .tile {
+            appearance: none;
+            flex: 0 0 auto;
+            width: 72px;
+            height: 56px;
+            padding: 0 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid var(--line-strong);
+            border-radius: 0;
+            background-color: var(--surface);
+            color: var(--ink);
+            font: 500 12px/1 var(--font-mono);
+            letter-spacing: .02em;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background-color 200ms var(--ease), border-color 200ms var(--ease);
+        }
+        .tile.w-xl {
+            width: 152px;
+        }
+        .tile.w-s {
+            width: 36px;
+            padding: 0;
+            font-size: 11px;
+            letter-spacing: 0;
+        }
+        .tile.is-paired {
+            margin-left: -9px; /* closes the 8px row gap and shares the 1px border */
+        }
+        .tile.unassigned:hover {
+            border-color: var(--ink);
+            transition-duration: 120ms;
+        }
+        .tile.assigned {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: var(--on-accent);
+        }
+        .tile.assigned:hover {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+            transition-duration: 120ms;
+        }
+        .tile.pending,
+        .tile.pending:hover {
+            background-color: var(--surface);
+            border-color: var(--line-strong);
+            border-bottom: 2px solid var(--warning);
+            color: var(--warning-ink);
+        }
+        .tile.is-missing {
+            background: repeating-linear-gradient(45deg, var(--hatch) 0 2px, transparent 2px 10px) var(--surface-sunk);
+            border-color: var(--line);
+            color: var(--ink-muted);
+            cursor: not-allowed;
+        }
+        .tile:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        .tile-spacer {
+            flex: 0 0 32px;
+        }
+        .tile-spacer.w-s {
+            flex-basis: 36px;
+        }
+        .tile-spacer.w-xl {
+            flex-basis: 152px;
+        }
+        .tile-spacer.is-paired {
+            margin-left: -8px;
+        }
+
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
             z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
+            padding: 24px 16px;
             overflow: auto;
-            background-color: rgba(0,0,0,0.5);
+            background-color: var(--scrim);
         }
         .modal.show {
             display: flex;
@@ -146,92 +629,39 @@
             justify-content: center;
         }
         .modal-content {
-            background-color: white;
+            width: 100%;
+            max-width: 480px;
             margin: auto;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            max-width: 500px;
-            width: 90%;
-            position: relative;
+            background-color: var(--surface);
+            border: 1px solid var(--line-strong);
+        }
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 4px 4px 4px 32px;
+            background-color: var(--surface-sunk);
+            border-bottom: 1px solid var(--line);
         }
         .modal-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 28px;
-            font-weight: bold;
-            color: #aaa;
-            background: none;
-            border: none;
-            cursor: pointer;
+            appearance: none;
+            width: 44px;
+            height: 44px;
             padding: 0;
-            width: 30px;
-            height: 30px;
-            line-height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 0;
+            color: var(--ink-muted);
+            cursor: pointer;
         }
         .modal-close:hover {
-            color: #000;
+            color: var(--ink);
         }
-        .modal-title {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #333;
-            padding-right: 40px;
-        }
-        .modal-info {
-            margin-bottom: 15px;
-        }
-        .modal-info-label {
-            font-weight: bold;
-            color: #555;
-            margin-bottom: 5px;
-        }
-        .modal-info-value {
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .modal-actions {
-            margin-top: 25px;
-            display: flex;
-            gap: 10px;
-        }
-        .modal-button {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .modal-button.assign {
-            background-color: #28a745;
-            color: white;
-        }
-        .modal-button.assign:hover {
-            background-color: #218838;
-        }
-        .modal-button.unassign {
-            background-color: #dc3545;
-            color: white;
-        }
-        .modal-button.unassign:hover {
-            background-color: #c82333;
-        }
-        .modal-button.cancel {
-            background-color: #6c757d;
-            color: white;
-        }
-        .modal-button.cancel:hover {
-            background-color: #5a6268;
-        }
-        .modal-button.confirm {
-            background-color: #dc3545;
-            color: white;
-        }
-        .modal-button.confirm:hover {
-            background-color: #c82333;
+        .modal-body {
+            padding: 32px;
         }
         .modal-view {
             display: none;
@@ -239,178 +669,486 @@
         .modal-view.show {
             display: block;
         }
+        .modal-title {
+            margin: 0 0 24px;
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 1.1;
+            letter-spacing: -.029em;
+            overflow-wrap: anywhere;
+        }
+        .modal-title.is-mono {
+            font-family: var(--font-mono);
+            letter-spacing: -.01em;
+        }
+        .modal-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .modal-title-row .modal-title {
+            margin: 0;
+        }
+        .modal-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 16px 0;
+            border-top: 1px solid var(--line);
+        }
+        .modal-info-label {
+            font: 400 12px/1.5 var(--font-mono);
+            letter-spacing: .02em;
+            color: var(--ink-muted);
+        }
+        .modal-info-value {
+            font-size: 16px;
+            font-weight: 500;
+            overflow-wrap: anywhere;
+        }
+        .modal-info-value.is-muted {
+            color: var(--ink-muted);
+        }
+        .modal-info-sub {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--ink-muted);
+        }
+        .modal-info-value.is-days {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -.02em;
+            font-variant-numeric: tabular-nums;
+        }
+        .modal-info-value.is-days::after {
+            content: " days";
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 0;
+            color: var(--ink-muted);
+        }
+        .modal-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 32px;
+        }
+        .modal-actions:empty {
+            display: none;
+        }
+        #mainView .modal-actions {
+            margin-top: 0;
+            padding-top: 32px;
+            border-top: 1px solid var(--line);
+        }
+
+        /* Messages inside the modal (class names are set by the script) */
+        .confirmation-message,
+        .success-message,
+        .error-message,
+        .loading-message {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background-color: var(--surface);
+            border: 1px solid var(--line-strong);
+            border-left: 2px solid var(--ink);
+            font-size: 14px;
+            line-height: 1.55;
+            color: var(--ink-secondary);
+            text-wrap: pretty;
+            overflow-wrap: anywhere;
+        }
+        .confirmation-message::before,
+        .success-message::before,
+        .error-message::before,
+        .loading-message::before {
+            content: "";
+            flex: 0 0 auto;
+            width: 20px;
+            height: 20px;
+            margin-top: 1px;
+            background-color: var(--ink);
+            -webkit-mask: var(--icon) center / contain no-repeat;
+            mask: var(--icon) center / contain no-repeat;
+        }
         .confirmation-message {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #fff3cd;
-            border: 1px solid #ffc107;
-            border-radius: 4px;
-            color: #856404;
+            --icon: var(--i-warning);
+            border-left-color: var(--warning);
+        }
+        .confirmation-message::before {
+            background-color: var(--warning);
+        }
+        #assignConfirmationView .confirmation-message {
+            --icon: var(--i-info);
+            border-left-color: var(--ink);
+        }
+        #assignConfirmationView .confirmation-message::before {
+            background-color: var(--ink);
         }
         .success-message {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #d4edda;
-            border: 1px solid #28a745;
-            border-radius: 4px;
-            color: #155724;
+            --icon: var(--i-check);
+            border-left-color: var(--positive);
+        }
+        .success-message::before {
+            background-color: var(--positive);
         }
         .error-message {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f8d7da;
-            border: 1px solid #dc3545;
-            border-radius: 4px;
-            color: #721c24;
+            --icon: var(--i-error);
+            border-left-color: var(--negative);
+        }
+        .error-message::before {
+            background-color: var(--negative);
         }
         .loading-message {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #d1ecf1;
-            border: 1px solid #bee5eb;
-            border-radius: 4px;
-            color: #0c5460;
+            --icon: var(--i-loader);
+        }
+        .loading-message::before {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Employee search */
+        .search-row {
+            display: flex;
+            gap: 8px;
         }
         .search-input {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 10px;
+            flex: 1 1 auto;
+            min-width: 0;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid var(--line-strong);
+            border-radius: 0;
+            background-color: var(--surface);
+            color: var(--ink);
+            font: 400 16px/1.4 var(--font-sans);
+        }
+        .search-input::placeholder {
+            color: var(--ink-muted);
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--ink);
         }
         .employee-results {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
             max-height: 400px;
+            margin-top: 24px;
             overflow-y: auto;
-            margin-top: 15px;
-            margin-bottom: 15px;
+        }
+        .employee-results:empty {
+            display: none;
         }
         .employee-item {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            background-color: #f8f9fa;
+            appearance: none;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background-color: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 0;
+            color: var(--ink);
+            font: inherit;
+            text-align: left;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: border-color 200ms var(--ease);
         }
         .employee-item:hover {
-            background-color: #e9ecef;
+            border-color: var(--ink);
+            transition-duration: 120ms;
+        }
+        .employee-item::after {
+            content: "";
+            flex: 0 0 auto;
+            width: 16px;
+            height: 16px;
+            background-color: var(--ink-muted);
+            -webkit-mask: var(--i-chevron) center / contain no-repeat;
+            mask: var(--i-chevron) center / contain no-repeat;
+        }
+        .employee-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
         }
         .employee-name {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-size: 16px;
+            font-weight: 500;
         }
         .employee-details {
-            font-size: 0.9em;
-            color: #666;
+            font: 400 12px/1.5 var(--font-mono);
+            letter-spacing: .02em;
+            color: var(--ink-muted);
+            overflow-wrap: anywhere;
         }
         .no-results {
-            padding: 20px;
+            padding: 16px;
+            border: 1px dashed var(--line-strong);
+            font-size: 14px;
             text-align: center;
-            color: #666;
+            color: var(--ink-muted);
         }
+
+        /* Not connected */
         .connection-status {
             display: none;
-            text-align: center;
-            padding: 40px 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-top: 20px;
+            max-width: 560px;
+            margin: 16px auto 0;
+            background-color: var(--surface);
+            border: 1px solid var(--line-strong);
+            border-left: 2px solid var(--negative);
         }
         .connection-status.show {
             display: block;
         }
+        .connection-body {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 32px;
+        }
+        .connection-icon {
+            flex: 0 0 auto;
+            margin-top: 4px;
+            color: var(--negative);
+        }
+        .connection-title {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 1.1;
+            letter-spacing: -.029em;
+        }
         .connection-message {
-            font-size: 1.2em;
-            color: #dc3545;
-            margin-bottom: 10px;
+            margin: 8px 0 0;
+            color: var(--ink-secondary);
+            text-wrap: pretty;
+        }
+        .connection-foot {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 32px;
+            background-color: var(--surface-sunk);
+            border-top: 1px solid var(--line);
         }
         .countdown {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #021B41;
+            font-size: 44px;
+            font-weight: 600;
+            line-height: 1;
+            letter-spacing: -.03em;
+            font-variant-numeric: tabular-nums;
+        }
+        .countdown::after {
+            content: "s";
+            margin-left: 4px;
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 0;
+            color: var(--ink-muted);
+        }
+
+        @@keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @@media (max-width: 720px) {
+            .wrap {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+            .main {
+                padding-top: 32px;
+                padding-bottom: 48px;
+            }
+            .container-title {
+                font-size: 32px;
+            }
+            .panel-bar {
+                padding: 12px 16px;
+            }
+            .panel-body {
+                padding: 16px;
+            }
+            .modal-head {
+                padding-left: 16px;
+            }
+            .modal-body,
+            .connection-body {
+                padding: 24px 16px;
+            }
+            .connection-foot {
+                padding: 16px;
+            }
+        }
+        @@media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Locker Management</h1>
-    <div class="button-container">
-        @foreach (var groupName in groups)
-        {
-            <button class="group-button" data-group-name="@groupName">@groupName</button>
-        }
-    </div>
-    
-    <div class="connection-status" id="connectionStatus">
-        <div class="connection-message">Not connected, retrying in</div>
-        <div class="countdown" id="countdown">3</div>
-    </div>
-    
-    <div class="lockers-container" id="lockersContainer">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <div class="container-title" id="containerTitle"></div>
-            <div class="header-buttons">
-                <button id="refreshButton" class="refresh-button">Refresh</button>
-                <button id="layoutToggle" class="layout-toggle-button" style="display: none;">Switch to Default View</button>
+    <header class="topbar">
+        <div class="wrap topbar-inner">
+            <div class="brand">
+                <svg class="brand-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 259.5 46.3" fill="currentColor" role="img" aria-label="Tricsy"><path d="M102.4,0c-2.5,0-4.5,2-4.5,4.5v37.2c0,2.5,2,4.5,4.5,4.5s4.5-2,4.5-4.5V4.5c0-2.5-2-4.5-4.5-4.5"/><path d="M142.6,9.1h11.7c2.5,0,4.5-2,4.5-4.5S156.8,0,154.3,0h-11.7c-12.8,0-23.1,10.4-23.1,23.1s10.4,23.1,23.1,23.1h11.7c2.5,0,4.5-2,4.5-4.5s-2-4.5-4.5-4.5h-11.7c-7.8,0-14.1-6.3-14.1-14.1s6.3-14.1,14.1-14.1"/><path d="M83.3,0h-8.9C63.6,0,54.7,8.9,54.7,19.7v22.1c0,2.5,2,4.5,4.5,4.5s4.5-2,4.5-4.5v-22.1c0-5.9,4.8-10.6,10.6-10.6h8.9c2.5,0,4.5-2,4.5-4.5S85.8,0,83.3,0"/><path d="M198.8,21.6l-15.7-6.3c-2.3-.9-2.1-3-1.9-3.6.1-.6.7-2.6,3.1-2.6h16.3c2.5,0,4.5-2,4.5-4.5S203.1,0,200.6,0h-16.3c-6,0-10.9,4-12,9.9-1.1,5.9,1.8,11.4,7.4,13.7l15.7,6.3c2.7,1.1,2.4,3.5,2.3,4.2-.1.7-.8,3.1-3.7,3.1h-16.9c-2.5,0-4.5,2-4.5,4.5s2,4.5,4.5,4.5h16.9c6.3,0,11.4-4.2,12.6-10.4,1.2-6.2-1.9-12-7.8-14.3"/><path d="M258.4,1.5c-1.8-2-4.9-1.9-6.7,0l-13.2,14.7-12.4-14.5c-1.5-1.8-4.2-2.3-6.2-.9s-2.6,4.7-.9,6.7l14.8,17.3v16.7c0,2.4,1.7,4.5,4.1,4.7s5-1.9,5-4.5v-16.9l15.4-17.1c1.6-1.8,1.7-4.6,0-6.3Z"/><path d="M39.5,9.1h-17c-2.5,0-4.5-2-4.5-4.5S20,0,22.5,0h17c2.5,0,4.5,2,4.5,4.5s-2,4.5-4.5,4.5Z"/><path d="M22.5,46.2c-2.5,0-4.5-2-4.5-4.5v-22.6c0-2.5,2-4.5,4.5-4.5s4.5,2,4.5,4.5v22.6c0,2.5-2,4.5-4.5,4.5Z"/><circle cx="4.5" cy="4.8" r="4.5"/></svg>
+                <span class="brand-divider" aria-hidden="true"></span>
+                <span class="brand-name">Locker Management</span>
             </div>
+            <span class="status-badge" id="connectionBadge">Connected</span>
         </div>
-        <div class="locker-list" id="lockerList"></div>
-    </div>
+    </header>
+
+    <nav class="button-container" aria-label="Locker groups">
+        <div class="wrap tabs-inner">
+            @foreach (var groupName in groups)
+            {
+                <button type="button" class="group-button" data-group-name="@groupName">@groupName <span class="count"></span></button>
+            }
+        </div>
+    </nav>
+
+    <main class="wrap main">
+        <section class="connection-status" id="connectionStatus" role="status" aria-live="polite">
+            <div class="connection-body">
+                <svg class="connection-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></svg>
+                <div>
+                    <h1 class="connection-title">Not connected</h1>
+                    <p class="connection-message">Locker data is not available. The page reconnects automatically.</p>
+                </div>
+            </div>
+            <div class="connection-foot">
+                <span class="eyebrow">Retrying in</span>
+                <span class="countdown" id="countdown">3</span>
+            </div>
+        </section>
+
+        <div class="lockers-container" id="lockersContainer">
+            <div class="group-head">
+                <div class="group-title-block">
+                    <span class="eyebrow">Locker group</span>
+                    <h1 class="container-title" id="containerTitle"></h1>
+                    <span class="spec" id="containerMeta"></span>
+                </div>
+                <div class="header-buttons">
+                    <button type="button" id="layoutToggle" class="btn btn--secondary layout-toggle-button" data-icon="list" style="display: none;">Switch to Default View</button>
+                    <button type="button" id="refreshButton" class="btn refresh-button" data-icon="refresh">Refresh</button>
+                </div>
+            </div>
+
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="eyebrow">Total lockers</div>
+                    <div class="metric" id="metricTotal">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label"><span class="sw is-assigned" aria-hidden="true"></span><span class="eyebrow">Assigned</span></div>
+                    <div class="metric" id="metricAssigned">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label"><span class="sw" aria-hidden="true"></span><span class="eyebrow">Free</span></div>
+                    <div class="metric" id="metricFree">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="eyebrow">Utilisation</div>
+                    <div class="metric"><span id="metricUtilisation">0.0</span><span class="metric-unit">%</span></div>
+                    <div class="meter" aria-hidden="true"><div class="meter-fill" id="metricUtilisationBar"></div></div>
+                </div>
+            </div>
+
+            <section class="panel" id="lockerPanel" aria-labelledby="panelTitle">
+                <div class="panel-bar">
+                    <span class="eyebrow" id="panelTitle">All lockers</span>
+                    <span class="eyebrow" id="panelMeta"></span>
+                </div>
+                <div class="panel-body">
+                    <div class="locker-list" id="lockerList"></div>
+                </div>
+                <div class="panel-bar panel-foot">
+                    <div class="legend">
+                        <span class="legend-item"><span class="sw is-assigned" aria-hidden="true"></span><span class="spec">Assigned</span></span>
+                        <span class="legend-item"><span class="sw" aria-hidden="true"></span><span class="spec">Free</span></span>
+                        <span class="legend-item"><span class="sw is-pending" aria-hidden="true"></span><span class="spec">Pending</span></span>
+                        <span class="legend-item" id="legendMissing" hidden><span class="sw is-missing" aria-hidden="true"></span><span class="spec">Not configured</span></span>
+                    </div>
+                    <span class="spec panel-hint">Select a locker to assign, unassign or&nbsp;unlock it.</span>
+                </div>
+            </section>
+        </div>
+
+        <div class="group-placeholder spec" id="groupPlaceholder">Select a locker group to see its lockers.</div>
+    </main>
 
     <!-- Modal -->
     <div id="lockerModal" class="modal">
-        <div class="modal-content">
-            <button class="modal-close" id="modalClose">&times;</button>
-            
-            <!-- Main View -->
-            <div id="mainView" class="modal-view show">
-                <div class="modal-title" id="modalTitle"></div>
-                <div class="modal-info">
-                    <div class="modal-info-label">Current Assigned Employee:</div>
-                    <div class="modal-info-value" id="modalEmployee"></div>
-                    <div class="modal-info-value" id="modalEmployeeEmail" style="font-size: 0.9em; color: #666; margin-top: 4px;"></div>
-                </div>
-                <div class="modal-info">
-                    <div class="modal-info-label">Days Since Last Use:</div>
-                    <div class="modal-info-value" id="modalDays"></div>
-                </div>
-                <div class="modal-actions" id="modalActions"></div>
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalGroup">
+            <div class="modal-head">
+                <span class="eyebrow" id="modalGroup">Locker</span>
+                <button type="button" class="modal-close" id="modalClose" aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </div>
-            
-            <!-- Confirmation View -->
-            <div id="confirmationView" class="modal-view">
-                <div class="modal-title">Confirm Unassign</div>
-                <div class="confirmation-message" id="confirmationMessage"></div>
-                <div class="modal-actions" id="confirmationActions"></div>
-            </div>
-            
-            <!-- Success View -->
-            <div id="successView" class="modal-view">
-                <div class="modal-title" id="successTitle"></div>
-                <div class="success-message" id="successMessage"></div>
-                <div class="modal-actions" id="successActions"></div>
-            </div>
-            
-            <!-- Employee Search View -->
-            <div id="employeeSearchView" class="modal-view">
-                <div class="modal-title">Search for Employee</div>
-                <div class="modal-info">
-                    <input type="text" id="employeeSearchInput" class="search-input" placeholder="Search by name, email, or identifier..." />
-                    <button type="button" id="employeeSearchButton" class="modal-button assign" style="margin-top: 10px;">Search</button>
+            <div class="modal-body">
+                <!-- Main View -->
+                <div id="mainView" class="modal-view show">
+                    <div class="modal-title-row">
+                        <div class="modal-title is-mono" id="modalTitle"></div>
+                        <span class="state" id="modalState"></span>
+                    </div>
+                    <div class="modal-info">
+                        <div class="modal-info-label">Current assigned employee</div>
+                        <div class="modal-info-value" id="modalEmployee"></div>
+                        <div class="modal-info-value modal-info-sub" id="modalEmployeeEmail"></div>
+                    </div>
+                    <div class="modal-info">
+                        <div class="modal-info-label">Days since last use</div>
+                        <div class="modal-info-value is-days" id="modalDays"></div>
+                    </div>
+                    <div class="modal-actions" id="modalActions"></div>
                 </div>
-                <div id="employeeSearchResults" class="employee-results"></div>
-                <div class="modal-actions" id="employeeSearchActions">
-                    <button type="button" class="modal-button cancel" id="employeeSearchCancel">Cancel</button>
+
+                <!-- Confirmation View -->
+                <div id="confirmationView" class="modal-view">
+                    <div class="modal-title">Confirm Unassign</div>
+                    <div class="confirmation-message" id="confirmationMessage"></div>
+                    <div class="modal-actions" id="confirmationActions"></div>
                 </div>
-            </div>
-            
-            <!-- Assign Confirmation View -->
-            <div id="assignConfirmationView" class="modal-view">
-                <div class="modal-title">Confirm Assign</div>
-                <div class="confirmation-message" id="assignConfirmationMessage"></div>
-                <div class="modal-actions" id="assignConfirmationActions"></div>
+
+                <!-- Success View -->
+                <div id="successView" class="modal-view">
+                    <div class="modal-title is-mono" id="successTitle"></div>
+                    <div class="success-message" id="successMessage"></div>
+                    <div class="modal-actions" id="successActions"></div>
+                </div>
+
+                <!-- Employee Search View -->
+                <div id="employeeSearchView" class="modal-view">
+                    <div class="modal-title">Search for Employee</div>
+                    <div class="search-row">
+                        <input type="text" id="employeeSearchInput" class="search-input" placeholder="Search by name, email, or identifier..." aria-label="Search by name, email, or identifier" />
+                        <button type="button" id="employeeSearchButton" class="modal-button assign" data-icon="search">Search</button>
+                    </div>
+                    <div id="employeeSearchResults" class="employee-results"></div>
+                    <div class="modal-actions" id="employeeSearchActions">
+                        <button type="button" class="modal-button cancel" id="employeeSearchCancel">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- Assign Confirmation View -->
+                <div id="assignConfirmationView" class="modal-view">
+                    <div class="modal-title">Confirm Assign</div>
+                    <div class="confirmation-message" id="assignConfirmationMessage"></div>
+                    <div class="modal-actions" id="assignConfirmationActions"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -437,16 +1175,24 @@
             }
         }
         
+        function setConnectionBadge(isConnected) {
+            const badge = document.getElementById('connectionBadge');
+            badge.classList.toggle('is-offline', !isConnected);
+            badge.textContent = isConnected ? 'Connected' : 'Offline';
+        }
+
         function showConnectionStatus() {
             document.getElementById('connectionStatus').classList.add('show');
             document.querySelector('.button-container').style.display = 'none';
             document.getElementById('lockersContainer').classList.remove('show');
+            setConnectionBadge(false);
             startCountdown();
         }
-        
+
         function hideConnectionStatus() {
             document.getElementById('connectionStatus').classList.remove('show');
             document.querySelector('.button-container').style.display = 'flex';
+            setConnectionBadge(true);
             if (retryCountdownInterval) {
                 clearInterval(retryCountdownInterval);
                 retryCountdownInterval = null;
@@ -477,9 +1223,21 @@
             }, 1000);
         }
         
+        // Number of lockers on each group tab
+        function updateGroupCounts() {
+            document.querySelectorAll('.group-button').forEach(button => {
+                const group = lockerData.find(g => g.name === button.getAttribute('data-group-name'));
+                const count = button.querySelector('.count');
+                if (count) {
+                    count.textContent = group && group.allLockers ? group.allLockers.length : '';
+                }
+            });
+        }
+
         // Check data availability on page load
         checkDataAvailability();
-        
+        updateGroupCounts();
+
         // Set up automatic data refresh polling
         let refreshPeriod = @ViewBag.WebRefreshPeriodMs;
         if (refreshPeriod > 0) {
@@ -501,9 +1259,13 @@
                 currentActiveGroupName = groupName;
                 
                 // Remove active class from all buttons
-                document.querySelectorAll('.group-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.group-button').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.removeAttribute('aria-current');
+                });
                 // Add active class to clicked button
                 this.classList.add('active');
+                this.setAttribute('aria-current', 'true');
                 
                 // Find the group data
                 const group = lockerData.find(g => g.name === groupName);
@@ -559,9 +1321,24 @@
             }
         });
         
+        function updateLockerMetrics(lockers) {
+            const total = lockers.length;
+            const assigned = lockers.filter(l => l.assignedTo).length;
+            const utilisation = total > 0 ? (assigned / total) * 100 : 0;
+            document.getElementById('metricTotal').textContent = total;
+            document.getElementById('metricAssigned').textContent = assigned;
+            document.getElementById('metricFree').textContent = total - assigned;
+            document.getElementById('metricUtilisation').textContent = utilisation.toFixed(1);
+            document.getElementById('metricUtilisationBar').style.width = `${utilisation}%`;
+        }
+        
         function displayLockers(groupName, lockers) {
             const container = document.getElementById('lockersContainer');
             const title = document.getElementById('containerTitle');
+            const meta = document.getElementById('containerMeta');
+            const panelTitle = document.getElementById('panelTitle');
+            const panelMeta = document.getElementById('panelMeta');
+            const legendMissing = document.getElementById('legendMissing');
             const list = document.getElementById('lockerList');
             const toggleButton = document.getElementById('layoutToggle');
             
@@ -572,140 +1349,97 @@
             if (useCustomLayout[groupName] === undefined) {
                 useCustomLayout[groupName] = hasCustomLayout;
             }
+            const showCustomLayout = hasCustomLayout && useCustomLayout[groupName];
             
             // Show/hide toggle button based on whether group has custom layout
             if (hasCustomLayout) {
-                toggleButton.style.display = 'block';
-                toggleButton.textContent = useCustomLayout[groupName] ? 'Switch to Default View' : 'Switch to Custom Layout';
+                toggleButton.style.display = '';
+                toggleButton.textContent = showCustomLayout ? 'Switch to Default View' : 'Switch to Custom Layout';
+                toggleButton.setAttribute('data-icon', showCustomLayout ? 'list' : 'grid');
             } else {
                 toggleButton.style.display = 'none';
             }
             
-            if (hasCustomLayout && useCustomLayout[groupName]) {
-                title.textContent = `Lockers in ${groupName} (${lockers.length} total)`;
-                list.innerHTML = '';
+            title.textContent = groupName;
+            meta.textContent = `${lockers.length} ${lockers.length === 1 ? 'locker' : 'lockers'} · ${showCustomLayout ? 'Custom layout' : 'Default view'}`;
+            updateLockerMetrics(lockers);
+            updateGroupCounts();
+            list.innerHTML = '';
+            
+            if (showCustomLayout) {
                 list.className = 'locker-list custom-layout';
-                list.style.display = 'block';
+                panelTitle.textContent = 'Locker map';
+                legendMissing.hidden = false;
+                let rowCount = 0;
                 
                 // Get the group configuration
                 const groupConfig = groupConfigurations[groupName];
                 if (groupConfig && groupConfig.groupLayout && Array.isArray(groupConfig.groupLayout)) {
                     groupConfig.groupLayout.forEach(rowItem => {
                         if (rowItem.row) {
+                            rowCount++;
                             const rowDiv = document.createElement('div');
-                            rowDiv.className = 'custom-layout-row';
-                            rowDiv.style.display = 'flex';
-                            rowDiv.style.gap = '10px';
-                            rowDiv.style.marginBottom = '10px';
-                            rowDiv.style.flexWrap = 'wrap';
+                            rowDiv.className = 'layout-row';
                             
-                            // Split row by comma and create buttons
+                            // Split row by comma and create a tile per item
                             const items = rowItem.row.split(',').map(item => item.trim()).filter(item => item.length > 0);
                             
-                            // Track consecutive (s) button count
+                            // (s) lockers and <smallspacer> count together and pair up: 1st+2nd, 3rd+4th, ...
                             let consecutiveSmallCount = 0;
                             
-                            items.forEach((item, index) => {
-                                const button = document.createElement('button');
-                                button.className = 'locker-item custom-layout-button';
-                                
-                                // Check if this is an (s) button or smallspacer (both behave the same for spacing)
+                            items.forEach(item => {
                                 const itemLower = item.toLowerCase();
                                 const isSmall = itemLower.startsWith('(s)');
                                 const isSmallSpacer = itemLower === '<smallspacer>';
-                                const isSmallOrSpacer = isSmall || isSmallSpacer;
+                                const isExtraLarge = itemLower.startsWith('(xl)');
                                 
-                                // Check if previous item is also an (s) button or smallspacer
-                                const prevItemLower = index > 0 ? items[index - 1].toLowerCase() : '';
-                                const prevIsSmall = prevItemLower.startsWith('(s)');
-                                const prevIsSmallSpacer = prevItemLower === '<smallspacer>';
-                                const prevIsSmallOrSpacer = prevIsSmall || prevIsSmallSpacer;
+                                if (isSmall || isSmallSpacer) {
+                                    consecutiveSmallCount++;
+                                } else {
+                                    consecutiveSmallCount = 0;
+                                }
+                                // The 2nd, 4th, 6th, ... small item sits flush against the one before it
+                                const isPaired = (isSmall || isSmallSpacer) && consecutiveSmallCount % 2 === 0;
                                 
-                                // Remove prefixes from display text
+                                // Spacers keep the physical layout but are not lockers
+                                if (itemLower === '<spacer>' || itemLower === '<bigspacer>' || isSmallSpacer) {
+                                    const spacer = document.createElement('div');
+                                    spacer.className = 'tile-spacer'
+                                        + (itemLower === '<bigspacer>' ? ' w-xl' : '')
+                                        + (isSmallSpacer ? ' w-s' : '')
+                                        + (isPaired ? ' is-paired' : '');
+                                    spacer.setAttribute('aria-hidden', 'true');
+                                    rowDiv.appendChild(spacer);
+                                    return;
+                                }
+                                
+                                // Remove size prefixes from display text
                                 let displayText = item;
-                                if (itemLower.startsWith('(xl)')) {
+                                if (isExtraLarge) {
                                     displayText = item.substring(4).trim(); // Remove "(xl)" prefix
                                 } else if (isSmall) {
                                     displayText = item.substring(3).trim(); // Remove "(s)" prefix
                                 }
                                 
-                                button.textContent = displayText;
+                                const button = document.createElement('button');
                                 button.type = 'button';
+                                button.className = 'locker-item tile'
+                                    + (isExtraLarge ? ' w-xl' : '')
+                                    + (isSmall ? ' w-s' : '')
+                                    + (isPaired ? ' is-paired' : '');
+                                button.textContent = displayText;
                                 
-                                // Track consecutive (s) buttons and smallspacers (they count together)
-                                if (isSmallOrSpacer) {
-                                    consecutiveSmallCount++;
+                                // Match button text with locker data
+                                const matchedLocker = lockers.find(l => l.name === displayText);
+                                if (matchedLocker) {
+                                    button.classList.add(matchedLocker.assignedTo ? 'assigned' : 'unassigned');
+                                    button.setAttribute('aria-label', `${displayText}, ${matchedLocker.assignedTo ? 'assigned' : 'free'}`);
+                                    button.addEventListener('click', () => showLockerModal(matchedLocker));
                                 } else {
-                                    consecutiveSmallCount = 0; // Reset counter when we hit a non-(s) button or smallspacer
-                                }
-                                
-                                // Handle special items like spacers
-                                if (itemLower === '<spacer>') {
-                                    button.style.visibility = 'hidden';
-                                    button.style.minWidth = '40px';
-                                    consecutiveSmallCount = 0; // Reset counter for spacer
-                                } else if (isSmallSpacer) {
-                                    button.style.visibility = 'hidden';
-                                    button.style.minWidth = '40px'; // Same width as (s) button
-                                    button.style.flex = '0 0 40px';
-                                    
-                                    // Apply same gap logic as (s) buttons - if previous is (s) or smallspacer and this is 2nd, 4th, etc.
-                                    if (prevIsSmallOrSpacer && consecutiveSmallCount % 2 === 0) {
-                                        button.style.marginLeft = '-10px'; // Cancel out the 10px gap from rowDiv
-                                    }
-                                } else if (itemLower === '<bigspacer>') {
-                                    button.style.visibility = 'hidden';
-                                    button.style.minWidth = '170px'; // Same width as (xl) button
-                                    button.style.flex = '0 0 170px';
-                                    consecutiveSmallCount = 0; // Reset counter for bigspacer
-                                } else {
-                                    // Default button width
-                                    button.style.minWidth = '80px';
-                                    button.style.padding = '10px';
-                                    
-                                    // Check for size prefixes
-                                    if (item.toLowerCase().startsWith('(xl)')) {
-                                        // Extra large - width of 2 normal buttons + gap (80px + 10px + 80px = 170px)
-                                        button.style.minWidth = '170px';
-                                        button.style.flex = '0 0 170px';
-                                        consecutiveSmallCount = 0; // Reset counter for xl
-                                    } else if (isSmall) {
-                                        // Small - half the width of normal
-                                        button.style.minWidth = '40px';
-                                        button.style.flex = '0 0 40px';
-                                        button.style.fontSize = '0.60em'; // Smaller font to prevent wrapping
-                                        
-                                        // Remove gap between pairs of (s) buttons or (s) + smallspacer (2nd, 4th, 6th, etc. in consecutive sequence)
-                                        // So: 1st and 2nd have no gap, 3rd and 4th have no gap, but 2nd and 3rd have normal gap
-                                        if (prevIsSmallOrSpacer && consecutiveSmallCount % 2 === 0) {
-                                            // This is the 2nd, 4th, 6th, etc. (s) button or smallspacer in a consecutive sequence
-                                            button.style.marginLeft = '-10px'; // Cancel out the 10px gap from rowDiv
-                                        }
-                                    } else {
-                                        // Normal size
-                                        button.style.flex = '0 0 80px';
-                                        consecutiveSmallCount = 0; // Reset counter for normal buttons
-                                    }
-                                    
-                                    // Match button text with locker data
-                                    const matchedLocker = lockers.find(l => l.name === displayText);
-                                    if (matchedLocker) {
-                                        // Locker exists - apply assigned/unassigned styling
-                                        if (matchedLocker.assignedTo) {
-                                            button.classList.add('assigned');
-                                        } else {
-                                            button.classList.add('unassigned');
-                                        }
-                                        // Make it clickable
-                                        button.addEventListener('click', () => showLockerModal(matchedLocker));
-                                    } else {
-                                        // Locker doesn't exist - grey and disabled
-                                        button.style.backgroundColor = '#e9ecef';
-                                        button.style.borderColor = '#ced4da';
-                                        button.style.color = '#6c757d';
-                                        button.style.cursor = 'not-allowed';
-                                        button.disabled = true;
-                                    }
+                                    // Locker doesn't exist - hatched and disabled
+                                    button.classList.add('is-missing');
+                                    button.setAttribute('aria-label', `${displayText}, not configured`);
+                                    button.disabled = true;
                                 }
                                 
                                 rowDiv.appendChild(button);
@@ -716,50 +1450,51 @@
                     });
                 }
                 
-                container.classList.add('show');
+                panelMeta.textContent = `${rowCount} ${rowCount === 1 ? 'row' : 'rows'}`;
             } else {
                 // Default layout (either no custom layout, or custom layout is toggled off)
-                // Reset list class and style for normal layout
                 list.className = 'locker-list';
-                list.style.display = 'grid'; // Ensure grid layout is restored
-                list.style.gap = '15px';
-                list.style.marginTop = '15px';
-                
-                title.textContent = `Lockers in ${groupName} (${lockers.length} total)`;
-                list.innerHTML = '';
+                panelTitle.textContent = 'All lockers';
+                panelMeta.textContent = 'A–Z';
+                legendMissing.hidden = true;
                 
                 lockers.forEach(locker => {
-                const lockerButton = document.createElement('button');
-                lockerButton.className = 'locker-item ' + (locker.assignedTo ? 'assigned' : 'unassigned');
-                lockerButton.type = 'button';
-                lockerButton.addEventListener('click', () => showLockerModal(locker));
-                
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'locker-name';
-                nameDiv.textContent = locker.name || `Locker ${locker.id}`;
-                
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'locker-info';
-                
-                if (locker.assignedTo) {
-                    infoDiv.textContent = `Assigned to: ${locker.assignedEmployeeName || 'Unknown'}`;
-                } else {
-                    infoDiv.textContent = 'Unassigned';
-                }
-                
-                const daysDiv = document.createElement('div');
-                daysDiv.className = 'locker-info';
-                const daysSinceLastUse = locker.daysSinceLastUse ?? 0;
-                daysDiv.textContent = `Days since last use: ${daysSinceLastUse.toFixed(1)}`;
-                
-                    lockerButton.appendChild(nameDiv);
+                    const lockerButton = document.createElement('button');
+                    lockerButton.className = 'locker-item locker-card ' + (locker.assignedTo ? 'assigned' : 'unassigned');
+                    lockerButton.type = 'button';
+                    lockerButton.addEventListener('click', () => showLockerModal(locker));
+                    
+                    const headDiv = document.createElement('span');
+                    headDiv.className = 'locker-card-head';
+                    
+                    const nameDiv = document.createElement('span');
+                    nameDiv.className = 'locker-name';
+                    nameDiv.textContent = locker.name || `Locker ${locker.id}`;
+                    
+                    const stateDiv = document.createElement('span');
+                    stateDiv.className = locker.assignedTo ? 'state is-assigned' : 'state';
+                    stateDiv.textContent = locker.assignedTo ? 'Assigned' : 'Free';
+                    
+                    headDiv.appendChild(nameDiv);
+                    headDiv.appendChild(stateDiv);
+                    
+                    const infoDiv = document.createElement('span');
+                    infoDiv.className = locker.assignedTo ? 'locker-who' : 'locker-who is-muted';
+                    infoDiv.textContent = locker.assignedTo ? (locker.assignedEmployeeName || 'Unknown') : 'Unassigned';
+                    
+                    const daysDiv = document.createElement('span');
+                    daysDiv.className = 'locker-days spec';
+                    const daysSinceLastUse = locker.daysSinceLastUse ?? 0;
+                    daysDiv.textContent = `Days since last use: ${daysSinceLastUse.toFixed(1)}`;
+                    
+                    lockerButton.appendChild(headDiv);
                     lockerButton.appendChild(infoDiv);
                     lockerButton.appendChild(daysDiv);
                     list.appendChild(lockerButton);
                 });
-                
-                container.classList.add('show');
             }
+            
+            container.classList.add('show');
         }
         
         function hideLockers() {
@@ -778,9 +1513,14 @@
             const modalDays = document.getElementById('modalDays');
             const modalActions = document.getElementById('modalActions');
             
-            // Set locker name
+            // Set locker name, its group and its state
             modalTitle.textContent = locker.name || `Locker ${locker.id}`;
-            
+            document.getElementById('modalGroup').textContent = currentActiveGroupName || 'Locker';
+            const modalState = document.getElementById('modalState');
+            modalState.className = locker.assignedTo ? 'state is-assigned' : 'state';
+            modalState.textContent = locker.assignedTo ? 'Assigned' : 'Free';
+            modalEmployee.classList.toggle('is-muted', !locker.assignedTo);
+
             // Set assigned employee
             if (locker.assignedTo) {
                 modalEmployee.textContent = locker.assignedEmployeeName || 'Unknown';
@@ -816,15 +1556,17 @@
             if (locker.assignedTo) {
                 const unassignButton = document.createElement('button');
                 unassignButton.className = 'modal-button unassign';
+                unassignButton.setAttribute('data-icon', 'unassign');
                 unassignButton.textContent = 'Unassign';
                 unassignButton.type = 'button';
                 unassignButton.addEventListener('click', () => showConfirmationView(locker));
                 modalActions.appendChild(unassignButton);
-                
+
                 // Add Unlock button if allowed
                 if (allowUnlock) {
                     const unlockButton = document.createElement('button');
-                    unlockButton.className = 'modal-button assign';
+                    unlockButton.className = 'modal-button secondary';
+                    unlockButton.setAttribute('data-icon', 'unlock');
                     unlockButton.textContent = 'Unlock';
                     unlockButton.type = 'button';
                     unlockButton.addEventListener('click', () => unlockLocker(locker));
@@ -833,15 +1575,17 @@
             } else {
                 const assignButton = document.createElement('button');
                 assignButton.className = 'modal-button assign';
+                assignButton.setAttribute('data-icon', 'assign');
                 assignButton.textContent = 'Assign';
                 assignButton.type = 'button';
                 assignButton.addEventListener('click', () => showEmployeeSearchView(locker));
                 modalActions.appendChild(assignButton);
-                
+
                 // Add Unlock button for unassigned lockers if allowed
                 if (allowUnlockWhenUnassigned) {
                     const unlockButton = document.createElement('button');
-                    unlockButton.className = 'modal-button assign';
+                    unlockButton.className = 'modal-button secondary';
+                    unlockButton.setAttribute('data-icon', 'unlock');
                     unlockButton.textContent = 'Unlock';
                     unlockButton.type = 'button';
                     unlockButton.addEventListener('click', () => unlockLocker(locker));
@@ -946,9 +1690,9 @@
             document.getElementById('employeeSearchView').classList.add('show');
             
             // Show search elements
-            document.getElementById('employeeSearchInput').style.display = 'block';
-            document.getElementById('employeeSearchButton').style.display = 'block';
-            
+            document.getElementById('employeeSearchInput').style.display = '';
+            document.getElementById('employeeSearchButton').style.display = '';
+
             // Clear previous search
             document.getElementById('employeeSearchInput').value = '';
             document.getElementById('employeeSearchResults').innerHTML = '';
@@ -1009,24 +1753,28 @@
                     } else {
                         resultsDiv.innerHTML = '';
                         filtered.forEach(employee => {
-                            const employeeDiv = document.createElement('div');
+                            const employeeDiv = document.createElement('button');
+                            employeeDiv.type = 'button';
                             employeeDiv.className = 'employee-item';
-                            employeeDiv.style.cursor = 'pointer';
                             employeeDiv.addEventListener('click', () => showAssignConfirmationView(employee));
-                            
-                            const nameDiv = document.createElement('div');
+
+                            const textDiv = document.createElement('span');
+                            textDiv.className = 'employee-text';
+
+                            const nameDiv = document.createElement('span');
                             nameDiv.className = 'employee-name';
                             nameDiv.textContent = `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'Unknown';
-                            
-                            const detailsDiv = document.createElement('div');
+
+                            const detailsDiv = document.createElement('span');
                             detailsDiv.className = 'employee-details';
                             let details = [];
-                            if (employee.email) details.push(`Email: ${employee.email}`);
-                            if (employee.identifier) details.push(`Identifier: ${employee.identifier}`);
+                            if (employee.email) details.push(employee.email);
+                            if (employee.identifier) details.push(employee.identifier);
                             detailsDiv.textContent = details.join(' | ') || 'No additional details';
-                            
-                            employeeDiv.appendChild(nameDiv);
-                            employeeDiv.appendChild(detailsDiv);
+
+                            textDiv.appendChild(nameDiv);
+                            textDiv.appendChild(detailsDiv);
+                            employeeDiv.appendChild(textDiv);
                             resultsDiv.appendChild(employeeDiv);
                         });
                     }
@@ -1389,8 +2137,7 @@
                 }
                 
                 if (matches) {
-                    button.style.backgroundColor = '#ffc107';
-                    button.style.borderColor = '#ff9800';
+                    // Styled by .tile.pending / .locker-card.pending
                     button.classList.add('pending');
                 }
             });
