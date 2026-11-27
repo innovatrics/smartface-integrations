@@ -121,23 +121,17 @@ Add following pattern to existing docker compose, depending on the integrations 
       - VillaProConfiguration__BaseUrl=
       # General AEOS NEDAP Configuration
       - AeosConfiguration__LabelName=LOCKERS
-      # KONE connector Maping configuration
-      StreamConfig__0__Type=KONE_CONNECTOR
-      StreamConfig__0__StreamId=<add your stream id>
-      StreamConfig__0__Terminal=1
-      StreamConfig__0__Area=1000
-      StreamConfig__0__Action=2001
-      # KONE defaults (used if a mapping omits Terminal/Area/Action)
-      KoneConfiguration__ClientId=<add your client id>
-      KoneConfiguration__ClientSecret=<add your client secret>
-      KoneConfiguration__BuildingId=${KONE_BUILDING_ID}
-      KoneConfiguration__ApiHostname=dev.kone.com
-      # omit WebSocketEndpoint to use default wss://<ApiHostname>/stream-v2
-      KoneConfiguration__WebSocketSubprotocol=koneapi
-      KoneConfiguration__GroupId=1
-      KoneConfiguration__Terminal=1
-      KoneConfiguration__Area=1000
-      KoneConfiguration__Action=2001
+      # KONE connector mapping configuration
+      - StreamConfig__8__Type=KONE_CONNECTOR
+      - StreamConfig__8__StreamId=<add your stream id>
+      - StreamConfig__8__DestinationArea=1000
+      - StreamConfig__8__IsDirectionUp=true
+      # KONE API configuration
+      - KoneConfiguration__ClientId=<add your client id>
+      - KoneConfiguration__ClientSecret=<add your client secret>
+      - KoneConfiguration__BuildingId=${KONE_BUILDING_ID}
+      - KoneConfiguration__GroupId=1
+      - KoneConfiguration__WebSocketEndpoint=wss://dev.kone.com/stream-v2
 
 networks:
   default:
@@ -146,36 +140,50 @@ networks:
 
 ```
 
+### StreamConfig indexes in environment variables
+
+`StreamConfig__<n>__<Property>` variables are merged by index, property by property, on top of whatever `appsettings.json` inside the image holds at the same index. They do not replace the entry.
+
+Images built before this entry was removed ship a sample entry at index 0:
+
+```json
+{ "Enabled": false, "Type": "KONE_CONNECTOR", "StreamId": "00000000-0000-0000-0000-000000000000", "DestinationArea": 1, "IsDirectionUp": false }
+```
+
+With such an image, `StreamConfig__0__*` variables overwrite `Type`, `StreamId` and the rest, but `Enabled` stays `false`. The stream is dropped at startup and every GRANTED notification for it logs:
+
+```
+Granted grantedNotification for Stream <stream-guid> has no AccessConnector configuration
+```
+
+If you see this for a stream you configured at index 0, do one of the following:
+
+- start your `StreamConfig` entries at index 1, or
+- add `StreamConfig__0__Enabled=true`, or
+- upgrade to an image where `StreamConfig` in `appsettings.json` is empty.
+
+Current images log a warning at startup for every entry that is ignored because `Enabled` is `false`, and list every active entry as `Stream [<stream-guid>] for <Type> ...`. Check these lines after any configuration change.
+
 ### KONE Connector
 
-This connector places elevator calls through the KONE Elevator Call API v2 (WebSocket) when a SmartFace access GRANTED event occurs on a mapped stream.
+This connector places a landing call through the KONE Elevator Call API v2 (WebSocket) when a SmartFace access GRANTED event occurs on a mapped stream.
 
-Configuration is done in `src/AccessControlConnector/appsettings.json`.
-
-1. Global KONE settings (defaults/fallbacks):
+1. Global KONE settings (`KoneConfiguration__<Property>` as environment variables):
 
 ```json
 "KoneConfiguration": {
   "ClientId": "<your-kone-client-id>",
   "ClientSecret": "<your-kone-client-secret>",
   "BuildingId": "<your-building-id>",
-  "ApiHostname": "dev.kone.com",
-  "WebSocketEndpoint": "",
-  "WebSocketSubprotocol": "koneapi",
   "GroupId": "1",
-  "Terminal": 1,
-  "Area": 1000,
-  "Action": 2001
+  "WebSocketEndpoint": "wss://dev.kone.com/stream-v2"
 }
 ```
 
 - ClientId / ClientSecret: credentials from KONE Developer.
-- BuildingId: building identifier; connector uses `building:<BuildingId>`.
-- ApiHostname/WebSocketEndpoint: leave default for KONE dev.
+- BuildingId: building identifier.
 - GroupId: elevator group (default "1").
-- Terminal: default elevator terminal/car (can be overridden per mapping).
-- Area: default floor/area ID (can be overridden per mapping).
-- Action: default call action (can be overridden per mapping). See Actions below.
+- WebSocketEndpoint: KONE WebSocket API endpoint.
 
 2. Per-stream mapping (triggers the call on GRANTED for that stream):
 
@@ -184,27 +192,22 @@ Configuration is done in `src/AccessControlConnector/appsettings.json`.
   {
     "Type": "KONE_CONNECTOR",
     "StreamId": "<stream-guid-1>",
-    "Terminal": 1,
-    "Area": 1000,
-    "Action": 2001
+    "DestinationArea": 1000,
+    "IsDirectionUp": true
   },
   {
     "Type": "KONE_CONNECTOR",
     "StreamId": "<stream-guid-2>",
-    "Terminal": 1,
-    "Area": 2000,
-    "Action": 2002
+    "DestinationArea": 2000,
+    "IsDirectionUp": false
   }
 ]
 ```
 
-Semantics:
+- DestinationArea: KONE area ID of the floor the elevator is called to.
+- IsDirectionUp: `true` calls the elevator for travel up, `false` for travel down.
 
-- Action: call type
-  - 2001: call elevator UP
-  - 2002: call elevator DOWN
-- Area: floor/area identifier to call to (destination or state activation target, depending on action).
-- Terminal: elevator terminal/car number.
+When you set the mapping through environment variables, read [StreamConfig indexes in environment variables](#streamconfig-indexes-in-environment-variables) first. A KONE mapping at index 0 is silently disabled on older images.
 
 ## OpenTelemetry Tracing
 

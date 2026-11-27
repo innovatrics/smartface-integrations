@@ -163,6 +163,11 @@ namespace Innovatrics.SmartFace.Integrations.AccessControlConnector.Services
                 streamConfigs = configuration.GetSection("StreamConfig").Get<StreamConfig[]>() ?? [];
             }
 
+            foreach (var disabled in streamConfigs.Where(x => !x.Enabled))
+            {
+                _log.Warning("Stream [{streamId}] for {Type} is ignored because Enabled is false", disabled.StreamId, disabled.Type);
+            }
+
             streamConfigs = streamConfigs.Where(x => x.Enabled).ToArray();
 
             foreach (var streamConfig in streamConfigs)
